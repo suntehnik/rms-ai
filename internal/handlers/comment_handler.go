@@ -132,7 +132,8 @@ func (h *CommentHandler) GetCommentsByEntity(c *gin.Context) {
 	var comments []service.CommentResponse
 	
 	if inlineOnly {
-		comments, err = h.commentService.GetInlineComments(entityType, entityID)
+		// Use visible inline comments to exclude hidden ones
+		comments, err = h.commentService.GetVisibleInlineComments(entityType, entityID)
 	} else if threaded {
 		comments, err = h.commentService.GetThreadedComments(entityType, entityID)
 	} else {
@@ -478,4 +479,384 @@ func (h *CommentHandler) CreateCommentReply(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, comment)
+}
+
+// CreateInlineComment handles POST /api/v1/:entityType/:id/comments/inline
+func (h *CommentHandler) CreateInlineComment(c *gin.Context) {
+	entityTypeParam := c.Param("entityType")
+	entityIDParam := c.Param("id")
+
+	// Parse entity type
+	entityType := models.EntityType(entityTypeParam)
+	
+	// Parse entity ID
+	entityID, err := uuid.Parse(entityIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid entity ID format",
+		})
+		return
+	}
+
+	var req service.CreateCommentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Set entity type and ID from URL parameters
+	req.EntityType = entityType
+	req.EntityID = entityID
+
+	// Validate that this is an inline comment request
+	if req.LinkedText == nil || req.TextPositionStart == nil || req.TextPositionEnd == nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Inline comments require linked_text, text_position_start, and text_position_end",
+		})
+		return
+	}
+
+	comment, err := h.commentService.CreateComment(req)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrCommentInvalidEntityType):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid entity type",
+			})
+		case errors.Is(err, service.ErrCommentEntityNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Entity not found",
+			})
+		case errors.Is(err, service.ErrCommentAuthorNotFound):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Author not found",
+			})
+		case errors.Is(err, service.ErrEmptyContent):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Content cannot be empty",
+			})
+		case errors.Is(err, service.ErrInvalidInlineCommentData):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Inline comments require linked_text, text_position_start, and text_position_end",
+			})
+		case errors.Is(err, service.ErrInvalidTextPosition):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid text position: start must be >= 0 and end must be >= start",
+			})
+		case errors.Is(err, service.ErrEmptyLinkedText):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Linked text cannot be empty for inline comments",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to create inline comment",
+				"details": err.Error(),
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusCreated, comment)
+}
+
+// CreateEpicInlineComment handles POST /api/v1/epics/:id/comments/inline
+func (h *CommentHandler) CreateEpicInlineComment(c *gin.Context) {
+	h.createInlineCommentForEntity(c, models.EntityTypeEpic)
+}
+
+// CreateUserStoryInlineComment handles POST /api/v1/user-stories/:id/comments/inline
+func (h *CommentHandler) CreateUserStoryInlineComment(c *gin.Context) {
+	h.createInlineCommentForEntity(c, models.EntityTypeUserStory)
+}
+
+// CreateAcceptanceCriteriaInlineComment handles POST /api/v1/acceptance-criteria/:id/comments/inline
+func (h *CommentHandler) CreateAcceptanceCriteriaInlineComment(c *gin.Context) {
+	h.createInlineCommentForEntity(c, models.EntityTypeAcceptanceCriteria)
+}
+
+// CreateRequirementInlineComment handles POST /api/v1/requirements/:id/comments/inline
+func (h *CommentHandler) CreateRequirementInlineComment(c *gin.Context) {
+	h.createInlineCommentForEntity(c, models.EntityTypeRequirement)
+}
+
+// createInlineCommentForEntity is a helper function for entity-specific inline comment creation
+func (h *CommentHandler) createInlineCommentForEntity(c *gin.Context, entityType models.EntityType) {
+	entityIDParam := c.Param("id")
+
+	// Parse entity ID
+	entityID, err := uuid.Parse(entityIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid entity ID format",
+		})
+		return
+	}
+
+	var req service.CreateCommentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Set entity type and ID
+	req.EntityType = entityType
+	req.EntityID = entityID
+
+	// Validate that this is an inline comment request
+	if req.LinkedText == nil || req.TextPositionStart == nil || req.TextPositionEnd == nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Inline comments require linked_text, text_position_start, and text_position_end",
+		})
+		return
+	}
+
+	comment, err := h.commentService.CreateComment(req)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrCommentInvalidEntityType):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid entity type",
+			})
+		case errors.Is(err, service.ErrCommentEntityNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Entity not found",
+			})
+		case errors.Is(err, service.ErrCommentAuthorNotFound):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Author not found",
+			})
+		case errors.Is(err, service.ErrEmptyContent):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Content cannot be empty",
+			})
+		case errors.Is(err, service.ErrInvalidInlineCommentData):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Inline comments require linked_text, text_position_start, and text_position_end",
+			})
+		case errors.Is(err, service.ErrInvalidTextPosition):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid text position: start must be >= 0 and end must be >= start",
+			})
+		case errors.Is(err, service.ErrEmptyLinkedText):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Linked text cannot be empty for inline comments",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to create inline comment",
+				"details": err.Error(),
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusCreated, comment)
+}
+
+// GetVisibleInlineComments handles GET /api/v1/:entityType/:id/comments/inline/visible
+func (h *CommentHandler) GetVisibleInlineComments(c *gin.Context) {
+	entityTypeParam := c.Param("entityType")
+	entityIDParam := c.Param("id")
+
+	// Parse entity type
+	entityType := models.EntityType(entityTypeParam)
+	
+	// Parse entity ID
+	entityID, err := uuid.Parse(entityIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid entity ID format",
+		})
+		return
+	}
+
+	comments, err := h.commentService.GetVisibleInlineComments(entityType, entityID)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrCommentInvalidEntityType):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid entity type",
+			})
+		case errors.Is(err, service.ErrCommentEntityNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Entity not found",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to get visible inline comments",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"comments": comments,
+		"count":    len(comments),
+	})
+}
+
+// GetEpicVisibleInlineComments handles GET /api/v1/epics/:id/comments/inline/visible
+func (h *CommentHandler) GetEpicVisibleInlineComments(c *gin.Context) {
+	h.getVisibleInlineCommentsForEntity(c, models.EntityTypeEpic)
+}
+
+// GetUserStoryVisibleInlineComments handles GET /api/v1/user-stories/:id/comments/inline/visible
+func (h *CommentHandler) GetUserStoryVisibleInlineComments(c *gin.Context) {
+	h.getVisibleInlineCommentsForEntity(c, models.EntityTypeUserStory)
+}
+
+// GetAcceptanceCriteriaVisibleInlineComments handles GET /api/v1/acceptance-criteria/:id/comments/inline/visible
+func (h *CommentHandler) GetAcceptanceCriteriaVisibleInlineComments(c *gin.Context) {
+	h.getVisibleInlineCommentsForEntity(c, models.EntityTypeAcceptanceCriteria)
+}
+
+// GetRequirementVisibleInlineComments handles GET /api/v1/requirements/:id/comments/inline/visible
+func (h *CommentHandler) GetRequirementVisibleInlineComments(c *gin.Context) {
+	h.getVisibleInlineCommentsForEntity(c, models.EntityTypeRequirement)
+}
+
+// getVisibleInlineCommentsForEntity is a helper function for entity-specific visible inline comments retrieval
+func (h *CommentHandler) getVisibleInlineCommentsForEntity(c *gin.Context, entityType models.EntityType) {
+	entityIDParam := c.Param("id")
+
+	// Parse entity ID
+	entityID, err := uuid.Parse(entityIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid entity ID format",
+		})
+		return
+	}
+
+	comments, err := h.commentService.GetVisibleInlineComments(entityType, entityID)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrCommentInvalidEntityType):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid entity type",
+			})
+		case errors.Is(err, service.ErrCommentEntityNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Entity not found",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to get visible inline comments",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"comments": comments,
+		"count":    len(comments),
+	})
+}
+
+// ValidateInlineComments handles POST /api/v1/:entityType/:id/comments/inline/validate
+func (h *CommentHandler) ValidateInlineComments(c *gin.Context) {
+	entityTypeParam := c.Param("entityType")
+	entityIDParam := c.Param("id")
+
+	// Parse entity type
+	entityType := models.EntityType(entityTypeParam)
+	
+	// Parse entity ID
+	entityID, err := uuid.Parse(entityIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid entity ID format",
+		})
+		return
+	}
+
+	var req struct {
+		NewDescription string `json:"new_description" binding:"required"`
+	}
+	
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	err = h.commentService.ValidateInlineCommentsAfterTextChange(entityType, entityID, req.NewDescription)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to validate inline comments",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Inline comments validated successfully",
+	})
+}
+
+// ValidateEpicInlineComments handles POST /api/v1/epics/:id/comments/inline/validate
+func (h *CommentHandler) ValidateEpicInlineComments(c *gin.Context) {
+	h.validateInlineCommentsForEntity(c, models.EntityTypeEpic)
+}
+
+// ValidateUserStoryInlineComments handles POST /api/v1/user-stories/:id/comments/inline/validate
+func (h *CommentHandler) ValidateUserStoryInlineComments(c *gin.Context) {
+	h.validateInlineCommentsForEntity(c, models.EntityTypeUserStory)
+}
+
+// ValidateAcceptanceCriteriaInlineComments handles POST /api/v1/acceptance-criteria/:id/comments/inline/validate
+func (h *CommentHandler) ValidateAcceptanceCriteriaInlineComments(c *gin.Context) {
+	h.validateInlineCommentsForEntity(c, models.EntityTypeAcceptanceCriteria)
+}
+
+// ValidateRequirementInlineComments handles POST /api/v1/requirements/:id/comments/inline/validate
+func (h *CommentHandler) ValidateRequirementInlineComments(c *gin.Context) {
+	h.validateInlineCommentsForEntity(c, models.EntityTypeRequirement)
+}
+
+// validateInlineCommentsForEntity is a helper function for entity-specific inline comment validation
+func (h *CommentHandler) validateInlineCommentsForEntity(c *gin.Context, entityType models.EntityType) {
+	entityIDParam := c.Param("id")
+
+	// Parse entity ID
+	entityID, err := uuid.Parse(entityIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid entity ID format",
+		})
+		return
+	}
+
+	var req struct {
+		NewDescription string `json:"new_description" binding:"required"`
+	}
+	
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	err = h.commentService.ValidateInlineCommentsAfterTextChange(entityType, entityID, req.NewDescription)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to validate inline comments",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Inline comments validated successfully",
+	})
 }

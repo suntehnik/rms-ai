@@ -73,21 +73,7 @@ func setupTestServer(t *testing.T) (*gin.Engine, *gorm.DB, func()) {
 	return router, db, cleanup
 }
 
-// createTestUser creates a test user in the database
-func createTestUser(t *testing.T, db *gorm.DB) *models.User {
-	user := &models.User{
-		ID:           uuid.New(),
-		Username:     "testuser",
-		Email:        "test@example.com",
-		PasswordHash: "hashedpassword",
-		Role:         models.RoleUser,
-	}
 
-	err := db.Create(user).Error
-	require.NoError(t, err)
-
-	return user
-}
 
 func TestEpicIntegration_CreateAndGetEpic(t *testing.T) {
 	router, db, cleanup := setupTestServer(t)

@@ -36,6 +36,8 @@ type CommentService interface {
 	GetThreadedComments(entityType models.EntityType, entityID uuid.UUID) ([]CommentResponse, error)
 	GetCommentsByStatus(isResolved bool) ([]CommentResponse, error)
 	GetInlineComments(entityType models.EntityType, entityID uuid.UUID) ([]CommentResponse, error)
+	GetVisibleInlineComments(entityType models.EntityType, entityID uuid.UUID) ([]CommentResponse, error)
+	ValidateInlineCommentsAfterTextChange(entityType models.EntityType, entityID uuid.UUID, newDescription string) error
 	ResolveComment(id uuid.UUID) (*CommentResponse, error)
 	UnresolveComment(id uuid.UUID) (*CommentResponse, error)
 }
@@ -133,6 +135,13 @@ func (s *commentService) CreateComment(req CreateCommentRequest) (*CommentRespon
 	// Validate inline comment data
 	if err := s.validateInlineCommentData(req.LinkedText, req.TextPositionStart, req.TextPositionEnd); err != nil {
 		return nil, err
+	}
+
+	// For inline comments, validate that the linked text matches the actual text fragment
+	if req.LinkedText != nil && req.TextPositionStart != nil && req.TextPositionEnd != nil {
+		if err := s.validateTextFragment(req.EntityType, req.EntityID, *req.LinkedText, *req.TextPositionStart, *req.TextPositionEnd); err != nil {
+			return nil, fmt.Errorf("text fragment validation failed: %w", err)
+		}
 	}
 
 	// Validate content
@@ -353,6 +362,87 @@ func (s *commentService) UnresolveComment(id uuid.UUID) (*CommentResponse, error
 	return s.toCommentResponse(comment), nil
 }
 
+// ValidateInlineCommentsAfterTextChange validates inline comments after entity description changes
+// This method should be called whenever an entity's description is updated
+func (s *commentService) ValidateInlineCommentsAfterTextChange(entityType models.EntityType, entityID uuid.UUID, newDescription string) error {
+	// Get all inline comments for this entity
+	inlineComments, err := s.commentRepo.GetInlineComments(entityType, entityID)
+	if err != nil {
+		return fmt.Errorf("failed to get inline comments: %w", err)
+	}
+
+	for _, comment := range inlineComments {
+		if comment.LinkedText == nil || comment.TextPositionStart == nil || comment.TextPositionEnd == nil {
+			continue // Skip non-inline comments
+		}
+
+		start := *comment.TextPositionStart
+		end := *comment.TextPositionEnd
+		linkedText := *comment.LinkedText
+
+		// Check if the text positions are still valid
+		if start < 0 || end > len(newDescription) || start > end {
+			// Hide the comment by marking it as invalid
+			if err := s.hideInlineComment(&comment); err != nil {
+				return fmt.Errorf("failed to hide invalid comment %s: %w", comment.ID, err)
+			}
+			continue
+		}
+
+		// Check if the linked text still matches
+		actualFragment := newDescription[start:end]
+		if actualFragment != linkedText {
+			// Hide the comment because the text has changed
+			if err := s.hideInlineComment(&comment); err != nil {
+				return fmt.Errorf("failed to hide changed comment %s: %w", comment.ID, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// hideInlineComment hides an inline comment by setting special markers
+// We don't delete the comment to preserve audit trail, but mark it as hidden
+func (s *commentService) hideInlineComment(comment *models.Comment) error {
+	// Mark the comment as hidden by setting linked text to null
+	// This effectively makes it invisible in inline comment queries
+	comment.LinkedText = nil
+	comment.TextPositionStart = nil
+	comment.TextPositionEnd = nil
+	
+	// Add a note to the content indicating why it was hidden
+	comment.Content = "[HIDDEN: Linked text was modified or deleted] " + comment.Content
+
+	return s.commentRepo.Update(comment)
+}
+
+// GetVisibleInlineComments retrieves only visible inline comments for an entity
+func (s *commentService) GetVisibleInlineComments(entityType models.EntityType, entityID uuid.UUID) ([]CommentResponse, error) {
+	// Validate entity type
+	if !isValidEntityType(entityType) {
+		return nil, ErrCommentInvalidEntityType
+	}
+
+	// Validate entity exists
+	if err := s.validateEntityExists(entityType, entityID); err != nil {
+		return nil, err
+	}
+
+	// Get inline comments (this already filters for non-null linked_text)
+	comments, err := s.commentRepo.GetInlineComments(entityType, entityID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get inline comments: %w", err)
+	}
+
+	responses := make([]CommentResponse, len(comments))
+	for i, comment := range comments {
+		responses[i] = *s.toCommentResponse(&comment)
+	}
+
+	return responses, nil
+}
+
 // validateEntityExists validates that the specified entity exists
 func (s *commentService) validateEntityExists(entityType models.EntityType, entityID uuid.UUID) error {
 	switch entityType {
@@ -405,6 +495,63 @@ func (s *commentService) validateInlineCommentData(linkedText *string, start *in
 		if strings.TrimSpace(*linkedText) == "" {
 			return ErrEmptyLinkedText
 		}
+	}
+
+	return nil
+}
+
+// validateTextFragment validates that the linked text matches the actual text in the entity's description
+func (s *commentService) validateTextFragment(entityType models.EntityType, entityID uuid.UUID, linkedText string, start, end int) error {
+	var description string
+
+	// Get the entity's description based on type
+	switch entityType {
+	case models.EntityTypeEpic:
+		epic, err := s.repos.Epic.GetByID(entityID)
+		if err != nil {
+			return fmt.Errorf("failed to get epic: %w", err)
+		}
+		if epic.Description != nil {
+			description = *epic.Description
+		}
+	case models.EntityTypeUserStory:
+		userStory, err := s.repos.UserStory.GetByID(entityID)
+		if err != nil {
+			return fmt.Errorf("failed to get user story: %w", err)
+		}
+		if userStory.Description != nil {
+			description = *userStory.Description
+		}
+	case models.EntityTypeAcceptanceCriteria:
+		acceptanceCriteria, err := s.repos.AcceptanceCriteria.GetByID(entityID)
+		if err != nil {
+			return fmt.Errorf("failed to get acceptance criteria: %w", err)
+		}
+		// AcceptanceCriteria.Description is a string, not a pointer
+		description = acceptanceCriteria.Description
+	case models.EntityTypeRequirement:
+		requirement, err := s.repos.Requirement.GetByID(entityID)
+		if err != nil {
+			return fmt.Errorf("failed to get requirement: %w", err)
+		}
+		if requirement.Description != nil {
+			description = *requirement.Description
+		}
+	default:
+		return ErrCommentInvalidEntityType
+	}
+
+	// Validate text positions are within bounds
+	if start < 0 || end > len(description) || start > end {
+		return ErrInvalidTextPosition
+	}
+
+	// Extract the actual text fragment from the description
+	actualFragment := description[start:end]
+
+	// Compare with the provided linked text
+	if actualFragment != linkedText {
+		return errors.New("linked text does not match the actual text fragment in the description")
 	}
 
 	return nil
