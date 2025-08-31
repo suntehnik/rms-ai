@@ -213,29 +213,29 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 
 		// Entity comment routes - these need to be added to each entity group
 		// Epic comments
-		epics.GET("/:id/comments", commentHandler.GetCommentsByEntity)
-		epics.POST("/:id/comments", commentHandler.CreateComment)
+		epics.GET("/:id/comments", commentHandler.GetEpicComments)
+		epics.POST("/:id/comments", commentHandler.CreateEpicComment)
 		epics.POST("/:id/comments/inline", commentHandler.CreateEpicInlineComment)
 		epics.GET("/:id/comments/inline/visible", commentHandler.GetEpicVisibleInlineComments)
 		epics.POST("/:id/comments/inline/validate", commentHandler.ValidateEpicInlineComments)
 
 		// User Story comments
-		userStories.GET("/:id/comments", commentHandler.GetCommentsByEntity)
-		userStories.POST("/:id/comments", commentHandler.CreateComment)
+		userStories.GET("/:id/comments", commentHandler.GetUserStoryComments)
+		userStories.POST("/:id/comments", commentHandler.CreateUserStoryComment)
 		userStories.POST("/:id/comments/inline", commentHandler.CreateUserStoryInlineComment)
 		userStories.GET("/:id/comments/inline/visible", commentHandler.GetUserStoryVisibleInlineComments)
 		userStories.POST("/:id/comments/inline/validate", commentHandler.ValidateUserStoryInlineComments)
 
 		// Acceptance Criteria comments
-		acceptanceCriteria.GET("/:id/comments", commentHandler.GetCommentsByEntity)
-		acceptanceCriteria.POST("/:id/comments", commentHandler.CreateComment)
+		acceptanceCriteria.GET("/:id/comments", commentHandler.GetAcceptanceCriteriaComments)
+		acceptanceCriteria.POST("/:id/comments", commentHandler.CreateAcceptanceCriteriaComment)
 		acceptanceCriteria.POST("/:id/comments/inline", commentHandler.CreateAcceptanceCriteriaInlineComment)
 		acceptanceCriteria.GET("/:id/comments/inline/visible", commentHandler.GetAcceptanceCriteriaVisibleInlineComments)
 		acceptanceCriteria.POST("/:id/comments/inline/validate", commentHandler.ValidateAcceptanceCriteriaInlineComments)
 
 		// Requirement comments
-		requirements.GET("/:id/comments", commentHandler.GetCommentsByEntity)
-		requirements.POST("/:id/comments", commentHandler.CreateComment)
+		requirements.GET("/:id/comments", commentHandler.GetRequirementComments)
+		requirements.POST("/:id/comments", commentHandler.CreateRequirementComment)
 		requirements.POST("/:id/comments/inline", commentHandler.CreateRequirementInlineComment)
 		requirements.GET("/:id/comments/inline/visible", commentHandler.GetRequirementVisibleInlineComments)
 		requirements.POST("/:id/comments/inline/validate", commentHandler.ValidateRequirementInlineComments)

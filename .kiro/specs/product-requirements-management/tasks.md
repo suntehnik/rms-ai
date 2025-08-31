@@ -128,7 +128,7 @@
   - commit, push and make pull request
 
 
-- [-] 14. Implement inline commenting functionality
+- [x] 14. Implement inline commenting functionality
   - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Add text fragment linking for inline comments

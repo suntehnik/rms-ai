@@ -860,3 +860,200 @@ func (h *CommentHandler) validateInlineCommentsForEntity(c *gin.Context, entityT
 		"message": "Inline comments validated successfully",
 	})
 }
+
+// Entity-specific comment handlers that determine entity type from route context
+
+// CreateEpicComment handles POST /api/v1/epics/:id/comments
+func (h *CommentHandler) CreateEpicComment(c *gin.Context) {
+	h.createCommentForEntity(c, models.EntityTypeEpic)
+}
+
+// CreateUserStoryComment handles POST /api/v1/user-stories/:id/comments
+func (h *CommentHandler) CreateUserStoryComment(c *gin.Context) {
+	h.createCommentForEntity(c, models.EntityTypeUserStory)
+}
+
+// CreateAcceptanceCriteriaComment handles POST /api/v1/acceptance-criteria/:id/comments
+func (h *CommentHandler) CreateAcceptanceCriteriaComment(c *gin.Context) {
+	h.createCommentForEntity(c, models.EntityTypeAcceptanceCriteria)
+}
+
+// CreateRequirementComment handles POST /api/v1/requirements/:id/comments
+func (h *CommentHandler) CreateRequirementComment(c *gin.Context) {
+	h.createCommentForEntity(c, models.EntityTypeRequirement)
+}
+
+// createCommentForEntity is a helper function for entity-specific comment creation
+func (h *CommentHandler) createCommentForEntity(c *gin.Context, entityType models.EntityType) {
+	entityIDParam := c.Param("id")
+
+	// Parse entity ID
+	entityID, err := uuid.Parse(entityIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid entity ID format",
+		})
+		return
+	}
+
+	var req service.CreateCommentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Set entity type and ID
+	req.EntityType = entityType
+	req.EntityID = entityID
+
+	comment, err := h.commentService.CreateComment(req)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrCommentInvalidEntityType):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid entity type",
+			})
+		case errors.Is(err, service.ErrCommentEntityNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Entity not found",
+			})
+		case errors.Is(err, service.ErrCommentAuthorNotFound):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Author not found",
+			})
+		case errors.Is(err, service.ErrParentCommentNotFound):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Parent comment not found",
+			})
+		case errors.Is(err, service.ErrParentCommentWrongEntity):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Parent comment must be on the same entity",
+			})
+		case errors.Is(err, service.ErrEmptyContent):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Content cannot be empty",
+			})
+		case errors.Is(err, service.ErrInvalidInlineCommentData):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Inline comments require linked_text, text_position_start, and text_position_end",
+			})
+		case errors.Is(err, service.ErrInvalidTextPosition):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid text position: start must be >= 0 and end must be >= start",
+			})
+		case errors.Is(err, service.ErrEmptyLinkedText):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Linked text cannot be empty for inline comments",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to create comment",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusCreated, comment)
+}
+
+// GetEpicComments handles GET /api/v1/epics/:id/comments
+func (h *CommentHandler) GetEpicComments(c *gin.Context) {
+	h.getCommentsForEntity(c, models.EntityTypeEpic)
+}
+
+// GetUserStoryComments handles GET /api/v1/user-stories/:id/comments
+func (h *CommentHandler) GetUserStoryComments(c *gin.Context) {
+	h.getCommentsForEntity(c, models.EntityTypeUserStory)
+}
+
+// GetAcceptanceCriteriaComments handles GET /api/v1/acceptance-criteria/:id/comments
+func (h *CommentHandler) GetAcceptanceCriteriaComments(c *gin.Context) {
+	h.getCommentsForEntity(c, models.EntityTypeAcceptanceCriteria)
+}
+
+// GetRequirementComments handles GET /api/v1/requirements/:id/comments
+func (h *CommentHandler) GetRequirementComments(c *gin.Context) {
+	h.getCommentsForEntity(c, models.EntityTypeRequirement)
+}
+
+// getCommentsForEntity is a helper function for entity-specific comment retrieval
+func (h *CommentHandler) getCommentsForEntity(c *gin.Context, entityType models.EntityType) {
+	entityIDParam := c.Param("id")
+
+	// Parse entity ID
+	entityID, err := uuid.Parse(entityIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid entity ID format",
+		})
+		return
+	}
+
+	// Check for threaded parameter
+	threaded := c.Query("threaded") == "true"
+	
+	// Check for inline parameter
+	inlineOnly := c.Query("inline") == "true"
+	
+	// Check for status filter
+	statusFilter := c.Query("status")
+
+	var comments []service.CommentResponse
+	
+	if inlineOnly {
+		// Use visible inline comments to exclude hidden ones
+		comments, err = h.commentService.GetVisibleInlineComments(entityType, entityID)
+	} else if threaded {
+		comments, err = h.commentService.GetThreadedComments(entityType, entityID)
+	} else {
+		comments, err = h.commentService.GetCommentsByEntity(entityType, entityID)
+	}
+
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrCommentInvalidEntityType):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid entity type",
+			})
+		case errors.Is(err, service.ErrCommentEntityNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Entity not found",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to get comments",
+			})
+		}
+		return
+	}
+
+	// Apply status filter if specified
+	if statusFilter != "" {
+		filteredComments := make([]service.CommentResponse, 0)
+		for _, comment := range comments {
+			switch statusFilter {
+			case "resolved":
+				if comment.IsResolved {
+					filteredComments = append(filteredComments, comment)
+				}
+			case "unresolved":
+				if !comment.IsResolved {
+					filteredComments = append(filteredComments, comment)
+				}
+			default:
+				// Invalid status filter, return all comments
+				filteredComments = comments
+				break
+			}
+		}
+		comments = filteredComments
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"comments": comments,
+		"count":    len(comments),
+	})
+}
