@@ -120,9 +120,9 @@ func (r *requirementRepository) HasRelationships(id uuid.UUID) (bool, error) {
 func (r *requirementRepository) SearchByText(searchText string) ([]models.Requirement, error) {
 	var requirements []models.Requirement
 	
-	// Use PostgreSQL full-text search or simple LIKE for now
+	// Use LIKE for compatibility with SQLite (tests) and PostgreSQL
 	searchPattern := "%" + searchText + "%"
-	if err := r.GetDB().Where("title ILIKE ? OR description ILIKE ? OR reference_id ILIKE ?", 
+	if err := r.GetDB().Where("title LIKE ? OR description LIKE ? OR reference_id LIKE ?", 
 		searchPattern, searchPattern, searchPattern).Find(&requirements).Error; err != nil {
 		return nil, r.handleDBError(err)
 	}

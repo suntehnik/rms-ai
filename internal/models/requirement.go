@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -43,18 +44,25 @@ type Requirement struct {
 	Comments             []Comment                   `gorm:"polymorphic:Entity;polymorphicValue:requirement" json:"comments,omitempty"`
 }
 
-// BeforeCreate sets the ID and ReferenceID if not already set
+// BeforeCreate sets the ID if not already set and ensures default status
 func (r *Requirement) BeforeCreate(tx *gorm.DB) error {
 	if r.ID == uuid.Nil {
 		r.ID = uuid.New()
 	}
-	if r.ReferenceID == "" {
-		// Generate reference ID - in production this would use database sequences
-		r.ReferenceID = "REQ-001" // Simplified for testing
-	}
 	if r.Status == "" {
 		r.Status = RequirementStatusDraft
 	}
+	
+	// Generate ReferenceID if not set (for SQLite compatibility in tests)
+	if r.ReferenceID == "" {
+		// Check if we're using SQLite (for tests) or PostgreSQL (production)
+		var count int64
+		if err := tx.Model(&Requirement{}).Count(&count).Error; err != nil {
+			return err
+		}
+		r.ReferenceID = fmt.Sprintf("REQ-%03d", count+1)
+	}
+	
 	return nil
 }
 
