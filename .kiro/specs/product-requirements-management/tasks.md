@@ -105,7 +105,7 @@
   - commit, push and make pull request
 
 
-- [-] 12. Implement status model system
+- [x] 12. Implement status model system
   - Create a git branch for feature
   - Create status model configuration for each entity type
   - Implement status transition validation
@@ -116,7 +116,8 @@
   - commit, push and make pull request
 
 
-- [ ] 13. Implement commenting system foundation
+- [-] 13. Implement commenting system foundation
+  - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Create Comment model with support for general and inline comments
   - Implement comment threading with parent-child relationships
@@ -128,6 +129,7 @@
 
 
 - [ ] 14. Implement inline commenting functionality
+  - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Add text fragment linking for inline comments
   - Implement comment visibility logic when linked text changes
@@ -138,6 +140,7 @@
   - commit, push and make pull request
 
 - [ ] 15. Implement comment filtering and management
+  - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Add comment filtering by status (resolved/unresolved)
   - Implement comment API endpoints for all entity types
@@ -148,6 +151,7 @@
   - commit, push and make pull request
 
 - [ ] 16. Implement search and filtering system
+  - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Create search service with full-text search capabilities
   - Implement PostgreSQL full-text search with proper indexing
@@ -159,6 +163,7 @@
   - commit, push and make pull request
 
 - [ ] 17. Implement sorting and result management
+  - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Add sorting capabilities by priority, creation date, modification date
   - Implement pagination for large result sets
@@ -169,6 +174,7 @@
   - commit, push and make pull request
 
 - [ ] 18. Implement hierarchical display and navigation
+  - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Create API endpoints for hierarchical entity listing
   - Implement tree structure display logic (Epic → UserStory → Requirement)
@@ -179,6 +185,7 @@
   - commit, push and make pull request
 
 - [ ] 19. Implement observability and monitoring
+  - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Add Prometheus metrics collection for all API endpoints
   - Implement OpenTelemetry tracing across all services
@@ -190,6 +197,7 @@
   - commit, push and make pull request
 
 - [ ] 20. Create comprehensive API documentation
+  - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Generate OpenAPI/Swagger documentation for all endpoints
   - Add API endpoint examples and response schemas
@@ -200,6 +208,7 @@
   - commit, push and make pull request
 
 - [ ] 21. Implement data validation and error handling
+  - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Create comprehensive input validation for all API endpoints
   - Implement structured error responses with proper HTTP status codes
@@ -210,6 +219,7 @@
   - commit, push and make pull request
 
 - [ ] 22. Performance optimization and caching
+  - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Implement Redis caching for frequently accessed data
   - Add database query optimization and connection pooling
@@ -220,6 +230,7 @@
   - commit, push and make pull request
 
 - [ ] 23. Security hardening and audit logging
+  - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Implement request rate limiting and security headers
   - Add audit logging for all CRUD operations
@@ -230,6 +241,7 @@
   - commit, push and make pull request
 
 - [ ] 24. Integration testing and end-to-end workflows
+  - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Create integration tests for complete user workflows
   - Test Epic → UserStory → Requirement creation flow
@@ -240,6 +252,7 @@
   - commit, push and make pull request
 
 - [ ] 25. Database seeding and development utilities
+  - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Create database seeding scripts for development and testing
   - Implement data migration utilities for system updates
