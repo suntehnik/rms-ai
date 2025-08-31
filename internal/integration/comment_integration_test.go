@@ -142,9 +142,9 @@ func TestCommentIntegration_CreateComment(t *testing.T) {
 			requestBody: map[string]interface{}{
 				"author_id":           user.ID.String(),
 				"content":             "This is an inline comment",
-				"linked_text":         "selected text",
-				"text_position_start": 10,
-				"text_position_end":   23,
+				"linked_text":         "epic",
+				"text_position_start": 5,
+				"text_position_end":   9,
 			},
 			expectedStatus: http.StatusCreated,
 		},

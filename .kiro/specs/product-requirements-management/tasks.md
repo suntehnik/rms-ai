@@ -116,7 +116,7 @@
   - commit, push and make pull request
 
 
-- [-] 13. Implement commenting system foundation
+- [x] 13. Implement commenting system foundation
   - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Create Comment model with support for general and inline comments
@@ -128,7 +128,7 @@
   - commit, push and make pull request
 
 
-- [ ] 14. Implement inline commenting functionality
+- [-] 14. Implement inline commenting functionality
   - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Add text fragment linking for inline comments
