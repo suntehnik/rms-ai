@@ -69,6 +69,7 @@ func TestEpicModel(t *testing.T) {
 		Status:      EpicStatusBacklog,
 		Title:       "Test Epic",
 		Description: stringPtr("Test epic description"),
+		ReferenceID: "EP-001", // Set manually for SQLite test
 	}
 
 	// Test creation

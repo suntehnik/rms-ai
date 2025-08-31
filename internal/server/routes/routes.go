@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"product-requirements-management/internal/config"
 	"product-requirements-management/internal/database"
+	"product-requirements-management/internal/handlers"
+	"product-requirements-management/internal/repository"
+	"product-requirements-management/internal/service"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -18,14 +21,33 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	router.GET("/ready", readinessCheck(db))
 	router.GET("/live", livenessCheck)
 
+	// Initialize repositories
+	epicRepo := repository.NewEpicRepository(db.Postgres)
+	userRepo := repository.NewUserRepository(db.Postgres)
+
+	// Initialize services
+	epicService := service.NewEpicService(epicRepo, userRepo)
+
+	// Initialize handlers
+	epicHandler := handlers.NewEpicHandler(epicService)
+
 	// API v1 routes
 	v1 := router.Group("/api/v1")
 	{
-		// Placeholder routes - will be implemented in subsequent tasks
-		v1.GET("/epics", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"message": "Epics endpoint - to be implemented"})
-		})
+		// Epic routes
+		epics := v1.Group("/epics")
+		{
+			epics.POST("", epicHandler.CreateEpic)
+			epics.GET("", epicHandler.ListEpics)
+			epics.GET("/:id", epicHandler.GetEpic)
+			epics.PUT("/:id", epicHandler.UpdateEpic)
+			epics.DELETE("/:id", epicHandler.DeleteEpic)
+			epics.GET("/:id/user-stories", epicHandler.GetEpicWithUserStories)
+			epics.PATCH("/:id/status", epicHandler.ChangeEpicStatus)
+			epics.PATCH("/:id/assign", epicHandler.AssignEpic)
+		}
 
+		// Placeholder routes for future implementation
 		v1.GET("/user-stories", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"message": "User stories endpoint - to be implemented"})
 		})
