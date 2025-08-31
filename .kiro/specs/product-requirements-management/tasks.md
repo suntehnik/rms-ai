@@ -70,7 +70,7 @@
   - commit, push and make pull request
 
 
-- [-] 9. Implement Requirements management functionality
+- [x] 9. Implement Requirements management functionality
   - Create a git branch for feature
   - Create Requirement service with CRUD operations
   - Implement Requirement API endpoints with UserStory relationship
@@ -82,7 +82,7 @@
   - commit, push and make pull request
 
 
-- [ ] 10. Implement comprehensive deletion logic
+- [-] 10. Implement comprehensive deletion logic
   - Create a git branch for feature
   - Create deletion service with dependency validation
   - Implement cascading deletion logic for all entities

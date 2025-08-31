@@ -40,6 +40,9 @@ make migrate-version  # Check migration status
 make docker-up        # Start PostgreSQL + Redis
 make docker-down      # Stop containers
 make dev-setup        # Full dev environment setup
+
+# Git Commands
+gh pr create           # Create pull request
 ```
 
 ## Code Standards
