@@ -26,16 +26,30 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	userRepo := repository.NewUserRepository(db.Postgres)
 	userStoryRepo := repository.NewUserStoryRepository(db.Postgres)
 	acceptanceCriteriaRepo := repository.NewAcceptanceCriteriaRepository(db.Postgres)
+	requirementRepo := repository.NewRequirementRepository(db.Postgres)
+	requirementTypeRepo := repository.NewRequirementTypeRepository(db.Postgres)
+	relationshipTypeRepo := repository.NewRelationshipTypeRepository(db.Postgres)
+	requirementRelationshipRepo := repository.NewRequirementRelationshipRepository(db.Postgres)
 
 	// Initialize services
 	epicService := service.NewEpicService(epicRepo, userRepo)
 	userStoryService := service.NewUserStoryService(userStoryRepo, epicRepo, userRepo)
 	acceptanceCriteriaService := service.NewAcceptanceCriteriaService(acceptanceCriteriaRepo, userStoryRepo, userRepo)
+	requirementService := service.NewRequirementService(
+		requirementRepo,
+		requirementTypeRepo,
+		relationshipTypeRepo,
+		requirementRelationshipRepo,
+		userStoryRepo,
+		acceptanceCriteriaRepo,
+		userRepo,
+	)
 
 	// Initialize handlers
 	epicHandler := handlers.NewEpicHandler(epicService)
 	userStoryHandler := handlers.NewUserStoryHandler(userStoryService)
 	acceptanceCriteriaHandler := handlers.NewAcceptanceCriteriaHandler(acceptanceCriteriaService)
+	requirementHandler := handlers.NewRequirementHandler(requirementService)
 
 	// API v1 routes
 	v1 := router.Group("/api/v1")
@@ -65,6 +79,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 			userStories.GET("/:id/acceptance-criteria", acceptanceCriteriaHandler.GetAcceptanceCriteriaByUserStory)
 			userStories.POST("/:id/acceptance-criteria", acceptanceCriteriaHandler.CreateAcceptanceCriteria)
 			userStories.GET("/:id/requirements", userStoryHandler.GetUserStoryWithRequirements)
+			userStories.POST("/:id/requirements", requirementHandler.CreateRequirementInUserStory)
 			userStories.PATCH("/:id/status", userStoryHandler.ChangeUserStoryStatus)
 			userStories.PATCH("/:id/assign", userStoryHandler.AssignUserStory)
 		}
@@ -78,9 +93,23 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 			acceptanceCriteria.DELETE("/:id", acceptanceCriteriaHandler.DeleteAcceptanceCriteria)
 		}
 
-		v1.GET("/requirements", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"message": "Requirements endpoint - to be implemented"})
-		})
+		// Requirement routes
+		requirements := v1.Group("/requirements")
+		{
+			requirements.POST("", requirementHandler.CreateRequirement)
+			requirements.GET("", requirementHandler.ListRequirements)
+			requirements.GET("/search", requirementHandler.SearchRequirements)
+			requirements.GET("/:id", requirementHandler.GetRequirement)
+			requirements.PUT("/:id", requirementHandler.UpdateRequirement)
+			requirements.DELETE("/:id", requirementHandler.DeleteRequirement)
+			requirements.GET("/:id/relationships", requirementHandler.GetRequirementWithRelationships)
+			requirements.PATCH("/:id/status", requirementHandler.ChangeRequirementStatus)
+			requirements.PATCH("/:id/assign", requirementHandler.AssignRequirement)
+			requirements.POST("/relationships", requirementHandler.CreateRelationship)
+		}
+
+		// Requirement Relationship routes
+		v1.DELETE("/requirement-relationships/:id", requirementHandler.DeleteRelationship)
 	}
 }
 

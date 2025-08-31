@@ -70,7 +70,7 @@
   - commit, push and make pull request
 
 
-- [ ] 9. Implement Requirements management functionality
+- [-] 9. Implement Requirements management functionality
   - Create a git branch for feature
   - Create Requirement service with CRUD operations
   - Implement Requirement API endpoints with UserStory relationship
