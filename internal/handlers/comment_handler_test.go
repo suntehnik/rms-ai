@@ -99,6 +99,19 @@ func (m *MockCommentService) UnresolveComment(id uuid.UUID) (*service.CommentRes
 	return args.Get(0).(*service.CommentResponse), args.Error(1)
 }
 
+func (m *MockCommentService) GetVisibleInlineComments(entityType models.EntityType, entityID uuid.UUID) ([]service.CommentResponse, error) {
+	args := m.Called(entityType, entityID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]service.CommentResponse), args.Error(1)
+}
+
+func (m *MockCommentService) ValidateInlineCommentsAfterTextChange(entityType models.EntityType, entityID uuid.UUID, newDescription string) error {
+	args := m.Called(entityType, entityID, newDescription)
+	return args.Error(0)
+}
+
 func setupCommentHandler() (*CommentHandler, *MockCommentService) {
 	mockService := &MockCommentService{}
 	handler := NewCommentHandler(mockService)
@@ -112,10 +125,6 @@ func setupGinRouter(handler *CommentHandler) *gin.Engine {
 	// Comment routes
 	v1 := router.Group("/api/v1")
 	{
-		// Entity comment routes
-		v1.POST("/:entityType/:id/comments", handler.CreateComment)
-		v1.GET("/:entityType/:id/comments", handler.GetCommentsByEntity)
-		
 		// Direct comment routes
 		v1.GET("/comments/:id", handler.GetComment)
 		v1.PUT("/comments/:id", handler.UpdateComment)
@@ -125,6 +134,31 @@ func setupGinRouter(handler *CommentHandler) *gin.Engine {
 		v1.GET("/comments/status/:status", handler.GetCommentsByStatus)
 		v1.GET("/comments/:id/replies", handler.GetCommentReplies)
 		v1.POST("/comments/:id/replies", handler.CreateCommentReply)
+
+		// Entity-specific comment routes (matching actual application routes)
+		epics := v1.Group("/epics")
+		{
+			epics.GET("/:id/comments", handler.GetEpicComments)
+			epics.POST("/:id/comments", handler.CreateEpicComment)
+		}
+
+		userStories := v1.Group("/user-stories")
+		{
+			userStories.GET("/:id/comments", handler.GetUserStoryComments)
+			userStories.POST("/:id/comments", handler.CreateUserStoryComment)
+		}
+
+		acceptanceCriteria := v1.Group("/acceptance-criteria")
+		{
+			acceptanceCriteria.GET("/:id/comments", handler.GetAcceptanceCriteriaComments)
+			acceptanceCriteria.POST("/:id/comments", handler.CreateAcceptanceCriteriaComment)
+		}
+
+		requirements := v1.Group("/requirements")
+		{
+			requirements.GET("/:id/comments", handler.GetRequirementComments)
+			requirements.POST("/:id/comments", handler.CreateRequirementComment)
+		}
 	}
 	
 	return router
@@ -149,7 +183,7 @@ func TestCreateComment(t *testing.T) {
 	}{
 		{
 			name:       "successful comment creation",
-			entityType: "epic",
+			entityType: "epics",
 			entityID:   entityID.String(),
 			requestBody: map[string]interface{}{
 				"author_id": authorID.String(),
@@ -176,7 +210,7 @@ func TestCreateComment(t *testing.T) {
 		},
 		{
 			name:       "invalid entity ID",
-			entityType: "epic",
+			entityType: "epics",
 			entityID:   "invalid-uuid",
 			requestBody: map[string]interface{}{
 				"author_id": authorID.String(),
@@ -188,7 +222,7 @@ func TestCreateComment(t *testing.T) {
 		},
 		{
 			name:       "empty content",
-			entityType: "epic",
+			entityType: "epics",
 			entityID:   entityID.String(),
 			requestBody: map[string]interface{}{
 				"author_id": authorID.String(),
@@ -203,7 +237,7 @@ func TestCreateComment(t *testing.T) {
 		},
 		{
 			name:       "author not found",
-			entityType: "epic",
+			entityType: "epics",
 			entityID:   entityID.String(),
 			requestBody: map[string]interface{}{
 				"author_id": authorID.String(),
@@ -275,7 +309,7 @@ func TestGetCommentsByEntity(t *testing.T) {
 	}{
 		{
 			name:       "successful get comments",
-			entityType: "epic",
+			entityType: "epics",
 			entityID:   entityID.String(),
 			mockSetup: func() {
 				expectedComments := []service.CommentResponse{
@@ -295,7 +329,7 @@ func TestGetCommentsByEntity(t *testing.T) {
 		},
 		{
 			name:        "get threaded comments",
-			entityType:  "epic",
+			entityType:  "epics",
 			entityID:    entityID.String(),
 			queryParams: "?threaded=true",
 			mockSetup: func() {
@@ -317,7 +351,7 @@ func TestGetCommentsByEntity(t *testing.T) {
 		},
 		{
 			name:        "get inline comments",
-			entityType:  "epic",
+			entityType:  "epics",
 			entityID:    entityID.String(),
 			queryParams: "?inline=true",
 			mockSetup: func() {
@@ -338,14 +372,14 @@ func TestGetCommentsByEntity(t *testing.T) {
 						IsInline:          true,
 					},
 				}
-				mockService.On("GetInlineComments", models.EntityTypeEpic, entityID).
+				mockService.On("GetVisibleInlineComments", models.EntityTypeEpic, entityID).
 					Return(expectedComments, nil)
 			},
 			expectedStatus: http.StatusOK,
 		},
 		{
 			name:       "invalid entity ID",
-			entityType: "epic",
+			entityType: "epics",
 			entityID:   "invalid-uuid",
 			mockSetup:  func() {},
 			expectedStatus: http.StatusBadRequest,
@@ -353,7 +387,7 @@ func TestGetCommentsByEntity(t *testing.T) {
 		},
 		{
 			name:       "entity not found",
-			entityType: "epic",
+			entityType: "epics",
 			entityID:   entityID.String(),
 			mockSetup: func() {
 				mockService.On("GetCommentsByEntity", models.EntityTypeEpic, entityID).
@@ -825,6 +859,360 @@ func TestGetCommentsByStatus(t *testing.T) {
 			// Create request
 			req := httptest.NewRequest(http.MethodGet, 
 				fmt.Sprintf("/api/v1/comments/status/%s", tt.status), nil)
+
+			// Create response recorder
+			w := httptest.NewRecorder()
+
+			// Perform request
+			router.ServeHTTP(w, req)
+
+			// Assert status code
+			assert.Equal(t, tt.expectedStatus, w.Code)
+
+			// Assert error message if expected
+			if tt.expectedError != "" {
+				var response map[string]interface{}
+				err := json.Unmarshal(w.Body.Bytes(), &response)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedError, response["error"])
+			}
+
+			// Verify mock expectations
+			mockService.AssertExpectations(t)
+		})
+	}
+}
+
+func TestCommentFiltering(t *testing.T) {
+	handler, mockService := setupCommentHandler()
+	router := setupGinRouter(handler)
+
+	entityID := uuid.New()
+	resolvedCommentID := uuid.New()
+	unresolvedCommentID := uuid.New()
+	authorID := uuid.New()
+
+	tests := []struct {
+		name           string
+		entityType     string
+		entityID       string
+		queryParams    string
+		mockSetup      func()
+		expectedStatus int
+		expectedCount  int
+		description    string
+	}{
+		{
+			name:        "filter resolved comments only",
+			entityType:  "epics",
+			entityID:    entityID.String(),
+			queryParams: "?status=resolved",
+			mockSetup: func() {
+				allComments := []service.CommentResponse{
+					{
+						ID:         resolvedCommentID,
+						EntityType: models.EntityTypeEpic,
+						EntityID:   entityID,
+						AuthorID:   authorID,
+						Content:    "Resolved comment",
+						IsResolved: true,
+					},
+					{
+						ID:         unresolvedCommentID,
+						EntityType: models.EntityTypeEpic,
+						EntityID:   entityID,
+						AuthorID:   authorID,
+						Content:    "Unresolved comment",
+						IsResolved: false,
+					},
+				}
+				mockService.On("GetCommentsByEntity", models.EntityTypeEpic, entityID).
+					Return(allComments, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedCount:  1,
+			description:    "Should return only resolved comments when status=resolved",
+		},
+		{
+			name:        "filter unresolved comments only",
+			entityType:  "epics",
+			entityID:    entityID.String(),
+			queryParams: "?status=unresolved",
+			mockSetup: func() {
+				allComments := []service.CommentResponse{
+					{
+						ID:         resolvedCommentID,
+						EntityType: models.EntityTypeEpic,
+						EntityID:   entityID,
+						AuthorID:   authorID,
+						Content:    "Resolved comment",
+						IsResolved: true,
+					},
+					{
+						ID:         unresolvedCommentID,
+						EntityType: models.EntityTypeEpic,
+						EntityID:   entityID,
+						AuthorID:   authorID,
+						Content:    "Unresolved comment",
+						IsResolved: false,
+					},
+				}
+				mockService.On("GetCommentsByEntity", models.EntityTypeEpic, entityID).
+					Return(allComments, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedCount:  1,
+			description:    "Should return only unresolved comments when status=unresolved",
+		},
+		{
+			name:        "no status filter returns all comments",
+			entityType:  "epics",
+			entityID:    entityID.String(),
+			queryParams: "",
+			mockSetup: func() {
+				allComments := []service.CommentResponse{
+					{
+						ID:         resolvedCommentID,
+						EntityType: models.EntityTypeEpic,
+						EntityID:   entityID,
+						AuthorID:   authorID,
+						Content:    "Resolved comment",
+						IsResolved: true,
+					},
+					{
+						ID:         unresolvedCommentID,
+						EntityType: models.EntityTypeEpic,
+						EntityID:   entityID,
+						AuthorID:   authorID,
+						Content:    "Unresolved comment",
+						IsResolved: false,
+					},
+				}
+				mockService.On("GetCommentsByEntity", models.EntityTypeEpic, entityID).
+					Return(allComments, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedCount:  2,
+			description:    "Should return all comments when no status filter is applied",
+		},
+		{
+			name:        "invalid status filter returns all comments",
+			entityType:  "epics",
+			entityID:    entityID.String(),
+			queryParams: "?status=invalid",
+			mockSetup: func() {
+				allComments := []service.CommentResponse{
+					{
+						ID:         resolvedCommentID,
+						EntityType: models.EntityTypeEpic,
+						EntityID:   entityID,
+						AuthorID:   authorID,
+						Content:    "Resolved comment",
+						IsResolved: true,
+					},
+					{
+						ID:         unresolvedCommentID,
+						EntityType: models.EntityTypeEpic,
+						EntityID:   entityID,
+						AuthorID:   authorID,
+						Content:    "Unresolved comment",
+						IsResolved: false,
+					},
+				}
+				mockService.On("GetCommentsByEntity", models.EntityTypeEpic, entityID).
+					Return(allComments, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedCount:  2,
+			description:    "Should return all comments when invalid status filter is provided",
+		},
+		{
+			name:        "filter resolved comments with threaded view",
+			entityType:  "user-stories",
+			entityID:    entityID.String(),
+			queryParams: "?threaded=true&status=resolved",
+			mockSetup: func() {
+				allComments := []service.CommentResponse{
+					{
+						ID:         resolvedCommentID,
+						EntityType: models.EntityTypeUserStory,
+						EntityID:   entityID,
+						AuthorID:   authorID,
+						Content:    "Resolved parent comment",
+						IsResolved: true,
+						Replies: []service.CommentResponse{
+							{
+								ID:         uuid.New(),
+								EntityType: models.EntityTypeUserStory,
+								EntityID:   entityID,
+								AuthorID:   authorID,
+								Content:    "Resolved reply",
+								IsResolved: true,
+							},
+						},
+					},
+					{
+						ID:         unresolvedCommentID,
+						EntityType: models.EntityTypeUserStory,
+						EntityID:   entityID,
+						AuthorID:   authorID,
+						Content:    "Unresolved comment",
+						IsResolved: false,
+					},
+				}
+				mockService.On("GetThreadedComments", models.EntityTypeUserStory, entityID).
+					Return(allComments, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedCount:  1,
+			description:    "Should filter resolved comments in threaded view",
+		},
+		{
+			name:        "filter resolved inline comments",
+			entityType:  "requirements",
+			entityID:    entityID.String(),
+			queryParams: "?inline=true&status=resolved",
+			mockSetup: func() {
+				linkedText := "selected text"
+				start := 10
+				end := 23
+				allComments := []service.CommentResponse{
+					{
+						ID:                resolvedCommentID,
+						EntityType:        models.EntityTypeRequirement,
+						EntityID:          entityID,
+						AuthorID:          authorID,
+						Content:           "Resolved inline comment",
+						IsResolved:        true,
+						LinkedText:        &linkedText,
+						TextPositionStart: &start,
+						TextPositionEnd:   &end,
+						IsInline:          true,
+					},
+					{
+						ID:                unresolvedCommentID,
+						EntityType:        models.EntityTypeRequirement,
+						EntityID:          entityID,
+						AuthorID:          authorID,
+						Content:           "Unresolved inline comment",
+						IsResolved:        false,
+						LinkedText:        &linkedText,
+						TextPositionStart: &start,
+						TextPositionEnd:   &end,
+						IsInline:          true,
+					},
+				}
+				mockService.On("GetVisibleInlineComments", models.EntityTypeRequirement, entityID).
+					Return(allComments, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedCount:  1,
+			description:    "Should filter resolved inline comments",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset mock
+			mockService.ExpectedCalls = nil
+			mockService.Calls = nil
+			
+			tt.mockSetup()
+
+			// Create request
+			url := fmt.Sprintf("/api/v1/%s/%s/comments%s", tt.entityType, tt.entityID, tt.queryParams)
+			req := httptest.NewRequest(http.MethodGet, url, nil)
+
+			// Create response recorder
+			w := httptest.NewRecorder()
+
+			// Perform request
+			router.ServeHTTP(w, req)
+
+			// Assert status code
+			assert.Equal(t, tt.expectedStatus, w.Code, tt.description)
+
+			// Parse response
+			var response map[string]interface{}
+			err := json.Unmarshal(w.Body.Bytes(), &response)
+			assert.NoError(t, err)
+
+			// Assert comment count
+			comments, ok := response["comments"].([]interface{})
+			assert.True(t, ok, "Response should contain comments array")
+			assert.Equal(t, tt.expectedCount, len(comments), tt.description)
+
+			// Assert count field
+			count, ok := response["count"].(float64)
+			assert.True(t, ok, "Response should contain count field")
+			assert.Equal(t, float64(tt.expectedCount), count, tt.description)
+
+			// Verify mock expectations
+			mockService.AssertExpectations(t)
+		})
+	}
+}
+
+func TestUnresolveComment(t *testing.T) {
+	handler, mockService := setupCommentHandler()
+	router := setupGinRouter(handler)
+
+	commentID := uuid.New()
+	entityID := uuid.New()
+	authorID := uuid.New()
+
+	tests := []struct {
+		name           string
+		commentID      string
+		mockSetup      func()
+		expectedStatus int
+		expectedError  string
+	}{
+		{
+			name:      "successful unresolve comment",
+			commentID: commentID.String(),
+			mockSetup: func() {
+				expectedResponse := &service.CommentResponse{
+					ID:         commentID,
+					EntityType: models.EntityTypeEpic,
+					EntityID:   entityID,
+					AuthorID:   authorID,
+					Content:    "Test comment",
+					IsResolved: false,
+				}
+				mockService.On("UnresolveComment", commentID).Return(expectedResponse, nil)
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "invalid comment ID",
+			commentID:      "invalid-uuid",
+			mockSetup:      func() {},
+			expectedStatus: http.StatusBadRequest,
+			expectedError:  "Invalid comment ID format",
+		},
+		{
+			name:      "comment not found",
+			commentID: commentID.String(),
+			mockSetup: func() {
+				mockService.On("UnresolveComment", commentID).Return(nil, service.ErrCommentNotFound)
+			},
+			expectedStatus: http.StatusNotFound,
+			expectedError:  "Comment not found",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset mock
+			mockService.ExpectedCalls = nil
+			mockService.Calls = nil
+			
+			tt.mockSetup()
+
+			// Create request
+			req := httptest.NewRequest(http.MethodPost, 
+				fmt.Sprintf("/api/v1/comments/%s/unresolve", tt.commentID), nil)
 
 			// Create response recorder
 			w := httptest.NewRecorder()
