@@ -36,7 +36,7 @@
   - Write unit tests for repository operations
   - _Requirements: 1.1, 2.1, 3.1, 4.1 (data access layer)_
 
-- [-] 6. Implement Epic management functionality
+- [x] 6. Implement Epic management functionality
   - Create a git branch for feature
   - Create Epic service with CRUD operations
   - Implement Epic API endpoints with proper validation
@@ -46,7 +46,7 @@
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6_
   - commit, push and make pull request
 
-- [ ] 7. Implement User Story management functionality
+- [-] 7. Implement User Story management functionality
   - Create a git branch for feature
   - Create a git branch for feature
   - Create UserStory service with CRUD operations
