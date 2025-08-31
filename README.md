@@ -24,8 +24,21 @@ A Go-based web application for managing product requirements through a hierarchi
 ### Prerequisites
 
 - Go 1.21 or higher
-- PostgreSQL (for future database tasks)
-- Redis (for future caching tasks)
+- PostgreSQL 12+
+- Redis 6+
+
+### Database Setup
+
+See [Database Setup Guide](docs/database-setup.md) for detailed instructions on setting up PostgreSQL and Redis.
+
+Quick start with Docker:
+```bash
+# Create docker-compose.yml (see database setup guide)
+docker-compose up -d
+
+# Run migrations
+make migrate-up
+```
 
 ### Environment Configuration
 
@@ -37,7 +50,7 @@ cp .env.example .env
 
 Edit `.env` with your configuration values, especially:
 - `JWT_SECRET`: Set a secure secret key for JWT tokens
-- Database and Redis connection details (for future tasks)
+- Database and Redis connection details
 
 ### Running the Application
 
@@ -54,20 +67,23 @@ JWT_SECRET=your-secret ./bin/server
 
 #### Using Make Commands
 ```bash
-make deps    # Install dependencies
-make build   # Build the application
-make run     # Run the application
-make test    # Run tests
-make clean   # Clean build artifacts
-make fmt     # Format code
+make deps           # Install dependencies
+make build          # Build the application
+make run            # Run the application
+make test           # Run tests
+make clean          # Clean build artifacts
+make fmt            # Format code
+make migrate-up     # Run database migrations
+make migrate-down   # Rollback last migration
+make migrate-version # Check migration status
 ```
 
 ## API Endpoints
 
 ### Health Checks
 - `GET /health` - Basic health check
-- `GET /health/deep` - Detailed health check with dependencies
-- `GET /ready` - Readiness probe
+- `GET /health/deep` - Detailed health check with database connectivity
+- `GET /ready` - Readiness probe (includes database health)
 - `GET /live` - Liveness probe
 
 ### API v1 (Placeholder endpoints)
@@ -111,8 +127,17 @@ The application uses structured logging with logrus:
 
 ## Development
 
-This is the foundation setup. Subsequent tasks will implement:
-- Database models and migrations
+### Completed Features
+- ✅ Basic server setup with Gin framework
+- ✅ Configuration management with environment variables
+- ✅ Structured logging with correlation IDs
+- ✅ Database connection management (PostgreSQL + Redis)
+- ✅ Database migration system
+- ✅ Health checks with database connectivity
+- ✅ Connection pooling and monitoring
+
+### Upcoming Tasks
+- Database models and GORM integration
 - Authentication and authorization
 - Business logic for requirements management
 - Search and filtering capabilities

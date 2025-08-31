@@ -7,14 +7,14 @@
   - Set up basic logging with structured logging (logrus/zap)
   - _Requirements: Foundation for all subsequent development_
 
-- [ ] 2. Database setup and connection management
+- [x] 2. Database setup and connection management
   - Configure PostgreSQL connection with GORM
   - Implement database connection pooling and health checks
   - Create database migration system
   - Set up Redis connection for caching
   - _Requirements: 1.1, 2.1, 3.1, 4.1 (data persistence foundation)_
 
-- [ ] 3. Implement core data models and database schema
+- [x] 3. Implement core data models and database schema
   - Create GORM models for User, Epic, UserStory, AcceptanceCriteria, Requirement
   - Implement dual ID system (UUID + reference ID) with sequences
   - Create database migrations for all core tables

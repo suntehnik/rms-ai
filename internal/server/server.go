@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"product-requirements-management/internal/config"
+	"product-requirements-management/internal/database"
 	"product-requirements-management/internal/logger"
 	"product-requirements-management/internal/server/middleware"
 	"product-requirements-management/internal/server/routes"
@@ -20,12 +21,19 @@ import (
 type Server struct {
 	config *config.Config
 	router *gin.Engine
+	db     *database.DB
 }
 
 // New creates a new server instance
-func New(cfg *config.Config) *Server {
+func New(cfg *config.Config) (*Server, error) {
 	// Initialize logger
 	logger.Init(&cfg.Log)
+
+	// Initialize database connections
+	db, err := database.Initialize(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize database: %w", err)
+	}
 
 	// Set Gin mode based on log level
 	if cfg.Log.Level == "debug" {
@@ -42,13 +50,14 @@ func New(cfg *config.Config) *Server {
 	router.Use(middleware.Recovery())
 	router.Use(middleware.CORS())
 
-	// Setup routes
-	routes.Setup(router, cfg)
+	// Setup routes with database connection
+	routes.Setup(router, cfg, db)
 
 	return &Server{
 		config: cfg,
 		router: router,
-	}
+		db:     db,
+	}, nil
 }
 
 // Start starts the HTTP server
@@ -81,7 +90,18 @@ func (s *Server) Start() error {
 
 	if err := srv.Shutdown(ctx); err != nil {
 		logger.Errorf("Server forced to shutdown: %v", err)
+		// Still try to close database connections
+		if s.db != nil {
+			s.db.Close()
+		}
 		return err
+	}
+
+	// Close database connections
+	if s.db != nil {
+		if err := s.db.Close(); err != nil {
+			logger.Errorf("Failed to close database connections: %v", err)
+		}
 	}
 
 	logger.Info("Server exited")
