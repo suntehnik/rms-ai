@@ -26,16 +26,30 @@ var (
 	ErrEmptyLinkedText           = errors.New("linked_text cannot be empty for inline comments")
 )
 
-// CommentService handles business logic for comments
-type CommentService struct {
+// CommentService defines the interface for comment business logic
+type CommentService interface {
+	CreateComment(req CreateCommentRequest) (*CommentResponse, error)
+	GetComment(id uuid.UUID) (*CommentResponse, error)
+	UpdateComment(id uuid.UUID, req UpdateCommentRequest) (*CommentResponse, error)
+	DeleteComment(id uuid.UUID) error
+	GetCommentsByEntity(entityType models.EntityType, entityID uuid.UUID) ([]CommentResponse, error)
+	GetThreadedComments(entityType models.EntityType, entityID uuid.UUID) ([]CommentResponse, error)
+	GetCommentsByStatus(isResolved bool) ([]CommentResponse, error)
+	GetInlineComments(entityType models.EntityType, entityID uuid.UUID) ([]CommentResponse, error)
+	ResolveComment(id uuid.UUID) (*CommentResponse, error)
+	UnresolveComment(id uuid.UUID) (*CommentResponse, error)
+}
+
+// commentService implements CommentService interface
+type commentService struct {
 	commentRepo repository.CommentRepository
 	userRepo    repository.UserRepository
 	repos       *repository.Repositories
 }
 
 // NewCommentService creates a new comment service instance
-func NewCommentService(repos *repository.Repositories) *CommentService {
-	return &CommentService{
+func NewCommentService(repos *repository.Repositories) CommentService {
+	return &commentService{
 		commentRepo: repos.Comment,
 		userRepo:    repos.User,
 		repos:       repos,
@@ -44,11 +58,11 @@ func NewCommentService(repos *repository.Repositories) *CommentService {
 
 // CreateCommentRequest represents the request to create a comment
 type CreateCommentRequest struct {
-	EntityType        models.EntityType `json:"entity_type" binding:"required"`
-	EntityID          uuid.UUID         `json:"entity_id" binding:"required"`
+	EntityType        models.EntityType `json:"entity_type"`
+	EntityID          uuid.UUID         `json:"entity_id"`
 	ParentCommentID   *uuid.UUID        `json:"parent_comment_id"`
 	AuthorID          uuid.UUID         `json:"author_id" binding:"required"`
-	Content           string            `json:"content" binding:"required"`
+	Content           string            `json:"content"`
 	LinkedText        *string           `json:"linked_text"`
 	TextPositionStart *int              `json:"text_position_start"`
 	TextPositionEnd   *int              `json:"text_position_end"`
@@ -56,7 +70,7 @@ type CreateCommentRequest struct {
 
 // UpdateCommentRequest represents the request to update a comment
 type UpdateCommentRequest struct {
-	Content string `json:"content" binding:"required"`
+	Content string `json:"content"`
 }
 
 // CommentResponse represents a comment in API responses
@@ -81,7 +95,7 @@ type CommentResponse struct {
 }
 
 // CreateComment creates a new comment
-func (s *CommentService) CreateComment(req CreateCommentRequest) (*CommentResponse, error) {
+func (s *commentService) CreateComment(req CreateCommentRequest) (*CommentResponse, error) {
 	// Validate entity type
 	if !isValidEntityType(req.EntityType) {
 		return nil, ErrCommentInvalidEntityType
@@ -147,7 +161,7 @@ func (s *CommentService) CreateComment(req CreateCommentRequest) (*CommentRespon
 }
 
 // GetComment retrieves a comment by ID
-func (s *CommentService) GetComment(id uuid.UUID) (*CommentResponse, error) {
+func (s *commentService) GetComment(id uuid.UUID) (*CommentResponse, error) {
 	comment, err := s.commentRepo.GetByID(id)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -160,7 +174,7 @@ func (s *CommentService) GetComment(id uuid.UUID) (*CommentResponse, error) {
 }
 
 // UpdateComment updates an existing comment
-func (s *CommentService) UpdateComment(id uuid.UUID, req UpdateCommentRequest) (*CommentResponse, error) {
+func (s *commentService) UpdateComment(id uuid.UUID, req UpdateCommentRequest) (*CommentResponse, error) {
 	// Validate content
 	if strings.TrimSpace(req.Content) == "" {
 		return nil, ErrEmptyContent
@@ -185,7 +199,7 @@ func (s *CommentService) UpdateComment(id uuid.UUID, req UpdateCommentRequest) (
 }
 
 // DeleteComment deletes a comment
-func (s *CommentService) DeleteComment(id uuid.UUID) error {
+func (s *commentService) DeleteComment(id uuid.UUID) error {
 	_, err := s.commentRepo.GetByID(id)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -212,7 +226,7 @@ func (s *CommentService) DeleteComment(id uuid.UUID) error {
 }
 
 // GetCommentsByEntity retrieves all comments for an entity
-func (s *CommentService) GetCommentsByEntity(entityType models.EntityType, entityID uuid.UUID) ([]CommentResponse, error) {
+func (s *commentService) GetCommentsByEntity(entityType models.EntityType, entityID uuid.UUID) ([]CommentResponse, error) {
 	// Validate entity type
 	if !isValidEntityType(entityType) {
 		return nil, ErrCommentInvalidEntityType
@@ -237,7 +251,7 @@ func (s *CommentService) GetCommentsByEntity(entityType models.EntityType, entit
 }
 
 // GetThreadedComments retrieves comments in threaded format for an entity
-func (s *CommentService) GetThreadedComments(entityType models.EntityType, entityID uuid.UUID) ([]CommentResponse, error) {
+func (s *commentService) GetThreadedComments(entityType models.EntityType, entityID uuid.UUID) ([]CommentResponse, error) {
 	// Validate entity type
 	if !isValidEntityType(entityType) {
 		return nil, ErrCommentInvalidEntityType
@@ -262,7 +276,7 @@ func (s *CommentService) GetThreadedComments(entityType models.EntityType, entit
 }
 
 // GetCommentsByStatus retrieves comments by resolution status
-func (s *CommentService) GetCommentsByStatus(isResolved bool) ([]CommentResponse, error) {
+func (s *commentService) GetCommentsByStatus(isResolved bool) ([]CommentResponse, error) {
 	comments, err := s.commentRepo.GetByStatus(isResolved)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get comments by status: %w", err)
@@ -277,7 +291,7 @@ func (s *CommentService) GetCommentsByStatus(isResolved bool) ([]CommentResponse
 }
 
 // GetInlineComments retrieves inline comments for an entity
-func (s *CommentService) GetInlineComments(entityType models.EntityType, entityID uuid.UUID) ([]CommentResponse, error) {
+func (s *commentService) GetInlineComments(entityType models.EntityType, entityID uuid.UUID) ([]CommentResponse, error) {
 	// Validate entity type
 	if !isValidEntityType(entityType) {
 		return nil, ErrCommentInvalidEntityType
@@ -302,7 +316,7 @@ func (s *CommentService) GetInlineComments(entityType models.EntityType, entityI
 }
 
 // ResolveComment marks a comment as resolved
-func (s *CommentService) ResolveComment(id uuid.UUID) (*CommentResponse, error) {
+func (s *commentService) ResolveComment(id uuid.UUID) (*CommentResponse, error) {
 	comment, err := s.commentRepo.GetByID(id)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -321,7 +335,7 @@ func (s *CommentService) ResolveComment(id uuid.UUID) (*CommentResponse, error) 
 }
 
 // UnresolveComment marks a comment as unresolved
-func (s *CommentService) UnresolveComment(id uuid.UUID) (*CommentResponse, error) {
+func (s *commentService) UnresolveComment(id uuid.UUID) (*CommentResponse, error) {
 	comment, err := s.commentRepo.GetByID(id)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -340,7 +354,7 @@ func (s *CommentService) UnresolveComment(id uuid.UUID) (*CommentResponse, error
 }
 
 // validateEntityExists validates that the specified entity exists
-func (s *CommentService) validateEntityExists(entityType models.EntityType, entityID uuid.UUID) error {
+func (s *commentService) validateEntityExists(entityType models.EntityType, entityID uuid.UUID) error {
 	switch entityType {
 	case models.EntityTypeEpic:
 		if exists, err := s.repos.Epic.Exists(entityID); err != nil {
@@ -373,7 +387,7 @@ func (s *CommentService) validateEntityExists(entityType models.EntityType, enti
 }
 
 // validateInlineCommentData validates inline comment data consistency
-func (s *CommentService) validateInlineCommentData(linkedText *string, start *int, end *int) error {
+func (s *commentService) validateInlineCommentData(linkedText *string, start *int, end *int) error {
 	// If any inline comment field is provided, all must be provided
 	hasLinkedText := linkedText != nil && *linkedText != ""
 	hasStart := start != nil
@@ -414,7 +428,7 @@ func isValidEntityType(entityType models.EntityType) bool {
 }
 
 // toCommentResponse converts a comment model to response format
-func (s *CommentService) toCommentResponse(comment *models.Comment) *CommentResponse {
+func (s *commentService) toCommentResponse(comment *models.Comment) *CommentResponse {
 	response := &CommentResponse{
 		ID:                comment.ID,
 		EntityType:        comment.EntityType,
@@ -442,7 +456,7 @@ func (s *CommentService) toCommentResponse(comment *models.Comment) *CommentResp
 }
 
 // toCommentResponseWithReplies converts a comment model to response format including replies
-func (s *CommentService) toCommentResponseWithReplies(comment *models.Comment) *CommentResponse {
+func (s *commentService) toCommentResponseWithReplies(comment *models.Comment) *CommentResponse {
 	response := s.toCommentResponse(comment)
 
 	// Convert replies

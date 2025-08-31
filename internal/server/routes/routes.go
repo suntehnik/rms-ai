@@ -23,51 +23,41 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	router.GET("/live", livenessCheck)
 
 	// Initialize repositories
-	epicRepo := repository.NewEpicRepository(db.Postgres)
-	userRepo := repository.NewUserRepository(db.Postgres)
-	userStoryRepo := repository.NewUserStoryRepository(db.Postgres)
-	acceptanceCriteriaRepo := repository.NewAcceptanceCriteriaRepository(db.Postgres)
-	requirementRepo := repository.NewRequirementRepository(db.Postgres)
-	requirementTypeRepo := repository.NewRequirementTypeRepository(db.Postgres)
-	relationshipTypeRepo := repository.NewRelationshipTypeRepository(db.Postgres)
-	requirementRelationshipRepo := repository.NewRequirementRelationshipRepository(db.Postgres)
-	commentRepo := repository.NewCommentRepository(db.Postgres)
-	statusModelRepo := repository.NewStatusModelRepository(db.Postgres)
-	statusRepo := repository.NewStatusRepository(db.Postgres)
-	statusTransitionRepo := repository.NewStatusTransitionRepository(db.Postgres)
+	repos := repository.NewRepositories(db.Postgres)
 
 	// Initialize services
-	epicService := service.NewEpicService(epicRepo, userRepo)
-	userStoryService := service.NewUserStoryService(userStoryRepo, epicRepo, userRepo)
-	acceptanceCriteriaService := service.NewAcceptanceCriteriaService(acceptanceCriteriaRepo, userStoryRepo, userRepo)
+	epicService := service.NewEpicService(repos.Epic, repos.User)
+	userStoryService := service.NewUserStoryService(repos.UserStory, repos.Epic, repos.User)
+	acceptanceCriteriaService := service.NewAcceptanceCriteriaService(repos.AcceptanceCriteria, repos.UserStory, repos.User)
 	requirementService := service.NewRequirementService(
-		requirementRepo,
-		requirementTypeRepo,
-		relationshipTypeRepo,
-		requirementRelationshipRepo,
-		userStoryRepo,
-		acceptanceCriteriaRepo,
-		userRepo,
+		repos.Requirement,
+		repos.RequirementType,
+		repos.RelationshipType,
+		repos.RequirementRelationship,
+		repos.UserStory,
+		repos.AcceptanceCriteria,
+		repos.User,
 	)
 	configService := service.NewConfigService(
-		requirementTypeRepo,
-		relationshipTypeRepo,
-		requirementRepo,
-		requirementRelationshipRepo,
-		statusModelRepo,
-		statusRepo,
-		statusTransitionRepo,
+		repos.RequirementType,
+		repos.RelationshipType,
+		repos.Requirement,
+		repos.RequirementRelationship,
+		repos.StatusModel,
+		repos.Status,
+		repos.StatusTransition,
 	)
 	deletionService := service.NewDeletionService(
-		epicRepo,
-		userStoryRepo,
-		acceptanceCriteriaRepo,
-		requirementRepo,
-		requirementRelationshipRepo,
-		commentRepo,
-		userRepo,
+		repos.Epic,
+		repos.UserStory,
+		repos.AcceptanceCriteria,
+		repos.Requirement,
+		repos.RequirementRelationship,
+		repos.Comment,
+		repos.User,
 		logger.Logger,
 	)
+	commentService := service.NewCommentService(repos)
 
 	// Initialize handlers
 	epicHandler := handlers.NewEpicHandler(epicService)
@@ -76,6 +66,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	requirementHandler := handlers.NewRequirementHandler(requirementService)
 	configHandler := handlers.NewConfigHandler(configService)
 	deletionHandler := handlers.NewDeletionHandler(deletionService, logger.Logger)
+	commentHandler := handlers.NewCommentHandler(commentService)
 
 	// API v1 routes
 	v1 := router.Group("/api/v1")
@@ -206,6 +197,36 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 
 		// General deletion confirmation route
 		v1.GET("/deletion/confirm", deletionHandler.GetDeletionConfirmation)
+
+		// Comment routes
+		comments := v1.Group("/comments")
+		{
+			comments.GET("/:id", commentHandler.GetComment)
+			comments.PUT("/:id", commentHandler.UpdateComment)
+			comments.DELETE("/:id", commentHandler.DeleteComment)
+			comments.POST("/:id/resolve", commentHandler.ResolveComment)
+			comments.POST("/:id/unresolve", commentHandler.UnresolveComment)
+			comments.GET("/status/:status", commentHandler.GetCommentsByStatus)
+			comments.GET("/:id/replies", commentHandler.GetCommentReplies)
+			comments.POST("/:id/replies", commentHandler.CreateCommentReply)
+		}
+
+		// Entity comment routes - these need to be added to each entity group
+		// Epic comments
+		epics.GET("/:id/comments", commentHandler.GetCommentsByEntity)
+		epics.POST("/:id/comments", commentHandler.CreateComment)
+
+		// User Story comments
+		userStories.GET("/:id/comments", commentHandler.GetCommentsByEntity)
+		userStories.POST("/:id/comments", commentHandler.CreateComment)
+
+		// Acceptance Criteria comments
+		acceptanceCriteria.GET("/:id/comments", commentHandler.GetCommentsByEntity)
+		acceptanceCriteria.POST("/:id/comments", commentHandler.CreateComment)
+
+		// Requirement comments
+		requirements.GET("/:id/comments", commentHandler.GetCommentsByEntity)
+		requirements.POST("/:id/comments", commentHandler.CreateComment)
 	}
 }
 
