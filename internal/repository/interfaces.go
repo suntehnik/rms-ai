@@ -18,6 +18,9 @@ type (
 	RelationshipType          = models.RelationshipType
 	RequirementRelationship   = models.RequirementRelationship
 	Comment                   = models.Comment
+	StatusModel               = models.StatusModel
+	Status                    = models.Status
+	StatusTransition          = models.StatusTransition
 	EpicStatus                = models.EpicStatus
 	UserStoryStatus           = models.UserStoryStatus
 	RequirementStatus         = models.RequirementStatus
@@ -131,4 +134,44 @@ type CommentRepository interface {
 	GetThreaded(entityType EntityType, entityID uuid.UUID) ([]Comment, error)
 	GetByStatus(isResolved bool) ([]Comment, error)
 	GetInlineComments(entityType EntityType, entityID uuid.UUID) ([]Comment, error)
+}
+
+// StatusModelRepository defines status model-specific repository operations
+type StatusModelRepository interface {
+	Create(statusModel *StatusModel) error
+	GetByID(id uuid.UUID) (*StatusModel, error)
+	GetByEntityTypeAndName(entityType EntityType, name string) (*StatusModel, error)
+	GetDefaultByEntityType(entityType EntityType) (*StatusModel, error)
+	Update(statusModel *StatusModel) error
+	Delete(id uuid.UUID) error
+	List(filters map[string]interface{}, orderBy string, limit, offset int) ([]StatusModel, error)
+	ListByEntityType(entityType EntityType) ([]StatusModel, error)
+	Exists(id uuid.UUID) (bool, error)
+	ExistsByEntityTypeAndName(entityType EntityType, name string) (bool, error)
+}
+
+// StatusRepository defines status-specific repository operations
+type StatusRepository interface {
+	Create(status *Status) error
+	GetByID(id uuid.UUID) (*Status, error)
+	GetByStatusModelID(statusModelID uuid.UUID) ([]Status, error)
+	GetByName(statusModelID uuid.UUID, name string) (*Status, error)
+	Update(status *Status) error
+	Delete(id uuid.UUID) error
+	List(filters map[string]interface{}, orderBy string, limit, offset int) ([]Status, error)
+	Exists(id uuid.UUID) (bool, error)
+	ExistsByName(statusModelID uuid.UUID, name string) (bool, error)
+}
+
+// StatusTransitionRepository defines status transition-specific repository operations
+type StatusTransitionRepository interface {
+	Create(transition *StatusTransition) error
+	GetByID(id uuid.UUID) (*StatusTransition, error)
+	GetByStatusModelID(statusModelID uuid.UUID) ([]StatusTransition, error)
+	GetByFromStatus(fromStatusID uuid.UUID) ([]StatusTransition, error)
+	Update(transition *StatusTransition) error
+	Delete(id uuid.UUID) error
+	List(filters map[string]interface{}, orderBy string, limit, offset int) ([]StatusTransition, error)
+	Exists(id uuid.UUID) (bool, error)
+	ExistsByTransition(statusModelID, fromStatusID, toStatusID uuid.UUID) (bool, error)
 }

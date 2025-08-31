@@ -91,6 +91,104 @@ func (m *MockConfigService) ValidateRelationshipType(typeID uuid.UUID) error {
 	return args.Error(0)
 }
 
+// Status Model methods
+func (m *MockConfigService) CreateStatusModel(req service.CreateStatusModelRequest) (*models.StatusModel, error) {
+	args := m.Called(req)
+	return args.Get(0).(*models.StatusModel), args.Error(1)
+}
+
+func (m *MockConfigService) GetStatusModelByID(id uuid.UUID) (*models.StatusModel, error) {
+	args := m.Called(id)
+	return args.Get(0).(*models.StatusModel), args.Error(1)
+}
+
+func (m *MockConfigService) GetStatusModelByEntityTypeAndName(entityType models.EntityType, name string) (*models.StatusModel, error) {
+	args := m.Called(entityType, name)
+	return args.Get(0).(*models.StatusModel), args.Error(1)
+}
+
+func (m *MockConfigService) GetDefaultStatusModelByEntityType(entityType models.EntityType) (*models.StatusModel, error) {
+	args := m.Called(entityType)
+	return args.Get(0).(*models.StatusModel), args.Error(1)
+}
+
+func (m *MockConfigService) UpdateStatusModel(id uuid.UUID, req service.UpdateStatusModelRequest) (*models.StatusModel, error) {
+	args := m.Called(id, req)
+	return args.Get(0).(*models.StatusModel), args.Error(1)
+}
+
+func (m *MockConfigService) DeleteStatusModel(id uuid.UUID, force bool) error {
+	args := m.Called(id, force)
+	return args.Error(0)
+}
+
+func (m *MockConfigService) ListStatusModels(filters service.StatusModelFilters) ([]models.StatusModel, error) {
+	args := m.Called(filters)
+	return args.Get(0).([]models.StatusModel), args.Error(1)
+}
+
+func (m *MockConfigService) ListStatusModelsByEntityType(entityType models.EntityType) ([]models.StatusModel, error) {
+	args := m.Called(entityType)
+	return args.Get(0).([]models.StatusModel), args.Error(1)
+}
+
+// Status methods
+func (m *MockConfigService) CreateStatus(req service.CreateStatusRequest) (*models.Status, error) {
+	args := m.Called(req)
+	return args.Get(0).(*models.Status), args.Error(1)
+}
+
+func (m *MockConfigService) GetStatusByID(id uuid.UUID) (*models.Status, error) {
+	args := m.Called(id)
+	return args.Get(0).(*models.Status), args.Error(1)
+}
+
+func (m *MockConfigService) UpdateStatus(id uuid.UUID, req service.UpdateStatusRequest) (*models.Status, error) {
+	args := m.Called(id, req)
+	return args.Get(0).(*models.Status), args.Error(1)
+}
+
+func (m *MockConfigService) DeleteStatus(id uuid.UUID, force bool) error {
+	args := m.Called(id, force)
+	return args.Error(0)
+}
+
+func (m *MockConfigService) ListStatusesByModel(statusModelID uuid.UUID) ([]models.Status, error) {
+	args := m.Called(statusModelID)
+	return args.Get(0).([]models.Status), args.Error(1)
+}
+
+// Status Transition methods
+func (m *MockConfigService) CreateStatusTransition(req service.CreateStatusTransitionRequest) (*models.StatusTransition, error) {
+	args := m.Called(req)
+	return args.Get(0).(*models.StatusTransition), args.Error(1)
+}
+
+func (m *MockConfigService) GetStatusTransitionByID(id uuid.UUID) (*models.StatusTransition, error) {
+	args := m.Called(id)
+	return args.Get(0).(*models.StatusTransition), args.Error(1)
+}
+
+func (m *MockConfigService) UpdateStatusTransition(id uuid.UUID, req service.UpdateStatusTransitionRequest) (*models.StatusTransition, error) {
+	args := m.Called(id, req)
+	return args.Get(0).(*models.StatusTransition), args.Error(1)
+}
+
+func (m *MockConfigService) DeleteStatusTransition(id uuid.UUID) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
+func (m *MockConfigService) ListStatusTransitionsByModel(statusModelID uuid.UUID) ([]models.StatusTransition, error) {
+	args := m.Called(statusModelID)
+	return args.Get(0).([]models.StatusTransition), args.Error(1)
+}
+
+func (m *MockConfigService) ValidateStatusTransition(entityType models.EntityType, fromStatus, toStatus string) error {
+	args := m.Called(entityType, fromStatus, toStatus)
+	return args.Error(0)
+}
+
 func setupConfigTestRouter() (*gin.Engine, *MockConfigService) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()

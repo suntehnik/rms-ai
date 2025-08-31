@@ -219,6 +219,9 @@ func TestConfigService_CreateRequirementType(t *testing.T) {
 		mockRelationshipTypeRepo,
 		mockRequirementRepo,
 		mockRequirementRelationRepo,
+		nil, // statusModelRepo - not needed for this test
+		nil, // statusRepo - not needed for this test
+		nil, // statusTransitionRepo - not needed for this test
 	)
 
 	t.Run("successful creation", func(t *testing.T) {
@@ -266,6 +269,9 @@ func TestConfigService_GetRequirementTypeByID(t *testing.T) {
 		mockRelationshipTypeRepo,
 		mockRequirementRepo,
 		mockRequirementRelationRepo,
+		nil, // statusModelRepo - not needed for this test
+		nil, // statusRepo - not needed for this test
+		nil, // statusTransitionRepo - not needed for this test
 	)
 
 	t.Run("successful retrieval", func(t *testing.T) {
@@ -311,6 +317,9 @@ func TestConfigService_DeleteRequirementType(t *testing.T) {
 		mockRelationshipTypeRepo,
 		mockRequirementRepo,
 		mockRequirementRelationRepo,
+		nil, // statusModelRepo - not needed for this test
+		nil, // statusRepo - not needed for this test
+		nil, // statusTransitionRepo - not needed for this test
 	)
 
 	t.Run("successful deletion with no requirements", func(t *testing.T) {
@@ -376,6 +385,9 @@ func TestConfigService_ValidateRequirementType(t *testing.T) {
 		mockRelationshipTypeRepo,
 		mockRequirementRepo,
 		mockRequirementRelationRepo,
+		nil, // statusModelRepo - not needed for this test
+		nil, // statusRepo - not needed for this test
+		nil, // statusTransitionRepo - not needed for this test
 	)
 
 	t.Run("valid requirement type", func(t *testing.T) {
@@ -413,6 +425,9 @@ func TestConfigService_ValidateRelationshipType(t *testing.T) {
 		mockRelationshipTypeRepo,
 		mockRequirementRepo,
 		mockRequirementRelationRepo,
+		nil, // statusModelRepo - not needed for this test
+		nil, // statusRepo - not needed for this test
+		nil, // statusTransitionRepo - not needed for this test
 	)
 
 	t.Run("valid relationship type", func(t *testing.T) {

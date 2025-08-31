@@ -16,6 +16,9 @@ func AllModels() []interface{} {
 		&Requirement{},
 		&RequirementRelationship{},
 		&Comment{},
+		&StatusModel{},
+		&Status{},
+		&StatusTransition{},
 	}
 }
 
@@ -24,7 +27,7 @@ func AutoMigrate(db *gorm.DB) error {
 	return db.AutoMigrate(AllModels()...)
 }
 
-// SeedDefaultData seeds the database with default requirement types and relationship types
+// SeedDefaultData seeds the database with default requirement types, relationship types, and status models
 func SeedDefaultData(db *gorm.DB) error {
 	// Seed default requirement types
 	for _, reqType := range GetDefaultRequirementTypes() {
@@ -45,6 +48,49 @@ func SeedDefaultData(db *gorm.DB) error {
 			if err := db.Create(&relType).Error; err != nil {
 				return err
 			}
+		}
+	}
+
+	// Seed default status models
+	if err := SeedDefaultStatusModels(db); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// SeedDefaultStatusModels seeds the database with default status models and their statuses
+func SeedDefaultStatusModels(db *gorm.DB) error {
+	for _, statusModel := range GetDefaultStatusModels() {
+		var existingModel StatusModel
+		result := db.Where("entity_type = ? AND name = ?", statusModel.EntityType, statusModel.Name).First(&existingModel)
+		if result.Error == gorm.ErrRecordNotFound {
+			// Create the status model
+			if err := db.Create(&statusModel).Error; err != nil {
+				return err
+			}
+
+			// Create default statuses for this model
+			var defaultStatuses []Status
+			switch statusModel.EntityType {
+			case EntityTypeEpic:
+				defaultStatuses = GetDefaultStatusesForEpic()
+			case EntityTypeUserStory:
+				defaultStatuses = GetDefaultStatusesForUserStory()
+			case EntityTypeRequirement:
+				defaultStatuses = GetDefaultStatusesForRequirement()
+			}
+
+			// Set the status model ID for each status and create them
+			for _, status := range defaultStatuses {
+				status.StatusModelID = statusModel.ID
+				if err := db.Create(&status).Error; err != nil {
+					return err
+				}
+			}
+
+			// Create default transitions (allow all transitions by default)
+			// We don't create explicit transitions, which means all transitions are allowed
 		}
 	}
 

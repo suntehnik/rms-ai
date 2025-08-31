@@ -45,6 +45,9 @@ func setupConfigIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, service.Co
 		relationshipTypeRepo,
 		requirementRepo,
 		requirementRelationshipRepo,
+		nil, // statusModelRepo - not needed for this test
+		nil, // statusRepo - not needed for this test
+		nil, // statusTransitionRepo - not needed for this test
 	)
 
 	// Initialize handler
