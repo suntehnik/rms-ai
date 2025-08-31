@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/service"
 )
 
@@ -370,5 +371,537 @@ func (h *ConfigHandler) ListRelationshipTypes(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"relationship_types": relationshipTypes,
 		"count":             len(relationshipTypes),
+	})
+}
+
+// Status Model handlers
+
+// CreateStatusModel handles POST /api/v1/config/status-models
+func (h *ConfigHandler) CreateStatusModel(c *gin.Context) {
+	var req service.CreateStatusModelRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request body",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	statusModel, err := h.configService.CreateStatusModel(req)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrStatusModelNameExists):
+			c.JSON(http.StatusConflict, gin.H{
+				"error": "Status model name already exists for this entity type",
+			})
+		case errors.Is(err, service.ErrInvalidEntityType):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid entity type",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to create status model",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusCreated, statusModel)
+}
+
+// GetStatusModel handles GET /api/v1/config/status-models/:id
+func (h *ConfigHandler) GetStatusModel(c *gin.Context) {
+	idParam := c.Param("id")
+	
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid status model ID format",
+		})
+		return
+	}
+
+	statusModel, err := h.configService.GetStatusModelByID(id)
+	if err != nil {
+		if errors.Is(err, service.ErrStatusModelNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Status model not found",
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to get status model",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, statusModel)
+}
+
+// UpdateStatusModel handles PUT /api/v1/config/status-models/:id
+func (h *ConfigHandler) UpdateStatusModel(c *gin.Context) {
+	idParam := c.Param("id")
+	
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid status model ID format",
+		})
+		return
+	}
+
+	var req service.UpdateStatusModelRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request body",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	statusModel, err := h.configService.UpdateStatusModel(id, req)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrStatusModelNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Status model not found",
+			})
+		case errors.Is(err, service.ErrStatusModelNameExists):
+			c.JSON(http.StatusConflict, gin.H{
+				"error": "Status model name already exists for this entity type",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to update status model",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, statusModel)
+}
+
+// DeleteStatusModel handles DELETE /api/v1/config/status-models/:id
+func (h *ConfigHandler) DeleteStatusModel(c *gin.Context) {
+	idParam := c.Param("id")
+	
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid status model ID format",
+		})
+		return
+	}
+
+	// Check for force parameter
+	force := c.Query("force") == "true"
+
+	err = h.configService.DeleteStatusModel(id, force)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrStatusModelNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Status model not found",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to delete status model",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusNoContent, nil)
+}
+
+// ListStatusModels handles GET /api/v1/config/status-models
+func (h *ConfigHandler) ListStatusModels(c *gin.Context) {
+	var filters service.StatusModelFilters
+
+	if entityType := c.Query("entity_type"); entityType != "" {
+		filters.EntityType = models.EntityType(entityType)
+	}
+
+	if orderBy := c.Query("order_by"); orderBy != "" {
+		filters.OrderBy = orderBy
+	}
+
+	if limit := c.Query("limit"); limit != "" {
+		if l, err := strconv.Atoi(limit); err == nil && l > 0 {
+			filters.Limit = l
+		}
+	}
+
+	if offset := c.Query("offset"); offset != "" {
+		if o, err := strconv.Atoi(offset); err == nil && o >= 0 {
+			filters.Offset = o
+		}
+	}
+
+	statusModels, err := h.configService.ListStatusModels(filters)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to list status models",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status_models": statusModels,
+		"count":        len(statusModels),
+	})
+}
+
+// GetDefaultStatusModel handles GET /api/v1/config/status-models/default/:entity_type
+func (h *ConfigHandler) GetDefaultStatusModel(c *gin.Context) {
+	entityTypeParam := c.Param("entity_type")
+	
+	statusModel, err := h.configService.GetDefaultStatusModelByEntityType(models.EntityType(entityTypeParam))
+	if err != nil {
+		if errors.Is(err, service.ErrStatusModelNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Default status model not found for entity type",
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to get default status model",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, statusModel)
+}
+
+// Status handlers
+
+// CreateStatus handles POST /api/v1/config/statuses
+func (h *ConfigHandler) CreateStatus(c *gin.Context) {
+	var req service.CreateStatusRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request body",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	status, err := h.configService.CreateStatus(req)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrStatusModelNotFound):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Status model not found",
+			})
+		case errors.Is(err, service.ErrStatusNameExists):
+			c.JSON(http.StatusConflict, gin.H{
+				"error": "Status name already exists in this model",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to create status",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusCreated, status)
+}
+
+// GetStatus handles GET /api/v1/config/statuses/:id
+func (h *ConfigHandler) GetStatus(c *gin.Context) {
+	idParam := c.Param("id")
+	
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid status ID format",
+		})
+		return
+	}
+
+	status, err := h.configService.GetStatusByID(id)
+	if err != nil {
+		if errors.Is(err, service.ErrStatusNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Status not found",
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to get status",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, status)
+}
+
+// UpdateStatus handles PUT /api/v1/config/statuses/:id
+func (h *ConfigHandler) UpdateStatus(c *gin.Context) {
+	idParam := c.Param("id")
+	
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid status ID format",
+		})
+		return
+	}
+
+	var req service.UpdateStatusRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request body",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	status, err := h.configService.UpdateStatus(id, req)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrStatusNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Status not found",
+			})
+		case errors.Is(err, service.ErrStatusNameExists):
+			c.JSON(http.StatusConflict, gin.H{
+				"error": "Status name already exists in this model",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to update status",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, status)
+}
+
+// DeleteStatus handles DELETE /api/v1/config/statuses/:id
+func (h *ConfigHandler) DeleteStatus(c *gin.Context) {
+	idParam := c.Param("id")
+	
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid status ID format",
+		})
+		return
+	}
+
+	// Check for force parameter
+	force := c.Query("force") == "true"
+
+	err = h.configService.DeleteStatus(id, force)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrStatusNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Status not found",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to delete status",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusNoContent, nil)
+}
+
+// ListStatusesByModel handles GET /api/v1/config/status-models/:id/statuses
+func (h *ConfigHandler) ListStatusesByModel(c *gin.Context) {
+	idParam := c.Param("id")
+	
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid status model ID format",
+		})
+		return
+	}
+
+	statuses, err := h.configService.ListStatusesByModel(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to list statuses",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"statuses": statuses,
+		"count":   len(statuses),
+	})
+}
+
+// Status Transition handlers
+
+// CreateStatusTransition handles POST /api/v1/config/status-transitions
+func (h *ConfigHandler) CreateStatusTransition(c *gin.Context) {
+	var req service.CreateStatusTransitionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request body",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	transition, err := h.configService.CreateStatusTransition(req)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrStatusModelNotFound):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Status model not found",
+			})
+		case errors.Is(err, service.ErrStatusNotFound):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Status not found",
+			})
+		case errors.Is(err, service.ErrInvalidStatusTransition):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid status transition",
+			})
+		case errors.Is(err, service.ErrTransitionExists):
+			c.JSON(http.StatusConflict, gin.H{
+				"error": "Status transition already exists",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to create status transition",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusCreated, transition)
+}
+
+// GetStatusTransition handles GET /api/v1/config/status-transitions/:id
+func (h *ConfigHandler) GetStatusTransition(c *gin.Context) {
+	idParam := c.Param("id")
+	
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid status transition ID format",
+		})
+		return
+	}
+
+	transition, err := h.configService.GetStatusTransitionByID(id)
+	if err != nil {
+		if errors.Is(err, service.ErrStatusTransitionNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Status transition not found",
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to get status transition",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, transition)
+}
+
+// UpdateStatusTransition handles PUT /api/v1/config/status-transitions/:id
+func (h *ConfigHandler) UpdateStatusTransition(c *gin.Context) {
+	idParam := c.Param("id")
+	
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid status transition ID format",
+		})
+		return
+	}
+
+	var req service.UpdateStatusTransitionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request body",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	transition, err := h.configService.UpdateStatusTransition(id, req)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrStatusTransitionNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Status transition not found",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to update status transition",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, transition)
+}
+
+// DeleteStatusTransition handles DELETE /api/v1/config/status-transitions/:id
+func (h *ConfigHandler) DeleteStatusTransition(c *gin.Context) {
+	idParam := c.Param("id")
+	
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid status transition ID format",
+		})
+		return
+	}
+
+	err = h.configService.DeleteStatusTransition(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrStatusTransitionNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Status transition not found",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to delete status transition",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusNoContent, nil)
+}
+
+// ListStatusTransitionsByModel handles GET /api/v1/config/status-models/:id/transitions
+func (h *ConfigHandler) ListStatusTransitionsByModel(c *gin.Context) {
+	idParam := c.Param("id")
+	
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid status model ID format",
+		})
+		return
+	}
+
+	transitions, err := h.configService.ListStatusTransitionsByModel(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to list status transitions",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"transitions": transitions,
+		"count":      len(transitions),
 	})
 }

@@ -14,8 +14,7 @@ var (
 	ErrRequirementNotFound           = errors.New("requirement not found")
 	ErrRequirementHasRelationships   = errors.New("requirement has associated relationships and cannot be deleted")
 	ErrInvalidRequirementStatus      = errors.New("invalid requirement status")
-	ErrRequirementTypeNotFound       = errors.New("requirement type not found")
-	ErrRelationshipTypeNotFound      = errors.New("relationship type not found")
+
 	ErrCircularRelationship          = errors.New("circular relationship detected")
 	ErrDuplicateRelationship         = errors.New("relationship already exists")
 )

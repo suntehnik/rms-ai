@@ -16,7 +16,6 @@ var (
 	ErrInvalidEpicStatus      = errors.New("invalid epic status")
 	ErrInvalidPriority        = errors.New("invalid priority")
 	ErrUserNotFound           = errors.New("user not found")
-	ErrInvalidStatusTransition = errors.New("invalid status transition")
 )
 
 // EpicService defines the interface for epic business logic

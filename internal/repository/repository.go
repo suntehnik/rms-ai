@@ -15,6 +15,9 @@ type Repositories struct {
 	RelationshipType          RelationshipTypeRepository
 	RequirementRelationship   RequirementRelationshipRepository
 	Comment                   CommentRepository
+	StatusModel               StatusModelRepository
+	Status                    StatusRepository
+	StatusTransition          StatusTransitionRepository
 }
 
 // NewRepositories creates a new instance of all repositories
@@ -29,6 +32,9 @@ func NewRepositories(db *gorm.DB) *Repositories {
 		RelationshipType:          NewRelationshipTypeRepository(db),
 		RequirementRelationship:   NewRequirementRelationshipRepository(db),
 		Comment:                   NewCommentRepository(db),
+		StatusModel:               NewStatusModelRepository(db),
+		Status:                    NewStatusRepository(db),
+		StatusTransition:          NewStatusTransitionRepository(db),
 	}
 }
 
@@ -47,6 +53,9 @@ func (r *Repositories) WithTransaction(fn func(*Repositories) error) error {
 			RelationshipType:          NewRelationshipTypeRepository(tx),
 			RequirementRelationship:   NewRequirementRelationshipRepository(tx),
 			Comment:                   NewCommentRepository(tx),
+			StatusModel:               NewStatusModelRepository(tx),
+			Status:                    NewStatusRepository(tx),
+			StatusTransition:          NewStatusTransitionRepository(tx),
 		}
 		return fn(txRepos)
 	})

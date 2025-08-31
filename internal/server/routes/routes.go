@@ -32,6 +32,9 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	relationshipTypeRepo := repository.NewRelationshipTypeRepository(db.Postgres)
 	requirementRelationshipRepo := repository.NewRequirementRelationshipRepository(db.Postgres)
 	commentRepo := repository.NewCommentRepository(db.Postgres)
+	statusModelRepo := repository.NewStatusModelRepository(db.Postgres)
+	statusRepo := repository.NewStatusRepository(db.Postgres)
+	statusTransitionRepo := repository.NewStatusTransitionRepository(db.Postgres)
 
 	// Initialize services
 	epicService := service.NewEpicService(epicRepo, userRepo)
@@ -51,6 +54,9 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 		relationshipTypeRepo,
 		requirementRepo,
 		requirementRelationshipRepo,
+		statusModelRepo,
+		statusRepo,
+		statusTransitionRepo,
 	)
 	deletionService := service.NewDeletionService(
 		epicRepo,
@@ -164,6 +170,37 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 				relationshipTypes.GET("/:id", configHandler.GetRelationshipType)
 				relationshipTypes.PUT("/:id", configHandler.UpdateRelationshipType)
 				relationshipTypes.DELETE("/:id", configHandler.DeleteRelationshipType)
+			}
+
+			// Status Model routes
+			statusModels := config.Group("/status-models")
+			{
+				statusModels.POST("", configHandler.CreateStatusModel)
+				statusModels.GET("", configHandler.ListStatusModels)
+				statusModels.GET("/:id", configHandler.GetStatusModel)
+				statusModels.PUT("/:id", configHandler.UpdateStatusModel)
+				statusModels.DELETE("/:id", configHandler.DeleteStatusModel)
+				statusModels.GET("/default/:entity_type", configHandler.GetDefaultStatusModel)
+				statusModels.GET("/:id/statuses", configHandler.ListStatusesByModel)
+				statusModels.GET("/:id/transitions", configHandler.ListStatusTransitionsByModel)
+			}
+
+			// Status routes
+			statuses := config.Group("/statuses")
+			{
+				statuses.POST("", configHandler.CreateStatus)
+				statuses.GET("/:id", configHandler.GetStatus)
+				statuses.PUT("/:id", configHandler.UpdateStatus)
+				statuses.DELETE("/:id", configHandler.DeleteStatus)
+			}
+
+			// Status Transition routes
+			statusTransitions := config.Group("/status-transitions")
+			{
+				statusTransitions.POST("", configHandler.CreateStatusTransition)
+				statusTransitions.GET("/:id", configHandler.GetStatusTransition)
+				statusTransitions.PUT("/:id", configHandler.UpdateStatusTransition)
+				statusTransitions.DELETE("/:id", configHandler.DeleteStatusTransition)
 			}
 		}
 

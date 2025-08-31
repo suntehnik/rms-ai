@@ -94,7 +94,7 @@
   - commit, push and make pull request
 
 
-- [-] 11. Implement configurable dictionaries system
+- [x] 11. Implement configurable dictionaries system
   - Create a git branch for feature
   - Create RequirementType and RelationshipType models
   - Implement configuration service for managing dictionaries
@@ -105,7 +105,7 @@
   - commit, push and make pull request
 
 
-- [ ] 12. Implement status model system
+- [-] 12. Implement status model system
   - Create a git branch for feature
   - Create status model configuration for each entity type
   - Implement status transition validation
