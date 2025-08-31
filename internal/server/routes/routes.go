@@ -24,12 +24,15 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	// Initialize repositories
 	epicRepo := repository.NewEpicRepository(db.Postgres)
 	userRepo := repository.NewUserRepository(db.Postgres)
+	userStoryRepo := repository.NewUserStoryRepository(db.Postgres)
 
 	// Initialize services
 	epicService := service.NewEpicService(epicRepo, userRepo)
+	userStoryService := service.NewUserStoryService(userStoryRepo, epicRepo, userRepo)
 
 	// Initialize handlers
 	epicHandler := handlers.NewEpicHandler(epicService)
+	userStoryHandler := handlers.NewUserStoryHandler(userStoryService)
 
 	// API v1 routes
 	v1 := router.Group("/api/v1")
@@ -43,14 +46,24 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 			epics.PUT("/:id", epicHandler.UpdateEpic)
 			epics.DELETE("/:id", epicHandler.DeleteEpic)
 			epics.GET("/:id/user-stories", epicHandler.GetEpicWithUserStories)
+			epics.POST("/:id/user-stories", userStoryHandler.CreateUserStoryInEpic)
 			epics.PATCH("/:id/status", epicHandler.ChangeEpicStatus)
 			epics.PATCH("/:id/assign", epicHandler.AssignEpic)
 		}
 
-		// Placeholder routes for future implementation
-		v1.GET("/user-stories", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"message": "User stories endpoint - to be implemented"})
-		})
+		// User Story routes
+		userStories := v1.Group("/user-stories")
+		{
+			userStories.POST("", userStoryHandler.CreateUserStory)
+			userStories.GET("", userStoryHandler.ListUserStories)
+			userStories.GET("/:id", userStoryHandler.GetUserStory)
+			userStories.PUT("/:id", userStoryHandler.UpdateUserStory)
+			userStories.DELETE("/:id", userStoryHandler.DeleteUserStory)
+			userStories.GET("/:id/acceptance-criteria", userStoryHandler.GetUserStoryWithAcceptanceCriteria)
+			userStories.GET("/:id/requirements", userStoryHandler.GetUserStoryWithRequirements)
+			userStories.PATCH("/:id/status", userStoryHandler.ChangeUserStoryStatus)
+			userStories.PATCH("/:id/assign", userStoryHandler.AssignUserStory)
+		}
 
 		v1.GET("/requirements", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"message": "Requirements endpoint - to be implemented"})
