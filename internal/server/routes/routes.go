@@ -46,6 +46,12 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 		acceptanceCriteriaRepo,
 		userRepo,
 	)
+	configService := service.NewConfigService(
+		requirementTypeRepo,
+		relationshipTypeRepo,
+		requirementRepo,
+		requirementRelationshipRepo,
+	)
 	deletionService := service.NewDeletionService(
 		epicRepo,
 		userStoryRepo,
@@ -62,6 +68,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	userStoryHandler := handlers.NewUserStoryHandler(userStoryService)
 	acceptanceCriteriaHandler := handlers.NewAcceptanceCriteriaHandler(acceptanceCriteriaService)
 	requirementHandler := handlers.NewRequirementHandler(requirementService)
+	configHandler := handlers.NewConfigHandler(configService)
 	deletionHandler := handlers.NewDeletionHandler(deletionService, logger.Logger)
 
 	// API v1 routes
@@ -135,6 +142,30 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 
 		// Requirement Relationship routes
 		v1.DELETE("/requirement-relationships/:id", requirementHandler.DeleteRelationship)
+
+		// Configuration routes (admin only)
+		config := v1.Group("/config")
+		{
+			// Requirement Type routes
+			requirementTypes := config.Group("/requirement-types")
+			{
+				requirementTypes.POST("", configHandler.CreateRequirementType)
+				requirementTypes.GET("", configHandler.ListRequirementTypes)
+				requirementTypes.GET("/:id", configHandler.GetRequirementType)
+				requirementTypes.PUT("/:id", configHandler.UpdateRequirementType)
+				requirementTypes.DELETE("/:id", configHandler.DeleteRequirementType)
+			}
+
+			// Relationship Type routes
+			relationshipTypes := config.Group("/relationship-types")
+			{
+				relationshipTypes.POST("", configHandler.CreateRelationshipType)
+				relationshipTypes.GET("", configHandler.ListRelationshipTypes)
+				relationshipTypes.GET("/:id", configHandler.GetRelationshipType)
+				relationshipTypes.PUT("/:id", configHandler.UpdateRelationshipType)
+				relationshipTypes.DELETE("/:id", configHandler.DeleteRelationshipType)
+			}
+		}
 
 		// General deletion confirmation route
 		v1.GET("/deletion/confirm", deletionHandler.GetDeletionConfirmation)
