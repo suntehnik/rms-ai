@@ -48,18 +48,15 @@ type Epic struct {
 	Comments    []Comment   `gorm:"polymorphic:Entity;polymorphicValue:epic" json:"comments,omitempty"`
 }
 
-// BeforeCreate sets the ID and ReferenceID if not already set
+// BeforeCreate sets the ID if not already set and ensures default status
 func (e *Epic) BeforeCreate(tx *gorm.DB) error {
 	if e.ID == uuid.Nil {
 		e.ID = uuid.New()
 	}
-	if e.ReferenceID == "" {
-		// Generate reference ID - in production this would use database sequences
-		e.ReferenceID = "EP-001" // Simplified for testing
-	}
 	if e.Status == "" {
 		e.Status = EpicStatusBacklog
 	}
+	// ReferenceID is handled by database default with sequence
 	return nil
 }
 
