@@ -25,7 +25,7 @@ func TestCommentService_CreateComment_Basic(t *testing.T) {
 	})
 
 	t.Run("validate inline comment data", func(t *testing.T) {
-		service := &CommentService{}
+		service := &commentService{}
 		
 		// Valid inline comment data
 		linkedText := "test text"
@@ -60,7 +60,7 @@ func TestCommentService_CreateComment_Basic(t *testing.T) {
 }
 
 func TestCommentService_ToCommentResponse(t *testing.T) {
-	service := &CommentService{}
+	service := &commentService{}
 	
 	// Create a test comment
 	commentID := uuid.New()
@@ -92,7 +92,7 @@ func TestCommentService_ToCommentResponse(t *testing.T) {
 }
 
 func TestCommentService_ToCommentResponseInline(t *testing.T) {
-	service := &CommentService{}
+	service := &commentService{}
 	
 	// Create a test inline comment
 	commentID := uuid.New()
@@ -126,7 +126,7 @@ func TestCommentService_ToCommentResponseInline(t *testing.T) {
 }
 
 func TestCommentService_ToCommentResponseReply(t *testing.T) {
-	service := &CommentService{}
+	service := &commentService{}
 	
 	// Create a test reply comment
 	commentID := uuid.New()
@@ -164,7 +164,7 @@ func TestCommentService_ValidationErrors(t *testing.T) {
 		}
 		
 		// This would normally require a full service setup, but we can test the validation logic
-		service := &CommentService{}
+		service := &commentService{}
 		err := service.validateInlineCommentData(req.LinkedText, req.TextPositionStart, req.TextPositionEnd)
 		assert.NoError(t, err) // No inline comment data, so should be valid
 	})
