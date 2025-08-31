@@ -59,7 +59,7 @@
   - commit, push and make pull request
 
 
-- [-] 8. Implement Acceptance Criteria management
+- [x] 8. Implement Acceptance Criteria management
   - Create a git branch for feature
   - Create AcceptanceCriteria service with CRUD operations
   - Implement AcceptanceCriteria API endpoints

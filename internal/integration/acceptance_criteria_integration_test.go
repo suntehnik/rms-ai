@@ -191,7 +191,7 @@ func TestAcceptanceCriteriaIntegration(t *testing.T) {
 	})
 
 	// Create acceptance criteria for further tests
-	acceptanceCriteria := createTestAcceptanceCriteria(t, db, userStory.ID, user.ID, "WHEN user clicks submit THEN system SHALL validate the form")
+	acceptanceCriteria := createTestAcceptanceCriteria(t, db, userStory.ID, user.ID, "WHEN user submits form THEN system SHALL validate all required fields")
 
 	t.Run("Get Acceptance Criteria by ID", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/acceptance-criteria/%s", acceptanceCriteria.ID.String()), nil)
@@ -228,7 +228,7 @@ func TestAcceptanceCriteriaIntegration(t *testing.T) {
 
 	t.Run("Update Acceptance Criteria", func(t *testing.T) {
 		requestBody := map[string]interface{}{
-			"description": "WHEN user submits form THEN system SHALL validate all required fields",
+			"description": "WHEN user submits form THEN system SHALL validate all required fields - updated",
 		}
 
 		body, _ := json.Marshal(requestBody)
@@ -245,14 +245,11 @@ func TestAcceptanceCriteriaIntegration(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, acceptanceCriteria.ID, response.ID)
-		assert.Equal(t, "WHEN user submits form THEN system SHALL validate all required fields", response.Description)
+		assert.Equal(t, "WHEN user submits form THEN system SHALL validate all required fields - updated", response.Description)
 		assert.True(t, response.LastModified.After(response.CreatedAt))
 	})
 
 	t.Run("List Acceptance Criteria", func(t *testing.T) {
-		// Create another acceptance criteria for the same user story
-		createTestAcceptanceCriteria(t, db, userStory.ID, user.ID, "WHEN validation fails THEN system SHALL display error message")
-
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/acceptance-criteria", nil)
 		w := httptest.NewRecorder()
 
@@ -264,6 +261,7 @@ func TestAcceptanceCriteriaIntegration(t *testing.T) {
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
 
+		// Should have 2 acceptance criteria (one from Create test, one from createTestAcceptanceCriteria)
 		assert.Equal(t, float64(2), response["count"])
 		
 		criteria := response["acceptance_criteria"].([]interface{})
