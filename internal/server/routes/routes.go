@@ -25,14 +25,17 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	epicRepo := repository.NewEpicRepository(db.Postgres)
 	userRepo := repository.NewUserRepository(db.Postgres)
 	userStoryRepo := repository.NewUserStoryRepository(db.Postgres)
+	acceptanceCriteriaRepo := repository.NewAcceptanceCriteriaRepository(db.Postgres)
 
 	// Initialize services
 	epicService := service.NewEpicService(epicRepo, userRepo)
 	userStoryService := service.NewUserStoryService(userStoryRepo, epicRepo, userRepo)
+	acceptanceCriteriaService := service.NewAcceptanceCriteriaService(acceptanceCriteriaRepo, userStoryRepo, userRepo)
 
 	// Initialize handlers
 	epicHandler := handlers.NewEpicHandler(epicService)
 	userStoryHandler := handlers.NewUserStoryHandler(userStoryService)
+	acceptanceCriteriaHandler := handlers.NewAcceptanceCriteriaHandler(acceptanceCriteriaService)
 
 	// API v1 routes
 	v1 := router.Group("/api/v1")
@@ -59,10 +62,20 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 			userStories.GET("/:id", userStoryHandler.GetUserStory)
 			userStories.PUT("/:id", userStoryHandler.UpdateUserStory)
 			userStories.DELETE("/:id", userStoryHandler.DeleteUserStory)
-			userStories.GET("/:id/acceptance-criteria", userStoryHandler.GetUserStoryWithAcceptanceCriteria)
+			userStories.GET("/:id/acceptance-criteria", acceptanceCriteriaHandler.GetAcceptanceCriteriaByUserStory)
+			userStories.POST("/:id/acceptance-criteria", acceptanceCriteriaHandler.CreateAcceptanceCriteria)
 			userStories.GET("/:id/requirements", userStoryHandler.GetUserStoryWithRequirements)
 			userStories.PATCH("/:id/status", userStoryHandler.ChangeUserStoryStatus)
 			userStories.PATCH("/:id/assign", userStoryHandler.AssignUserStory)
+		}
+
+		// Acceptance Criteria routes
+		acceptanceCriteria := v1.Group("/acceptance-criteria")
+		{
+			acceptanceCriteria.GET("", acceptanceCriteriaHandler.ListAcceptanceCriteria)
+			acceptanceCriteria.GET("/:id", acceptanceCriteriaHandler.GetAcceptanceCriteria)
+			acceptanceCriteria.PUT("/:id", acceptanceCriteriaHandler.UpdateAcceptanceCriteria)
+			acceptanceCriteria.DELETE("/:id", acceptanceCriteriaHandler.DeleteAcceptanceCriteria)
 		}
 
 		v1.GET("/requirements", func(c *gin.Context) {
