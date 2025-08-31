@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -30,9 +31,14 @@ func (ac *AcceptanceCriteria) BeforeCreate(tx *gorm.DB) error {
 		ac.ID = uuid.New()
 	}
 	if ac.ReferenceID == "" {
-		// Generate reference ID - in production this would use database sequences
-		ac.ReferenceID = "AC-001" // Simplified for testing
+		// Generate reference ID using a simple counter
+		var count int64
+		tx.Model(&AcceptanceCriteria{}).Count(&count)
+		ac.ReferenceID = fmt.Sprintf("AC-%03d", count+1)
 	}
+	now := time.Now().UTC()
+	ac.CreatedAt = now
+	ac.LastModified = now
 	return nil
 }
 
@@ -76,3 +82,4 @@ func (ac *AcceptanceCriteria) IsEARSFormat() bool {
 func (ac *AcceptanceCriteria) GetFormattedDescription() string {
 	return ac.Description
 }
+

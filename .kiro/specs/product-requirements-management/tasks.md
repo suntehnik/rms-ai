@@ -46,7 +46,7 @@
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6_
   - commit, push and make pull request
 
-- [-] 7. Implement User Story management functionality
+- [x] 7. Implement User Story management functionality
   - Create a git branch for feature
   - Create a git branch for feature
   - Create UserStory service with CRUD operations
@@ -59,7 +59,7 @@
   - commit, push and make pull request
 
 
-- [ ] 8. Implement Acceptance Criteria management
+- [-] 8. Implement Acceptance Criteria management
   - Create a git branch for feature
   - Create AcceptanceCriteria service with CRUD operations
   - Implement AcceptanceCriteria API endpoints
