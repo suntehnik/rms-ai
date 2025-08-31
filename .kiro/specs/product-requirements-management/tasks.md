@@ -139,7 +139,7 @@
   - _Requirements: 5.2, 5.5_
   - commit, push and make pull request
 
-- [ ] 15. Implement comment filtering and management
+- [-] 15. Implement comment filtering and management
   - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Add comment filtering by status (resolved/unresolved)
