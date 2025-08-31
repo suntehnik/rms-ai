@@ -6,6 +6,7 @@ import (
 	"product-requirements-management/internal/config"
 	"product-requirements-management/internal/database"
 	"product-requirements-management/internal/handlers"
+	"product-requirements-management/internal/logger"
 	"product-requirements-management/internal/repository"
 	"product-requirements-management/internal/service"
 	"time"
@@ -30,6 +31,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	requirementTypeRepo := repository.NewRequirementTypeRepository(db.Postgres)
 	relationshipTypeRepo := repository.NewRelationshipTypeRepository(db.Postgres)
 	requirementRelationshipRepo := repository.NewRequirementRelationshipRepository(db.Postgres)
+	commentRepo := repository.NewCommentRepository(db.Postgres)
 
 	// Initialize services
 	epicService := service.NewEpicService(epicRepo, userRepo)
@@ -44,12 +46,23 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 		acceptanceCriteriaRepo,
 		userRepo,
 	)
+	deletionService := service.NewDeletionService(
+		epicRepo,
+		userStoryRepo,
+		acceptanceCriteriaRepo,
+		requirementRepo,
+		requirementRelationshipRepo,
+		commentRepo,
+		userRepo,
+		logger.Logger,
+	)
 
 	// Initialize handlers
 	epicHandler := handlers.NewEpicHandler(epicService)
 	userStoryHandler := handlers.NewUserStoryHandler(userStoryService)
 	acceptanceCriteriaHandler := handlers.NewAcceptanceCriteriaHandler(acceptanceCriteriaService)
 	requirementHandler := handlers.NewRequirementHandler(requirementService)
+	deletionHandler := handlers.NewDeletionHandler(deletionService, logger.Logger)
 
 	// API v1 routes
 	v1 := router.Group("/api/v1")
@@ -66,6 +79,9 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 			epics.POST("/:id/user-stories", userStoryHandler.CreateUserStoryInEpic)
 			epics.PATCH("/:id/status", epicHandler.ChangeEpicStatus)
 			epics.PATCH("/:id/assign", epicHandler.AssignEpic)
+			// Comprehensive deletion routes
+			epics.GET("/:id/validate-deletion", deletionHandler.ValidateEpicDeletion)
+			epics.DELETE("/:id/delete", deletionHandler.DeleteEpic)
 		}
 
 		// User Story routes
@@ -82,6 +98,9 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 			userStories.POST("/:id/requirements", requirementHandler.CreateRequirementInUserStory)
 			userStories.PATCH("/:id/status", userStoryHandler.ChangeUserStoryStatus)
 			userStories.PATCH("/:id/assign", userStoryHandler.AssignUserStory)
+			// Comprehensive deletion routes
+			userStories.GET("/:id/validate-deletion", deletionHandler.ValidateUserStoryDeletion)
+			userStories.DELETE("/:id/delete", deletionHandler.DeleteUserStory)
 		}
 
 		// Acceptance Criteria routes
@@ -91,6 +110,9 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 			acceptanceCriteria.GET("/:id", acceptanceCriteriaHandler.GetAcceptanceCriteria)
 			acceptanceCriteria.PUT("/:id", acceptanceCriteriaHandler.UpdateAcceptanceCriteria)
 			acceptanceCriteria.DELETE("/:id", acceptanceCriteriaHandler.DeleteAcceptanceCriteria)
+			// Comprehensive deletion routes
+			acceptanceCriteria.GET("/:id/validate-deletion", deletionHandler.ValidateAcceptanceCriteriaDeletion)
+			acceptanceCriteria.DELETE("/:id/delete", deletionHandler.DeleteAcceptanceCriteria)
 		}
 
 		// Requirement routes
@@ -106,10 +128,16 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 			requirements.PATCH("/:id/status", requirementHandler.ChangeRequirementStatus)
 			requirements.PATCH("/:id/assign", requirementHandler.AssignRequirement)
 			requirements.POST("/relationships", requirementHandler.CreateRelationship)
+			// Comprehensive deletion routes
+			requirements.GET("/:id/validate-deletion", deletionHandler.ValidateRequirementDeletion)
+			requirements.DELETE("/:id/delete", deletionHandler.DeleteRequirement)
 		}
 
 		// Requirement Relationship routes
 		v1.DELETE("/requirement-relationships/:id", requirementHandler.DeleteRelationship)
+
+		// General deletion confirmation route
+		v1.GET("/deletion/confirm", deletionHandler.GetDeletionConfirmation)
 	}
 }
 
