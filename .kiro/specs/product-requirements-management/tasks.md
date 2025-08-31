@@ -82,7 +82,7 @@
   - commit, push and make pull request
 
 
-- [-] 10. Implement comprehensive deletion logic
+- [x] 10. Implement comprehensive deletion logic
   - Create a git branch for feature
   - Create deletion service with dependency validation
   - Implement cascading deletion logic for all entities
@@ -94,7 +94,7 @@
   - commit, push and make pull request
 
 
-- [ ] 11. Implement configurable dictionaries system
+- [-] 11. Implement configurable dictionaries system
   - Create a git branch for feature
   - Create RequirementType and RelationshipType models
   - Implement configuration service for managing dictionaries
