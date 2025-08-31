@@ -76,7 +76,7 @@ func setupCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, func()) {
 	return router, db, cleanup
 }
 
-func createTestUser(t *testing.T, db *gorm.DB) *models.User {
+func createTestUserForComment(t *testing.T, db *gorm.DB) *models.User {
 	user := &models.User{
 		ID:       uuid.New(),
 		Username: fmt.Sprintf("testuser_%s", uuid.New().String()[:8]),
@@ -90,7 +90,7 @@ func createTestUser(t *testing.T, db *gorm.DB) *models.User {
 	return user
 }
 
-func createTestEpic(t *testing.T, db *gorm.DB, creator *models.User) *models.Epic {
+func createTestEpicForComment(t *testing.T, db *gorm.DB, creator *models.User) *models.Epic {
 	description := "Test epic description"
 	epic := &models.Epic{
 		ID:          uuid.New(),
@@ -114,8 +114,8 @@ func TestCommentIntegration_CreateComment(t *testing.T) {
 	defer cleanup()
 
 	// Create test data
-	user := createTestUser(t, db)
-	epic := createTestEpic(t, db, user)
+	user := createTestUserForComment(t, db)
+	epic := createTestEpicForComment(t, db, user)
 
 	tests := []struct {
 		name           string
@@ -243,8 +243,8 @@ func TestCommentIntegration_GetCommentsByEntity(t *testing.T) {
 	defer cleanup()
 
 	// Create test data
-	user := createTestUser(t, db)
-	epic := createTestEpic(t, db, user)
+	user := createTestUserForComment(t, db)
+	epic := createTestEpicForComment(t, db, user)
 
 	// Create test comments
 	generalComment := &models.Comment{
@@ -371,8 +371,8 @@ func TestCommentIntegration_UpdateComment(t *testing.T) {
 	defer cleanup()
 
 	// Create test data
-	user := createTestUser(t, db)
-	epic := createTestEpic(t, db, user)
+	user := createTestUserForComment(t, db)
+	epic := createTestEpicForComment(t, db, user)
 
 	// Create test comment
 	comment := &models.Comment{
@@ -460,8 +460,8 @@ func TestCommentIntegration_ResolveComment(t *testing.T) {
 	defer cleanup()
 
 	// Create test data
-	user := createTestUser(t, db)
-	epic := createTestEpic(t, db, user)
+	user := createTestUserForComment(t, db)
+	epic := createTestEpicForComment(t, db, user)
 
 	// Create test comment
 	comment := &models.Comment{
@@ -507,8 +507,8 @@ func TestCommentIntegration_DeleteComment(t *testing.T) {
 	defer cleanup()
 
 	// Create test data
-	user := createTestUser(t, db)
-	epic := createTestEpic(t, db, user)
+	user := createTestUserForComment(t, db)
+	epic := createTestEpicForComment(t, db, user)
 
 	// Create test comment
 	comment := &models.Comment{
@@ -543,8 +543,8 @@ func TestCommentIntegration_GetCommentsByStatus(t *testing.T) {
 	defer cleanup()
 
 	// Create test data
-	user := createTestUser(t, db)
-	epic := createTestEpic(t, db, user)
+	user := createTestUserForComment(t, db)
+	epic := createTestEpicForComment(t, db, user)
 
 	// Create resolved comment
 	resolvedComment := &models.Comment{
@@ -631,8 +631,8 @@ func TestCommentIntegration_CommentThreading(t *testing.T) {
 	defer cleanup()
 
 	// Create test data
-	user := createTestUser(t, db)
-	epic := createTestEpic(t, db, user)
+	user := createTestUserForComment(t, db)
+	epic := createTestEpicForComment(t, db, user)
 
 	// Create parent comment
 	parentComment := &models.Comment{
