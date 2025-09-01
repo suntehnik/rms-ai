@@ -166,7 +166,7 @@
   - _Requirements: 7.3_
   - commit, push and make pull request
 
-- [-] 18. Implement hierarchical display and navigation
+- [x] 18. Implement hierarchical display and navigation
   - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Create API endpoints for hierarchical entity listing
@@ -220,7 +220,7 @@
   - _Requirements: System performance and scalability_
   - commit, push and make pull request
 
-- [ ] 23. Security hardening and audit logging
+- [x] 23. Security hardening and audit logging
   - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Implement request rate limiting and security headers
