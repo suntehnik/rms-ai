@@ -7,8 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/repository"
@@ -16,24 +14,16 @@ import (
 )
 
 func TestSearchIntegration_ComprehensiveSearch(t *testing.T) {
-	// Setup test environment
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	require.NoError(t, err)
-
-	// Auto-migrate models
-	err = models.AutoMigrate(db)
-	require.NoError(t, err)
-
-	// Seed default data
-	err = models.SeedDefaultData(db)
-	require.NoError(t, err)
+	// Setup test environment with PostgreSQL
+	testDB := SetupTestDatabase(t)
+	defer testDB.Cleanup(t)
 
 	// Setup repositories
-	repos := repository.NewRepositories(db)
+	repos := repository.NewRepositories(testDB.DB)
 
 	// Setup search service
 	searchService := service.NewSearchService(
-		db,
+		testDB.DB,
 		nil, // No Redis for integration tests
 		repos.Epic,
 		repos.UserStory,
@@ -42,7 +32,7 @@ func TestSearchIntegration_ComprehensiveSearch(t *testing.T) {
 	)
 
 	// Create test user
-	user := createTestUser(t, db)
+	user := testDB.CreateTestUser(t)
 
 	// Create test data
 	epic := &models.Epic{
@@ -54,7 +44,7 @@ func TestSearchIntegration_ComprehensiveSearch(t *testing.T) {
 		Title:       "User Authentication Epic",
 		Description: stringPtr("This epic covers all user authentication features including login, logout, and password reset functionality."),
 	}
-	err = db.Create(epic).Error
+	err := testDB.DB.Create(epic).Error
 	require.NoError(t, err)
 
 	userStory := &models.UserStory{
@@ -67,7 +57,7 @@ func TestSearchIntegration_ComprehensiveSearch(t *testing.T) {
 		Title:       "User Login Feature",
 		Description: stringPtr("As a user, I want to login to the system, so that I can access my account and personal data."),
 	}
-	err = db.Create(userStory).Error
+	err = testDB.DB.Create(userStory).Error
 	require.NoError(t, err)
 
 	ac := &models.AcceptanceCriteria{
@@ -76,12 +66,11 @@ func TestSearchIntegration_ComprehensiveSearch(t *testing.T) {
 		AuthorID:    user.ID,
 		Description: "WHEN user enters valid credentials THEN system SHALL authenticate and redirect to dashboard",
 	}
-	err = db.Create(ac).Error
+	err = testDB.DB.Create(ac).Error
 	require.NoError(t, err)
 
 	// Get a requirement type for the requirement
-	var reqType models.RequirementType
-	err = db.Where("name = ?", "Functional").First(&reqType).Error
+	reqType, err := testDB.GetRequirementType("Functional")
 	require.NoError(t, err)
 
 	requirement := &models.Requirement{
@@ -95,7 +84,7 @@ func TestSearchIntegration_ComprehensiveSearch(t *testing.T) {
 		Title:       "Password Validation Requirement",
 		Description: stringPtr("The system must validate user passwords against security policies including minimum length and complexity requirements."),
 	}
-	err = db.Create(requirement).Error
+	err = testDB.DB.Create(requirement).Error
 	require.NoError(t, err)
 
 	t.Run("search by title", func(t *testing.T) {
