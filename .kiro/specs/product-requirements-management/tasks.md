@@ -150,7 +150,7 @@
   - _Requirements: 5.6_
   - commit, push and make pull request
 
-- [ ] 16. Implement search and filtering system
+- [-] 16. Implement search and filtering system
   - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Create search service with full-text search capabilities

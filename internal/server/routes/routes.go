@@ -25,6 +25,17 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	// Initialize repositories
 	repos := repository.NewRepositories(db.Postgres)
 
+	// Initialize Redis client (optional)
+	var redisClient *database.RedisClient
+	if cfg.Redis.Host != "" {
+		var err error
+		redisClient, err = database.NewRedisClient(&cfg.Redis, logger.Logger)
+		if err != nil {
+			logger.Logger.WithError(err).Warn("Failed to connect to Redis, search caching will be disabled")
+			redisClient = nil
+		}
+	}
+
 	// Initialize services
 	epicService := service.NewEpicService(repos.Epic, repos.User)
 	userStoryService := service.NewUserStoryService(repos.UserStory, repos.Epic, repos.User)
@@ -58,6 +69,28 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 		logger.Logger,
 	)
 	commentService := service.NewCommentService(repos)
+	
+	// Initialize search service
+	var searchService *service.SearchService
+	if redisClient != nil {
+		searchService = service.NewSearchService(
+			db.Postgres,
+			redisClient.Client,
+			repos.Epic,
+			repos.UserStory,
+			repos.AcceptanceCriteria,
+			repos.Requirement,
+		)
+	} else {
+		searchService = service.NewSearchService(
+			db.Postgres,
+			nil,
+			repos.Epic,
+			repos.UserStory,
+			repos.AcceptanceCriteria,
+			repos.Requirement,
+		)
+	}
 
 	// Initialize handlers
 	epicHandler := handlers.NewEpicHandler(epicService)
@@ -67,10 +100,14 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	configHandler := handlers.NewConfigHandler(configService)
 	deletionHandler := handlers.NewDeletionHandler(deletionService, logger.Logger)
 	commentHandler := handlers.NewCommentHandler(commentService)
+	searchHandler := handlers.NewSearchHandler(searchService, logger.Logger)
 
 	// API v1 routes
 	v1 := router.Group("/api/v1")
 	{
+		// Search routes
+		v1.GET("/search", searchHandler.Search)
+		v1.GET("/search/suggestions", searchHandler.SearchSuggestions)
 		// Epic routes
 		epics := v1.Group("/epics")
 		{
