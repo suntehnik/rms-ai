@@ -6,33 +6,22 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 
-	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/repository"
 	"product-requirements-management/internal/service"
 )
 
 func TestSearchIntegration_BasicFunctionality(t *testing.T) {
-	// Setup test environment
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	require.NoError(t, err)
-
-	// Auto-migrate models
-	err = models.AutoMigrate(db)
-	require.NoError(t, err)
-
-	// Seed default data
-	err = models.SeedDefaultData(db)
-	require.NoError(t, err)
+	// Setup test environment with PostgreSQL
+	testDB := SetupTestDatabase(t)
+	defer testDB.Cleanup(t)
 
 	// Setup repositories
-	repos := repository.NewRepositories(db)
+	repos := repository.NewRepositories(testDB.DB)
 
 	// Setup search service
 	searchService := service.NewSearchService(
-		db,
+		testDB.DB,
 		nil, // No Redis for integration tests
 		repos.Epic,
 		repos.UserStory,
@@ -63,20 +52,16 @@ func TestSearchIntegration_BasicFunctionality(t *testing.T) {
 }
 
 func TestSearchIntegration_CacheInvalidation(t *testing.T) {
-	// Setup test environment
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	require.NoError(t, err)
-
-	// Auto-migrate models
-	err = models.AutoMigrate(db)
-	require.NoError(t, err)
+	// Setup test environment with PostgreSQL
+	testDB := SetupTestDatabase(t)
+	defer testDB.Cleanup(t)
 
 	// Setup repositories
-	repos := repository.NewRepositories(db)
+	repos := repository.NewRepositories(testDB.DB)
 
 	// Setup search service without Redis
 	searchService := service.NewSearchService(
-		db,
+		testDB.DB,
 		nil, // No Redis
 		repos.Epic,
 		repos.UserStory,
@@ -85,29 +70,21 @@ func TestSearchIntegration_CacheInvalidation(t *testing.T) {
 	)
 
 	// Test cache invalidation without Redis (should not fail)
-	err = searchService.InvalidateCache(context.Background())
+	err := searchService.InvalidateCache(context.Background())
 	assert.NoError(t, err)
 }
 
 func TestSearchIntegration_PrepareSearchQuery(t *testing.T) {
-	// Setup test environment
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	require.NoError(t, err)
-
-	// Auto-migrate models
-	err = models.AutoMigrate(db)
-	require.NoError(t, err)
-
-	// Seed default data
-	err = models.SeedDefaultData(db)
-	require.NoError(t, err)
+	// Setup test environment with PostgreSQL
+	testDB := SetupTestDatabase(t)
+	defer testDB.Cleanup(t)
 
 	// Setup repositories
-	repos := repository.NewRepositories(db)
+	repos := repository.NewRepositories(testDB.DB)
 
 	// Setup search service
 	searchService := service.NewSearchService(
-		db,
+		testDB.DB,
 		nil,
 		repos.Epic,
 		repos.UserStory,
@@ -131,20 +108,16 @@ func TestSearchIntegration_PrepareSearchQuery(t *testing.T) {
 }
 
 func TestSearchIntegration_FilterValidation(t *testing.T) {
-	// Setup test environment
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	require.NoError(t, err)
-
-	// Auto-migrate models
-	err = models.AutoMigrate(db)
-	require.NoError(t, err)
+	// Setup test environment with PostgreSQL
+	testDB := SetupTestDatabase(t)
+	defer testDB.Cleanup(t)
 
 	// Setup repositories
-	repos := repository.NewRepositories(db)
+	repos := repository.NewRepositories(testDB.DB)
 
 	// Setup search service
 	searchService := service.NewSearchService(
-		db,
+		testDB.DB,
 		nil,
 		repos.Epic,
 		repos.UserStory,

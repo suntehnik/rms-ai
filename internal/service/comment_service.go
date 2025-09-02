@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/repository"
@@ -110,7 +109,7 @@ func (s *commentService) CreateComment(req CreateCommentRequest) (*CommentRespon
 
 	// Validate author exists
 	if _, err := s.userRepo.GetByID(req.AuthorID); err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, repository.ErrNotFound) {
 			return nil, ErrCommentAuthorNotFound
 		}
 		return nil, fmt.Errorf("failed to validate author: %w", err)
@@ -120,7 +119,7 @@ func (s *commentService) CreateComment(req CreateCommentRequest) (*CommentRespon
 	if req.ParentCommentID != nil {
 		parentComment, err := s.commentRepo.GetByID(*req.ParentCommentID)
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
+			if errors.Is(err, repository.ErrNotFound) {
 				return nil, ErrParentCommentNotFound
 			}
 			return nil, fmt.Errorf("failed to validate parent comment: %w", err)
@@ -173,7 +172,7 @@ func (s *commentService) CreateComment(req CreateCommentRequest) (*CommentRespon
 func (s *commentService) GetComment(id uuid.UUID) (*CommentResponse, error) {
 	comment, err := s.commentRepo.GetByID(id)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, repository.ErrNotFound) {
 			return nil, ErrCommentNotFound
 		}
 		return nil, fmt.Errorf("failed to get comment: %w", err)
@@ -191,7 +190,7 @@ func (s *commentService) UpdateComment(id uuid.UUID, req UpdateCommentRequest) (
 
 	comment, err := s.commentRepo.GetByID(id)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, repository.ErrNotFound) {
 			return nil, ErrCommentNotFound
 		}
 		return nil, fmt.Errorf("failed to get comment: %w", err)
@@ -211,7 +210,7 @@ func (s *commentService) UpdateComment(id uuid.UUID, req UpdateCommentRequest) (
 func (s *commentService) DeleteComment(id uuid.UUID) error {
 	_, err := s.commentRepo.GetByID(id)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, repository.ErrNotFound) {
 			return ErrCommentNotFound
 		}
 		return fmt.Errorf("failed to get comment: %w", err)
@@ -328,7 +327,7 @@ func (s *commentService) GetInlineComments(entityType models.EntityType, entityI
 func (s *commentService) ResolveComment(id uuid.UUID) (*CommentResponse, error) {
 	comment, err := s.commentRepo.GetByID(id)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, repository.ErrNotFound) {
 			return nil, ErrCommentNotFound
 		}
 		return nil, fmt.Errorf("failed to get comment: %w", err)
@@ -347,7 +346,7 @@ func (s *commentService) ResolveComment(id uuid.UUID) (*CommentResponse, error) 
 func (s *commentService) UnresolveComment(id uuid.UUID) (*CommentResponse, error) {
 	comment, err := s.commentRepo.GetByID(id)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, repository.ErrNotFound) {
 			return nil, ErrCommentNotFound
 		}
 		return nil, fmt.Errorf("failed to get comment: %w", err)

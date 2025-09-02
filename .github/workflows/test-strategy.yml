@@ -1,0 +1,187 @@
+name: Test Strategy - Multi-Level Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Fast unit tests - run on every commit
+  unit-tests:
+    name: Unit Tests (SQLite)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    
+    - name: Install dependencies
+      run: make deps
+    
+    - name: Run unit tests
+      run: make test-unit
+    
+    - name: Generate unit test coverage
+      run: make test-unit-coverage
+    
+    - name: Upload unit test coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage-unit.out
+        flags: unit
+        name: unit-tests
+
+  # Integration tests - run on main branch and PRs
+  integration-tests:
+    name: Integration Tests (PostgreSQL)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    
+    - name: Install dependencies
+      run: make deps
+    
+    - name: Install testcontainers dependencies
+      run: |
+        go get github.com/testcontainers/testcontainers-go
+        go get github.com/testcontainers/testcontainers-go/wait
+    
+    - name: Run integration tests
+      run: make test-integration
+      env:
+        TESTCONTAINERS_RYUK_DISABLED: true
+    
+    - name: Generate integration test coverage
+      run: make test-integration-coverage
+    
+    - name: Upload integration test coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage-integration.out
+        flags: integration
+        name: integration-tests
+
+  # E2E tests - run only on main branch
+  e2e-tests:
+    name: E2E Tests (Full Environment)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    
+    - name: Install dependencies
+      run: make deps
+    
+    - name: Install testcontainers dependencies
+      run: |
+        go get github.com/testcontainers/testcontainers-go
+        go get github.com/testcontainers/testcontainers-go/wait
+    
+    - name: Run E2E tests
+      run: make test-e2e
+      env:
+        TESTCONTAINERS_RYUK_DISABLED: true
+    
+    - name: Upload E2E test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: e2e-test-results
+        path: |
+          *.log
+          test-results/
+
+  # Performance benchmarks - run weekly
+  performance-tests:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || contains(github.event.head_commit.message, '[benchmark]')
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    
+    - name: Install dependencies
+      run: make deps
+    
+    - name: Run performance benchmarks
+      run: make test-bench
+    
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v3
+      with:
+        name: benchmark-results
+        path: |
+          *.bench
+          benchmark-results/
+
+  # Test summary
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    if: always()
+    steps:
+    - name: Test Results Summary
+      run: |
+        echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+        echo "| Test Type | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Unit Tests | ${{ needs.unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Integration Tests | ${{ needs.integration-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ needs.unit-tests.result }}" == "success" && "${{ needs.integration-tests.result }}" == "success" ]]; then
+          echo "✅ All tests passed!" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Some tests failed. Please check the logs." >> $GITHUB_STEP_SUMMARY
+        fi

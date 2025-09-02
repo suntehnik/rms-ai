@@ -92,6 +92,16 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 		)
 	}
 
+	// Initialize navigation service
+	navigationService := service.NewNavigationService(
+		repos.Epic,
+		repos.UserStory,
+		repos.AcceptanceCriteria,
+		repos.Requirement,
+		repos.RequirementRelationship,
+		repos.User,
+	)
+
 	// Initialize handlers
 	epicHandler := handlers.NewEpicHandler(epicService)
 	userStoryHandler := handlers.NewUserStoryHandler(userStoryService)
@@ -101,6 +111,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	deletionHandler := handlers.NewDeletionHandler(deletionService, logger.Logger)
 	commentHandler := handlers.NewCommentHandler(commentService)
 	searchHandler := handlers.NewSearchHandler(searchService, logger.Logger)
+	navigationHandler := handlers.NewNavigationHandler(navigationService)
 
 	// API v1 routes
 	v1 := router.Group("/api/v1")
@@ -108,6 +119,15 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 		// Search routes
 		v1.GET("/search", searchHandler.Search)
 		v1.GET("/search/suggestions", searchHandler.SearchSuggestions)
+
+		// Hierarchy and navigation routes
+		hierarchy := v1.Group("/hierarchy")
+		{
+			hierarchy.GET("", navigationHandler.GetHierarchy)
+			hierarchy.GET("/epics/:id", navigationHandler.GetEpicHierarchy)
+			hierarchy.GET("/user-stories/:id", navigationHandler.GetUserStoryHierarchy)
+			hierarchy.GET("/path/:entity_type/:id", navigationHandler.GetEntityPath)
+		}
 		// Epic routes
 		epics := v1.Group("/epics")
 		{
