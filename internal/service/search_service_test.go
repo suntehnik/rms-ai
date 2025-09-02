@@ -209,3 +209,117 @@ func TestSearchResponse_Structure(t *testing.T) {
 	assert.Equal(t, "test", response.Query)
 	assert.NotZero(t, response.ExecutedAt)
 }
+
+func TestSearchService_validateSearchOptions(t *testing.T) {
+	service := &SearchService{}
+
+	tests := []struct {
+		name        string
+		options     SearchOptions
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name: "valid options",
+			options: SearchOptions{
+				Query:     "test",
+				Limit:     50,
+				Offset:    0,
+				SortBy:    "created_at",
+				SortOrder: "desc",
+			},
+			expectError: false,
+		},
+		{
+			name: "negative limit",
+			options: SearchOptions{
+				Limit: -1,
+			},
+			expectError: true,
+			errorMsg:    "limit must be non-negative",
+		},
+		{
+			name: "limit too high",
+			options: SearchOptions{
+				Limit: 101,
+			},
+			expectError: true,
+			errorMsg:    "limit must not exceed 100",
+		},
+		{
+			name: "negative offset",
+			options: SearchOptions{
+				Offset: -1,
+			},
+			expectError: true,
+			errorMsg:    "offset must be non-negative",
+		},
+		{
+			name: "invalid sort order",
+			options: SearchOptions{
+				SortOrder: "invalid",
+			},
+			expectError: true,
+			errorMsg:    "sort_order must be 'asc' or 'desc'",
+		},
+		{
+			name: "invalid sort by",
+			options: SearchOptions{
+				SortBy: "invalid_field",
+			},
+			expectError: true,
+			errorMsg:    "invalid sort_by field",
+		},
+		{
+			name: "empty sort order is valid",
+			options: SearchOptions{
+				SortOrder: "",
+			},
+			expectError: false,
+		},
+		{
+			name: "empty sort by is valid",
+			options: SearchOptions{
+				SortBy: "",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid sort fields",
+			options: SearchOptions{
+				SortBy:    "priority",
+				SortOrder: "asc",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid sort fields - last_modified",
+			options: SearchOptions{
+				SortBy:    "last_modified",
+				SortOrder: "desc",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid sort fields - title",
+			options: SearchOptions{
+				SortBy:    "title",
+				SortOrder: "asc",
+			},
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := service.validateSearchOptions(tt.options)
+			
+			if tt.expectError {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errorMsg)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

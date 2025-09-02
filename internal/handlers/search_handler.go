@@ -128,7 +128,13 @@ func (h *SearchHandler) parseSearchOptions(c *gin.Context) (service.SearchOption
 	if limitStr := c.Query("limit"); limitStr != "" {
 		limit, err := strconv.Atoi(limitStr)
 		if err != nil {
-			return options, err
+			return options, fmt.Errorf("invalid limit parameter: %s", err.Error())
+		}
+		if limit < 0 {
+			return options, fmt.Errorf("limit must be non-negative, got: %d", limit)
+		}
+		if limit > 100 {
+			return options, fmt.Errorf("limit must not exceed 100, got: %d", limit)
 		}
 		options.Limit = limit
 	} else {
@@ -139,7 +145,10 @@ func (h *SearchHandler) parseSearchOptions(c *gin.Context) (service.SearchOption
 	if offsetStr := c.Query("offset"); offsetStr != "" {
 		offset, err := strconv.Atoi(offsetStr)
 		if err != nil {
-			return options, err
+			return options, fmt.Errorf("invalid offset parameter: %s", err.Error())
+		}
+		if offset < 0 {
+			return options, fmt.Errorf("offset must be non-negative, got: %d", offset)
 		}
 		options.Offset = offset
 	}
@@ -151,7 +160,7 @@ func (h *SearchHandler) parseSearchOptions(c *gin.Context) (service.SearchOption
 	if creatorIDStr := c.Query("creator_id"); creatorIDStr != "" {
 		creatorID, err := uuid.Parse(creatorIDStr)
 		if err != nil {
-			return options, err
+			return options, fmt.Errorf("invalid creator_id UUID format: %s", err.Error())
 		}
 		filters.CreatorID = &creatorID
 	}
@@ -159,7 +168,7 @@ func (h *SearchHandler) parseSearchOptions(c *gin.Context) (service.SearchOption
 	if assigneeIDStr := c.Query("assignee_id"); assigneeIDStr != "" {
 		assigneeID, err := uuid.Parse(assigneeIDStr)
 		if err != nil {
-			return options, err
+			return options, fmt.Errorf("invalid assignee_id UUID format: %s", err.Error())
 		}
 		filters.AssigneeID = &assigneeID
 	}
@@ -167,7 +176,7 @@ func (h *SearchHandler) parseSearchOptions(c *gin.Context) (service.SearchOption
 	if epicIDStr := c.Query("epic_id"); epicIDStr != "" {
 		epicID, err := uuid.Parse(epicIDStr)
 		if err != nil {
-			return options, err
+			return options, fmt.Errorf("invalid epic_id UUID format: %s", err.Error())
 		}
 		filters.EpicID = &epicID
 	}
@@ -175,7 +184,7 @@ func (h *SearchHandler) parseSearchOptions(c *gin.Context) (service.SearchOption
 	if userStoryIDStr := c.Query("user_story_id"); userStoryIDStr != "" {
 		userStoryID, err := uuid.Parse(userStoryIDStr)
 		if err != nil {
-			return options, err
+			return options, fmt.Errorf("invalid user_story_id UUID format: %s", err.Error())
 		}
 		filters.UserStoryID = &userStoryID
 	}
@@ -183,7 +192,7 @@ func (h *SearchHandler) parseSearchOptions(c *gin.Context) (service.SearchOption
 	if acIDStr := c.Query("acceptance_criteria_id"); acIDStr != "" {
 		acID, err := uuid.Parse(acIDStr)
 		if err != nil {
-			return options, err
+			return options, fmt.Errorf("invalid acceptance_criteria_id UUID format: %s", err.Error())
 		}
 		filters.AcceptanceCriteriaID = &acID
 	}
@@ -191,7 +200,7 @@ func (h *SearchHandler) parseSearchOptions(c *gin.Context) (service.SearchOption
 	if reqTypeIDStr := c.Query("requirement_type_id"); reqTypeIDStr != "" {
 		reqTypeID, err := uuid.Parse(reqTypeIDStr)
 		if err != nil {
-			return options, err
+			return options, fmt.Errorf("invalid requirement_type_id UUID format: %s", err.Error())
 		}
 		filters.RequirementTypeID = &reqTypeID
 	}
@@ -199,7 +208,7 @@ func (h *SearchHandler) parseSearchOptions(c *gin.Context) (service.SearchOption
 	if authorIDStr := c.Query("author_id"); authorIDStr != "" {
 		authorID, err := uuid.Parse(authorIDStr)
 		if err != nil {
-			return options, err
+			return options, fmt.Errorf("invalid author_id UUID format: %s", err.Error())
 		}
 		filters.AuthorID = &authorID
 	}
@@ -225,7 +234,7 @@ func (h *SearchHandler) parseSearchOptions(c *gin.Context) (service.SearchOption
 	if createdFromStr := c.Query("created_from"); createdFromStr != "" {
 		createdFrom, err := time.Parse(time.RFC3339, createdFromStr)
 		if err != nil {
-			return options, err
+			return options, fmt.Errorf("invalid created_from date format, expected RFC3339: %s", err.Error())
 		}
 		filters.CreatedFrom = &createdFrom
 	}
@@ -233,7 +242,7 @@ func (h *SearchHandler) parseSearchOptions(c *gin.Context) (service.SearchOption
 	if createdToStr := c.Query("created_to"); createdToStr != "" {
 		createdTo, err := time.Parse(time.RFC3339, createdToStr)
 		if err != nil {
-			return options, err
+			return options, fmt.Errorf("invalid created_to date format, expected RFC3339: %s", err.Error())
 		}
 		filters.CreatedTo = &createdTo
 	}

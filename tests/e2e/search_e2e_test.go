@@ -195,7 +195,7 @@ func TestSearchE2E(t *testing.T) {
 				{"invalid_offset", "/api/v1/search?query=test&offset=-1", http.StatusBadRequest},
 				{"invalid_priority", "/api/v1/search?query=test&priority=999", http.StatusBadRequest},
 				{"invalid_uuid", "/api/v1/search?query=test&creator_id=invalid-uuid", http.StatusBadRequest},
-				{"invalid_date", "/api/v1/search?query=test&created_after=invalid-date", http.StatusBadRequest},
+				{"invalid_date", "/api/v1/search?query=test&created_from=invalid-date", http.StatusBadRequest},
 			}
 
 			for _, tc := range testCases {

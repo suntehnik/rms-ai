@@ -103,8 +103,47 @@ func safeStringValue(ptr *string) string {
 	return *ptr
 }
 
+// validateSearchOptions validates the search options
+func (s *SearchService) validateSearchOptions(options SearchOptions) error {
+	// Validate limit
+	if options.Limit < 0 {
+		return fmt.Errorf("limit must be non-negative, got: %d", options.Limit)
+	}
+	if options.Limit > 100 {
+		return fmt.Errorf("limit must not exceed 100, got: %d", options.Limit)
+	}
+
+	// Validate offset
+	if options.Offset < 0 {
+		return fmt.Errorf("offset must be non-negative, got: %d", options.Offset)
+	}
+
+	// Validate sort order
+	if options.SortOrder != "" && options.SortOrder != "asc" && options.SortOrder != "desc" {
+		return fmt.Errorf("sort_order must be 'asc' or 'desc', got: %s", options.SortOrder)
+	}
+
+	// Validate sort by
+	validSortFields := map[string]bool{
+		"priority":      true,
+		"created_at":    true,
+		"last_modified": true,
+		"title":         true,
+	}
+	if options.SortBy != "" && !validSortFields[options.SortBy] {
+		return fmt.Errorf("invalid sort_by field: %s", options.SortBy)
+	}
+
+	return nil
+}
+
 // Search performs full-text search across all entities with filtering and caching
 func (s *SearchService) Search(ctx context.Context, options SearchOptions) (*SearchResponse, error) {
+	// Validate input parameters
+	if err := s.validateSearchOptions(options); err != nil {
+		return nil, fmt.Errorf("invalid search options: %w", err)
+	}
+
 	// Generate cache key
 	cacheKey := s.generateCacheKey(options)
 	
@@ -211,7 +250,12 @@ func (s *SearchService) performFullTextSearch(ctx context.Context, options Searc
 	total = int64(len(results))
 	start := options.Offset
 	end := start + options.Limit
-	if start > len(results) {
+	
+	// Ensure safe pagination bounds
+	if start < 0 {
+		start = 0
+	}
+	if start >= len(results) {
 		results = []SearchResult{}
 	} else if end > len(results) {
 		results = results[start:]
@@ -262,7 +306,12 @@ func (s *SearchService) performFilterSearch(ctx context.Context, options SearchO
 	total = int64(len(results))
 	start := options.Offset
 	end := start + options.Limit
-	if start > len(results) {
+	
+	// Ensure safe pagination bounds
+	if start < 0 {
+		start = 0
+	}
+	if start >= len(results) {
 		results = []SearchResult{}
 	} else if end > len(results) {
 		results = results[start:]

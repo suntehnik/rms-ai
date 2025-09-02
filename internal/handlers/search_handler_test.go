@@ -465,3 +465,112 @@ func TestSearchHandler_parseSearchOptions_AllFilters(t *testing.T) {
 	assert.NotNil(t, options.Filters.CreatedFrom)
 	assert.NotNil(t, options.Filters.CreatedTo)
 }
+
+func TestSearchHandler_Search_InvalidLimit(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	mockService := &MockSearchService{}
+	logger := logrus.New()
+	handler := NewSearchHandler(mockService, logger)
+
+	testCases := []struct {
+		name        string
+		limit       string
+		expectError bool
+	}{
+		{"negative_limit", "-1", true},
+		{"zero_limit", "0", false}, // Zero is valid, will be set to default
+		{"valid_limit", "25", false},
+		{"max_limit", "100", false},
+		{"over_max_limit", "101", true},
+		{"invalid_format", "abc", true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
+
+			req := httptest.NewRequest("GET", "/api/search?limit="+tc.limit, nil)
+			c.Request = req
+			c.Set("correlation_id", "test-correlation-id")
+
+			if !tc.expectError {
+				mockService.On("Search", mock.Anything, mock.Anything).Return(&service.SearchResponse{
+					Results:    []service.SearchResult{},
+					Total:      0,
+					Limit:      50,
+					Offset:     0,
+					Query:      "",
+					ExecutedAt: time.Now(),
+				}, nil).Once()
+			}
+
+			handler.Search(c)
+
+			if tc.expectError {
+				assert.Equal(t, http.StatusBadRequest, w.Code)
+				var response ErrorResponse
+				err := json.Unmarshal(w.Body.Bytes(), &response)
+				assert.NoError(t, err)
+				assert.Equal(t, "INVALID_SEARCH_OPTIONS", response.Error.Code)
+			} else {
+				assert.Equal(t, http.StatusOK, w.Code)
+			}
+		})
+	}
+}
+
+func TestSearchHandler_Search_InvalidOffset(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	mockService := &MockSearchService{}
+	logger := logrus.New()
+	handler := NewSearchHandler(mockService, logger)
+
+	testCases := []struct {
+		name        string
+		offset      string
+		expectError bool
+	}{
+		{"negative_offset", "-1", true},
+		{"zero_offset", "0", false},
+		{"valid_offset", "10", false},
+		{"large_offset", "1000", false},
+		{"invalid_format", "xyz", true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
+
+			req := httptest.NewRequest("GET", "/api/search?offset="+tc.offset, nil)
+			c.Request = req
+			c.Set("correlation_id", "test-correlation-id")
+
+			if !tc.expectError {
+				mockService.On("Search", mock.Anything, mock.Anything).Return(&service.SearchResponse{
+					Results:    []service.SearchResult{},
+					Total:      0,
+					Limit:      50,
+					Offset:     0,
+					Query:      "",
+					ExecutedAt: time.Now(),
+				}, nil).Once()
+			}
+
+			handler.Search(c)
+
+			if tc.expectError {
+				assert.Equal(t, http.StatusBadRequest, w.Code)
+				var response ErrorResponse
+				err := json.Unmarshal(w.Body.Bytes(), &response)
+				assert.NoError(t, err)
+				assert.Equal(t, "INVALID_SEARCH_OPTIONS", response.Error.Code)
+			} else {
+				assert.Equal(t, http.StatusOK, w.Code)
+			}
+		})
+	}
+}
