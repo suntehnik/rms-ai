@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -56,7 +57,42 @@ func (e *Epic) BeforeCreate(tx *gorm.DB) error {
 	if e.Status == "" {
 		e.Status = EpicStatusBacklog
 	}
-	// ReferenceID is handled by database default with sequence
+	
+	// Generate reference ID if not set
+	if e.ReferenceID == "" {
+		// Check if we're using PostgreSQL for advisory locks
+		if tx.Dialector.Name() == "postgres" {
+			// Use PostgreSQL advisory lock for atomic reference ID generation
+			// Lock key: fixed value for epic reference ID generation
+			lockKey := int64(2147483647) // Fixed key for epic reference ID generation
+			
+			// Acquire advisory lock (automatically released at transaction end)
+			var lockAcquired bool
+			if err := tx.Raw("SELECT pg_try_advisory_xact_lock(?)", lockKey).Scan(&lockAcquired).Error; err != nil {
+				return fmt.Errorf("failed to acquire advisory lock: %w", err)
+			}
+			
+			if !lockAcquired {
+				// If lock not acquired, fall back to UUID-based ID
+				e.ReferenceID = fmt.Sprintf("EP-%s", uuid.New().String()[:8])
+			} else {
+				// Lock acquired, safely generate sequential reference ID
+				var count int64
+				if err := tx.Model(&Epic{}).Count(&count).Error; err != nil {
+					return fmt.Errorf("failed to count epics: %w", err)
+				}
+				e.ReferenceID = fmt.Sprintf("EP-%03d", count+1)
+			}
+		} else {
+			// For non-PostgreSQL databases (like SQLite in tests), use simple count method
+			var count int64
+			if err := tx.Model(&Epic{}).Count(&count).Error; err != nil {
+				return fmt.Errorf("failed to count epics: %w", err)
+			}
+			e.ReferenceID = fmt.Sprintf("EP-%03d", count+1)
+		}
+	}
+	
 	return nil
 }
 
