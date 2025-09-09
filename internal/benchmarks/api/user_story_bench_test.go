@@ -293,7 +293,8 @@ func BenchmarkUserStoryStatusTransition(b *testing.B) {
 				"status": statuses[i%len(statuses)],
 			}
 
-			resp, err := client.PATCH(fmt.Sprintf("/api/v1/user-stories/%s/status", userStoryIDs[i]), statusReq)
+			userStoryID := userStoryIDs[i%len(userStoryIDs)]
+			resp, err := client.PATCH(fmt.Sprintf("/api/v1/user-stories/%s/status", userStoryID), statusReq)
 			require.NoError(b, err)
 			require.Equal(b, http.StatusOK, resp.StatusCode)
 			resp.Body.Close()
@@ -360,7 +361,8 @@ func BenchmarkUserStoryAssignment(b *testing.B) {
 				"assignee_id": assigneeID,
 			}
 
-			resp, err := client.PATCH(fmt.Sprintf("/api/v1/user-stories/%s/assign", userStoryIDs[i]), assignReq)
+			userStoryID := userStoryIDs[i%len(userStoryIDs)]
+			resp, err := client.PATCH(fmt.Sprintf("/api/v1/user-stories/%s/assign", userStoryID), assignReq)
 			require.NoError(b, err)
 			require.Equal(b, http.StatusOK, resp.StatusCode)
 			resp.Body.Close()
