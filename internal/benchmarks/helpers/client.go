@@ -91,6 +91,23 @@ func (bc *BenchmarkClient) DELETE(path string) (*http.Response, error) {
 	return bc.Client.Do(req)
 }
 
+// PATCH performs a PATCH request with JSON body
+func (bc *BenchmarkClient) PATCH(path string, body interface{}) (*http.Response, error) {
+	jsonBody, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+	}
+
+	req, err := http.NewRequest("PATCH", bc.BaseURL+path, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create PATCH request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	bc.addAuthHeader(req)
+	return bc.Client.Do(req)
+}
+
 // addAuthHeader adds the JWT token to the request if available
 func (bc *BenchmarkClient) addAuthHeader(req *http.Request) {
 	bc.mu.RLock()
@@ -174,6 +191,8 @@ func (bc *BenchmarkClient) executeRequest(req Request) (*http.Response, error) {
 		return bc.POST(req.Path, req.Body)
 	case "PUT":
 		return bc.PUT(req.Path, req.Body)
+	case "PATCH":
+		return bc.PATCH(req.Path, req.Body)
 	case "DELETE":
 		return bc.DELETE(req.Path)
 	default:
