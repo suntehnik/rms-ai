@@ -49,8 +49,8 @@ func NewBenchmarkSuite(b *testing.B) *BenchmarkSuite {
 		b.Fatalf("Failed to authenticate benchmark client: %v", err)
 	}
 
-	// Create metrics collector
-	metrics := helpers.NewMetricsCollector()
+	// Create metrics collector with database monitoring
+	metrics := helpers.NewMetricsCollector(server.DB)
 
 	// Create data generator
 	dataGen := setup.NewDataGenerator(server.DB)
