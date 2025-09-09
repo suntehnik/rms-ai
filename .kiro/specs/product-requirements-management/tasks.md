@@ -265,22 +265,8 @@
   - Ensure E2E tests pass with proper error responses
   - _Requirements: Critical bug fix identified by E2E tests - search service crashes on invalid input_
   - commit, push and make pull request
-
-- [ ] 27. **HIGH PRIORITY: Fix Epic reference ID generation causing E2E test failures**
-  - Pull changes from remote and switch to main branch
-  - Create a git branch for feature
-  - Fix Epic model BeforeCreate hook to generate reference IDs using application-level logic
-  - Add proper reference ID generation using database count method (consistent with AcceptanceCriteria and Requirement models)
-  - Add required fmt import to Epic model
-  - Prevent GORM from overriding database default values with empty strings
-  - Update Epic model to generate reference IDs in format "EP-001", "EP-002", etc.
-  - Write unit tests for Epic reference ID generation
-  - Verify E2E cache invalidation test passes after fix
-  - Test concurrent Epic creation scenarios to ensure no race conditions
-  - _Requirements: Critical bug fix - Epic creation fails with duplicate key constraint violation on reference_id_
-  - commit, push and make pull request
-
-- [ ] 28. Advanced observability implementation
+  
+- [-] 28. Advanced observability implementation
   - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Add Prometheus metrics collection for all API endpoints

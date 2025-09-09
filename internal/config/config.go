@@ -8,11 +8,12 @@ import (
 
 // Config holds all configuration for the application
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	Redis    RedisConfig
-	JWT      JWTConfig
-	Log      LogConfig
+	Server        ServerConfig
+	Database      DatabaseConfig
+	Redis         RedisConfig
+	JWT           JWTConfig
+	Log           LogConfig
+	Observability ObservabilityConfig
 }
 
 // ServerConfig holds server-related configuration
@@ -50,6 +51,16 @@ type LogConfig struct {
 	Format string // json or text
 }
 
+// ObservabilityConfig holds observability configuration
+type ObservabilityConfig struct {
+	ServiceName     string
+	ServiceVersion  string
+	Environment     string
+	MetricsEnabled  bool
+	TracingEnabled  bool
+	TracingEndpoint string
+}
+
 // Load loads configuration from environment variables with defaults
 func Load() (*Config, error) {
 	cfg := &Config{
@@ -78,6 +89,14 @@ func Load() (*Config, error) {
 			Level:  getEnv("LOG_LEVEL", "info"),
 			Format: getEnv("LOG_FORMAT", "json"),
 		},
+		Observability: ObservabilityConfig{
+			ServiceName:     getEnv("SERVICE_NAME", "product-requirements-management"),
+			ServiceVersion:  getEnv("SERVICE_VERSION", "1.0.0"),
+			Environment:     getEnv("ENVIRONMENT", "development"),
+			MetricsEnabled:  getEnvAsBool("METRICS_ENABLED", true),
+			TracingEnabled:  getEnvAsBool("TRACING_ENABLED", true),
+			TracingEndpoint: getEnv("TRACING_ENDPOINT", "http://localhost:4318/v1/traces"),
+		},
 	}
 
 	// Validate required configuration
@@ -101,6 +120,16 @@ func getEnvAsInt(key string, fallback int) int {
 	if value := os.Getenv(key); value != "" {
 		if intVal, err := strconv.Atoi(value); err == nil {
 			return intVal
+		}
+	}
+	return fallback
+}
+
+// getEnvAsBool gets an environment variable as boolean with a fallback value
+func getEnvAsBool(key string, fallback bool) bool {
+	if value := os.Getenv(key); value != "" {
+		if boolVal, err := strconv.ParseBool(value); err == nil {
+			return boolVal
 		}
 	}
 	return fallback
