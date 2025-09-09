@@ -12,12 +12,10 @@
 package benchmarks
 
 import (
-	"fmt"
 	"testing"
 
 	"product-requirements-management/internal/benchmarks/helpers"
 	"product-requirements-management/internal/benchmarks/setup"
-	"product-requirements-management/internal/models"
 )
 
 // BenchmarkSuite provides a complete benchmark testing environment
@@ -75,28 +73,30 @@ func (bs *BenchmarkSuite) Cleanup() {
 
 // SeedTestData populates the database with test data for benchmarking
 func (bs *BenchmarkSuite) SeedTestData(dataSetName string) error {
-	config, exists := setup.PredefinedDataSets[dataSetName]
-	if !exists {
-		config = setup.PredefinedDataSets["small"] // Default to small dataset
+	var config setup.DataSetConfig
+	
+	switch dataSetName {
+	case "small":
+		config = setup.GetSmallDataSet()
+	case "medium":
+		config = setup.GetMediumDataSet()
+	case "large":
+		config = setup.GetLargeDataSet()
+	default:
+		config = setup.GetSmallDataSet() // Default to small dataset
 	}
 
-	return bs.DataGen.GenerateDataSet(config)
+	return bs.DataGen.GenerateFullDataSet(config)
 }
 
 // ResetDatabase clears all data and re-runs migrations
 func (bs *BenchmarkSuite) ResetDatabase() error {
-	// Clean up existing data
-	if err := bs.DataGen.CleanupData(); err != nil {
-		return err
-	}
+	return bs.DataGen.ResetDatabase()
+}
 
-	// Reset database schema by dropping and recreating tables
-	if err := bs.Server.DB.Exec("DROP SCHEMA public CASCADE; CREATE SCHEMA public;").Error; err != nil {
-		return fmt.Errorf("failed to reset database schema: %w", err)
-	}
-
-	// Re-run migrations
-	return models.AutoMigrate(bs.Server.DB)
+// CleanupTestData removes all test data from the database
+func (bs *BenchmarkSuite) CleanupTestData() error {
+	return bs.DataGen.CleanupDatabase()
 }
 
 // StartMetrics begins collecting performance metrics

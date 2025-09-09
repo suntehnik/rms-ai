@@ -131,9 +131,57 @@ func (bs *BenchmarkServer) Cleanup() {
 
 // SeedData populates the database with test data for benchmarking
 func (bs *BenchmarkServer) SeedData(entityCounts map[string]int) error {
-	// This will be implemented when we create the data generation utilities
-	// For now, just ensure the database is ready
-	return models.AutoMigrate(bs.DB)
+	dataGen := NewDataGenerator(bs.DB)
+	
+	// Convert map to DataSetConfig
+	config := DataSetConfig{
+		Users:              getIntOrDefault(entityCounts, "users", 10),
+		Epics:              getIntOrDefault(entityCounts, "epics", 25),
+		UserStoriesPerEpic: getIntOrDefault(entityCounts, "user_stories_per_epic", 4),
+		RequirementsPerUS:  getIntOrDefault(entityCounts, "requirements_per_us", 3),
+		AcceptanceCriteria: getIntOrDefault(entityCounts, "acceptance_criteria", 50),
+		Comments:           getIntOrDefault(entityCounts, "comments", 100),
+	}
+	
+	return dataGen.GenerateFullDataSet(config)
+}
+
+// SeedSmallDataSet seeds the database with a small dataset for development
+func (bs *BenchmarkServer) SeedSmallDataSet() error {
+	dataGen := NewDataGenerator(bs.DB)
+	return dataGen.GenerateFullDataSet(GetSmallDataSet())
+}
+
+// SeedMediumDataSet seeds the database with a medium dataset for CI/CD
+func (bs *BenchmarkServer) SeedMediumDataSet() error {
+	dataGen := NewDataGenerator(bs.DB)
+	return dataGen.GenerateFullDataSet(GetMediumDataSet())
+}
+
+// SeedLargeDataSet seeds the database with a large dataset for performance analysis
+func (bs *BenchmarkServer) SeedLargeDataSet() error {
+	dataGen := NewDataGenerator(bs.DB)
+	return dataGen.GenerateFullDataSet(GetLargeDataSet())
+}
+
+// CleanupData removes all test data from the database
+func (bs *BenchmarkServer) CleanupData() error {
+	dataGen := NewDataGenerator(bs.DB)
+	return dataGen.CleanupDatabase()
+}
+
+// ResetData drops and recreates all tables, then seeds default data
+func (bs *BenchmarkServer) ResetData() error {
+	dataGen := NewDataGenerator(bs.DB)
+	return dataGen.ResetDatabase()
+}
+
+// getIntOrDefault returns the value from map or default if not found
+func getIntOrDefault(m map[string]int, key string, defaultValue int) int {
+	if val, exists := m[key]; exists {
+		return val
+	}
+	return defaultValue
 }
 
 // setupPostgreSQLContainer creates and starts a PostgreSQL testcontainer

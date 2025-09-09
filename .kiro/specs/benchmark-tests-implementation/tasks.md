@@ -10,7 +10,7 @@
   - Create pull request: `gh pr create --title "feat: Set up benchmark infrastructure and core utilities" --body "Implements benchmark package structure, PostgreSQL testcontainer setup, and HTTP server utilities"`
   - _Requirements: 1.4, 2.2, 3.4_
 
-- [-] 2. Implement HTTP client utilities for API endpoint testing
+- [x] 2. Implement HTTP client utilities for API endpoint testing
   - Create feature branch: `git flow feature start benchmark-http-client`
   - Create BenchmarkClient struct with authenticated HTTP client functionality
   - Implement standard HTTP methods (GET, POST, PUT, DELETE) with error handling
@@ -21,7 +21,7 @@
   - Create pull request: `gh pr create --title "feat: Implement HTTP client utilities for API endpoint testing" --body "Adds BenchmarkClient with HTTP methods, parallel request execution, and authentication helpers"`
   - _Requirements: 1.1, 1.2, 4.4, 5.1_
 
-- [ ] 3. Create test data generation utilities
+- [-] 3. Create test data generation utilities
   - Create feature branch: `git flow feature start benchmark-data-generation`
   - Implement DataGenerator for creating realistic test datasets
   - Create user, epic, user story, and requirement generation functions

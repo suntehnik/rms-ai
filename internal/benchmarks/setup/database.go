@@ -105,7 +105,24 @@ func (dc *DatabaseContainer) ResetDatabase() error {
 	}
 
 	// Re-run migrations
-	return models.AutoMigrate(dc.DB)
+	if err := models.AutoMigrate(dc.DB); err != nil {
+		return fmt.Errorf("failed to run migrations: %w", err)
+	}
+
+	// Seed default data
+	return models.SeedDefaultData(dc.DB)
+}
+
+// SeedTestData populates the database with test data using the data generator
+func (dc *DatabaseContainer) SeedTestData(config DataSetConfig) error {
+	dataGen := NewDataGenerator(dc.DB)
+	return dataGen.GenerateFullDataSet(config)
+}
+
+// CleanupTestData removes all test data from the database
+func (dc *DatabaseContainer) CleanupTestData() error {
+	dataGen := NewDataGenerator(dc.DB)
+	return dataGen.CleanupDatabase()
 }
 
 // GetConnectionString returns the database connection string
