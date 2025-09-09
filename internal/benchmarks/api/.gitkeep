@@ -1,0 +1,8 @@
+# This directory will contain API endpoint benchmark tests
+# Files will be created in subsequent tasks:
+# - epic_bench_test.go
+# - user_story_bench_test.go  
+# - requirement_bench_test.go
+# - acceptance_criteria_bench_test.go
+# - search_bench_test.go
+# - comment_bench_test.go
