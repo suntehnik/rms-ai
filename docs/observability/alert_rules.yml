@@ -1,0 +1,137 @@
+# Alert rules for Product Requirements Management System
+groups:
+  - name: product_requirements_alerts
+    rules:
+      # High error rate alert
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status_code=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          service: product-requirements-management
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors per second for the last 5 minutes"
+
+      # High response time alert
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: product-requirements-management
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is {{ $value }}s"
+
+      # Database connection pool exhaustion
+      - alert: DatabaseConnectionPoolHigh
+        expr: database_connections{state="open"} / database_connections{state="max"} > 0.8
+        for: 2m
+        labels:
+          severity: warning
+          service: product-requirements-management
+        annotations:
+          summary: "Database connection pool usage is high"
+          description: "Database connection pool usage is {{ $value | humanizePercentage }}"
+
+      # Slow database queries
+      - alert: SlowDatabaseQueries
+        expr: histogram_quantile(0.95, rate(database_query_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: product-requirements-management
+        annotations:
+          summary: "Slow database queries detected"
+          description: "95th percentile database query time is {{ $value }}s"
+
+      # Application down
+      - alert: ApplicationDown
+        expr: up{job="product-requirements-management"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: product-requirements-management
+        annotations:
+          summary: "Application is down"
+          description: "Product Requirements Management application has been down for more than 1 minute"
+
+      # Health check failing
+      - alert: HealthCheckFailing
+        expr: up{job="product-requirements-health"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: product-requirements-management
+        annotations:
+          summary: "Health check is failing"
+          description: "Application health check has been failing for more than 2 minutes"
+
+      # High memory usage (if node_exporter is available)
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: product-requirements-management
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value | humanizePercentage }}"
+
+      # High CPU usage (if node_exporter is available)
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: product-requirements-management
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value }}%"
+
+      # Low disk space (if node_exporter is available)
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
+        for: 5m
+        labels:
+          severity: critical
+          service: product-requirements-management
+        annotations:
+          summary: "Low disk space"
+          description: "Disk space usage is {{ $value | humanizePercentage }} on {{ $labels.mountpoint }}"
+
+  - name: business_metrics_alerts
+    rules:
+      # Unusual entity creation rate
+      - alert: UnusualEntityCreationRate
+        expr: rate(entities_created_total[1h]) > 100
+        for: 10m
+        labels:
+          severity: info
+          service: product-requirements-management
+        annotations:
+          summary: "Unusual entity creation rate"
+          description: "Entity creation rate is {{ $value }} per second, which is unusually high"
+
+      # No entity activity
+      - alert: NoEntityActivity
+        expr: rate(entities_created_total[1h]) == 0 and rate(entities_updated_total[1h]) == 0
+        for: 2h
+        labels:
+          severity: info
+          service: product-requirements-management
+        annotations:
+          summary: "No entity activity detected"
+          description: "No entity creation or updates for the last 2 hours"
+
+      # High search failure rate
+      - alert: HighSearchFailureRate
+        expr: rate(http_requests_total{endpoint="/api/search", status_code=~"5.."}[5m]) / rate(http_requests_total{endpoint="/api/search"}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: product-requirements-management
+        annotations:
+          summary: "High search failure rate"
+          description: "Search failure rate is {{ $value | humanizePercentage }}"

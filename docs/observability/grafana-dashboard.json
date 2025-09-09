@@ -1,0 +1,217 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Product Requirements Management System",
+    "tags": ["product-requirements", "go", "api"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "HTTP Request Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{method}} {{endpoint}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "reqps"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "HTTP Response Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "50th percentile"
+          }
+        ],
+        "yAxes": [
+          {
+            "unit": "s"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "HTTP Status Codes",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum by (status_code) (rate(http_requests_total[5m]))",
+            "legendFormat": "{{status_code}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 4,
+        "title": "Database Connections",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "database_connections{state=\"open\"}",
+            "legendFormat": "Open Connections"
+          },
+          {
+            "expr": "database_connections{state=\"idle\"}",
+            "legendFormat": "Idle Connections"
+          },
+          {
+            "expr": "database_connections{state=\"in_use\"}",
+            "legendFormat": "In Use Connections"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 8
+        }
+      },
+      {
+        "id": 5,
+        "title": "Database Query Duration",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(database_query_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(database_query_duration_seconds_bucket[5m]))",
+            "legendFormat": "50th percentile"
+          }
+        ],
+        "yAxes": [
+          {
+            "unit": "s"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 8
+        }
+      },
+      {
+        "id": 6,
+        "title": "Entity Operations",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(entities_created_total[5m])",
+            "legendFormat": "Created - {{entity_type}}"
+          },
+          {
+            "expr": "rate(entities_updated_total[5m])",
+            "legendFormat": "Updated - {{entity_type}}"
+          },
+          {
+            "expr": "rate(entities_deleted_total[5m])",
+            "legendFormat": "Deleted - {{entity_type}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        }
+      },
+      {
+        "id": 7,
+        "title": "Search Performance",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(search_queries_total[5m])",
+            "legendFormat": "Search Rate - {{search_type}}"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(search_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile duration"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        }
+      },
+      {
+        "id": 8,
+        "title": "Application Uptime",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "application_uptime_seconds_total",
+            "legendFormat": "Uptime"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 24
+        }
+      },
+      {
+        "id": 9,
+        "title": "Comments Activity",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(comments_total[5m])",
+            "legendFormat": "{{entity_type}} - {{comment_type}} - {{status}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 18,
+          "x": 6,
+          "y": 24
+        }
+      }
+    ]
+  }
+}

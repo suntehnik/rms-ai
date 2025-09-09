@@ -1,0 +1,88 @@
+# OpenTelemetry Collector Configuration
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  # Prometheus receiver to scrape metrics from the application
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'product-requirements-management'
+          static_configs:
+            - targets: ['host.docker.internal:8080']
+          metrics_path: '/metrics'
+          scrape_interval: 15s
+
+processors:
+  # Batch processor to reduce the number of requests
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    limit_mib: 512
+
+  # Resource processor to add additional attributes
+  resource:
+    attributes:
+      - key: service.name
+        value: product-requirements-management
+        action: upsert
+      - key: service.version
+        value: 1.0.0
+        action: upsert
+      - key: deployment.environment
+        value: development
+        action: upsert
+
+exporters:
+  # Jaeger exporter for traces
+  jaeger:
+    endpoint: jaeger:14250
+    tls:
+      insecure: true
+
+  # Prometheus exporter for metrics
+  prometheus:
+    endpoint: "0.0.0.0:8888"
+    namespace: product_requirements
+    const_labels:
+      service: product-requirements-management
+
+  # OTLP exporter (can be used to send to other OTLP-compatible backends)
+  otlp:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+
+  # Logging exporter for debugging
+  logging:
+    loglevel: info
+
+service:
+  pipelines:
+    # Traces pipeline
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [jaeger, logging]
+
+    # Metrics pipeline
+    metrics:
+      receivers: [otlp, prometheus]
+      processors: [memory_limiter, resource, batch]
+      exporters: [prometheus, logging]
+
+  extensions: []
+
+  telemetry:
+    logs:
+      level: "info"
+    metrics:
+      address: 0.0.0.0:8888

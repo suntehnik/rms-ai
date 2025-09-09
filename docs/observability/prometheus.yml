@@ -1,0 +1,66 @@
+# Prometheus configuration for Product Requirements Management System
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  - "alert_rules.yml"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'product-requirements-management'
+    static_configs:
+      - targets: ['localhost:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    
+    # Optional: Add custom labels
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'product-requirements-api'
+      - source_labels: [__address__]
+        target_label: environment
+        replacement: 'development'
+
+  # Health check monitoring
+  - job_name: 'product-requirements-health'
+    static_configs:
+      - targets: ['localhost:8080']
+    metrics_path: '/health/ready'
+    scrape_interval: 30s
+    scrape_timeout: 5s
+    
+    # Custom metric for health status
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        target_label: __name__
+        replacement: 'health_check_up'
+
+  # PostgreSQL monitoring (if using postgres_exporter)
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['localhost:9187']
+    scrape_interval: 30s
+
+  # Redis monitoring (if using redis_exporter)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['localhost:9121']
+    scrape_interval: 30s
+
+  # Node exporter for system metrics
+  - job_name: 'node'
+    static_configs:
+      - targets: ['localhost:9100']
+    scrape_interval: 30s

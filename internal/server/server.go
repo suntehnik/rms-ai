@@ -9,6 +9,9 @@ import (
 	"product-requirements-management/internal/config"
 	"product-requirements-management/internal/database"
 	"product-requirements-management/internal/logger"
+	"product-requirements-management/internal/observability"
+	"product-requirements-management/internal/observability/health"
+	obsMiddleware "product-requirements-management/internal/observability/middleware"
 	"product-requirements-management/internal/server/middleware"
 	"product-requirements-management/internal/server/routes"
 	"syscall"
@@ -19,13 +22,17 @@ import (
 
 // Server represents the HTTP server
 type Server struct {
-	config *config.Config
-	router *gin.Engine
-	db     *database.DB
+	config        *config.Config
+	router        *gin.Engine
+	db            *database.DB
+	observability *observability.Observability
+	startTime     time.Time
 }
 
 // New creates a new server instance
 func New(cfg *config.Config) (*Server, error) {
+	startTime := time.Now()
+
 	// Initialize logger
 	logger.Init(&cfg.Log)
 
@@ -33,6 +40,22 @@ func New(cfg *config.Config) (*Server, error) {
 	db, err := database.Initialize(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
+	}
+
+	// Initialize observability
+	ctx := context.Background()
+	obsConfig := observability.Config{
+		ServiceName:     cfg.Observability.ServiceName,
+		ServiceVersion:  cfg.Observability.ServiceVersion,
+		Environment:     cfg.Observability.Environment,
+		MetricsEnabled:  cfg.Observability.MetricsEnabled,
+		TracingEnabled:  cfg.Observability.TracingEnabled,
+		TracingEndpoint: cfg.Observability.TracingEndpoint,
+	}
+
+	obs, err := observability.Init(ctx, obsConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize observability: %w", err)
 	}
 
 	// Set Gin mode based on log level
@@ -45,18 +68,45 @@ func New(cfg *config.Config) (*Server, error) {
 	// Create Gin router
 	router := gin.New()
 
-	// Add middleware
-	router.Use(middleware.Logger())
+	// Add core middleware
 	router.Use(middleware.Recovery())
 	router.Use(middleware.CORS())
 
-	// Setup routes with database connection
+	// Add observability middleware
+	if obs.Metrics != nil || obs.Tracer != nil {
+		router.Use(obsMiddleware.ObservabilityMiddleware(obs.Metrics, obs.Tracer))
+	} else {
+		// Fallback to basic logger if observability is disabled
+		router.Use(middleware.Logger())
+	}
+
+	// Setup database observability plugin
+	if obs.Metrics != nil || obs.Tracer != nil {
+		dbPlugin := obsMiddleware.NewDatabaseMetricsPlugin(obs.Metrics, obs.Tracer)
+		if err := db.Postgres.Use(dbPlugin); err != nil {
+			logger.Warnf("Failed to register database metrics plugin: %v", err)
+		}
+	}
+
+	// Setup health check routes
+	healthChecker := health.NewHealthChecker(db, obs.Metrics)
+	healthChecker.SetupHealthRoutes(router)
+
+	// Setup metrics endpoint
+	obs.SetupMetricsEndpoint(router)
+
+	// Setup application routes
 	routes.Setup(router, cfg, db)
 
+	// Start uptime recording
+	obs.StartUptimeRecording(ctx, startTime)
+
 	return &Server{
-		config: cfg,
-		router: router,
-		db:     db,
+		config:        cfg,
+		router:        router,
+		db:            db,
+		observability: obs,
+		startTime:     startTime,
 	}, nil
 }
 
@@ -95,6 +145,13 @@ func (s *Server) Start() error {
 			s.db.Close()
 		}
 		return err
+	}
+
+	// Shutdown observability
+	if s.observability != nil {
+		if err := s.observability.Shutdown(ctx); err != nil {
+			logger.Errorf("Failed to shutdown observability: %v", err)
+		}
 	}
 
 	// Close database connections
