@@ -13,7 +13,9 @@ import (
 	"gorm.io/gorm"
 
 	"product-requirements-management/internal/config"
+	"product-requirements-management/internal/database"
 	"product-requirements-management/internal/models"
+	"product-requirements-management/internal/server/routes"
 )
 
 // BenchmarkServer manages HTTP server instances for benchmark testing
@@ -65,24 +67,25 @@ func NewBenchmarkServer(b *testing.B) *BenchmarkServer {
 	// Set up Gin in release mode for benchmarks
 	gin.SetMode(gin.ReleaseMode)
 
-	// Create a simple HTTP server for benchmarks
+	// Create a router with full application routes
 	router := gin.New()
 	router.Use(gin.Recovery())
-	
-	// Add a basic health endpoint
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
-	})
 
-	// TODO: Add actual API routes when implementing specific benchmark tests
+	// Setup application routes with the benchmark database
+	dbWrapper := &database.DB{
+		Postgres: db,
+	}
+	routes.Setup(router, cfg, dbWrapper)
 	
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port),
 		Handler: router,
 	}
 
-	// Get the actual port assigned by the system (for now use a fixed port for simplicity)
-	baseURL := "http://localhost:8080"
+	// Use a fixed port for benchmarks
+	cfg.Server.Port = "8081" // Use 8081 to avoid conflicts with development server
+	httpServer.Addr = fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
+	baseURL := "http://localhost:8081"
 
 	return &BenchmarkServer{
 		Server:    httpServer,
@@ -95,15 +98,28 @@ func NewBenchmarkServer(b *testing.B) *BenchmarkServer {
 
 // Start starts the benchmark server
 func (bs *BenchmarkServer) Start() error {
+	// Start server in a goroutine
 	go func() {
 		if err := bs.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			panic(fmt.Sprintf("Failed to start benchmark server: %v", err))
+			// Don't panic in benchmarks, just log the error
+			fmt.Printf("Server error: %v\n", err)
 		}
 	}()
 
-	// Wait for server to be ready
-	time.Sleep(100 * time.Millisecond)
-	return nil
+	// Wait for server to be ready with a health check
+	for i := 0; i < 50; i++ { // Try for 5 seconds
+		resp, err := http.Get(bs.BaseURL + "/health")
+		if err == nil && resp.StatusCode == 200 {
+			resp.Body.Close()
+			return nil
+		}
+		if resp != nil {
+			resp.Body.Close()
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	
+	return fmt.Errorf("server failed to start within timeout")
 }
 
 // Cleanup stops the server and cleans up resources

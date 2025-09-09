@@ -32,7 +32,7 @@
   - Create pull request: `gh pr create --title "feat: Create test data generation utilities" --body "Implements DataGenerator with entity creation, bulk insertion, and cleanup functions"`
   - _Requirements: 2.4, 4.2, 5.2_
 
-- [-] 4. Implement performance metrics collection system
+- [x] 4. Implement performance metrics collection system
   - Create feature branch: `git checkout -b  benchmark-metrics-collection`
   - Create MetricsCollector for tracking memory allocation and performance stats
   - Add database connection pool monitoring capabilities
@@ -43,7 +43,7 @@
   - Create pull request
   - _Requirements: 1.3, 1.5, 2.5_
 
-- [ ] 5. Create Epic API endpoint benchmarks
+- [-] 5. Create Epic API endpoint benchmarks
   - Create feature branch: `git checkout -b  benchmark-epic-api`
   - Implement Epic CRUD operation benchmarks via HTTP endpoints
   - Add Epic listing and filtering performance tests
