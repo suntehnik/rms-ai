@@ -12,11 +12,12 @@
 package benchmarks
 
 import (
-	"context"
+	"fmt"
 	"testing"
 
 	"product-requirements-management/internal/benchmarks/helpers"
 	"product-requirements-management/internal/benchmarks/setup"
+	"product-requirements-management/internal/models"
 )
 
 // BenchmarkSuite provides a complete benchmark testing environment
@@ -89,14 +90,13 @@ func (bs *BenchmarkSuite) ResetDatabase() error {
 		return err
 	}
 
-	// Reset database schema
-	ctx := context.Background()
-	container := &setup.DatabaseContainer{
-		Container: bs.Server.Container,
-		DB:        bs.Server.DB,
+	// Reset database schema by dropping and recreating tables
+	if err := bs.Server.DB.Exec("DROP SCHEMA public CASCADE; CREATE SCHEMA public;").Error; err != nil {
+		return fmt.Errorf("failed to reset database schema: %w", err)
 	}
-	
-	return container.ResetDatabase()
+
+	// Re-run migrations
+	return models.AutoMigrate(bs.Server.DB)
 }
 
 // StartMetrics begins collecting performance metrics

@@ -13,8 +13,7 @@ import (
 	"gorm.io/gorm"
 
 	"product-requirements-management/internal/config"
-	"product-requirements-management/internal/database"
-	"product-requirements-management/internal/server"
+	"product-requirements-management/internal/models"
 )
 
 // BenchmarkServer manages HTTP server instances for benchmark testing
@@ -36,33 +35,54 @@ func NewBenchmarkServer(b *testing.B) *BenchmarkServer {
 		b.Fatalf("Failed to setup PostgreSQL container: %v", err)
 	}
 
+	// Run migrations on the test database
+	if err := models.AutoMigrate(db); err != nil {
+		container.Terminate(ctx)
+		b.Fatalf("Failed to run migrations: %v", err)
+	}
+
+	// Seed default data
+	if err := models.SeedDefaultData(db); err != nil {
+		container.Terminate(ctx)
+		b.Fatalf("Failed to seed default data: %v", err)
+	}
+
 	// Create configuration for benchmark
 	cfg := &config.Config{
 		Server: config.ServerConfig{
 			Host: "localhost",
 			Port: "0", // Let the system assign a free port
 		},
-		Database: config.DatabaseConfig{
-			Host:     "localhost",
-			Port:     "5432", // Will be overridden by container port
-			Database: "benchmark_test",
-			Username: "benchmark_user",
-			Password: "benchmark_pass",
-		},
 		JWT: config.JWTConfig{
 			Secret: "benchmark-test-secret-key-for-testing-only",
 		},
-		LogLevel: "error", // Reduce logging noise during benchmarks
+		Log: config.LogConfig{
+			Level:  "error", // Reduce logging noise during benchmarks
+			Format: "json",
+		},
 	}
 
 	// Set up Gin in release mode for benchmarks
 	gin.SetMode(gin.ReleaseMode)
 
-	// Create HTTP server
-	httpServer := server.NewServer(cfg, db)
+	// Create a simple HTTP server for benchmarks
+	router := gin.New()
+	router.Use(gin.Recovery())
+	
+	// Add a basic health endpoint
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
 
-	// Get the actual port assigned by the system
-	baseURL := fmt.Sprintf("http://localhost:%s", cfg.Server.Port)
+	// TODO: Add actual API routes when implementing specific benchmark tests
+	
+	httpServer := &http.Server{
+		Addr:    fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port),
+		Handler: router,
+	}
+
+	// Get the actual port assigned by the system (for now use a fixed port for simplicity)
+	baseURL := "http://localhost:8080"
 
 	return &BenchmarkServer{
 		Server:    httpServer,
@@ -113,7 +133,7 @@ func (bs *BenchmarkServer) Cleanup() {
 func (bs *BenchmarkServer) SeedData(entityCounts map[string]int) error {
 	// This will be implemented when we create the data generation utilities
 	// For now, just ensure the database is ready
-	return database.RunMigrations(bs.DB)
+	return models.AutoMigrate(bs.DB)
 }
 
 // setupPostgreSQLContainer creates and starts a PostgreSQL testcontainer
@@ -152,15 +172,16 @@ func setupPostgreSQLContainer(ctx context.Context) (testcontainers.Container, *g
 	}
 
 	// Create database connection
-	dbConfig := &config.DatabaseConfig{
+	dbConfig := config.DatabaseConfig{
 		Host:     host,
 		Port:     mappedPort.Port(),
-		Database: "benchmark_test",
-		Username: "benchmark_user",
+		DBName:   "benchmark_test",
+		User:     "benchmark_user",
 		Password: "benchmark_pass",
+		SSLMode:  "disable",
 	}
 
-	db, err := database.NewConnection(dbConfig)
+	db, err := initPostgreSQL(dbConfig)
 	if err != nil {
 		container.Terminate(ctx)
 		return nil, nil, fmt.Errorf("failed to connect to database: %w", err)
@@ -168,3 +189,4 @@ func setupPostgreSQLContainer(ctx context.Context) (testcontainers.Container, *g
 
 	return container, db, nil
 }
+

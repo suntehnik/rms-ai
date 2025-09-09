@@ -60,6 +60,7 @@ var PredefinedDataSets = map[string]DataSetConfig{
 
 // GenerateDataSet creates a complete dataset based on configuration
 func (dg *DataGenerator) GenerateDataSet(config DataSetConfig) error {
+
 	// Create users first
 	users, err := dg.CreateUsers(config.Users)
 	if err != nil {
@@ -111,9 +112,10 @@ func (dg *DataGenerator) CreateUsers(count int) ([]*models.User, error) {
 	
 	for i := 0; i < count; i++ {
 		user := &models.User{
-			Username: fmt.Sprintf("benchmark_user_%d", i+1),
-			Email:    fmt.Sprintf("benchmark_user_%d@example.com", i+1),
-			FullName: fmt.Sprintf("Benchmark User %d", i+1),
+			Username:     fmt.Sprintf("benchmark_user_%d", i+1),
+			Email:        fmt.Sprintf("benchmark_user_%d@example.com", i+1),
+			PasswordHash: "benchmark-password-hash", // In real usage, this would be properly hashed
+			Role:         models.RoleUser,
 		}
 		
 		if err := dg.DB.Create(user).Error; err != nil {
@@ -131,10 +133,14 @@ func (dg *DataGenerator) CreateEpics(count int, users []*models.User) ([]*models
 	epics := make([]*models.Epic, count)
 	
 	for i := 0; i < count; i++ {
+		description := fmt.Sprintf("This is a benchmark epic for performance testing purposes. Epic number %d contains multiple user stories and requirements for comprehensive testing.", i+1)
 		epic := &models.Epic{
 			Title:       fmt.Sprintf("Benchmark Epic %d", i+1),
-			Description: fmt.Sprintf("This is a benchmark epic for performance testing purposes. Epic number %d contains multiple user stories and requirements for comprehensive testing.", i+1),
-			CreatedBy:   users[rand.Intn(len(users))].ID,
+			Description: &description,
+			CreatorID:   users[rand.Intn(len(users))].ID,
+			AssigneeID:  users[rand.Intn(len(users))].ID,
+			Priority:    models.PriorityMedium,
+			Status:      models.EpicStatusBacklog,
 		}
 		
 		if err := dg.DB.Create(epic).Error; err != nil {
@@ -151,12 +157,25 @@ func (dg *DataGenerator) CreateEpics(count int, users []*models.User) ([]*models
 func (dg *DataGenerator) CreateUserStories(count int, epic *models.Epic, users []*models.User) ([]*models.UserStory, error) {
 	userStories := make([]*models.UserStory, count)
 	
+	// Get the current count once at the beginning
+	var baseCount int64
+	dg.DB.Model(&models.UserStory{}).Count(&baseCount)
+	
 	for i := 0; i < count; i++ {
+		description := fmt.Sprintf("As a user, I want to perform action %d so that I can achieve goal %d. This user story is part of epic %s for benchmark testing.", i+1, i+1, epic.ReferenceID)
+		
+		// Generate a unique reference ID for benchmarks
+		referenceID := fmt.Sprintf("US-%03d", baseCount+int64(i)+1)
+		
 		userStory := &models.UserStory{
+			ReferenceID: referenceID,
 			Title:       fmt.Sprintf("User Story %d for %s", i+1, epic.Title),
-			Description: fmt.Sprintf("As a user, I want to perform action %d so that I can achieve goal %d. This user story is part of epic %s for benchmark testing.", i+1, i+1, epic.ReferenceID),
+			Description: &description,
 			EpicID:      epic.ID,
-			CreatedBy:   users[rand.Intn(len(users))].ID,
+			CreatorID:   users[rand.Intn(len(users))].ID,
+			AssigneeID:  users[rand.Intn(len(users))].ID,
+			Priority:    models.PriorityMedium,
+			Status:      models.UserStoryStatusBacklog,
 		}
 		
 		if err := dg.DB.Create(userStory).Error; err != nil {
@@ -173,12 +192,32 @@ func (dg *DataGenerator) CreateUserStories(count int, epic *models.Epic, users [
 func (dg *DataGenerator) CreateRequirements(count int, userStory *models.UserStory, users []*models.User) ([]*models.Requirement, error) {
 	requirements := make([]*models.Requirement, count)
 	
+	// Get the requirement type (should already exist)
+	var reqType models.RequirementType
+	if err := dg.DB.Where("name = ?", "Functional").First(&reqType).Error; err != nil {
+		return nil, fmt.Errorf("failed to find requirement type: %w", err)
+	}
+	
+	// Get the current count once at the beginning
+	var baseCount int64
+	dg.DB.Model(&models.Requirement{}).Count(&baseCount)
+	
 	for i := 0; i < count; i++ {
+		description := fmt.Sprintf("The system shall implement functionality %d to support user story %s. This requirement includes detailed specifications for benchmark testing purposes.", i+1, userStory.ReferenceID)
+		
+		// Generate a unique reference ID for benchmarks
+		referenceID := fmt.Sprintf("REQ-%03d", baseCount+int64(i)+1)
+		
 		requirement := &models.Requirement{
+			ReferenceID: referenceID,
 			Title:       fmt.Sprintf("Requirement %d for %s", i+1, userStory.Title),
-			Description: fmt.Sprintf("The system shall implement functionality %d to support user story %s. This requirement includes detailed specifications for benchmark testing purposes.", i+1, userStory.ReferenceID),
+			Description: &description,
 			UserStoryID: userStory.ID,
-			CreatedBy:   users[rand.Intn(len(users))].ID,
+			CreatorID:   users[rand.Intn(len(users))].ID,
+			AssigneeID:  users[rand.Intn(len(users))].ID,
+			Priority:    models.PriorityMedium,
+			Status:      models.RequirementStatusDraft,
+			TypeID:      reqType.ID,
 		}
 		
 		if err := dg.DB.Create(requirement).Error; err != nil {
@@ -193,14 +232,21 @@ func (dg *DataGenerator) CreateRequirements(count int, userStory *models.UserSto
 
 // CreateAcceptanceCriteria generates test acceptance criteria
 func (dg *DataGenerator) CreateAcceptanceCriteria(count int, requirements []*models.Requirement, users []*models.User) error {
+	// Get the current count once at the beginning
+	var baseCount int64
+	dg.DB.Model(&models.AcceptanceCriteria{}).Count(&baseCount)
+	
 	for i := 0; i < count; i++ {
 		requirement := requirements[rand.Intn(len(requirements))]
 		
+		// Generate a unique reference ID for benchmarks
+		referenceID := fmt.Sprintf("AC-%03d", baseCount+int64(i)+1)
+		
 		ac := &models.AcceptanceCriteria{
-			Title:         fmt.Sprintf("Acceptance Criteria %d", i+1),
-			Description:   fmt.Sprintf("GIVEN the system is in state X, WHEN action Y is performed, THEN result Z should occur. This is acceptance criteria %d for benchmark testing.", i+1),
-			RequirementID: requirement.ID,
-			CreatedBy:     users[rand.Intn(len(users))].ID,
+			ReferenceID:  referenceID,
+			Description:  fmt.Sprintf("GIVEN the system is in state X, WHEN action Y is performed, THEN result Z should occur. This is acceptance criteria %d for benchmark testing.", i+1),
+			UserStoryID:  requirement.UserStoryID, // Link to the user story, not requirement
+			AuthorID:     users[rand.Intn(len(users))].ID,
 		}
 		
 		if err := dg.DB.Create(ac).Error; err != nil {
@@ -217,10 +263,10 @@ func (dg *DataGenerator) CreateComments(count int, requirements []*models.Requir
 		requirement := requirements[rand.Intn(len(requirements))]
 		
 		comment := &models.Comment{
-			Content:      fmt.Sprintf("This is a benchmark comment %d. It provides feedback and discussion about the requirement for performance testing purposes.", i+1),
-			EntityType:   "requirement",
-			EntityID:     requirement.ID,
-			CreatedBy:    users[rand.Intn(len(users))].ID,
+			Content:    fmt.Sprintf("This is a benchmark comment %d. It provides feedback and discussion about the requirement for performance testing purposes.", i+1),
+			EntityType: models.EntityTypeRequirement,
+			EntityID:   requirement.ID,
+			AuthorID:   users[rand.Intn(len(users))].ID,
 		}
 		
 		if err := dg.DB.Create(comment).Error; err != nil {

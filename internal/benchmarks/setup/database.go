@@ -7,10 +7,12 @@ import (
 
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 
 	"product-requirements-management/internal/config"
-	"product-requirements-management/internal/database"
+	"product-requirements-management/internal/models"
 )
 
 // DatabaseContainer wraps testcontainer functionality for PostgreSQL
@@ -58,13 +60,14 @@ func NewPostgreSQLContainer(ctx context.Context) (*DatabaseContainer, error) {
 	dbConfig := &config.DatabaseConfig{
 		Host:     host,
 		Port:     mappedPort.Port(),
-		Database: "benchmark_test",
-		Username: "benchmark_user",
+		DBName:   "benchmark_test",
+		User:     "benchmark_user",
 		Password: "benchmark_pass",
+		SSLMode:  "disable",
 	}
 
 	// Connect to database
-	db, err := database.NewConnection(dbConfig)
+	db, err := initPostgreSQL(*dbConfig)
 	if err != nil {
 		container.Terminate(ctx)
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
@@ -102,16 +105,45 @@ func (dc *DatabaseContainer) ResetDatabase() error {
 	}
 
 	// Re-run migrations
-	return database.RunMigrations(dc.DB)
+	return models.AutoMigrate(dc.DB)
 }
 
 // GetConnectionString returns the database connection string
 func (dc *DatabaseContainer) GetConnectionString() string {
 	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		dc.Config.Username,
+		dc.Config.User,
 		dc.Config.Password,
 		dc.Config.Host,
 		dc.Config.Port,
-		dc.Config.Database,
+		dc.Config.DBName,
 	)
+}
+
+// initPostgreSQL initializes PostgreSQL connection with GORM for benchmarks
+func initPostgreSQL(cfg config.DatabaseConfig) (*gorm.DB, error) {
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=UTC",
+		cfg.Host, cfg.User, cfg.Password, cfg.DBName, cfg.Port, cfg.SSLMode)
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent), // Silent for benchmarks
+		NowFunc: func() time.Time {
+			return time.Now().UTC()
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to PostgreSQL: %w", err)
+	}
+
+	// Configure connection pool for benchmarks
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get underlying sql.DB: %w", err)
+	}
+
+	// Set connection pool settings optimized for benchmarks
+	sqlDB.SetMaxIdleConns(5)
+	sqlDB.SetMaxOpenConns(20)
+	sqlDB.SetConnMaxLifetime(time.Hour)
+
+	return db, nil
 }
