@@ -1,6 +1,6 @@
 # Implementation Plan
 
-- [ ] 1. Set up benchmark infrastructure and core utilities
+- [-] 1. Set up benchmark infrastructure and core utilities
   - Create git-flow feature branch: `git flow feature start benchmark-infrastructure`
   - Create benchmark package structure with setup, api, and helpers directories
   - Implement PostgreSQL testcontainer setup for benchmark database isolation
