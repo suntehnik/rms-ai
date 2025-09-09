@@ -24,7 +24,7 @@
   - Ensure no other deprecated actions are present in the workflow
   - _Requirements: 1.2, 3.2, 3.4_
 
-- [-] 5. Test workflow execution with updated actions
+- [x] 5. Test workflow execution with updated actions
   - Create a test commit to trigger the workflow and verify it runs successfully
   - Monitor the workflow execution logs for any errors or warnings
   - Confirm that artifacts are uploaded successfully in both E2E and performance test jobs
