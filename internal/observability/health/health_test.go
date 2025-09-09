@@ -101,6 +101,13 @@ func TestReadinessHealth_NoMetrics(t *testing.T) {
 }
 
 func TestDeepHealth_NoDatabase(t *testing.T) {
+	// Create a new registry for this test
+	oldRegistry := prometheus.DefaultRegisterer
+	prometheus.DefaultRegisterer = prometheus.NewRegistry()
+	defer func() {
+		prometheus.DefaultRegisterer = oldRegistry
+	}()
+	
 	metrics := metrics.Init("test-service", "1.0.0")
 	hc := NewHealthChecker(nil, metrics)
 	
