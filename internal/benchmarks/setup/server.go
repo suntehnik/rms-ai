@@ -10,7 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 
 	"product-requirements-management/internal/config"
 	"product-requirements-management/internal/database"
@@ -74,6 +76,7 @@ func NewBenchmarkServer(b *testing.B) *BenchmarkServer {
 	// Setup application routes with the benchmark database
 	dbWrapper := &database.DB{
 		Postgres: db,
+		Redis:    nil, // No Redis for benchmarks
 	}
 	routes.Setup(router, cfg, dbWrapper)
 	
@@ -235,21 +238,31 @@ func setupPostgreSQLContainer(ctx context.Context) (testcontainers.Container, *g
 		return nil, nil, fmt.Errorf("failed to get container host: %w", err)
 	}
 
-	// Create database connection
-	dbConfig := config.DatabaseConfig{
-		Host:     host,
-		Port:     mappedPort.Port(),
-		DBName:   "benchmark_test",
-		User:     "benchmark_user",
-		Password: "benchmark_pass",
-		SSLMode:  "disable",
-	}
+	// Create database connection directly for benchmarks
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=UTC",
+		host, "benchmark_user", "benchmark_pass", "benchmark_test", mappedPort.Port(), "disable")
 
-	db, err := initPostgreSQL(dbConfig)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent), // Silent for benchmarks
+		NowFunc: func() time.Time {
+			return time.Now().UTC()
+		},
+	})
 	if err != nil {
 		container.Terminate(ctx)
 		return nil, nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
+
+	// Configure connection pool
+	sqlDB, err := db.DB()
+	if err != nil {
+		container.Terminate(ctx)
+		return nil, nil, fmt.Errorf("failed to get underlying sql.DB: %w", err)
+	}
+
+	sqlDB.SetMaxOpenConns(25)
+	sqlDB.SetMaxIdleConns(5)
+	sqlDB.SetConnMaxLifetime(5 * time.Minute)
 
 	return container, db, nil
 }

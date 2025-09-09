@@ -43,7 +43,7 @@
   - Create pull request
   - _Requirements: 1.3, 1.5, 2.5_
 
-- [-] 5. Create Epic API endpoint benchmarks
+- [x] 5. Create Epic API endpoint benchmarks
   - Create feature branch: `git checkout -b  benchmark-epic-api`
   - Implement Epic CRUD operation benchmarks via HTTP endpoints
   - Add Epic listing and filtering performance tests
@@ -54,7 +54,7 @@
   - Create pull request
   - _Requirements: 1.1, 1.2, 5.1_
 
-- [ ] 6. Create User Story API endpoint benchmarks
+- [-] 6. Create User Story API endpoint benchmarks
   - Create feature branch: `git checkout -b  benchmark-user-story-api`
   - Implement User Story CRUD operation benchmarks via HTTP endpoints
   - Add User Story listing and filtering performance tests
