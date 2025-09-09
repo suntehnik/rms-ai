@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -53,15 +52,8 @@ func (r *Requirement) BeforeCreate(tx *gorm.DB) error {
 		r.Status = RequirementStatusDraft
 	}
 	
-	// Generate ReferenceID if not set (for SQLite compatibility in tests)
-	if r.ReferenceID == "" {
-		// Check if we're using SQLite (for tests) or PostgreSQL (production)
-		var count int64
-		if err := tx.Model(&Requirement{}).Count(&count).Error; err != nil {
-			return err
-		}
-		r.ReferenceID = fmt.Sprintf("REQ-%03d", count+1)
-	}
+	// Reference ID generation is now handled at the repository level
+	// to properly handle concurrency and retries
 	
 	return nil
 }

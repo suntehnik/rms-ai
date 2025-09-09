@@ -54,7 +54,7 @@
   - Create pull request
   - _Requirements: 1.1, 1.2, 5.1_
 
-- [-] 6. Create User Story API endpoint benchmarks
+- [x] 6. Create User Story API endpoint benchmarks
   - Create feature branch: `git checkout -b  benchmark-user-story-api`
   - Implement User Story CRUD operation benchmarks via HTTP endpoints
   - Add User Story listing and filtering performance tests
