@@ -266,7 +266,7 @@
   - _Requirements: Critical bug fix identified by E2E tests - search service crashes on invalid input_
   - commit, push and make pull request
   
-- [-] 28. Advanced observability implementation
+- [x] 28. Advanced observability implementation
   - Pull changes from remote and switch to main branch
   - Create a git branch for feature
   - Add Prometheus metrics collection for all API endpoints
