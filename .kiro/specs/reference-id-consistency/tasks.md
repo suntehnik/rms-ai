@@ -1,0 +1,138 @@
+# Implementation Plan
+
+- [x] 1. Create production PostgreSQL reference ID generator
+  - Fetch latest main branch: `git fetch origin main`
+  - Create feature branch: `git checkout -b feat/production-reference-id-generator`
+  - Implement `internal/models/reference_id.go` with PostgreSQLReferenceIDGenerator struct
+  - Add constructor `NewPostgreSQLReferenceIDGenerator(lockKey int64, prefix string)`
+  - Implement `Generate(tx *gorm.DB, model interface{}) (string, error)` method with PostgreSQL advisory lock logic
+  - Include fallback to UUID-based IDs when lock acquisition fails
+  - Handle both PostgreSQL and SQLite databases (SQLite uses simple count for integration tests)
+  - Commit changes
+  - Push branch
+  - Create PR
+  - _Requirements: 1.1, 1.2, 1.3, 1.4, 4.1, 4.2, 4.3_
+
+- [x] 2. Create test reference ID generator for unit tests
+  - Fetch latest main branch: `git fetch origin main`
+  - Create feature branch
+  - Implement `internal/models/reference_id_test.go` with TestReferenceIDGenerator struct
+  - Add constructor `NewTestReferenceIDGenerator(prefix string)` 
+  - Implement simple counting logic without advisory locks for fast unit tests
+  - Ensure test generator is only available in test files and not in production builds
+  - Add interface compatibility with production generator
+  - Commit changes
+  - Push branch
+  - Create PR
+  - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
+
+- [ ] 3. Add comprehensive unit tests using test generator
+  - Fetch latest main branch: `git fetch origin main`
+  - Create feature branch
+  - Write unit tests for TestReferenceIDGenerator behavior
+  - Write unit tests for PostgreSQLReferenceIDGenerator using test generator for mocking
+  - Write tests for UUID fallback scenarios
+  - Write tests for error handling scenarios (count failures, invalid models)
+  - Write tests for concurrent generation scenarios using test generator
+  - Commit changes
+  - Push branch
+  - Create PR
+  - _Requirements: 2.1, 2.2, 2.3, 2.4, 5.5_
+
+- [ ] 4. Update Requirement model to use production generator
+  - Fetch latest main branch: `git fetch origin main`
+  - Create feature branch
+  - Create package-level `requirementGenerator` instance using PostgreSQLReferenceIDGenerator in `requirement.go`
+  - Replace simple count logic in `BeforeCreate()` with production generator call
+  - Remove existing reference ID generation code
+  - Ensure lock key 2147483645 is used for requirements
+  - Commit changes
+  - Push branch
+  - Create PR
+  - _Requirements: 1.1, 1.2, 1.3, 2.1, 4.1_
+
+- [ ] 5. Add integration tests for Requirement model using production generator
+  - Fetch latest main branch: `git fetch origin main`
+  - Create feature branch
+  - Write integration tests for concurrent requirement creation using PostgreSQL
+  - Write tests verifying unique reference IDs under load
+  - Write tests for reference ID format and uniqueness
+  - Ensure tests use the same production generator as runtime code
+  - Commit changes
+  - Push branch
+  - Create PR
+  - _Requirements: 1.2, 1.3, 2.1, 2.2, 2.3_
+
+- [ ] 6. Update AcceptanceCriteria model to use production generator
+  - Fetch latest main branch: `git fetch origin main`
+  - Create feature branch
+  - Create package-level `acceptanceCriteriaGenerator` instance using PostgreSQLReferenceIDGenerator in `acceptance_criteria.go`
+  - Replace simple count logic in `BeforeCreate()` with production generator call
+  - Remove existing reference ID generation code
+  - Ensure lock key 2147483644 is used for acceptance criteria
+  - Commit changes: `git add . && git commit -m "feat: update AcceptanceCriteria model to use production reference ID generator"`
+  - Push branch
+  - Create PR
+  - _Requirements: 1.1, 1.2, 1.3, 2.1, 4.1_
+
+- [ ] 7. Add integration tests for AcceptanceCriteria model using production generator
+  - Fetch latest main branch: `git fetch origin main`
+  - Create feature branch
+  - Write integration tests for concurrent acceptance criteria creation using PostgreSQL
+  - Write tests verifying unique reference IDs under load
+  - Write tests for reference ID format and uniqueness
+  - Ensure tests use the same production generator as runtime code
+  - Commit changes
+  - Push branch
+  - Create PR
+  - _Requirements: 1.2, 1.3, 2.1, 2.2, 2.3_
+
+- [ ] 8. Refactor Epic model to use production generator (consistency)
+  - Fetch latest main branch: `git fetch origin main`
+  - Create feature branch
+  - Create package-level `epicGenerator` instance using PostgreSQLReferenceIDGenerator in `epic.go`
+  - Replace existing advisory lock logic in `BeforeCreate()` with production generator call
+  - Maintain existing lock key 2147483647 for backward compatibility
+  - Ensure no behavior changes for existing Epic functionality
+  - Commit changes: `git add . && git commit -m "refactor: update Epic model to use unified production reference ID generator"`
+  - Push branch
+  - Create PR
+  - _Requirements: 1.1, 1.2, 1.3, 4.1_
+
+- [ ] 9. Refactor UserStory model to use production generator (consistency)
+  - Fetch latest main branch: `git fetch origin main`
+  - Create feature branch
+  - Create package-level `userStoryGenerator` instance using PostgreSQLReferenceIDGenerator in `user_story.go`
+  - Replace existing advisory lock logic in `BeforeCreate()` with production generator call
+  - Maintain existing lock key 2147483646 for backward compatibility
+  - Ensure no behavior changes for existing UserStory functionality
+  - Commit changes: `git add . && git commit -m "refactor: update UserStory model to use unified production reference ID generator"`
+  - Push branch
+  - Create PR
+  - _Requirements: 1.1, 1.2, 1.3, 4.1_
+
+- [ ] 10. Add comprehensive integration tests for all entities
+  - Fetch latest main branch: `git fetch origin main`
+  - Create feature branch
+  - Write integration tests creating all entity types concurrently using PostgreSQL
+  - Verify all reference IDs are unique across entity types
+  - Test reference ID format consistency (PREFIX-NNN or PREFIX-UUID)
+  - Ensure all tests use production generators, not test generators
+  - Commit changes
+  all entity reference ID generation"`
+  - Push branch
+  - Create PR
+  - _Requirements: 1.2, 1.3, 2.1, 2.2, 2.3, 2.4_
+
+- [ ] 11. Update documentation and steering files
+  - Fetch latest main branch: `git fetch origin main`
+  - Create feature branch
+  - Update `reference-id-strategy.md` steering document with static selection approach
+  - Add code comments explaining production vs test generator separation
+  - Document lock key assignments and their purpose
+  - Add guidance on when to use test generator vs production generator
+  - Document compile-time selection benefits and implementation
+  - Commit changes
+  - Push branch
+  - Create PR
+  - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
