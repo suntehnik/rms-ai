@@ -13,7 +13,7 @@
   - Create PR
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 4.1, 4.2, 4.3_
 
-- [-] 2. Create test reference ID generator for unit tests
+- [x] 2. Create test reference ID generator for unit tests
   - Fetch latest main branch: `git fetch origin main`
   - Create feature branch
   - Implement `internal/models/reference_id_test.go` with TestReferenceIDGenerator struct
