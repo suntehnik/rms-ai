@@ -1,12 +1,14 @@
 package models
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
+
+// Package-level generator instance for requirements
+var requirementGenerator = NewPostgreSQLReferenceIDGenerator(2147483645, "REQ")
 
 // RequirementStatus represents the status of a requirement
 type RequirementStatus string
@@ -53,14 +55,13 @@ func (r *Requirement) BeforeCreate(tx *gorm.DB) error {
 		r.Status = RequirementStatusDraft
 	}
 	
-	// Generate ReferenceID if not set (for SQLite compatibility in tests)
+	// Generate ReferenceID if not set using production generator
 	if r.ReferenceID == "" {
-		// Check if we're using SQLite (for tests) or PostgreSQL (production)
-		var count int64
-		if err := tx.Model(&Requirement{}).Count(&count).Error; err != nil {
+		referenceID, err := requirementGenerator.Generate(tx, &Requirement{})
+		if err != nil {
 			return err
 		}
-		r.ReferenceID = fmt.Sprintf("REQ-%03d", count+1)
+		r.ReferenceID = referenceID
 	}
 	
 	return nil

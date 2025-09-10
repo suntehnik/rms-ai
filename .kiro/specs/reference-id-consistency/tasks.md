@@ -26,7 +26,7 @@
   - Create PR
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [-] 3. Add comprehensive unit tests using test generator
+- [x] 3. Add comprehensive unit tests using test generator
   - Fetch latest main branch: `git fetch origin main`
   - Create feature branch
   - Write unit tests for TestReferenceIDGenerator behavior
@@ -39,7 +39,7 @@
   - Create PR
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 5.5_
 
-- [ ] 4. Update Requirement model to use production generator
+- [-] 4. Update Requirement model to use production generator
   - Fetch latest main branch: `git fetch origin main`
   - Create feature branch
   - Create package-level `requirementGenerator` instance using PostgreSQLReferenceIDGenerator in `requirement.go`
