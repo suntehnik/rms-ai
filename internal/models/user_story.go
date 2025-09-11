@@ -8,7 +8,16 @@ import (
 	"gorm.io/gorm"
 )
 
-// Package-level generator instance for UserStory reference IDs
+// Package-level generator instance for UserStory reference IDs.
+// 
+// This uses the production PostgreSQLReferenceIDGenerator which provides:
+// - Thread-safe reference ID generation for production environments
+// - PostgreSQL advisory locks for atomic generation (lock key: 2147483646)
+// - UUID fallback when locks are unavailable
+// - Automatic PostgreSQL vs SQLite detection
+//
+// For unit tests, use TestReferenceIDGenerator from reference_id_test.go instead.
+// The static selection approach ensures the right generator is used in the right context.
 var userStoryGenerator = NewPostgreSQLReferenceIDGenerator(2147483646, "US")
 
 // UserStoryStatus represents the status of a user story
