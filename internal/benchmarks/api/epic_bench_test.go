@@ -227,12 +227,33 @@ func BenchmarkEpicStatusChange(b *testing.B) {
 	// Get a test user ID for epic creation
 	var users []models.User
 	require.NoError(b, server.DB.Limit(1).Find(&users).Error)
-	require.NotEmpty(b, users)
+	require.NotEmpty(b, users, "No users available for epic creation")
 	userID := users[0].ID
 
-	// Create epics for status change testing
-	epicIDs := make([]uuid.UUID, b.N)
-	for i := 0; i < b.N; i++ {
+	// Validate test data availability before proceeding
+	if b.N <= 0 {
+		b.Fatal("Invalid benchmark iteration count: b.N must be greater than 0")
+	}
+
+	// Create a reasonable number of epics for status change testing
+	// Use a minimum of 10 epics or b.N, whichever is smaller, to avoid creating too many
+	numEpics := b.N
+	if numEpics > 100 {
+		numEpics = 100 // Cap at 100 to avoid excessive setup time
+	}
+	if numEpics < 10 {
+		numEpics = 10 // Minimum of 10 for reasonable testing
+	}
+
+	// Validate that we can create the required number of epics
+	if numEpics <= 0 {
+		b.Fatal("Invalid number of epics to create: must be greater than 0")
+	}
+
+	epicIDs := make([]uuid.UUID, 0, numEpics) // Use slice with capacity for better memory management
+	
+	// Create epics with proper error handling and validation
+	for i := 0; i < numEpics; i++ {
 		createReq := service.CreateEpicRequest{
 			CreatorID:   userID,
 			Priority:    models.PriorityMedium,
@@ -241,31 +262,92 @@ func BenchmarkEpicStatusChange(b *testing.B) {
 		}
 
 		resp, err := client.POST("/api/v1/epics", createReq)
-		require.NoError(b, err)
-		require.Equal(b, http.StatusCreated, resp.StatusCode)
+		if err != nil {
+			b.Fatalf("Failed to create epic %d: %v", i, err)
+		}
+		if resp.StatusCode != http.StatusCreated {
+			resp.Body.Close()
+			b.Fatalf("Failed to create epic %d: expected status %d, got %d", i, http.StatusCreated, resp.StatusCode)
+		}
 
 		var epic models.Epic
-		require.NoError(b, helpers.ParseJSONResponse(resp, &epic))
-		epicIDs[i] = epic.ID
+		if err := helpers.ParseJSONResponse(resp, &epic); err != nil {
+			resp.Body.Close()
+			b.Fatalf("Failed to parse epic response %d: %v", i, err)
+		}
+
+		// Validate that the epic ID is not nil
+		if epic.ID == uuid.Nil {
+			b.Fatalf("Created epic %d has nil UUID", i)
+		}
+
+		epicIDs = append(epicIDs, epic.ID)
+	}
+
+	// Validate test data using the validator
+	validator := NewBenchmarkDataValidator(b)
+	validator.ValidateUUIDs(epicIDs, "epic")
+	validator.ValidateMinimumCount(len(epicIDs), 1, "epics")
+
+	// Additional validation for test data availability
+	if len(epicIDs) == 0 {
+		b.Fatal("No epics were successfully created for benchmark testing")
 	}
 
 	b.ResetTimer()
 
 	b.Run("ChangeEpicStatus", func(b *testing.B) {
+		// Define available statuses for cycling
 		statuses := []models.EpicStatus{
 			models.EpicStatusInProgress,
 			models.EpicStatusDone,
 			models.EpicStatusBacklog,
 		}
 
+		// Validate that we have statuses to work with
+		if len(statuses) == 0 {
+			b.Fatal("No epic statuses available for testing")
+		}
+
+		// Validate that we have epics to work with before starting benchmark
+		if len(epicIDs) == 0 {
+			b.Fatal("No epic IDs available for status change benchmark")
+		}
+
 		for i := 0; i < b.N; i++ {
-			statusReq := map[string]interface{}{
-				"status": statuses[i%len(statuses)],
+			// Use safe indexing with bounds checking to cycle through available epics
+			epicIndex := safeIndex(i, len(epicIDs))
+			statusIndex := safeIndex(i, len(statuses))
+			
+			// Additional bounds checking as defensive programming
+			if epicIndex < 0 || epicIndex >= len(epicIDs) {
+				b.Fatalf("Epic index out of bounds: %d (available: %d)", epicIndex, len(epicIDs))
+			}
+			if statusIndex < 0 || statusIndex >= len(statuses) {
+				b.Fatalf("Status index out of bounds: %d (available: %d)", statusIndex, len(statuses))
 			}
 
-			resp, err := client.PATCH(fmt.Sprintf("/api/v1/epics/%s/status", epicIDs[i]), statusReq)
-			require.NoError(b, err)
-			require.Equal(b, http.StatusOK, resp.StatusCode)
+			// Validate epic ID before using it
+			epicID := epicIDs[epicIndex]
+			if epicID == uuid.Nil {
+				b.Fatalf("Epic ID at index %d is nil", epicIndex)
+			}
+
+			statusReq := map[string]interface{}{
+				"status": statuses[statusIndex],
+			}
+
+			resp, err := client.PATCH(fmt.Sprintf("/api/v1/epics/%s/status", epicID), statusReq)
+			if err != nil {
+				b.Fatalf("Failed to change epic status (iteration %d, epic %s): %v", i, epicID, err)
+			}
+			
+			if resp.StatusCode != http.StatusOK {
+				resp.Body.Close()
+				b.Fatalf("Epic status change failed (iteration %d, epic %s): expected status %d, got %d", 
+					i, epicID, http.StatusOK, resp.StatusCode)
+			}
+			
 			resp.Body.Close()
 		}
 	})
@@ -294,11 +376,31 @@ func BenchmarkEpicAssignment(b *testing.B) {
 	// Get test users for assignment
 	var users []models.User
 	require.NoError(b, server.DB.Limit(5).Find(&users).Error)
-	require.NotEmpty(b, users)
+	require.NotEmpty(b, users, "No users available for epic assignment")
 
-	// Create epics for assignment testing
-	epicIDs := make([]uuid.UUID, b.N)
-	for i := 0; i < b.N; i++ {
+	// Validate test data availability before proceeding
+	if b.N <= 0 {
+		b.Fatal("Invalid benchmark iteration count: b.N must be greater than 0")
+	}
+
+	// Create a reasonable number of epics for assignment testing
+	numEpics := b.N
+	if numEpics > 100 {
+		numEpics = 100 // Cap at 100 to avoid excessive setup time
+	}
+	if numEpics < 10 {
+		numEpics = 10 // Minimum of 10 for reasonable testing
+	}
+
+	// Validate that we can create the required number of epics
+	if numEpics <= 0 {
+		b.Fatal("Invalid number of epics to create: must be greater than 0")
+	}
+
+	epicIDs := make([]uuid.UUID, 0, numEpics) // Use slice with capacity for better memory management
+	
+	// Create epics with proper error handling and validation
+	for i := 0; i < numEpics; i++ {
 		createReq := service.CreateEpicRequest{
 			CreatorID:   users[0].ID,
 			Priority:    models.PriorityMedium,
@@ -307,26 +409,92 @@ func BenchmarkEpicAssignment(b *testing.B) {
 		}
 
 		resp, err := client.POST("/api/v1/epics", createReq)
-		require.NoError(b, err)
-		require.Equal(b, http.StatusCreated, resp.StatusCode)
+		if err != nil {
+			b.Fatalf("Failed to create epic %d: %v", i, err)
+		}
+		if resp.StatusCode != http.StatusCreated {
+			resp.Body.Close()
+			b.Fatalf("Failed to create epic %d: expected status %d, got %d", i, http.StatusCreated, resp.StatusCode)
+		}
 
 		var epic models.Epic
-		require.NoError(b, helpers.ParseJSONResponse(resp, &epic))
-		epicIDs[i] = epic.ID
+		if err := helpers.ParseJSONResponse(resp, &epic); err != nil {
+			resp.Body.Close()
+			b.Fatalf("Failed to parse epic response %d: %v", i, err)
+		}
+
+		// Validate that the epic ID is not nil
+		if epic.ID == uuid.Nil {
+			b.Fatalf("Created epic %d has nil UUID", i)
+		}
+
+		epicIDs = append(epicIDs, epic.ID)
+	}
+
+	// Validate test data using the validator
+	validator := NewBenchmarkDataValidator(b)
+	validator.ValidateUUIDs(epicIDs, "epic")
+	validator.ValidateMinimumCount(len(epicIDs), 1, "epics")
+	validator.ValidateMinimumCount(len(users), 1, "users")
+
+	// Additional validation for test data availability
+	if len(epicIDs) == 0 {
+		b.Fatal("No epics were successfully created for benchmark testing")
+	}
+	if len(users) == 0 {
+		b.Fatal("No users available for epic assignment")
 	}
 
 	b.ResetTimer()
 
 	b.Run("AssignEpic", func(b *testing.B) {
+		// Validate that we have data to work with before starting benchmark
+		if len(epicIDs) == 0 {
+			b.Fatal("No epic IDs available for assignment benchmark")
+		}
+		if len(users) == 0 {
+			b.Fatal("No users available for assignment benchmark")
+		}
+
 		for i := 0; i < b.N; i++ {
-			assigneeID := users[i%len(users)].ID
+			// Use safe indexing with bounds checking to cycle through available epics and users
+			epicIndex := safeIndex(i, len(epicIDs))
+			userIndex := safeIndex(i, len(users))
+
+			// Additional bounds checking as defensive programming
+			if epicIndex < 0 || epicIndex >= len(epicIDs) {
+				b.Fatalf("Epic index out of bounds: %d (available: %d)", epicIndex, len(epicIDs))
+			}
+			if userIndex < 0 || userIndex >= len(users) {
+				b.Fatalf("User index out of bounds: %d (available: %d)", userIndex, len(users))
+			}
+
+			// Validate IDs before using them
+			epicID := epicIDs[epicIndex]
+			if epicID == uuid.Nil {
+				b.Fatalf("Epic ID at index %d is nil", epicIndex)
+			}
+
+			assigneeID := users[userIndex].ID
+			if assigneeID == uuid.Nil {
+				b.Fatalf("User ID at index %d is nil", userIndex)
+			}
+
 			assignReq := map[string]interface{}{
 				"assignee_id": assigneeID,
 			}
 
-			resp, err := client.PATCH(fmt.Sprintf("/api/v1/epics/%s/assign", epicIDs[i]), assignReq)
-			require.NoError(b, err)
-			require.Equal(b, http.StatusOK, resp.StatusCode)
+			resp, err := client.PATCH(fmt.Sprintf("/api/v1/epics/%s/assign", epicID), assignReq)
+			if err != nil {
+				b.Fatalf("Failed to assign epic (iteration %d, epic %s): %v", i, epicID, err)
+			}
+			
+			if resp.StatusCode != http.StatusOK {
+				resp.Body.Close()
+				b.Fatalf("Epic assignment failed (iteration %d, epic %s): expected status %d, got %d", 
+					i, epicID, http.StatusOK, resp.StatusCode)
+			}
+			
 			resp.Body.Close()
 		}
 	})
@@ -475,7 +643,3 @@ func BenchmarkEpicConcurrentOperations(b *testing.B) {
 	})
 }
 
-// Helper function to create string pointer
-func stringPtr(s string) *string {
-	return &s
-}
