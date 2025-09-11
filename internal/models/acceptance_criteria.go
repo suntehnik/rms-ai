@@ -1,12 +1,23 @@
 package models
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
+
+// Package-level generator instance for AcceptanceCriteria.
+// 
+// This uses the production PostgreSQLReferenceIDGenerator which provides:
+// - Thread-safe reference ID generation for production environments
+// - PostgreSQL advisory locks for atomic generation (lock key: 2147483644)
+// - UUID fallback when locks are unavailable
+// - Automatic PostgreSQL vs SQLite detection
+//
+// For unit tests, use TestReferenceIDGenerator from reference_id_test.go instead.
+// The static selection approach ensures the right generator is used in the right context.
+var acceptanceCriteriaGenerator = NewPostgreSQLReferenceIDGenerator(2147483644, "AC")
 
 // AcceptanceCriteria represents acceptance criteria for a user story
 type AcceptanceCriteria struct {
@@ -31,10 +42,11 @@ func (ac *AcceptanceCriteria) BeforeCreate(tx *gorm.DB) error {
 		ac.ID = uuid.New()
 	}
 	if ac.ReferenceID == "" {
-		// Generate reference ID using a simple counter
-		var count int64
-		tx.Model(&AcceptanceCriteria{}).Count(&count)
-		ac.ReferenceID = fmt.Sprintf("AC-%03d", count+1)
+		referenceID, err := acceptanceCriteriaGenerator.Generate(tx, &AcceptanceCriteria{})
+		if err != nil {
+			return err
+		}
+		ac.ReferenceID = referenceID
 	}
 	now := time.Now().UTC()
 	ac.CreatedAt = now
