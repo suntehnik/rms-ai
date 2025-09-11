@@ -87,7 +87,7 @@
   - Create PR
   - _Requirements: 1.2, 1.3, 2.1, 2.2, 2.3_
 
-- [-] 8. Refactor Epic model to use production generator (consistency)
+- [x] 8. Refactor Epic model to use production generator (consistency)
   - Fetch latest main branch: `git fetch origin main`
   - Create feature branch
   - Create package-level `epicGenerator` instance using PostgreSQLReferenceIDGenerator in `epic.go`
@@ -99,7 +99,7 @@
   - Create PR
   - _Requirements: 1.1, 1.2, 1.3, 4.1_
 
-- [ ] 9. Refactor UserStory model to use production generator (consistency)
+- [-] 9. Refactor UserStory model to use production generator (consistency)
   - Fetch latest main branch: `git fetch origin main`
   - Create feature branch
   - Create package-level `userStoryGenerator` instance using PostgreSQLReferenceIDGenerator in `user_story.go`
