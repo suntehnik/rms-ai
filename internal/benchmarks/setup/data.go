@@ -397,8 +397,17 @@ func (dg *DataGenerator) CleanupDatabase() error {
 	}
 
 	for _, table := range tables {
-		if err := dg.DB.Exec(fmt.Sprintf("DELETE FROM %s", table)).Error; err != nil {
-			return fmt.Errorf("failed to cleanup table %s: %w", table, err)
+		// Check if table exists before attempting to delete
+		var exists bool
+		query := fmt.Sprintf("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = '%s')", table)
+		if err := dg.DB.Raw(query).Scan(&exists).Error; err != nil {
+			return fmt.Errorf("failed to check if table %s exists: %w", table, err)
+		}
+		
+		if exists {
+			if err := dg.DB.Exec(fmt.Sprintf("DELETE FROM %s", table)).Error; err != nil {
+				return fmt.Errorf("failed to cleanup table %s: %w", table, err)
+			}
 		}
 	}
 
@@ -420,6 +429,19 @@ func (dg *DataGenerator) ResetDatabase() error {
 	// Seed default data
 	if err := models.SeedDefaultData(dg.DB); err != nil {
 		return fmt.Errorf("failed to seed default data: %w", err)
+	}
+
+	// Verify tables were created successfully
+	requiredTables := []string{"users", "epics", "user_stories", "requirements", "acceptance_criteria"}
+	for _, table := range requiredTables {
+		var exists bool
+		query := fmt.Sprintf("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = '%s')", table)
+		if err := dg.DB.Raw(query).Scan(&exists).Error; err != nil {
+			return fmt.Errorf("failed to verify table %s exists after reset: %w", table, err)
+		}
+		if !exists {
+			return fmt.Errorf("table %s was not created after database reset", table)
+		}
 	}
 
 	return nil

@@ -73,6 +73,18 @@ func NewPostgreSQLContainer(ctx context.Context) (*DatabaseContainer, error) {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
+	// Run migrations to ensure database schema is initialized
+	if err := models.AutoMigrate(db); err != nil {
+		container.Terminate(ctx)
+		return nil, fmt.Errorf("failed to run database migrations: %w", err)
+	}
+
+	// Seed default data
+	if err := models.SeedDefaultData(db); err != nil {
+		container.Terminate(ctx)
+		return nil, fmt.Errorf("failed to seed default data: %w", err)
+	}
+
 	return &DatabaseContainer{
 		Container: container,
 		DB:        db,
@@ -110,7 +122,21 @@ func (dc *DatabaseContainer) ResetDatabase() error {
 	}
 
 	// Seed default data
-	return models.SeedDefaultData(dc.DB)
+	if err := models.SeedDefaultData(dc.DB); err != nil {
+		return fmt.Errorf("failed to seed default data: %w", err)
+	}
+
+	// Verify database connection after reset
+	sqlDB, err := dc.DB.DB()
+	if err != nil {
+		return fmt.Errorf("failed to get underlying sql.DB after reset: %w", err)
+	}
+
+	if err := sqlDB.Ping(); err != nil {
+		return fmt.Errorf("database ping failed after reset: %w", err)
+	}
+
+	return nil
 }
 
 // SeedTestData populates the database with test data using the data generator
