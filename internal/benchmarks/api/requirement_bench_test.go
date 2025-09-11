@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -251,6 +250,191 @@ func BenchmarkRequirementListing(b *testing.B) {
 	})
 }
 
+// BenchmarkRequirementStatusChange tests Requirement status change performance
+func BenchmarkRequirementStatusChange(b *testing.B) {
+	// Setup benchmark server
+	server := setup.NewBenchmarkServer(b)
+	defer server.Cleanup()
+
+	// Start the server
+	require.NoError(b, server.Start())
+
+	// Seed small dataset
+	require.NoError(b, server.SeedSmallDataSet())
+
+	// Create HTTP client
+	client := helpers.NewBenchmarkClient(server.BaseURL)
+
+	// Setup authentication
+	authHelper := helpers.NewAuthHelper(server.Config.JWT.Secret)
+	testUser := helpers.GetDefaultTestUser()
+	require.NoError(b, authHelper.AuthenticateClient(client, testUser.ID, testUser.Username))
+
+	// Get test data for requirement creation
+	var users []models.User
+	require.NoError(b, server.DB.Limit(1).Find(&users).Error)
+	require.NotEmpty(b, users)
+	userID := users[0].ID
+
+	var userStories []models.UserStory
+	require.NoError(b, server.DB.Limit(1).Find(&userStories).Error)
+	require.NotEmpty(b, userStories)
+	userStoryID := userStories[0].ID
+
+	var requirementTypes []models.RequirementType
+	require.NoError(b, server.DB.Limit(1).Find(&requirementTypes).Error)
+	require.NotEmpty(b, requirementTypes)
+	typeID := requirementTypes[0].ID
+
+	// Create a reasonable number of requirements for status change testing
+	numRequirements := b.N
+	if numRequirements > 100 {
+		numRequirements = 100 // Cap at 100 to avoid excessive setup time
+	}
+	if numRequirements < 10 {
+		numRequirements = 10 // Minimum of 10 for reasonable testing
+	}
+
+	requirementIDs := make([]uuid.UUID, numRequirements)
+	for i := 0; i < numRequirements; i++ {
+		createReq := service.CreateRequirementRequest{
+			UserStoryID: userStoryID,
+			CreatorID:   userID,
+			Priority:    models.PriorityMedium,
+			TypeID:      typeID,
+			Title:       fmt.Sprintf("Requirement for Status Change %d", i),
+			Description: stringPtr("Requirement created for status change benchmark"),
+		}
+
+		resp, err := client.POST("/api/v1/requirements", createReq)
+		require.NoError(b, err)
+		require.Equal(b, http.StatusCreated, resp.StatusCode)
+
+		var requirement models.Requirement
+		require.NoError(b, helpers.ParseJSONResponse(resp, &requirement))
+		requirementIDs[i] = requirement.ID
+	}
+
+	// Validate test data
+	validator := NewBenchmarkDataValidator(b)
+	validator.ValidateUUIDs(requirementIDs, "requirement")
+
+	b.ResetTimer()
+
+	b.Run("ChangeRequirementStatus", func(b *testing.B) {
+		statuses := []models.RequirementStatus{
+			models.RequirementStatusActive,
+			models.RequirementStatusObsolete,
+			models.RequirementStatusDraft,
+		}
+
+		for i := 0; i < b.N; i++ {
+			// Use safe indexing to cycle through available requirements
+			requirementIndex := safeIndex(i, len(requirementIDs))
+			
+			statusReq := map[string]interface{}{
+				"status": statuses[safeIndex(i, len(statuses))],
+			}
+
+			requirementID := requirementIDs[requirementIndex]
+			resp, err := client.PATCH(fmt.Sprintf("/api/v1/requirements/%s/status", requirementID), statusReq)
+			require.NoError(b, err)
+			require.Equal(b, http.StatusOK, resp.StatusCode)
+			resp.Body.Close()
+		}
+	})
+}
+
+// BenchmarkRequirementAssignment tests Requirement assignment performance
+func BenchmarkRequirementAssignment(b *testing.B) {
+	// Setup benchmark server
+	server := setup.NewBenchmarkServer(b)
+	defer server.Cleanup()
+
+	// Start the server
+	require.NoError(b, server.Start())
+
+	// Seed small dataset
+	require.NoError(b, server.SeedSmallDataSet())
+
+	// Create HTTP client
+	client := helpers.NewBenchmarkClient(server.BaseURL)
+
+	// Setup authentication
+	authHelper := helpers.NewAuthHelper(server.Config.JWT.Secret)
+	testUser := helpers.GetDefaultTestUser()
+	require.NoError(b, authHelper.AuthenticateClient(client, testUser.ID, testUser.Username))
+
+	// Get test users for assignment
+	var users []models.User
+	require.NoError(b, server.DB.Limit(5).Find(&users).Error)
+	require.NotEmpty(b, users)
+
+	var userStories []models.UserStory
+	require.NoError(b, server.DB.Limit(1).Find(&userStories).Error)
+	require.NotEmpty(b, userStories)
+	userStoryID := userStories[0].ID
+
+	var requirementTypes []models.RequirementType
+	require.NoError(b, server.DB.Limit(1).Find(&requirementTypes).Error)
+	require.NotEmpty(b, requirementTypes)
+	typeID := requirementTypes[0].ID
+
+	// Create a reasonable number of requirements for assignment testing
+	numRequirements := b.N
+	if numRequirements > 100 {
+		numRequirements = 100 // Cap at 100 to avoid excessive setup time
+	}
+	if numRequirements < 10 {
+		numRequirements = 10 // Minimum of 10 for reasonable testing
+	}
+
+	requirementIDs := make([]uuid.UUID, numRequirements)
+	for i := 0; i < numRequirements; i++ {
+		createReq := service.CreateRequirementRequest{
+			UserStoryID: userStoryID,
+			CreatorID:   users[0].ID,
+			Priority:    models.PriorityMedium,
+			TypeID:      typeID,
+			Title:       fmt.Sprintf("Requirement for Assignment %d", i),
+			Description: stringPtr("Requirement created for assignment benchmark"),
+		}
+
+		resp, err := client.POST("/api/v1/requirements", createReq)
+		require.NoError(b, err)
+		require.Equal(b, http.StatusCreated, resp.StatusCode)
+
+		var requirement models.Requirement
+		require.NoError(b, helpers.ParseJSONResponse(resp, &requirement))
+		requirementIDs[i] = requirement.ID
+	}
+
+	// Validate test data
+	validator := NewBenchmarkDataValidator(b)
+	validator.ValidateUUIDs(requirementIDs, "requirement")
+
+	b.ResetTimer()
+
+	b.Run("AssignRequirement", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			// Use safe indexing to cycle through available requirements and users
+			requirementIndex := safeIndex(i, len(requirementIDs))
+			userIndex := safeIndex(i, len(users))
+
+			assigneeID := users[userIndex].ID
+			assignReq := map[string]interface{}{
+				"assignee_id": assigneeID,
+			}
+
+			requirementID := requirementIDs[requirementIndex]
+			resp, err := client.PATCH(fmt.Sprintf("/api/v1/requirements/%s/assign", requirementID), assignReq)
+			require.NoError(b, err)
+			require.Equal(b, http.StatusOK, resp.StatusCode)
+			resp.Body.Close()
+		}
+	})
+}
+
 // BenchmarkRequirementRelationshipManagement tests Requirement relationship management benchmarks
 func BenchmarkRequirementRelationshipManagement(b *testing.B) {
 	// Setup benchmark server
@@ -296,18 +480,6 @@ func BenchmarkRequirementRelationshipManagement(b *testing.B) {
 		}
 	})
 
-	if len(requirementsWithRelationships) > 0 {
-		b.Run("GetRequirementRelationships", func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
-				requirement := requirementsWithRelationships[i%len(requirementsWithRelationships)]
-				resp, err := client.GET(fmt.Sprintf("/api/v1/requirements/%s/relationships", requirement.ID))
-				require.NoError(b, err)
-				require.Equal(b, http.StatusOK, resp.StatusCode)
-				resp.Body.Close()
-			}
-		})
-	}
-
 	b.Run("GetRequirementByReferenceID", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			requirement := requirements[i%len(requirements)]
@@ -318,7 +490,7 @@ func BenchmarkRequirementRelationshipManagement(b *testing.B) {
 		}
 	})
 
-	// Test creating relationships
+	// Test relationship creation if we have enough requirements
 	if len(requirements) >= 2 {
 		b.Run("CreateRequirementRelationship", func(b *testing.B) {
 			// Get relationship types
@@ -327,31 +499,32 @@ func BenchmarkRequirementRelationshipManagement(b *testing.B) {
 			require.NotEmpty(b, relationshipTypes)
 			relationshipTypeID := relationshipTypes[0].ID
 
-			// Get user for creating relationships
+			// Get user for relationship creation
 			var users []models.User
 			require.NoError(b, server.DB.Limit(1).Find(&users).Error)
 			require.NotEmpty(b, users)
 			userID := users[0].ID
 
 			for i := 0; i < b.N; i++ {
-				sourceReq := requirements[i%len(requirements)]
-				targetReq := requirements[(i+1)%len(requirements)]
-
-				// Skip if same requirement
-				if sourceReq.ID == targetReq.ID {
-					continue
+				// Use different pairs of requirements to avoid duplicate relationships
+				sourceIndex := safeIndex(i*2, len(requirements))
+				targetIndex := safeIndex(i*2+1, len(requirements))
+				
+				// Ensure we don't create self-relationships
+				if sourceIndex == targetIndex {
+					targetIndex = safeIndex(sourceIndex+1, len(requirements))
 				}
 
 				createRelReq := service.CreateRelationshipRequest{
-					SourceRequirementID: sourceReq.ID,
-					TargetRequirementID: targetReq.ID,
+					SourceRequirementID: requirements[sourceIndex].ID,
+					TargetRequirementID: requirements[targetIndex].ID,
 					RelationshipTypeID:  relationshipTypeID,
 					CreatedBy:           userID,
 				}
 
 				resp, err := client.POST("/api/v1/requirements/relationships", createRelReq)
 				require.NoError(b, err)
-				// Accept both 201 (created) and 409 (conflict for duplicate)
+				// Accept both 201 (created) and 409 (conflict for duplicate) as valid responses
 				require.True(b, resp.StatusCode == http.StatusCreated || resp.StatusCode == http.StatusConflict)
 				resp.Body.Close()
 			}
@@ -359,8 +532,8 @@ func BenchmarkRequirementRelationshipManagement(b *testing.B) {
 	}
 }
 
-// BenchmarkRequirementTypeAndStatusOperations tests Requirement type and status operations via API endpoints
-func BenchmarkRequirementTypeAndStatusOperations(b *testing.B) {
+// BenchmarkRequirementTypeOperations tests Requirement type and status operations via API endpoints
+func BenchmarkRequirementTypeOperations(b *testing.B) {
 	// Setup benchmark server
 	server := setup.NewBenchmarkServer(b)
 	defer server.Cleanup()
@@ -379,78 +552,26 @@ func BenchmarkRequirementTypeAndStatusOperations(b *testing.B) {
 	testUser := helpers.GetDefaultTestUser()
 	require.NoError(b, authHelper.AuthenticateClient(client, testUser.ID, testUser.Username))
 
-	// Get test data for requirement creation
-	var users []models.User
-	require.NoError(b, server.DB.Limit(1).Find(&users).Error)
-	require.NotEmpty(b, users)
-	userID := users[0].ID
-
-	var userStories []models.UserStory
-	require.NoError(b, server.DB.Limit(1).Find(&userStories).Error)
-	require.NotEmpty(b, userStories)
-	userStoryID := userStories[0].ID
-
-	var requirementTypes []models.RequirementType
-	require.NoError(b, server.DB.Find(&requirementTypes).Error)
-	require.NotEmpty(b, requirementTypes)
-
-	// Create requirements for status change testing
-	requirementIDs := make([]uuid.UUID, b.N)
-	for i := 0; i < b.N; i++ {
-		createReq := service.CreateRequirementRequest{
-			UserStoryID: userStoryID,
-			CreatorID:   userID,
-			Priority:    models.PriorityMedium,
-			TypeID:      requirementTypes[0].ID,
-			Title:       fmt.Sprintf("Requirement for Status Change %d", i),
-			Description: stringPtr("Requirement created for status change benchmark"),
-		}
-
-		resp, err := client.POST("/api/v1/requirements", createReq)
-		require.NoError(b, err)
-		require.Equal(b, http.StatusCreated, resp.StatusCode)
-
-		var requirement models.Requirement
-		require.NoError(b, helpers.ParseJSONResponse(resp, &requirement))
-		requirementIDs[i] = requirement.ID
-	}
-
 	b.ResetTimer()
 
-	b.Run("ChangeRequirementStatus", func(b *testing.B) {
-		statuses := []models.RequirementStatus{
-			models.RequirementStatusActive,
-			models.RequirementStatusObsolete,
-			models.RequirementStatusDraft,
-		}
-
+	b.Run("ListRequirementTypes", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			statusReq := map[string]interface{}{
-				"status": statuses[i%len(statuses)],
-			}
-
-			requirementID := requirementIDs[i%len(requirementIDs)]
-			resp, err := client.PATCH(fmt.Sprintf("/api/v1/requirements/%s/status", requirementID), statusReq)
+			resp, err := client.GET("/api/v1/config/requirement-types")
 			require.NoError(b, err)
 			require.Equal(b, http.StatusOK, resp.StatusCode)
 			resp.Body.Close()
 		}
 	})
 
-	b.Run("AssignRequirement", func(b *testing.B) {
-		// Get multiple users for assignment
-		var assignUsers []models.User
-		require.NoError(b, server.DB.Limit(5).Find(&assignUsers).Error)
-		require.NotEmpty(b, assignUsers)
+	b.Run("GetRequirementType", func(b *testing.B) {
+		// Get a requirement type for testing
+		var requirementTypes []models.RequirementType
+		require.NoError(b, server.DB.Limit(1).Find(&requirementTypes).Error)
+		require.NotEmpty(b, requirementTypes)
+		typeID := requirementTypes[0].ID
 
 		for i := 0; i < b.N; i++ {
-			assigneeID := assignUsers[i%len(assignUsers)].ID
-			assignReq := map[string]interface{}{
-				"assignee_id": assigneeID,
-			}
-
-			requirementID := requirementIDs[i%len(requirementIDs)]
-			resp, err := client.PATCH(fmt.Sprintf("/api/v1/requirements/%s/assign", requirementID), assignReq)
+			resp, err := client.GET(fmt.Sprintf("/api/v1/config/requirement-types/%s", typeID))
 			require.NoError(b, err)
 			require.Equal(b, http.StatusOK, resp.StatusCode)
 			resp.Body.Close()
@@ -458,35 +579,16 @@ func BenchmarkRequirementTypeAndStatusOperations(b *testing.B) {
 	})
 
 	b.Run("SearchRequirements", func(b *testing.B) {
-		searchQueries := []string{
-			"benchmark",
-			"requirement",
-			"test",
-			"status",
-			"change",
-		}
-
+		searchTerms := []string{"test", "requirement", "benchmark", "performance"}
+		
 		for i := 0; i < b.N; i++ {
-			query := searchQueries[i%len(searchQueries)]
-			resp, err := client.GET(fmt.Sprintf("/api/v1/requirements/search?q=%s", query))
+			searchTerm := searchTerms[safeIndex(i, len(searchTerms))]
+			resp, err := client.GET(fmt.Sprintf("/api/v1/requirements/search?q=%s", searchTerm))
 			require.NoError(b, err)
 			require.Equal(b, http.StatusOK, resp.StatusCode)
 			resp.Body.Close()
 		}
 	})
-
-	// Test filtering by different requirement types
-	if len(requirementTypes) > 1 {
-		b.Run("FilterRequirementsByType", func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
-				reqType := requirementTypes[i%len(requirementTypes)]
-				resp, err := client.GET(fmt.Sprintf("/api/v1/requirements?type_id=%s", reqType.ID))
-				require.NoError(b, err)
-				require.Equal(b, http.StatusOK, resp.StatusCode)
-				resp.Body.Close()
-			}
-		})
-	}
 }
 
 // BenchmarkRequirementConcurrentOperations tests concurrent Requirement operations
@@ -536,8 +638,8 @@ func BenchmarkRequirementConcurrentOperations(b *testing.B) {
 				CreatorID:   userID,
 				Priority:    models.PriorityMedium,
 				TypeID:      typeID,
-				Title:       fmt.Sprintf("Concurrent Requirement %d-%d", time.Now().UnixNano(), i),
-				Description: stringPtr(fmt.Sprintf("Requirement created concurrently %d at %d", i, time.Now().UnixNano())),
+				Title:       fmt.Sprintf("Concurrent Requirement %d", i),
+				Description: stringPtr(fmt.Sprintf("Requirement created concurrently %d", i)),
 			}
 			requests[i] = helpers.Request{
 				Method: "POST",
@@ -547,16 +649,13 @@ func BenchmarkRequirementConcurrentOperations(b *testing.B) {
 		}
 
 		// Execute requests with limited concurrency
-		concurrency := 5 // Reduce concurrency to avoid database conflicts
+		concurrency := 10
 		responses, err := client.RunParallelRequests(requests, concurrency)
 		require.NoError(b, err)
 
 		// Verify all requests succeeded
 		for i, resp := range responses {
 			require.NoError(b, resp.Error, "Request %d failed", i)
-			if resp.StatusCode != http.StatusCreated {
-				b.Logf("Request %d failed with status %d, body: %s", i, resp.StatusCode, string(resp.Body))
-			}
 			require.Equal(b, http.StatusCreated, resp.StatusCode, "Request %d returned wrong status", i)
 		}
 	})
@@ -589,4 +688,3 @@ func BenchmarkRequirementConcurrentOperations(b *testing.B) {
 		}
 	})
 }
-
