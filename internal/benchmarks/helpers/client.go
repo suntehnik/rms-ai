@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -18,11 +19,33 @@ type BenchmarkClient struct {
 	mu      sync.RWMutex
 }
 
-// NewBenchmarkClient creates a new HTTP client for benchmark testing
+// NewBenchmarkClient creates a new HTTP client for benchmark testing with enhanced configuration
 func NewBenchmarkClient(baseURL string) *BenchmarkClient {
 	return &BenchmarkClient{
 		Client: &http.Client{
 			Timeout: 30 * time.Second,
+			Transport: &http.Transport{
+				MaxIdleConns:        100,
+				MaxIdleConnsPerHost: 10,
+				IdleConnTimeout:     90 * time.Second,
+				DisableKeepAlives:   false, // Enable keep-alives for better performance
+			},
+		},
+		BaseURL: baseURL,
+	}
+}
+
+// NewBenchmarkClientWithTimeout creates a client with custom timeout
+func NewBenchmarkClientWithTimeout(baseURL string, timeout time.Duration) *BenchmarkClient {
+	return &BenchmarkClient{
+		Client: &http.Client{
+			Timeout: timeout,
+			Transport: &http.Transport{
+				MaxIdleConns:        100,
+				MaxIdleConnsPerHost: 10,
+				IdleConnTimeout:     90 * time.Second,
+				DisableKeepAlives:   false,
+			},
 		},
 		BaseURL: baseURL,
 	}
@@ -35,77 +58,111 @@ func (bc *BenchmarkClient) SetAuthToken(token string) {
 	bc.Token = token
 }
 
-// GET performs a GET request to the specified path
+// GET performs a GET request to the specified path with enhanced error handling
 func (bc *BenchmarkClient) GET(path string) (*http.Response, error) {
-	req, err := http.NewRequest("GET", bc.BaseURL+path, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create GET request: %w", err)
-	}
-
-	bc.addAuthHeader(req)
-	return bc.Client.Do(req)
+	return bc.executeWithRetry("GET", path, nil)
 }
 
-// POST performs a POST request with JSON body
+// executeWithRetry executes HTTP requests with retry logic for transient failures
+func (bc *BenchmarkClient) executeWithRetry(method, path string, body interface{}) (*http.Response, error) {
+	maxRetries := 3
+	baseDelay := 100 * time.Millisecond
+	
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		resp, err := bc.executeRequest(method, path, body)
+		
+		// If successful or non-retryable error, return immediately
+		if err == nil || !bc.isRetryableError(err) {
+			return resp, err
+		}
+		
+		// If this was the last attempt, return the error
+		if attempt == maxRetries {
+			return resp, fmt.Errorf("request failed after %d attempts: %w", maxRetries+1, err)
+		}
+		
+		// Wait before retrying with exponential backoff
+		delay := time.Duration(attempt+1) * baseDelay
+		time.Sleep(delay)
+	}
+	
+	return nil, fmt.Errorf("unexpected retry loop exit")
+}
+
+// executeRequest performs the actual HTTP request
+func (bc *BenchmarkClient) executeRequest(method, path string, body interface{}) (*http.Response, error) {
+	var reqBody io.Reader
+	
+	if body != nil {
+		jsonBody, err := json.Marshal(body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		}
+		reqBody = bytes.NewBuffer(jsonBody)
+	}
+	
+	req, err := http.NewRequest(method, bc.BaseURL+path, reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create %s request: %w", method, err)
+	}
+	
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	
+	bc.addAuthHeader(req)
+	
+	resp, err := bc.Client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP %s request failed: %w", method, err)
+	}
+	
+	return resp, nil
+}
+
+// isRetryableError determines if an error should trigger a retry
+func (bc *BenchmarkClient) isRetryableError(err error) bool {
+	if err == nil {
+		return false
+	}
+	
+	errStr := err.Error()
+	retryableErrors := []string{
+		"connection refused",
+		"timeout",
+		"temporary failure",
+		"network is unreachable",
+		"no such host",
+		"connection reset by peer",
+	}
+	
+	for _, retryableErr := range retryableErrors {
+		if strings.Contains(strings.ToLower(errStr), retryableErr) {
+			return true
+		}
+	}
+	
+	return false
+}
+
+// POST performs a POST request with JSON body and enhanced error handling
 func (bc *BenchmarkClient) POST(path string, body interface{}) (*http.Response, error) {
-	jsonBody, err := json.Marshal(body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request body: %w", err)
-	}
-
-	req, err := http.NewRequest("POST", bc.BaseURL+path, bytes.NewBuffer(jsonBody))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create POST request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	bc.addAuthHeader(req)
-	return bc.Client.Do(req)
+	return bc.executeWithRetry("POST", path, body)
 }
 
-// PUT performs a PUT request with JSON body
+// PUT performs a PUT request with JSON body and enhanced error handling
 func (bc *BenchmarkClient) PUT(path string, body interface{}) (*http.Response, error) {
-	jsonBody, err := json.Marshal(body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request body: %w", err)
-	}
-
-	req, err := http.NewRequest("PUT", bc.BaseURL+path, bytes.NewBuffer(jsonBody))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create PUT request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	bc.addAuthHeader(req)
-	return bc.Client.Do(req)
+	return bc.executeWithRetry("PUT", path, body)
 }
 
-// DELETE performs a DELETE request
+// DELETE performs a DELETE request with enhanced error handling
 func (bc *BenchmarkClient) DELETE(path string) (*http.Response, error) {
-	req, err := http.NewRequest("DELETE", bc.BaseURL+path, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create DELETE request: %w", err)
-	}
-
-	bc.addAuthHeader(req)
-	return bc.Client.Do(req)
+	return bc.executeWithRetry("DELETE", path, nil)
 }
 
-// PATCH performs a PATCH request with JSON body
+// PATCH performs a PATCH request with JSON body and enhanced error handling
 func (bc *BenchmarkClient) PATCH(path string, body interface{}) (*http.Response, error) {
-	jsonBody, err := json.Marshal(body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request body: %w", err)
-	}
-
-	req, err := http.NewRequest("PATCH", bc.BaseURL+path, bytes.NewBuffer(jsonBody))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create PATCH request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	bc.addAuthHeader(req)
-	return bc.Client.Do(req)
+	return bc.executeWithRetry("PATCH", path, body)
 }
 
 // addAuthHeader adds the JWT token to the request if available
@@ -153,7 +210,7 @@ func (bc *BenchmarkClient) RunParallelRequests(requests []Request, concurrency i
 			defer func() { <-semaphore }()
 
 			start := time.Now()
-			resp, err := bc.executeRequest(request)
+			resp, err := bc.executeRequestFromStruct(request)
 			duration := time.Since(start)
 
 			response := Response{
@@ -182,19 +239,19 @@ func (bc *BenchmarkClient) RunParallelRequests(requests []Request, concurrency i
 	return responses, nil
 }
 
-// executeRequest executes a single HTTP request
-func (bc *BenchmarkClient) executeRequest(req Request) (*http.Response, error) {
+// executeRequestFromStruct executes a single HTTP request from a Request struct
+func (bc *BenchmarkClient) executeRequestFromStruct(req Request) (*http.Response, error) {
 	switch req.Method {
 	case "GET":
-		return bc.GET(req.Path)
+		return bc.executeRequest("GET", req.Path, nil)
 	case "POST":
-		return bc.POST(req.Path, req.Body)
+		return bc.executeRequest("POST", req.Path, req.Body)
 	case "PUT":
-		return bc.PUT(req.Path, req.Body)
+		return bc.executeRequest("PUT", req.Path, req.Body)
 	case "PATCH":
-		return bc.PATCH(req.Path, req.Body)
+		return bc.executeRequest("PATCH", req.Path, req.Body)
 	case "DELETE":
-		return bc.DELETE(req.Path)
+		return bc.executeRequest("DELETE", req.Path, nil)
 	default:
 		return nil, fmt.Errorf("unsupported HTTP method: %s", req.Method)
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"runtime"
 	"testing"
 	"time"
 
@@ -99,53 +100,153 @@ func NewBenchmarkServer(b *testing.B) *BenchmarkServer {
 	}
 }
 
-// Start starts the benchmark server
+// Start starts the benchmark server with enhanced error handling and validation
 func (bs *BenchmarkServer) Start() error {
-	// Start server in a goroutine
+	// Validate server configuration before starting
+	if bs.Server == nil {
+		return fmt.Errorf("server is not initialized")
+	}
+	
+	if bs.DB == nil {
+		return fmt.Errorf("database connection is not initialized")
+	}
+
+	// Test database connectivity before starting server
+	if sqlDB, err := bs.DB.DB(); err != nil {
+		return fmt.Errorf("failed to get database connection: %w", err)
+	} else if err := sqlDB.Ping(); err != nil {
+		return fmt.Errorf("database ping failed: %w", err)
+	}
+
+	// Start server in a goroutine with enhanced error handling
+	serverErrChan := make(chan error, 1)
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				serverErrChan <- fmt.Errorf("server panicked: %v", r)
+			}
+		}()
+		
 		if err := bs.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			// Don't panic in benchmarks, just log the error
-			fmt.Printf("Server error: %v\n", err)
+			serverErrChan <- fmt.Errorf("server failed to start: %w", err)
 		}
 	}()
 
-	// Wait for server to be ready with a health check
-	for i := 0; i < 50; i++ { // Try for 5 seconds
-		resp, err := http.Get(bs.BaseURL + "/health")
+	// Wait for server to be ready with comprehensive health checks
+	timeout := 30 * time.Second
+	checkInterval := 100 * time.Millisecond
+	maxAttempts := int(timeout / checkInterval)
+	
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	for i := 0; i < maxAttempts; i++ {
+		// Check if server encountered an error during startup
+		select {
+		case err := <-serverErrChan:
+			return fmt.Errorf("server startup failed: %w", err)
+		default:
+		}
+
+		// Test health endpoint
+		resp, err := client.Get(bs.BaseURL + "/health")
 		if err == nil && resp.StatusCode == 200 {
 			resp.Body.Close()
-			return nil
+			
+			// Additional validation - test basic API endpoint
+			apiResp, apiErr := client.Get(bs.BaseURL + "/api/v1")
+			if apiResp != nil {
+				apiResp.Body.Close()
+			}
+			
+			// Accept 404 for API root as it may not have a handler
+			if apiErr == nil && (apiResp.StatusCode == 200 || apiResp.StatusCode == 404) {
+				return nil
+			}
 		}
+		
 		if resp != nil {
 			resp.Body.Close()
 		}
-		time.Sleep(100 * time.Millisecond)
+		
+		time.Sleep(checkInterval)
 	}
 	
-	return fmt.Errorf("server failed to start within timeout")
+	return fmt.Errorf("server failed to start within %v timeout", timeout)
 }
 
-// Cleanup stops the server and cleans up resources
+// Cleanup stops the server and cleans up resources with enhanced error handling
 func (bs *BenchmarkServer) Cleanup() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// Use a longer timeout for cleanup to ensure proper resource cleanup
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// Shutdown HTTP server
+	// Cleanup in reverse order of initialization for proper dependency management
+	
+	// 1. Shutdown HTTP server gracefully
 	if bs.Server != nil {
-		bs.Server.Shutdown(ctx)
-	}
-
-	// Close database connection
-	if bs.DB != nil {
-		if sqlDB, err := bs.DB.DB(); err == nil {
-			sqlDB.Close()
+		fmt.Printf("Shutting down HTTP server...\n")
+		if err := bs.Server.Shutdown(ctx); err != nil {
+			fmt.Printf("HTTP server shutdown error: %v\n", err)
+			// Force close if graceful shutdown fails
+			if err := bs.Server.Close(); err != nil {
+				fmt.Printf("HTTP server force close error: %v\n", err)
+			}
+		} else {
+			fmt.Printf("HTTP server shutdown completed\n")
 		}
 	}
 
-	// Terminate container
-	if bs.Container != nil {
-		bs.Container.Terminate(context.Background())
+	// 2. Close database connections
+	if bs.DB != nil {
+		fmt.Printf("Closing database connections...\n")
+		if sqlDB, err := bs.DB.DB(); err == nil {
+			// Get connection stats before closing
+			stats := sqlDB.Stats()
+			fmt.Printf("Database stats before close - Open: %d, InUse: %d\n", 
+				stats.OpenConnections, stats.InUse)
+			
+			// Set connection limits to 0 to force closure of idle connections
+			sqlDB.SetMaxOpenConns(0)
+			sqlDB.SetMaxIdleConns(0)
+			
+			if err := sqlDB.Close(); err != nil {
+				fmt.Printf("Database close error: %v\n", err)
+			} else {
+				fmt.Printf("Database connections closed successfully\n")
+			}
+		} else {
+			fmt.Printf("Failed to get underlying database connection: %v\n", err)
+		}
 	}
+
+	// 3. Terminate container
+	if bs.Container != nil {
+		fmt.Printf("Terminating test container...\n")
+		
+		// Use a separate context for container termination
+		containerCtx, containerCancel := context.WithTimeout(context.Background(), 20*time.Second)
+		defer containerCancel()
+		
+		if err := bs.Container.Terminate(containerCtx); err != nil {
+			fmt.Printf("Container termination error: %v\n", err)
+			
+			// Try to force terminate if graceful termination fails
+			if err := bs.Container.Terminate(context.Background()); err != nil {
+				fmt.Printf("Container force termination error: %v\n", err)
+			}
+		} else {
+			fmt.Printf("Test container terminated successfully\n")
+		}
+	}
+
+	// 4. Force garbage collection to clean up any remaining resources
+	fmt.Printf("Running garbage collection...\n")
+	runtime.GC()
+	runtime.GC() // Run twice for better cleanup
+	
+	fmt.Printf("Benchmark server cleanup completed\n")
 }
 
 // SeedData populates the database with test data for benchmarking
