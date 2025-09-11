@@ -5,6 +5,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
+	
+	"product-requirements-management/internal/benchmarks/helpers"
 )
 
 // stringPtr creates a pointer to a string value
@@ -195,6 +198,110 @@ func NewBenchmarkDataValidator(b *testing.B) *BenchmarkDataValidator {
 	return &BenchmarkDataValidator{
 		errorHandler: NewBenchmarkErrorHandler(b),
 	}
+}
+
+// BenchmarkTestRunner provides enhanced test execution with reliability features
+type BenchmarkTestRunner struct {
+	b                *testing.B
+	reliabilityMgr   *helpers.BenchmarkReliabilityManager
+	validator        *helpers.BenchmarkValidator
+	resourceMgr      *helpers.BenchmarkResourceManager
+	timeoutMgr       *helpers.BenchmarkTimeoutManager
+}
+
+// NewBenchmarkTestRunner creates a new test runner with reliability features
+func NewBenchmarkTestRunner(b *testing.B, db *gorm.DB) *BenchmarkTestRunner {
+	reliabilityMgr := helpers.NewBenchmarkReliabilityManager(b)
+	validator := helpers.NewBenchmarkValidator(b, reliabilityMgr)
+	resourceMgr := helpers.NewBenchmarkResourceManager(b, db)
+	timeoutMgr := helpers.NewBenchmarkTimeoutManager()
+	
+	return &BenchmarkTestRunner{
+		b:              b,
+		reliabilityMgr: reliabilityMgr,
+		validator:      validator,
+		resourceMgr:    resourceMgr,
+		timeoutMgr:     timeoutMgr,
+	}
+}
+
+// ExecuteWithReliability executes a benchmark operation with full reliability features
+func (btr *BenchmarkTestRunner) ExecuteWithReliability(
+	operationName string,
+	operation func() error,
+) error {
+	// Start resource monitoring
+	btr.reliabilityMgr.StartResourceMonitoring()
+	defer btr.reliabilityMgr.StopResourceMonitoring()
+	
+	// Execute with retry and timeout
+	return btr.reliabilityMgr.ExecuteWithRetry(operationName, operation)
+}
+
+// SetupBenchmarkEnvironment performs comprehensive benchmark environment setup
+func (btr *BenchmarkTestRunner) SetupBenchmarkEnvironment(db *gorm.DB, baseURL string) error {
+	// Add preflight checks
+	btr.reliabilityMgr.AddPreflightCheck(helpers.PreflightCheck{
+		Name:        "database_connectivity",
+		Description: "Verify database is accessible",
+		Required:    true,
+		CheckFunc: func() error {
+			return btr.validator.ValidateDatabaseConnection(db)
+		},
+	})
+	
+	btr.reliabilityMgr.AddPreflightCheck(helpers.PreflightCheck{
+		Name:        "server_availability",
+		Description: "Verify HTTP server is running",
+		Required:    true,
+		CheckFunc: func() error {
+			return btr.validator.ValidateServerAvailability(baseURL)
+		},
+	})
+	
+	btr.reliabilityMgr.AddPreflightCheck(helpers.PreflightCheck{
+		Name:        "resource_availability",
+		Description: "Check system resource availability",
+		Required:    false,
+		CheckFunc: func() error {
+			return btr.validator.ValidateTestEnvironment()
+		},
+	})
+	
+	// Run preflight checks
+	if err := btr.reliabilityMgr.RunPreflightChecks(); err != nil {
+		return fmt.Errorf("preflight checks failed: %w", err)
+	}
+	
+	// Validate prerequisites
+	return btr.validator.ValidatePrerequisites(db, baseURL)
+}
+
+// Cleanup performs comprehensive cleanup with error handling
+func (btr *BenchmarkTestRunner) Cleanup() {
+	defer func() {
+		if r := recover(); r != nil {
+			btr.b.Logf("Panic during cleanup: %v", r)
+		}
+	}()
+	
+	btr.resourceMgr.ExecuteCleanup()
+	btr.reliabilityMgr.Cleanup()
+}
+
+// GetReliabilityManager returns the reliability manager for advanced configuration
+func (btr *BenchmarkTestRunner) GetReliabilityManager() *helpers.BenchmarkReliabilityManager {
+	return btr.reliabilityMgr
+}
+
+// GetValidator returns the validator for custom validation
+func (btr *BenchmarkTestRunner) GetValidator() *helpers.BenchmarkValidator {
+	return btr.validator
+}
+
+// GetResourceManager returns the resource manager for resource tracking
+func (btr *BenchmarkTestRunner) GetResourceManager() *helpers.BenchmarkResourceManager {
+	return btr.resourceMgr
 }
 
 // ValidateUUIDs ensures all UUIDs in the slice are valid (not nil)
