@@ -39,7 +39,7 @@
   - Create PR
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 5.5_
 
-- [-] 4. Update Requirement model to use production generator
+- [x] 4. Update Requirement model to use production generator
   - Fetch latest main branch: `git fetch origin main`
   - Create feature branch
   - Create package-level `requirementGenerator` instance using PostgreSQLReferenceIDGenerator in `requirement.go`
@@ -51,7 +51,7 @@
   - Create PR
   - _Requirements: 1.1, 1.2, 1.3, 2.1, 4.1_
 
-- [ ] 5. Add integration tests for Requirement model using production generator
+- [x] 5. Add integration tests for Requirement model using production generator
   - Fetch latest main branch: `git fetch origin main`
   - Create feature branch
   - Write integration tests for concurrent requirement creation using PostgreSQL
@@ -63,7 +63,7 @@
   - Create PR
   - _Requirements: 1.2, 1.3, 2.1, 2.2, 2.3_
 
-- [ ] 6. Update AcceptanceCriteria model to use production generator
+- [-] 6. Update AcceptanceCriteria model to use production generator
   - Fetch latest main branch: `git fetch origin main`
   - Create feature branch
   - Create package-level `acceptanceCriteriaGenerator` instance using PostgreSQLReferenceIDGenerator in `acceptance_criteria.go`
