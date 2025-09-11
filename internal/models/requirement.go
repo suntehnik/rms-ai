@@ -7,7 +7,16 @@ import (
 	"gorm.io/gorm"
 )
 
-// Package-level generator instance for requirements
+// Package-level generator instance for requirements.
+// 
+// This uses the production PostgreSQLReferenceIDGenerator which provides:
+// - Thread-safe reference ID generation for production environments
+// - PostgreSQL advisory locks for atomic generation (lock key: 2147483645)
+// - UUID fallback when locks are unavailable
+// - Automatic PostgreSQL vs SQLite detection
+//
+// For unit tests, use TestReferenceIDGenerator from reference_id_test.go instead.
+// The static selection approach ensures the right generator is used in the right context.
 var requirementGenerator = NewPostgreSQLReferenceIDGenerator(2147483645, "REQ")
 
 // RequirementStatus represents the status of a requirement
@@ -55,7 +64,9 @@ func (r *Requirement) BeforeCreate(tx *gorm.DB) error {
 		r.Status = RequirementStatusDraft
 	}
 	
-	// Generate ReferenceID if not set using production generator
+	// Generate ReferenceID if not set using production generator.
+	// This uses the package-level requirementGenerator which provides thread-safe,
+	// production-grade reference ID generation with PostgreSQL advisory locks.
 	if r.ReferenceID == "" {
 		referenceID, err := requirementGenerator.Generate(tx, &Requirement{})
 		if err != nil {
