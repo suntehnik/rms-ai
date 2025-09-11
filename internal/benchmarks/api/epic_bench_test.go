@@ -230,9 +230,18 @@ func BenchmarkEpicStatusChange(b *testing.B) {
 	require.NotEmpty(b, users)
 	userID := users[0].ID
 
-	// Create epics for status change testing
-	epicIDs := make([]uuid.UUID, b.N)
-	for i := 0; i < b.N; i++ {
+	// Create a reasonable number of epics for status change testing
+	// Use a minimum of 10 epics or b.N, whichever is smaller, to avoid creating too many
+	numEpics := b.N
+	if numEpics > 100 {
+		numEpics = 100 // Cap at 100 to avoid excessive setup time
+	}
+	if numEpics < 10 {
+		numEpics = 10 // Minimum of 10 for reasonable testing
+	}
+
+	epicIDs := make([]uuid.UUID, numEpics)
+	for i := 0; i < numEpics; i++ {
 		createReq := service.CreateEpicRequest{
 			CreatorID:   userID,
 			Priority:    models.PriorityMedium,
@@ -249,6 +258,10 @@ func BenchmarkEpicStatusChange(b *testing.B) {
 		epicIDs[i] = epic.ID
 	}
 
+	// Validate test data
+	validator := NewBenchmarkDataValidator(b)
+	validator.ValidateUUIDs(epicIDs, "epic")
+
 	b.ResetTimer()
 
 	b.Run("ChangeEpicStatus", func(b *testing.B) {
@@ -259,11 +272,14 @@ func BenchmarkEpicStatusChange(b *testing.B) {
 		}
 
 		for i := 0; i < b.N; i++ {
+			// Use safe indexing to cycle through available epics
+			epicIndex := safeIndex(i, len(epicIDs))
+			
 			statusReq := map[string]interface{}{
-				"status": statuses[i%len(statuses)],
+				"status": statuses[safeIndex(i, len(statuses))],
 			}
 
-			resp, err := client.PATCH(fmt.Sprintf("/api/v1/epics/%s/status", epicIDs[i]), statusReq)
+			resp, err := client.PATCH(fmt.Sprintf("/api/v1/epics/%s/status", epicIDs[epicIndex]), statusReq)
 			require.NoError(b, err)
 			require.Equal(b, http.StatusOK, resp.StatusCode)
 			resp.Body.Close()
@@ -296,9 +312,17 @@ func BenchmarkEpicAssignment(b *testing.B) {
 	require.NoError(b, server.DB.Limit(5).Find(&users).Error)
 	require.NotEmpty(b, users)
 
-	// Create epics for assignment testing
-	epicIDs := make([]uuid.UUID, b.N)
-	for i := 0; i < b.N; i++ {
+	// Create a reasonable number of epics for assignment testing
+	numEpics := b.N
+	if numEpics > 100 {
+		numEpics = 100 // Cap at 100 to avoid excessive setup time
+	}
+	if numEpics < 10 {
+		numEpics = 10 // Minimum of 10 for reasonable testing
+	}
+
+	epicIDs := make([]uuid.UUID, numEpics)
+	for i := 0; i < numEpics; i++ {
 		createReq := service.CreateEpicRequest{
 			CreatorID:   users[0].ID,
 			Priority:    models.PriorityMedium,
@@ -315,16 +339,24 @@ func BenchmarkEpicAssignment(b *testing.B) {
 		epicIDs[i] = epic.ID
 	}
 
+	// Validate test data
+	validator := NewBenchmarkDataValidator(b)
+	validator.ValidateUUIDs(epicIDs, "epic")
+
 	b.ResetTimer()
 
 	b.Run("AssignEpic", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			assigneeID := users[i%len(users)].ID
+			// Use safe indexing to cycle through available epics and users
+			epicIndex := safeIndex(i, len(epicIDs))
+			userIndex := safeIndex(i, len(users))
+
+			assigneeID := users[userIndex].ID
 			assignReq := map[string]interface{}{
 				"assignee_id": assigneeID,
 			}
 
-			resp, err := client.PATCH(fmt.Sprintf("/api/v1/epics/%s/assign", epicIDs[i]), assignReq)
+			resp, err := client.PATCH(fmt.Sprintf("/api/v1/epics/%s/assign", epicIDs[epicIndex]), assignReq)
 			require.NoError(b, err)
 			require.Equal(b, http.StatusOK, resp.StatusCode)
 			resp.Body.Close()
@@ -475,7 +507,3 @@ func BenchmarkEpicConcurrentOperations(b *testing.B) {
 	})
 }
 
-// Helper function to create string pointer
-func stringPtr(s string) *string {
-	return &s
-}
