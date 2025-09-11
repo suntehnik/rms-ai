@@ -63,7 +63,6 @@ func (r *Requirement) BeforeCreate(tx *gorm.DB) error {
 	if r.Status == "" {
 		r.Status = RequirementStatusDraft
 	}
-	
 	// Generate ReferenceID if not set using production generator.
 	// This uses the package-level requirementGenerator which provides thread-safe,
 	// production-grade reference ID generation with PostgreSQL advisory locks.
