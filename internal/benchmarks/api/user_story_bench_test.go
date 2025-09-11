@@ -258,9 +258,17 @@ func BenchmarkUserStoryStatusTransition(b *testing.B) {
 	require.NotEmpty(b, epics)
 	epicID := epics[0].ID
 
-	// Create user stories for status transition testing
-	userStoryIDs := make([]uuid.UUID, b.N)
-	for i := 0; i < b.N; i++ {
+	// Create a reasonable number of user stories for status transition testing
+	numUserStories := b.N
+	if numUserStories > 100 {
+		numUserStories = 100 // Cap at 100 to avoid excessive setup time
+	}
+	if numUserStories < 10 {
+		numUserStories = 10 // Minimum of 10 for reasonable testing
+	}
+
+	userStoryIDs := make([]uuid.UUID, numUserStories)
+	for i := 0; i < numUserStories; i++ {
 		createReq := service.CreateUserStoryRequest{
 			EpicID:      epicID,
 			CreatorID:   userID,
@@ -278,6 +286,10 @@ func BenchmarkUserStoryStatusTransition(b *testing.B) {
 		userStoryIDs[i] = userStory.ID
 	}
 
+	// Validate test data
+	validator := NewBenchmarkDataValidator(b)
+	validator.ValidateUUIDs(userStoryIDs, "user story")
+
 	b.ResetTimer()
 
 	b.Run("ChangeUserStoryStatus", func(b *testing.B) {
@@ -289,11 +301,14 @@ func BenchmarkUserStoryStatusTransition(b *testing.B) {
 		}
 
 		for i := 0; i < b.N; i++ {
+			// Use safe indexing to cycle through available user stories
+			userStoryIndex := safeIndex(i, len(userStoryIDs))
+			
 			statusReq := map[string]interface{}{
-				"status": statuses[i%len(statuses)],
+				"status": statuses[safeIndex(i, len(statuses))],
 			}
 
-			userStoryID := userStoryIDs[i%len(userStoryIDs)]
+			userStoryID := userStoryIDs[userStoryIndex]
 			resp, err := client.PATCH(fmt.Sprintf("/api/v1/user-stories/%s/status", userStoryID), statusReq)
 			require.NoError(b, err)
 			require.Equal(b, http.StatusOK, resp.StatusCode)
@@ -332,9 +347,17 @@ func BenchmarkUserStoryAssignment(b *testing.B) {
 	require.NotEmpty(b, epics)
 	epicID := epics[0].ID
 
-	// Create user stories for assignment testing
-	userStoryIDs := make([]uuid.UUID, b.N)
-	for i := 0; i < b.N; i++ {
+	// Create a reasonable number of user stories for assignment testing
+	numUserStories := b.N
+	if numUserStories > 100 {
+		numUserStories = 100 // Cap at 100 to avoid excessive setup time
+	}
+	if numUserStories < 10 {
+		numUserStories = 10 // Minimum of 10 for reasonable testing
+	}
+
+	userStoryIDs := make([]uuid.UUID, numUserStories)
+	for i := 0; i < numUserStories; i++ {
 		createReq := service.CreateUserStoryRequest{
 			EpicID:      epicID,
 			CreatorID:   users[0].ID,
@@ -352,16 +375,24 @@ func BenchmarkUserStoryAssignment(b *testing.B) {
 		userStoryIDs[i] = userStory.ID
 	}
 
+	// Validate test data
+	validator := NewBenchmarkDataValidator(b)
+	validator.ValidateUUIDs(userStoryIDs, "user story")
+
 	b.ResetTimer()
 
 	b.Run("AssignUserStory", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			assigneeID := users[i%len(users)].ID
+			// Use safe indexing to cycle through available user stories and users
+			userStoryIndex := safeIndex(i, len(userStoryIDs))
+			userIndex := safeIndex(i, len(users))
+
+			assigneeID := users[userIndex].ID
 			assignReq := map[string]interface{}{
 				"assignee_id": assigneeID,
 			}
 
-			userStoryID := userStoryIDs[i%len(userStoryIDs)]
+			userStoryID := userStoryIDs[userStoryIndex]
 			resp, err := client.PATCH(fmt.Sprintf("/api/v1/user-stories/%s/assign", userStoryID), assignReq)
 			require.NoError(b, err)
 			require.Equal(b, http.StatusOK, resp.StatusCode)
