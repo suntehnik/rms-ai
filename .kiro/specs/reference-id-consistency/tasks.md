@@ -99,7 +99,7 @@
   - Create PR
   - _Requirements: 1.1, 1.2, 1.3, 4.1_
 
-- [-] 9. Refactor UserStory model to use production generator (consistency)
+- [x] 9. Refactor UserStory model to use production generator (consistency)
   - Fetch latest main branch: `git fetch origin main`
   - Create feature branch
   - Create package-level `userStoryGenerator` instance using PostgreSQLReferenceIDGenerator in `user_story.go`
@@ -111,7 +111,7 @@
   - Create PR
   - _Requirements: 1.1, 1.2, 1.3, 4.1_
 
-- [ ] 10. Add comprehensive integration tests for all entities
+- [x] 10. Add comprehensive integration tests for all entities
   - Fetch latest main branch: `git fetch origin main`
   - Create feature branch
   - Write integration tests creating all entity types concurrently using PostgreSQL
