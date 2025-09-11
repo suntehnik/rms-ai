@@ -79,7 +79,7 @@
   - Create pull request: `gh pr create --title "fix: Resolve database operations benchmark failures" --body "Fixes missing table migrations and improves error handling in database benchmark tests"`
   - _Requirements: 2.2, 2.4_
 
-- [ ] 8. Fix API benchmark compilation issues
+- [x] 8. Fix API benchmark compilation issues
   - Create feature branch: `git checkout -b fix/benchmark-api-compilation`
   - Fix undefined `stringPtr` helper function in user story benchmark tests
   - Add missing utility functions for API benchmark test helpers
@@ -91,7 +91,7 @@
   - Create pull request: `gh pr create --title "fix: Resolve API benchmark compilation issues" --body "Fixes undefined helper functions and compilation errors in API benchmark tests"`
   - _Requirements: 1.1, 1.2, 5.1_
 
-- [ ] 9. Fix epic status change benchmark runtime error
+- [-] 9. Fix epic status change benchmark runtime error
   - Create feature branch: `git checkout -b fix/benchmark-epic-status-change`
   - Debug and fix index out of range error in BenchmarkEpicStatusChange test
   - Add proper array bounds checking before accessing test data elements
