@@ -2,8 +2,10 @@ package benchmarks
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
+	"gorm.io/gorm"
 	"product-requirements-management/internal/benchmarks/setup"
 )
 
@@ -17,6 +19,11 @@ func BenchmarkDataGeneration(b *testing.B) {
 		b.Fatalf("Failed to create PostgreSQL container: %v", err)
 	}
 	defer dbContainer.Cleanup(ctx)
+
+	// Verify database connection and schema
+	if err := verifyDatabaseConnection(dbContainer.DB); err != nil {
+		b.Fatalf("Database connection verification failed: %v", err)
+	}
 
 	// Create data generator
 	dataGen := setup.NewDataGenerator(dbContainer.DB)
@@ -140,6 +147,11 @@ func BenchmarkDatabaseOperations(b *testing.B) {
 	}
 	defer dbContainer.Cleanup(ctx)
 
+	// Verify database connection and schema
+	if err := verifyDatabaseConnection(dbContainer.DB); err != nil {
+		b.Fatalf("Database connection verification failed: %v", err)
+	}
+
 	dataGen := setup.NewDataGenerator(dbContainer.DB)
 
 	b.Run("DatabaseCleanup", func(b *testing.B) {
@@ -175,4 +187,32 @@ func BenchmarkDatabaseOperations(b *testing.B) {
 			b.StopTimer()
 		}
 	})
+}
+
+// verifyDatabaseConnection checks if the database connection is working and tables exist
+func verifyDatabaseConnection(db *gorm.DB) error {
+	// Test database connection
+	sqlDB, err := db.DB()
+	if err != nil {
+		return fmt.Errorf("failed to get underlying sql.DB: %w", err)
+	}
+
+	if err := sqlDB.Ping(); err != nil {
+		return fmt.Errorf("database ping failed: %w", err)
+	}
+
+	// Verify essential tables exist
+	requiredTables := []string{"users", "epics", "user_stories", "requirements", "acceptance_criteria"}
+	for _, table := range requiredTables {
+		var exists bool
+		query := fmt.Sprintf("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = '%s')", table)
+		if err := db.Raw(query).Scan(&exists).Error; err != nil {
+			return fmt.Errorf("failed to check if table %s exists: %w", table, err)
+		}
+		if !exists {
+			return fmt.Errorf("required table %s does not exist", table)
+		}
+	}
+
+	return nil
 }
