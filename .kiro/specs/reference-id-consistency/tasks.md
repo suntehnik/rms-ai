@@ -75,7 +75,7 @@
   - Create PR
   - _Requirements: 1.1, 1.2, 1.3, 2.1, 4.1_
 
-- [-] 7. Add integration tests for AcceptanceCriteria model using production generator
+- [x] 7. Add integration tests for AcceptanceCriteria model using production generator
   - Fetch latest main branch: `git fetch origin main`
   - Create feature branch
   - Write integration tests for concurrent acceptance criteria creation using PostgreSQL
@@ -87,7 +87,7 @@
   - Create PR
   - _Requirements: 1.2, 1.3, 2.1, 2.2, 2.3_
 
-- [ ] 8. Refactor Epic model to use production generator (consistency)
+- [-] 8. Refactor Epic model to use production generator (consistency)
   - Fetch latest main branch: `git fetch origin main`
   - Create feature branch
   - Create package-level `epicGenerator` instance using PostgreSQLReferenceIDGenerator in `epic.go`
