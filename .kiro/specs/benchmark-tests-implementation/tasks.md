@@ -129,7 +129,7 @@
 
 ## Remaining Feature Tasks
 
-- [ ] 12. Create Requirement API endpoint benchmarks
+- [x] 12. Create Requirement API endpoint benchmarks
   - Create feature branch: `git checkout -b  benchmark-requirement-api`
   - Implement Requirement CRUD operation benchmarks via HTTP endpoints
   - Add Requirement listing and filtering performance tests
@@ -140,7 +140,7 @@
   - Create pull request
   - _Requirements: 1.1, 1.2, 5.1_
 
-- [ ] 13. Create Acceptance Criteria API endpoint benchmarks
+- [-] 13. Create Acceptance Criteria API endpoint benchmarks
   - Create feature branch: `git checkout -b  benchmark-acceptance-criteria-api`
   - Implement Acceptance Criteria CRUD operation benchmarks via HTTP endpoints
   - Add Acceptance Criteria listing and filtering performance tests
