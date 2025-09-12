@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/swaggo/files"
+	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
@@ -43,7 +43,7 @@ func RegisterSwaggerRoutes(router *gin.Engine, config *SwaggerConfig) {
 	swaggerGroup := router.Group(config.BasePath)
 	{
 		// Swagger UI endpoint
-		swaggerGroup.GET("/*any", ginSwagger.WrapHandler(files.Handler))
+		swaggerGroup.GET("/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 		// Health check for documentation
 		swaggerGroup.GET("/health", func(c *gin.Context) {

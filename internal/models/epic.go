@@ -20,44 +20,105 @@ import (
 var epicGenerator = NewPostgreSQLReferenceIDGenerator(2147483647, "EP")
 
 // Priority represents the priority level of an entity
+// @Description Priority level for entities (1=Critical, 2=High, 3=Medium, 4=Low)
+// @Example 1
 type Priority int
 
 const (
-	PriorityCritical Priority = 1
-	PriorityHigh     Priority = 2
-	PriorityMedium   Priority = 3
-	PriorityLow      Priority = 4
+	PriorityCritical Priority = 1 // Critical priority - highest urgency, immediate attention required
+	PriorityHigh     Priority = 2 // High priority - important, should be addressed soon
+	PriorityMedium   Priority = 3 // Medium priority - normal importance, standard timeline
+	PriorityLow      Priority = 4 // Low priority - nice to have, can be deferred
 )
 
-// EpicStatus represents the status of an epic
+// EpicStatus represents the status of an epic in the workflow
+// @Description Status of an epic in the workflow lifecycle
+// @Example "Backlog"
 type EpicStatus string
 
 const (
-	EpicStatusBacklog    EpicStatus = "Backlog"
-	EpicStatusDraft      EpicStatus = "Draft"
-	EpicStatusInProgress EpicStatus = "In Progress"
-	EpicStatusDone       EpicStatus = "Done"
-	EpicStatusCancelled  EpicStatus = "Cancelled"
+	EpicStatusBacklog    EpicStatus = "Backlog"     // Epic is in the backlog - not yet started, awaiting prioritization
+	EpicStatusDraft      EpicStatus = "Draft"       // Epic is in draft state - being defined and refined
+	EpicStatusInProgress EpicStatus = "In Progress" // Epic is being actively worked on
+	EpicStatusDone       EpicStatus = "Done"        // Epic is completed - all user stories finished
+	EpicStatusCancelled  EpicStatus = "Cancelled"   // Epic has been cancelled - will not be implemented
 )
 
-// Epic represents an epic in the requirements management system
+// Epic represents a high-level feature or initiative in the requirements management system
+// @Description Epic is a large body of work that can be broken down into smaller user stories. It represents a significant feature or initiative that delivers business value.
 type Epic struct {
-	ID           uuid.UUID  `gorm:"type:uuid;primary_key" json:"id"`
-	ReferenceID  string     `gorm:"uniqueIndex;not null" json:"reference_id"`
-	CreatorID    uuid.UUID  `gorm:"not null" json:"creator_id"`
-	AssigneeID   uuid.UUID  `gorm:"not null" json:"assignee_id"`
-	CreatedAt    time.Time  `json:"created_at"`
-	LastModified time.Time  `json:"last_modified"`
-	Priority     Priority   `gorm:"not null" json:"priority"`
-	Status       EpicStatus `gorm:"not null" json:"status"`
-	Title        string     `gorm:"not null" json:"title"`
-	Description  *string    `json:"description"`
+	// ID is the unique identifier for the epic
+	// @Description Unique UUID identifier for the epic
+	// @Example "123e4567-e89b-12d3-a456-426614174000"
+	ID uuid.UUID `gorm:"type:uuid;primary_key" json:"id"`
 
-	// Relationships
-	Creator     User        `gorm:"foreignKey:CreatorID;constraint:OnDelete:RESTRICT" json:"creator,omitempty"`
-	Assignee    User        `gorm:"foreignKey:AssigneeID;constraint:OnDelete:RESTRICT" json:"assignee,omitempty"`
+	// ReferenceID is the human-readable identifier for the epic
+	// @Description Human-readable reference identifier (auto-generated, format: EP-XXX)
+	// @Example "EP-001"
+	ReferenceID string `gorm:"uniqueIndex;not null" json:"reference_id"`
+
+	// CreatorID is the UUID of the user who created the epic
+	// @Description UUID of the user who created this epic
+	// @Example "123e4567-e89b-12d3-a456-426614174001"
+	CreatorID uuid.UUID `gorm:"not null" json:"creator_id"`
+
+	// AssigneeID is the UUID of the user assigned to the epic
+	// @Description UUID of the user currently assigned to work on this epic
+	// @Example "123e4567-e89b-12d3-a456-426614174002"
+	AssigneeID uuid.UUID `gorm:"not null" json:"assignee_id"`
+
+	// CreatedAt is the timestamp when the epic was created
+	// @Description Timestamp when the epic was created (RFC3339 format)
+	// @Example "2023-01-15T10:30:00Z"
+	CreatedAt time.Time `json:"created_at"`
+
+	// LastModified is the timestamp when the epic was last updated
+	// @Description Timestamp when the epic was last modified (RFC3339 format)
+	// @Example "2023-01-16T14:45:30Z"
+	LastModified time.Time `json:"last_modified"`
+
+	// Priority indicates the importance level of the epic
+	// @Description Priority level of the epic (1=Critical, 2=High, 3=Medium, 4=Low)
+	// @Minimum 1
+	// @Maximum 4
+	// @Example 1
+	Priority Priority `gorm:"not null" json:"priority" validate:"required,min=1,max=4"`
+
+	// Status represents the current workflow state of the epic
+	// @Description Current status of the epic in the workflow
+	// @Enum Backlog,Draft,In Progress,Done,Cancelled
+	// @Example "Backlog"
+	Status EpicStatus `gorm:"not null" json:"status" validate:"required"`
+
+	// Title is the name/summary of the epic
+	// @Description Title or name of the epic (required, max 500 characters)
+	// @MaxLength 500
+	// @Example "User Authentication System"
+	Title string `gorm:"not null" json:"title" validate:"required,max=500"`
+
+	// Description provides detailed information about the epic
+	// @Description Detailed description of the epic's purpose and scope (optional, max 5000 characters)
+	// @MaxLength 5000
+	// @Example "Implement a comprehensive user authentication and authorization system with JWT tokens, role-based access control, and secure password management."
+	Description *string `json:"description,omitempty" validate:"omitempty,max=5000"`
+
+	// Relationships - These fields are populated when explicitly requested and contain related entities
+
+	// Creator contains the user information of who created the epic
+	// @Description User who created this epic (populated when requested with ?include=creator)
+	Creator User `gorm:"foreignKey:CreatorID;constraint:OnDelete:RESTRICT" json:"creator,omitempty"`
+
+	// Assignee contains the user information of who is assigned to the epic
+	// @Description User currently assigned to this epic (populated when requested with ?include=assignee)
+	Assignee User `gorm:"foreignKey:AssigneeID;constraint:OnDelete:RESTRICT" json:"assignee,omitempty"`
+
+	// UserStories contains all user stories that belong to this epic
+	// @Description List of user stories that belong to this epic (populated when requested with ?include=user_stories)
 	UserStories []UserStory `gorm:"foreignKey:EpicID;constraint:OnDelete:CASCADE" json:"user_stories,omitempty"`
-	Comments    []Comment   `gorm:"polymorphic:Entity;polymorphicValue:epic" json:"comments,omitempty"`
+
+	// Comments contains all comments associated with this epic
+	// @Description List of comments on this epic (populated when requested with ?include=comments)
+	Comments []Comment `gorm:"polymorphic:Entity;polymorphicValue:epic" json:"comments,omitempty"`
 }
 
 // BeforeCreate sets the ID if not already set and ensures default status

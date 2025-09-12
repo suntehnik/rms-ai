@@ -6,21 +6,21 @@
   - Add Makefile targets for Swagger generation and validation
   - _Requirements: 5.1, 5.2, 5.3_
 
-- [ ] 2. Implement core documentation infrastructure
-  - [ ] 2.1 Create Swagger middleware integration
+- [x] 2. Implement core documentation infrastructure
+  - [x] 2.1 Create Swagger middleware integration
     - Implement Swagger UI middleware in internal/server/middleware/swagger.go
     - Add conditional Swagger serving based on environment configuration
     - Create documentation route registration in routes.go
     - _Requirements: 1.1, 1.5, 5.4_
 
-  - [ ] 2.2 Define standard response models and error schemas
+  - [x] 2.2 Define standard response models and error schemas
     - Create common response wrapper types in internal/docs/schemas.go
     - Define standard error response structures with examples
     - Implement pagination metadata models for list endpoints
     - _Requirements: 2.1, 2.2, 4.4_
 
-- [ ] 3. Document core entity models with Swagger annotations
-  - [ ] 3.1 Add Swagger annotations to Epic model
+- [-] 3. Document core entity models with Swagger annotations
+  - [x] 3.1 Add Swagger annotations to Epic model
     - Add field-level documentation with examples and validation rules
     - Document Epic status enum values and descriptions
     - Include relationship documentation for UserStories
