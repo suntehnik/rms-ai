@@ -30,7 +30,7 @@ func (h *CommentHandler) CreateComment(c *gin.Context) {
 
 	// Parse entity type
 	entityType := models.EntityType(entityTypeParam)
-	
+
 	// Parse entity ID
 	entityID, err := uuid.Parse(entityIDParam)
 	if err != nil {
@@ -43,7 +43,7 @@ func (h *CommentHandler) CreateComment(c *gin.Context) {
 	var req service.CreateCommentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": err.Error(),
 		})
 		return
@@ -110,7 +110,7 @@ func (h *CommentHandler) GetCommentsByEntity(c *gin.Context) {
 
 	// Parse entity type
 	entityType := models.EntityType(entityTypeParam)
-	
+
 	// Parse entity ID
 	entityID, err := uuid.Parse(entityIDParam)
 	if err != nil {
@@ -122,15 +122,15 @@ func (h *CommentHandler) GetCommentsByEntity(c *gin.Context) {
 
 	// Check for threaded parameter
 	threaded := c.Query("threaded") == "true"
-	
+
 	// Check for inline parameter
 	inlineOnly := c.Query("inline") == "true"
-	
+
 	// Check for status filter
 	statusFilter := c.Query("status")
 
 	var comments []service.CommentResponse
-	
+
 	if inlineOnly {
 		// Use visible inline comments to exclude hidden ones
 		comments, err = h.commentService.GetVisibleInlineComments(entityType, entityID)
@@ -189,7 +189,7 @@ func (h *CommentHandler) GetCommentsByEntity(c *gin.Context) {
 // GetComment handles GET /api/v1/comments/:id
 func (h *CommentHandler) GetComment(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -218,7 +218,7 @@ func (h *CommentHandler) GetComment(c *gin.Context) {
 // UpdateComment handles PUT /api/v1/comments/:id
 func (h *CommentHandler) UpdateComment(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -230,7 +230,7 @@ func (h *CommentHandler) UpdateComment(c *gin.Context) {
 	var req service.UpdateCommentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": err.Error(),
 		})
 		return
@@ -261,7 +261,7 @@ func (h *CommentHandler) UpdateComment(c *gin.Context) {
 // DeleteComment handles DELETE /api/v1/comments/:id
 func (h *CommentHandler) DeleteComment(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -295,7 +295,7 @@ func (h *CommentHandler) DeleteComment(c *gin.Context) {
 // ResolveComment handles POST /api/v1/comments/:id/resolve
 func (h *CommentHandler) ResolveComment(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -324,7 +324,7 @@ func (h *CommentHandler) ResolveComment(c *gin.Context) {
 // UnresolveComment handles POST /api/v1/comments/:id/unresolve
 func (h *CommentHandler) UnresolveComment(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -353,7 +353,7 @@ func (h *CommentHandler) UnresolveComment(c *gin.Context) {
 // GetCommentsByStatus handles GET /api/v1/comments/status/:status
 func (h *CommentHandler) GetCommentsByStatus(c *gin.Context) {
 	statusParam := c.Param("status")
-	
+
 	var isResolved bool
 	switch statusParam {
 	case "resolved":
@@ -385,7 +385,7 @@ func (h *CommentHandler) GetCommentsByStatus(c *gin.Context) {
 // GetCommentReplies handles GET /api/v1/comments/:id/replies
 func (h *CommentHandler) GetCommentReplies(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -421,7 +421,7 @@ func (h *CommentHandler) GetCommentReplies(c *gin.Context) {
 // CreateCommentReply handles POST /api/v1/comments/:id/replies
 func (h *CommentHandler) CreateCommentReply(c *gin.Context) {
 	parentIDParam := c.Param("id")
-	
+
 	parentID, err := uuid.Parse(parentIDParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -448,7 +448,7 @@ func (h *CommentHandler) CreateCommentReply(c *gin.Context) {
 	var req service.CreateCommentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": err.Error(),
 		})
 		return
@@ -488,7 +488,7 @@ func (h *CommentHandler) CreateInlineComment(c *gin.Context) {
 
 	// Parse entity type
 	entityType := models.EntityType(entityTypeParam)
-	
+
 	// Parse entity ID
 	entityID, err := uuid.Parse(entityIDParam)
 	if err != nil {
@@ -501,7 +501,7 @@ func (h *CommentHandler) CreateInlineComment(c *gin.Context) {
 	var req service.CreateCommentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": err.Error(),
 		})
 		return
@@ -552,7 +552,7 @@ func (h *CommentHandler) CreateInlineComment(c *gin.Context) {
 			})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to create inline comment",
+				"error":   "Failed to create inline comment",
 				"details": err.Error(),
 			})
 		}
@@ -598,7 +598,7 @@ func (h *CommentHandler) createInlineCommentForEntity(c *gin.Context, entityType
 	var req service.CreateCommentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": err.Error(),
 		})
 		return
@@ -649,7 +649,7 @@ func (h *CommentHandler) createInlineCommentForEntity(c *gin.Context, entityType
 			})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to create inline comment",
+				"error":   "Failed to create inline comment",
 				"details": err.Error(),
 			})
 		}
@@ -666,7 +666,7 @@ func (h *CommentHandler) GetVisibleInlineComments(c *gin.Context) {
 
 	// Parse entity type
 	entityType := models.EntityType(entityTypeParam)
-	
+
 	// Parse entity ID
 	entityID, err := uuid.Parse(entityIDParam)
 	if err != nil {
@@ -766,7 +766,7 @@ func (h *CommentHandler) ValidateInlineComments(c *gin.Context) {
 
 	// Parse entity type
 	entityType := models.EntityType(entityTypeParam)
-	
+
 	// Parse entity ID
 	entityID, err := uuid.Parse(entityIDParam)
 	if err != nil {
@@ -779,10 +779,10 @@ func (h *CommentHandler) ValidateInlineComments(c *gin.Context) {
 	var req struct {
 		NewDescription string `json:"new_description" binding:"required"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": err.Error(),
 		})
 		return
@@ -791,7 +791,7 @@ func (h *CommentHandler) ValidateInlineComments(c *gin.Context) {
 	err = h.commentService.ValidateInlineCommentsAfterTextChange(entityType, entityID, req.NewDescription)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to validate inline comments",
+			"error":   "Failed to validate inline comments",
 			"details": err.Error(),
 		})
 		return
@@ -838,10 +838,10 @@ func (h *CommentHandler) validateInlineCommentsForEntity(c *gin.Context, entityT
 	var req struct {
 		NewDescription string `json:"new_description" binding:"required"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": err.Error(),
 		})
 		return
@@ -850,7 +850,7 @@ func (h *CommentHandler) validateInlineCommentsForEntity(c *gin.Context, entityT
 	err = h.commentService.ValidateInlineCommentsAfterTextChange(entityType, entityID, req.NewDescription)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to validate inline comments",
+			"error":   "Failed to validate inline comments",
 			"details": err.Error(),
 		})
 		return
@@ -899,7 +899,7 @@ func (h *CommentHandler) createCommentForEntity(c *gin.Context, entityType model
 	var req service.CreateCommentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": err.Error(),
 		})
 		return
@@ -994,15 +994,15 @@ func (h *CommentHandler) getCommentsForEntity(c *gin.Context, entityType models.
 
 	// Check for threaded parameter
 	threaded := c.Query("threaded") == "true"
-	
+
 	// Check for inline parameter
 	inlineOnly := c.Query("inline") == "true"
-	
+
 	// Check for status filter
 	statusFilter := c.Query("status")
 
 	var comments []service.CommentResponse
-	
+
 	if inlineOnly {
 		// Use visible inline comments to exclude hidden ones
 		comments, err = h.commentService.GetVisibleInlineComments(entityType, entityID)

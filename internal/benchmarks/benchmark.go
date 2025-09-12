@@ -20,18 +20,18 @@ import (
 
 // BenchmarkSuite provides a complete benchmark testing environment
 type BenchmarkSuite struct {
-	Server    *setup.BenchmarkServer
-	Client    *helpers.BenchmarkClient
-	Auth      *helpers.AuthHelper
-	Metrics   *helpers.MetricsCollector
-	DataGen   *setup.DataGenerator
+	Server  *setup.BenchmarkServer
+	Client  *helpers.BenchmarkClient
+	Auth    *helpers.AuthHelper
+	Metrics *helpers.MetricsCollector
+	DataGen *setup.DataGenerator
 }
 
 // NewBenchmarkSuite creates a new benchmark testing suite
 func NewBenchmarkSuite(b *testing.B) *BenchmarkSuite {
 	// Create benchmark server with PostgreSQL container
 	server := setup.NewBenchmarkServer(b)
-	
+
 	// Start the server
 	if err := server.Start(); err != nil {
 		b.Fatalf("Failed to start benchmark server: %v", err)
@@ -74,7 +74,7 @@ func (bs *BenchmarkSuite) Cleanup() {
 // SeedTestData populates the database with test data for benchmarking
 func (bs *BenchmarkSuite) SeedTestData(dataSetName string) error {
 	var config setup.DataSetConfig
-	
+
 	switch dataSetName {
 	case "small":
 		config = setup.GetSmallDataSet()

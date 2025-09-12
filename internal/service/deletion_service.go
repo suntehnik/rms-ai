@@ -23,16 +23,16 @@ var (
 type DeletionService interface {
 	// Epic deletion
 	DeleteEpicWithValidation(id uuid.UUID, userID uuid.UUID, force bool) (*DeletionResult, error)
-	
+
 	// User Story deletion
 	DeleteUserStoryWithValidation(id uuid.UUID, userID uuid.UUID, force bool) (*DeletionResult, error)
-	
+
 	// Acceptance Criteria deletion
 	DeleteAcceptanceCriteriaWithValidation(id uuid.UUID, userID uuid.UUID, force bool) (*DeletionResult, error)
-	
+
 	// Requirement deletion
 	DeleteRequirementWithValidation(id uuid.UUID, userID uuid.UUID, force bool) (*DeletionResult, error)
-	
+
 	// Dependency validation
 	ValidateEpicDeletion(id uuid.UUID) (*DependencyInfo, error)
 	ValidateUserStoryDeletion(id uuid.UUID) (*DependencyInfo, error)
@@ -42,14 +42,14 @@ type DeletionService interface {
 
 // DeletionResult represents the result of a deletion operation
 type DeletionResult struct {
-	EntityType      string                 `json:"entity_type"`
-	EntityID        uuid.UUID              `json:"entity_id"`
-	ReferenceID     string                 `json:"reference_id"`
-	DeletedAt       time.Time              `json:"deleted_at"`
-	DeletedBy       uuid.UUID              `json:"deleted_by"`
-	CascadeDeleted  []CascadeDeletedEntity `json:"cascade_deleted,omitempty"`
-	AuditLogID      uuid.UUID              `json:"audit_log_id"`
-	TransactionID   string                 `json:"transaction_id"`
+	EntityType     string                 `json:"entity_type"`
+	EntityID       uuid.UUID              `json:"entity_id"`
+	ReferenceID    string                 `json:"reference_id"`
+	DeletedAt      time.Time              `json:"deleted_at"`
+	DeletedBy      uuid.UUID              `json:"deleted_by"`
+	CascadeDeleted []CascadeDeletedEntity `json:"cascade_deleted,omitempty"`
+	AuditLogID     uuid.UUID              `json:"audit_log_id"`
+	TransactionID  string                 `json:"transaction_id"`
 }
 
 // CascadeDeletedEntity represents an entity that was deleted as part of cascade
@@ -61,11 +61,11 @@ type CascadeDeletedEntity struct {
 
 // DependencyInfo represents information about dependencies that would prevent deletion
 type DependencyInfo struct {
-	CanDelete            bool                    `json:"can_delete"`
-	Dependencies         []DependencyDetail      `json:"dependencies,omitempty"`
-	CascadeDeleteCount   int                     `json:"cascade_delete_count"`
+	CanDelete             bool                   `json:"can_delete"`
+	Dependencies          []DependencyDetail     `json:"dependencies,omitempty"`
+	CascadeDeleteCount    int                    `json:"cascade_delete_count"`
 	CascadeDeleteEntities []CascadeDeletePreview `json:"cascade_delete_entities,omitempty"`
-	RequiresConfirmation bool                    `json:"requires_confirmation"`
+	RequiresConfirmation  bool                   `json:"requires_confirmation"`
 }
 
 // DependencyDetail represents a specific dependency that prevents deletion
@@ -108,7 +108,7 @@ type deletionService struct {
 	requirementRelationshipRepo repository.RequirementRelationshipRepository
 	commentRepo                 repository.CommentRepository
 	userRepo                    repository.UserRepository
-	
+
 	// Logger
 	logger *logrus.Logger
 }
@@ -144,7 +144,7 @@ func (s *deletionService) generateTransactionID() string {
 // logAuditEntry creates an audit log entry for deletion operations
 func (s *deletionService) logAuditEntry(entityType string, entityID uuid.UUID, referenceID string, operation string, performedBy uuid.UUID, transactionID string, details map[string]interface{}) uuid.UUID {
 	auditID := uuid.New()
-	
+
 	s.logger.WithFields(logrus.Fields{
 		"audit_id":       auditID,
 		"entity_type":    entityType,
@@ -155,14 +155,14 @@ func (s *deletionService) logAuditEntry(entityType string, entityID uuid.UUID, r
 		"transaction_id": transactionID,
 		"details":        details,
 	}).Info("Deletion audit log entry")
-	
+
 	return auditID
 }
 
 // DeleteEpicWithValidation deletes an epic with comprehensive validation and cascading
 func (s *deletionService) DeleteEpicWithValidation(id uuid.UUID, userID uuid.UUID, force bool) (*DeletionResult, error) {
 	transactionID := s.generateTransactionID()
-	
+
 	s.logger.WithFields(logrus.Fields{
 		"epic_id":        id,
 		"user_id":        userID,
@@ -199,50 +199,50 @@ func (s *deletionService) DeleteEpicWithValidation(id uuid.UUID, userID uuid.UUI
 	var result *DeletionResult
 	err = s.epicRepo.WithTransaction(func(tx *gorm.DB) error {
 		cascadeDeleted := []CascadeDeletedEntity{}
-		
+
 		if force {
 			// Delete all user stories and their dependencies
 			userStories, err := s.userStoryRepo.GetByEpic(id)
 			if err != nil {
 				return fmt.Errorf("failed to get user stories for epic: %w", err)
 			}
-			
+
 			for _, userStory := range userStories {
 				// Delete user story with cascade
 				userStoryResult, err := s.deleteUserStoryInTransaction(tx, userStory.ID, userID, transactionID)
 				if err != nil {
 					return fmt.Errorf("failed to cascade delete user story %s: %w", userStory.ReferenceID, err)
 				}
-				
+
 				// Add to cascade deleted list
 				cascadeDeleted = append(cascadeDeleted, CascadeDeletedEntity{
 					EntityType:  "user_story",
 					EntityID:    userStory.ID,
 					ReferenceID: userStory.ReferenceID,
 				})
-				
+
 				// Add nested cascade deletions
 				cascadeDeleted = append(cascadeDeleted, userStoryResult.CascadeDeleted...)
 			}
 		}
-		
+
 		// Delete comments associated with the epic
 		if err := s.deleteCommentsInTransaction(tx, models.EntityTypeEpic, id, transactionID); err != nil {
 			return fmt.Errorf("failed to delete epic comments: %w", err)
 		}
-		
+
 		// Delete the epic itself
 		if err := tx.Delete(&models.Epic{}, id).Error; err != nil {
 			return fmt.Errorf("failed to delete epic: %w", err)
 		}
-		
+
 		// Create audit log
 		auditID := s.logAuditEntry("epic", id, epic.ReferenceID, "DELETE", userID, transactionID, map[string]interface{}{
-			"force":           force,
-			"cascade_count":   len(cascadeDeleted),
-			"title":           epic.Title,
+			"force":         force,
+			"cascade_count": len(cascadeDeleted),
+			"title":         epic.Title,
 		})
-		
+
 		result = &DeletionResult{
 			EntityType:     "epic",
 			EntityID:       id,
@@ -253,10 +253,10 @@ func (s *deletionService) DeleteEpicWithValidation(id uuid.UUID, userID uuid.UUI
 			AuditLogID:     auditID,
 			TransactionID:  transactionID,
 		}
-		
+
 		return nil
 	})
-	
+
 	if err != nil {
 		s.logger.WithFields(logrus.Fields{
 			"epic_id":        id,
@@ -265,20 +265,20 @@ func (s *deletionService) DeleteEpicWithValidation(id uuid.UUID, userID uuid.UUI
 		}).Error("Epic deletion transaction failed")
 		return nil, ErrDeletionTransactionFailed
 	}
-	
+
 	s.logger.WithFields(logrus.Fields{
 		"epic_id":        id,
 		"cascade_count":  len(result.CascadeDeleted),
 		"transaction_id": transactionID,
 	}).Info("Epic deletion completed successfully")
-	
+
 	return result, nil
 }
 
 // DeleteUserStoryWithValidation deletes a user story with comprehensive validation and cascading
 func (s *deletionService) DeleteUserStoryWithValidation(id uuid.UUID, userID uuid.UUID, force bool) (*DeletionResult, error) {
 	transactionID := s.generateTransactionID()
-	
+
 	s.logger.WithFields(logrus.Fields{
 		"user_story_id":  id,
 		"user_id":        userID,
@@ -314,7 +314,7 @@ func (s *deletionService) DeleteUserStoryWithValidation(id uuid.UUID, userID uui
 		result = userStoryResult
 		return nil
 	})
-	
+
 	if err != nil {
 		s.logger.WithFields(logrus.Fields{
 			"user_story_id":  id,
@@ -323,13 +323,13 @@ func (s *deletionService) DeleteUserStoryWithValidation(id uuid.UUID, userID uui
 		}).Error("User story deletion transaction failed")
 		return nil, ErrDeletionTransactionFailed
 	}
-	
+
 	s.logger.WithFields(logrus.Fields{
 		"user_story_id":  id,
 		"cascade_count":  len(result.CascadeDeleted),
 		"transaction_id": transactionID,
 	}).Info("User story deletion completed successfully")
-	
+
 	return result, nil
 }
 
@@ -340,68 +340,68 @@ func (s *deletionService) deleteUserStoryInTransaction(tx *gorm.DB, id uuid.UUID
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user story: %w", err)
 	}
-	
+
 	cascadeDeleted := []CascadeDeletedEntity{}
-	
+
 	// Delete all acceptance criteria
 	acceptanceCriteria, err := s.acceptanceCriteriaRepo.GetByUserStory(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get acceptance criteria for user story: %w", err)
 	}
-	
+
 	for _, ac := range acceptanceCriteria {
 		acResult, err := s.deleteAcceptanceCriteriaInTransaction(tx, ac.ID, userID, transactionID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to cascade delete acceptance criteria %s: %w", ac.ReferenceID, err)
 		}
-		
+
 		cascadeDeleted = append(cascadeDeleted, CascadeDeletedEntity{
 			EntityType:  "acceptance_criteria",
 			EntityID:    ac.ID,
 			ReferenceID: ac.ReferenceID,
 		})
-		
+
 		cascadeDeleted = append(cascadeDeleted, acResult.CascadeDeleted...)
 	}
-	
+
 	// Delete all requirements
 	requirements, err := s.requirementRepo.GetByUserStory(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get requirements for user story: %w", err)
 	}
-	
+
 	for _, req := range requirements {
 		reqResult, err := s.deleteRequirementInTransaction(tx, req.ID, userID, transactionID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to cascade delete requirement %s: %w", req.ReferenceID, err)
 		}
-		
+
 		cascadeDeleted = append(cascadeDeleted, CascadeDeletedEntity{
 			EntityType:  "requirement",
 			EntityID:    req.ID,
 			ReferenceID: req.ReferenceID,
 		})
-		
+
 		cascadeDeleted = append(cascadeDeleted, reqResult.CascadeDeleted...)
 	}
-	
+
 	// Delete comments associated with the user story
 	if err := s.deleteCommentsInTransaction(tx, models.EntityTypeUserStory, id, transactionID); err != nil {
 		return nil, fmt.Errorf("failed to delete user story comments: %w", err)
 	}
-	
+
 	// Delete the user story itself
 	if err := tx.Delete(&models.UserStory{}, id).Error; err != nil {
 		return nil, fmt.Errorf("failed to delete user story: %w", err)
 	}
-	
+
 	// Create audit log
 	auditID := s.logAuditEntry("user_story", id, userStory.ReferenceID, "DELETE", userID, transactionID, map[string]interface{}{
 		"cascade_count": len(cascadeDeleted),
 		"title":         userStory.Title,
 		"epic_id":       userStory.EpicID,
 	})
-	
+
 	return &DeletionResult{
 		EntityType:     "user_story",
 		EntityID:       id,
@@ -417,7 +417,7 @@ func (s *deletionService) deleteUserStoryInTransaction(tx *gorm.DB, id uuid.UUID
 // DeleteAcceptanceCriteriaWithValidation deletes acceptance criteria with comprehensive validation and cascading
 func (s *deletionService) DeleteAcceptanceCriteriaWithValidation(id uuid.UUID, userID uuid.UUID, force bool) (*DeletionResult, error) {
 	transactionID := s.generateTransactionID()
-	
+
 	s.logger.WithFields(logrus.Fields{
 		"acceptance_criteria_id": id,
 		"user_id":                userID,
@@ -453,7 +453,7 @@ func (s *deletionService) DeleteAcceptanceCriteriaWithValidation(id uuid.UUID, u
 		result = acResult
 		return nil
 	})
-	
+
 	if err != nil {
 		s.logger.WithFields(logrus.Fields{
 			"acceptance_criteria_id": id,
@@ -462,13 +462,13 @@ func (s *deletionService) DeleteAcceptanceCriteriaWithValidation(id uuid.UUID, u
 		}).Error("Acceptance criteria deletion transaction failed")
 		return nil, ErrDeletionTransactionFailed
 	}
-	
+
 	s.logger.WithFields(logrus.Fields{
 		"acceptance_criteria_id": id,
 		"cascade_count":          len(result.CascadeDeleted),
 		"transaction_id":         transactionID,
 	}).Info("Acceptance criteria deletion completed successfully")
-	
+
 	return result, nil
 }
 
@@ -479,46 +479,46 @@ func (s *deletionService) deleteAcceptanceCriteriaInTransaction(tx *gorm.DB, id 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get acceptance criteria: %w", err)
 	}
-	
+
 	cascadeDeleted := []CascadeDeletedEntity{}
-	
+
 	// Delete all requirements linked to this acceptance criteria
 	requirements, err := s.requirementRepo.GetByAcceptanceCriteria(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get requirements for acceptance criteria: %w", err)
 	}
-	
+
 	for _, req := range requirements {
 		// Update requirement to remove acceptance criteria link instead of deleting
 		if err := tx.Model(&models.Requirement{}).Where("id = ?", req.ID).Update("acceptance_criteria_id", nil).Error; err != nil {
 			return nil, fmt.Errorf("failed to unlink requirement %s from acceptance criteria: %w", req.ReferenceID, err)
 		}
-		
+
 		s.logger.WithFields(logrus.Fields{
 			"requirement_id":         req.ID,
 			"acceptance_criteria_id": id,
 			"transaction_id":         transactionID,
 		}).Info("Unlinked requirement from acceptance criteria")
 	}
-	
+
 	// Delete comments associated with the acceptance criteria
 	if err := s.deleteCommentsInTransaction(tx, models.EntityTypeAcceptanceCriteria, id, transactionID); err != nil {
 		return nil, fmt.Errorf("failed to delete acceptance criteria comments: %w", err)
 	}
-	
+
 	// Delete the acceptance criteria itself
 	if err := tx.Delete(&models.AcceptanceCriteria{}, id).Error; err != nil {
 		return nil, fmt.Errorf("failed to delete acceptance criteria: %w", err)
 	}
-	
+
 	// Create audit log
 	auditID := s.logAuditEntry("acceptance_criteria", id, acceptanceCriteria.ReferenceID, "DELETE", userID, transactionID, map[string]interface{}{
-		"cascade_count":   len(cascadeDeleted),
-		"description":     acceptanceCriteria.Description,
-		"user_story_id":   acceptanceCriteria.UserStoryID,
-		"unlinked_reqs":   len(requirements),
+		"cascade_count": len(cascadeDeleted),
+		"description":   acceptanceCriteria.Description,
+		"user_story_id": acceptanceCriteria.UserStoryID,
+		"unlinked_reqs": len(requirements),
 	})
-	
+
 	return &DeletionResult{
 		EntityType:     "acceptance_criteria",
 		EntityID:       id,
@@ -534,7 +534,7 @@ func (s *deletionService) deleteAcceptanceCriteriaInTransaction(tx *gorm.DB, id 
 // DeleteRequirementWithValidation deletes a requirement with comprehensive validation and cascading
 func (s *deletionService) DeleteRequirementWithValidation(id uuid.UUID, userID uuid.UUID, force bool) (*DeletionResult, error) {
 	transactionID := s.generateTransactionID()
-	
+
 	s.logger.WithFields(logrus.Fields{
 		"requirement_id": id,
 		"user_id":        userID,
@@ -570,7 +570,7 @@ func (s *deletionService) DeleteRequirementWithValidation(id uuid.UUID, userID u
 		result = reqResult
 		return nil
 	})
-	
+
 	if err != nil {
 		s.logger.WithFields(logrus.Fields{
 			"requirement_id": id,
@@ -579,13 +579,13 @@ func (s *deletionService) DeleteRequirementWithValidation(id uuid.UUID, userID u
 		}).Error("Requirement deletion transaction failed")
 		return nil, ErrDeletionTransactionFailed
 	}
-	
+
 	s.logger.WithFields(logrus.Fields{
 		"requirement_id": id,
 		"cascade_count":  len(result.CascadeDeleted),
 		"transaction_id": transactionID,
 	}).Info("Requirement deletion completed successfully")
-	
+
 	return result, nil
 }
 
@@ -596,43 +596,43 @@ func (s *deletionService) deleteRequirementInTransaction(tx *gorm.DB, id uuid.UU
 	if err != nil {
 		return nil, fmt.Errorf("failed to get requirement: %w", err)
 	}
-	
+
 	cascadeDeleted := []CascadeDeletedEntity{}
-	
+
 	// Delete all requirement relationships (both source and target)
 	relationships, err := s.requirementRelationshipRepo.GetByRequirement(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get relationships for requirement: %w", err)
 	}
-	
+
 	for _, rel := range relationships {
 		if err := tx.Delete(&models.RequirementRelationship{}, rel.ID).Error; err != nil {
 			return nil, fmt.Errorf("failed to delete requirement relationship: %w", err)
 		}
-		
+
 		cascadeDeleted = append(cascadeDeleted, CascadeDeletedEntity{
 			EntityType:  "requirement_relationship",
 			EntityID:    rel.ID,
 			ReferenceID: fmt.Sprintf("REL-%s", rel.ID.String()[:8]),
 		})
-		
+
 		s.logger.WithFields(logrus.Fields{
 			"relationship_id": rel.ID,
 			"requirement_id":  id,
 			"transaction_id":  transactionID,
 		}).Info("Deleted requirement relationship")
 	}
-	
+
 	// Delete comments associated with the requirement
 	if err := s.deleteCommentsInTransaction(tx, models.EntityTypeRequirement, id, transactionID); err != nil {
 		return nil, fmt.Errorf("failed to delete requirement comments: %w", err)
 	}
-	
+
 	// Delete the requirement itself
 	if err := tx.Delete(&models.Requirement{}, id).Error; err != nil {
 		return nil, fmt.Errorf("failed to delete requirement: %w", err)
 	}
-	
+
 	// Create audit log
 	auditID := s.logAuditEntry("requirement", id, requirement.ReferenceID, "DELETE", userID, transactionID, map[string]interface{}{
 		"cascade_count":          len(cascadeDeleted),
@@ -641,7 +641,7 @@ func (s *deletionService) deleteRequirementInTransaction(tx *gorm.DB, id uuid.UU
 		"acceptance_criteria_id": requirement.AcceptanceCriteriaID,
 		"deleted_relationships":  len(relationships),
 	})
-	
+
 	return &DeletionResult{
 		EntityType:     "requirement",
 		EntityID:       id,
@@ -660,13 +660,13 @@ func (s *deletionService) deleteCommentsInTransaction(tx *gorm.DB, entityType mo
 	if err := tx.Where("entity_type = ? AND entity_id = ?", entityType, entityID).Delete(&models.Comment{}).Error; err != nil {
 		return fmt.Errorf("failed to delete comments for entity %s %s: %w", entityType, entityID, err)
 	}
-	
+
 	s.logger.WithFields(logrus.Fields{
 		"entity_type":    entityType,
 		"entity_id":      entityID,
 		"transaction_id": transactionID,
 	}).Info("Deleted comments for entity")
-	
+
 	return nil
 }
 
@@ -688,13 +688,13 @@ func (s *deletionService) ValidateEpicDeletion(id uuid.UUID) (*DependencyInfo, e
 
 	dependencies := []DependencyDetail{}
 	cascadeEntities := []CascadeDeletePreview{}
-	
+
 	// Check for user stories
 	userStories, err := s.userStoryRepo.GetByEpic(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user stories for epic: %w", err)
 	}
-	
+
 	if len(userStories) > 0 {
 		for _, us := range userStories {
 			dependencies = append(dependencies, DependencyDetail{
@@ -704,20 +704,20 @@ func (s *deletionService) ValidateEpicDeletion(id uuid.UUID) (*DependencyInfo, e
 				Title:       us.Title,
 				Reason:      "Epic contains user stories",
 			})
-			
+
 			cascadeEntities = append(cascadeEntities, CascadeDeletePreview{
 				EntityType:  "user_story",
 				EntityID:    us.ID,
 				ReferenceID: us.ReferenceID,
 				Title:       us.Title,
 			})
-			
+
 			// Add nested dependencies (acceptance criteria and requirements)
 			acceptanceCriteria, err := s.acceptanceCriteriaRepo.GetByUserStory(us.ID)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get acceptance criteria for user story %s: %w", us.ReferenceID, err)
 			}
-			
+
 			for _, ac := range acceptanceCriteria {
 				cascadeEntities = append(cascadeEntities, CascadeDeletePreview{
 					EntityType:  "acceptance_criteria",
@@ -726,12 +726,12 @@ func (s *deletionService) ValidateEpicDeletion(id uuid.UUID) (*DependencyInfo, e
 					Title:       fmt.Sprintf("AC: %s", ac.Description[:min(50, len(ac.Description))]),
 				})
 			}
-			
+
 			requirements, err := s.requirementRepo.GetByUserStory(us.ID)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get requirements for user story %s: %w", us.ReferenceID, err)
 			}
-			
+
 			for _, req := range requirements {
 				cascadeEntities = append(cascadeEntities, CascadeDeletePreview{
 					EntityType:  "requirement",
@@ -742,10 +742,10 @@ func (s *deletionService) ValidateEpicDeletion(id uuid.UUID) (*DependencyInfo, e
 			}
 		}
 	}
-	
+
 	canDelete := len(dependencies) == 0
 	requiresConfirmation := len(cascadeEntities) > 0
-	
+
 	return &DependencyInfo{
 		CanDelete:             canDelete,
 		Dependencies:          dependencies,
@@ -773,13 +773,13 @@ func (s *deletionService) ValidateUserStoryDeletion(id uuid.UUID) (*DependencyIn
 
 	dependencies := []DependencyDetail{}
 	cascadeEntities := []CascadeDeletePreview{}
-	
+
 	// Check for acceptance criteria
 	acceptanceCriteria, err := s.acceptanceCriteriaRepo.GetByUserStory(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get acceptance criteria for user story: %w", err)
 	}
-	
+
 	if len(acceptanceCriteria) > 0 {
 		for _, ac := range acceptanceCriteria {
 			dependencies = append(dependencies, DependencyDetail{
@@ -789,7 +789,7 @@ func (s *deletionService) ValidateUserStoryDeletion(id uuid.UUID) (*DependencyIn
 				Title:       fmt.Sprintf("AC: %s", ac.Description[:min(50, len(ac.Description))]),
 				Reason:      "User story contains acceptance criteria",
 			})
-			
+
 			cascadeEntities = append(cascadeEntities, CascadeDeletePreview{
 				EntityType:  "acceptance_criteria",
 				EntityID:    ac.ID,
@@ -798,13 +798,13 @@ func (s *deletionService) ValidateUserStoryDeletion(id uuid.UUID) (*DependencyIn
 			})
 		}
 	}
-	
+
 	// Check for requirements
 	requirements, err := s.requirementRepo.GetByUserStory(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get requirements for user story: %w", err)
 	}
-	
+
 	if len(requirements) > 0 {
 		for _, req := range requirements {
 			dependencies = append(dependencies, DependencyDetail{
@@ -814,7 +814,7 @@ func (s *deletionService) ValidateUserStoryDeletion(id uuid.UUID) (*DependencyIn
 				Title:       req.Title,
 				Reason:      "User story contains requirements",
 			})
-			
+
 			cascadeEntities = append(cascadeEntities, CascadeDeletePreview{
 				EntityType:  "requirement",
 				EntityID:    req.ID,
@@ -823,10 +823,10 @@ func (s *deletionService) ValidateUserStoryDeletion(id uuid.UUID) (*DependencyIn
 			})
 		}
 	}
-	
+
 	canDelete := len(dependencies) == 0
 	requiresConfirmation := len(cascadeEntities) > 0
-	
+
 	return &DependencyInfo{
 		CanDelete:             canDelete,
 		Dependencies:          dependencies,
@@ -853,13 +853,13 @@ func (s *deletionService) ValidateAcceptanceCriteriaDeletion(id uuid.UUID) (*Dep
 
 	dependencies := []DependencyDetail{}
 	cascadeEntities := []CascadeDeletePreview{}
-	
+
 	// Check if this is the last acceptance criteria for the user story
 	count, err := s.acceptanceCriteriaRepo.CountByUserStory(acceptanceCriteria.UserStoryID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to count acceptance criteria for user story: %w", err)
 	}
-	
+
 	if count <= 1 {
 		dependencies = append(dependencies, DependencyDetail{
 			EntityType:  "user_story",
@@ -869,13 +869,13 @@ func (s *deletionService) ValidateAcceptanceCriteriaDeletion(id uuid.UUID) (*Dep
 			Reason:      "User story must have at least one acceptance criteria",
 		})
 	}
-	
+
 	// Check for linked requirements (these will be unlinked, not deleted)
 	requirements, err := s.requirementRepo.GetByAcceptanceCriteria(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get requirements for acceptance criteria: %w", err)
 	}
-	
+
 	// Requirements are not dependencies since they will be unlinked, not deleted
 	// But we should note them in the cascade entities for information
 	for _, req := range requirements {
@@ -886,10 +886,10 @@ func (s *deletionService) ValidateAcceptanceCriteriaDeletion(id uuid.UUID) (*Dep
 			Title:       fmt.Sprintf("Unlink: %s", req.Title),
 		})
 	}
-	
+
 	canDelete := len(dependencies) == 0
 	requiresConfirmation := len(cascadeEntities) > 0 || count <= 1
-	
+
 	return &DependencyInfo{
 		CanDelete:             canDelete,
 		Dependencies:          dependencies,
@@ -917,19 +917,19 @@ func (s *deletionService) ValidateRequirementDeletion(id uuid.UUID) (*Dependency
 
 	dependencies := []DependencyDetail{}
 	cascadeEntities := []CascadeDeletePreview{}
-	
+
 	// Check for requirement relationships
 	relationships, err := s.requirementRelationshipRepo.GetByRequirement(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get relationships for requirement: %w", err)
 	}
-	
+
 	if len(relationships) > 0 {
 		for _, rel := range relationships {
 			// Get the other requirement in the relationship
 			var otherReqID uuid.UUID
 			var relationshipDirection string
-			
+
 			if rel.SourceRequirementID == id {
 				otherReqID = rel.TargetRequirementID
 				relationshipDirection = "outgoing"
@@ -937,12 +937,12 @@ func (s *deletionService) ValidateRequirementDeletion(id uuid.UUID) (*Dependency
 				otherReqID = rel.SourceRequirementID
 				relationshipDirection = "incoming"
 			}
-			
+
 			otherReq, err := s.requirementRepo.GetByID(otherReqID)
 			if err != nil {
 				continue // Skip if other requirement doesn't exist
 			}
-			
+
 			dependencies = append(dependencies, DependencyDetail{
 				EntityType:  "requirement_relationship",
 				EntityID:    rel.ID,
@@ -950,7 +950,7 @@ func (s *deletionService) ValidateRequirementDeletion(id uuid.UUID) (*Dependency
 				Title:       fmt.Sprintf("%s relationship with %s", relationshipDirection, otherReq.ReferenceID),
 				Reason:      "Requirement has active relationships",
 			})
-			
+
 			cascadeEntities = append(cascadeEntities, CascadeDeletePreview{
 				EntityType:  "requirement_relationship",
 				EntityID:    rel.ID,
@@ -959,10 +959,10 @@ func (s *deletionService) ValidateRequirementDeletion(id uuid.UUID) (*Dependency
 			})
 		}
 	}
-	
+
 	canDelete := len(dependencies) == 0
 	requiresConfirmation := len(cascadeEntities) > 0
-	
+
 	return &DependencyInfo{
 		CanDelete:             canDelete,
 		Dependencies:          dependencies,

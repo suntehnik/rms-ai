@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	
+
 	"product-requirements-management/internal/models"
 )
 
@@ -26,7 +26,7 @@ func NewRequirementRepository(db *gorm.DB) RequirementRepository {
 // Create creates a new requirement with proper concurrent reference ID generation
 func (r *requirementRepository) Create(requirement *models.Requirement) error {
 	maxRetries := 10
-	
+
 	for attempt := 0; attempt < maxRetries; attempt++ {
 		// Generate reference ID if not set
 		if requirement.ReferenceID == "" {
@@ -34,28 +34,28 @@ func (r *requirementRepository) Create(requirement *models.Requirement) error {
 				return err
 			}
 		}
-		
+
 		// Try to create the requirement
 		err := r.BaseRepository.Create(requirement)
 		if err == nil {
 			// Success
 			return nil
 		}
-		
+
 		// Check if it's a duplicate key error on reference_id
-		if errors.Is(err, ErrDuplicateKey) || 
-		   (err != nil && (strings.Contains(strings.ToLower(err.Error()), "unique constraint") ||
-		                   strings.Contains(strings.ToLower(err.Error()), "duplicate key") ||
-		                   strings.Contains(strings.ToLower(err.Error()), "reference_id"))) {
+		if errors.Is(err, ErrDuplicateKey) ||
+			(err != nil && (strings.Contains(strings.ToLower(err.Error()), "unique constraint") ||
+				strings.Contains(strings.ToLower(err.Error()), "duplicate key") ||
+				strings.Contains(strings.ToLower(err.Error()), "reference_id"))) {
 			// Clear the reference ID and retry
 			requirement.ReferenceID = ""
 			continue
 		}
-		
+
 		// Non-retryable error
 		return err
 	}
-	
+
 	// If we exhausted retries, use UUID-based reference ID as fallback
 	requirement.ReferenceID = fmt.Sprintf("REQ-%s", uuid.New().String()[:8])
 	return r.BaseRepository.Create(requirement)
@@ -66,18 +66,18 @@ func (r *requirementRepository) generateReferenceID(requirement *models.Requirem
 	// Get the current maximum reference number
 	var maxRefNum int
 	var maxRef string
-	
+
 	err := r.GetDB().Model(&models.Requirement{}).
 		Select("reference_id").
 		Where("reference_id LIKE 'REQ-%'").
 		Order("reference_id DESC").
 		Limit(1).
 		Pluck("reference_id", &maxRef).Error
-	
+
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return r.handleDBError(err)
 	}
-	
+
 	// Parse the maximum reference number
 	if maxRef != "" {
 		if _, scanErr := fmt.Sscanf(maxRef, "REQ-%d", &maxRefNum); scanErr != nil {
@@ -89,11 +89,11 @@ func (r *requirementRepository) generateReferenceID(requirement *models.Requirem
 			maxRefNum = int(count)
 		}
 	}
-	
+
 	// Generate next reference ID with attempt offset to reduce collisions
 	nextNum := maxRefNum + 1 + attempt
 	requirement.ReferenceID = fmt.Sprintf("REQ-%03d", nextNum)
-	
+
 	return nil
 }
 
@@ -175,7 +175,7 @@ func (r *requirementRepository) GetByType(typeID uuid.UUID) ([]models.Requiremen
 // HasRelationships checks if a requirement has any relationships
 func (r *requirementRepository) HasRelationships(id uuid.UUID) (bool, error) {
 	var count int64
-	
+
 	// Check source relationships
 	if err := r.GetDB().Model(&models.RequirementRelationship{}).Where("source_requirement_id = ?", id).Count(&count).Error; err != nil {
 		return false, r.handleDBError(err)
@@ -183,25 +183,25 @@ func (r *requirementRepository) HasRelationships(id uuid.UUID) (bool, error) {
 	if count > 0 {
 		return true, nil
 	}
-	
+
 	// Check target relationships
 	if err := r.GetDB().Model(&models.RequirementRelationship{}).Where("target_requirement_id = ?", id).Count(&count).Error; err != nil {
 		return false, r.handleDBError(err)
 	}
-	
+
 	return count > 0, nil
 }
 
 // SearchByText performs full-text search on requirements
 func (r *requirementRepository) SearchByText(searchText string) ([]models.Requirement, error) {
 	var requirements []models.Requirement
-	
+
 	// Use LIKE for compatibility with SQLite (tests) and PostgreSQL
 	searchPattern := "%" + searchText + "%"
-	if err := r.GetDB().Where("title LIKE ? OR description LIKE ? OR reference_id LIKE ?", 
+	if err := r.GetDB().Where("title LIKE ? OR description LIKE ? OR reference_id LIKE ?",
 		searchPattern, searchPattern, searchPattern).Find(&requirements).Error; err != nil {
 		return nil, r.handleDBError(err)
 	}
-	
+
 	return requirements, nil
 }

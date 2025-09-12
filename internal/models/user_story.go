@@ -9,7 +9,7 @@ import (
 )
 
 // Package-level generator instance for UserStory reference IDs.
-// 
+//
 // This uses the production PostgreSQLReferenceIDGenerator which provides:
 // - Thread-safe reference ID generation for production environments
 // - PostgreSQL advisory locks for atomic generation (lock key: 2147483646)
@@ -62,7 +62,7 @@ func (us *UserStory) BeforeCreate(tx *gorm.DB) error {
 	if us.Status == "" {
 		us.Status = UserStoryStatusBacklog
 	}
-	
+
 	// Generate reference ID if not set
 	if us.ReferenceID == "" {
 		referenceID, err := userStoryGenerator.Generate(tx, &UserStory{})
@@ -71,7 +71,7 @@ func (us *UserStory) BeforeCreate(tx *gorm.DB) error {
 		}
 		us.ReferenceID = referenceID
 	}
-	
+
 	return nil
 }
 
@@ -111,7 +111,7 @@ func (us *UserStory) IsValidStatus(status UserStoryStatus) bool {
 		UserStoryStatusDone,
 		UserStoryStatusCancelled,
 	}
-	
+
 	for _, validStatus := range validStatuses {
 		if status == validStatus {
 			return true
@@ -142,14 +142,14 @@ func (us *UserStory) IsUserStoryTemplate() bool {
 	if us.Description == nil {
 		return false
 	}
-	
+
 	description := *us.Description
 	// Basic validation for user story template format
 	// This is a simple check - in a real implementation, you might want more sophisticated validation
-	return len(description) > 0 && 
-		   (contains(description, "As ") || contains(description, "as ")) &&
-		   (contains(description, "I want") || contains(description, "i want")) &&
-		   (contains(description, "so that") || contains(description, "So that"))
+	return len(description) > 0 &&
+		(contains(description, "As ") || contains(description, "as ")) &&
+		(contains(description, "I want") || contains(description, "i want")) &&
+		(contains(description, "so that") || contains(description, "So that"))
 }
 
 // Helper function to check if string contains substring

@@ -8,7 +8,7 @@ import (
 )
 
 // Package-level generator instance for requirements.
-// 
+//
 // This uses the production PostgreSQLReferenceIDGenerator which provides:
 // - Thread-safe reference ID generation for production environments
 // - PostgreSQL advisory locks for atomic generation (lock key: 2147483645)
@@ -30,29 +30,29 @@ const (
 
 // Requirement represents a detailed requirement in the system
 type Requirement struct {
-	ID                   uuid.UUID          `gorm:"type:uuid;primary_key" json:"id"`
-	ReferenceID          string             `gorm:"uniqueIndex;not null" json:"reference_id"`
-	UserStoryID          uuid.UUID          `gorm:"not null" json:"user_story_id"`
-	AcceptanceCriteriaID *uuid.UUID         `json:"acceptance_criteria_id"`
-	CreatorID            uuid.UUID          `gorm:"not null" json:"creator_id"`
-	AssigneeID           uuid.UUID          `gorm:"not null" json:"assignee_id"`
-	CreatedAt            time.Time          `json:"created_at"`
-	LastModified         time.Time          `json:"last_modified"`
-	Priority             Priority           `gorm:"not null" json:"priority"`
-	Status               RequirementStatus  `gorm:"not null" json:"status"`
-	TypeID               uuid.UUID          `gorm:"not null" json:"type_id"`
-	Title                string             `gorm:"not null" json:"title"`
-	Description          *string            `json:"description"`
+	ID                   uuid.UUID         `gorm:"type:uuid;primary_key" json:"id"`
+	ReferenceID          string            `gorm:"uniqueIndex;not null" json:"reference_id"`
+	UserStoryID          uuid.UUID         `gorm:"not null" json:"user_story_id"`
+	AcceptanceCriteriaID *uuid.UUID        `json:"acceptance_criteria_id"`
+	CreatorID            uuid.UUID         `gorm:"not null" json:"creator_id"`
+	AssigneeID           uuid.UUID         `gorm:"not null" json:"assignee_id"`
+	CreatedAt            time.Time         `json:"created_at"`
+	LastModified         time.Time         `json:"last_modified"`
+	Priority             Priority          `gorm:"not null" json:"priority"`
+	Status               RequirementStatus `gorm:"not null" json:"status"`
+	TypeID               uuid.UUID         `gorm:"not null" json:"type_id"`
+	Title                string            `gorm:"not null" json:"title"`
+	Description          *string           `json:"description"`
 
 	// Relationships
-	UserStory            UserStory                   `gorm:"foreignKey:UserStoryID;constraint:OnDelete:CASCADE" json:"user_story,omitempty"`
-	AcceptanceCriteria   *AcceptanceCriteria         `gorm:"foreignKey:AcceptanceCriteriaID;constraint:OnDelete:SET NULL" json:"acceptance_criteria,omitempty"`
-	Creator              User                        `gorm:"foreignKey:CreatorID;constraint:OnDelete:RESTRICT" json:"creator,omitempty"`
-	Assignee             User                        `gorm:"foreignKey:AssigneeID;constraint:OnDelete:RESTRICT" json:"assignee,omitempty"`
-	Type                 RequirementType             `gorm:"foreignKey:TypeID;constraint:OnDelete:RESTRICT" json:"type,omitempty"`
-	SourceRelationships  []RequirementRelationship   `gorm:"foreignKey:SourceRequirementID;constraint:OnDelete:CASCADE" json:"source_relationships,omitempty"`
-	TargetRelationships  []RequirementRelationship   `gorm:"foreignKey:TargetRequirementID;constraint:OnDelete:CASCADE" json:"target_relationships,omitempty"`
-	Comments             []Comment                   `gorm:"polymorphic:Entity;polymorphicValue:requirement" json:"comments,omitempty"`
+	UserStory           UserStory                 `gorm:"foreignKey:UserStoryID;constraint:OnDelete:CASCADE" json:"user_story,omitempty"`
+	AcceptanceCriteria  *AcceptanceCriteria       `gorm:"foreignKey:AcceptanceCriteriaID;constraint:OnDelete:SET NULL" json:"acceptance_criteria,omitempty"`
+	Creator             User                      `gorm:"foreignKey:CreatorID;constraint:OnDelete:RESTRICT" json:"creator,omitempty"`
+	Assignee            User                      `gorm:"foreignKey:AssigneeID;constraint:OnDelete:RESTRICT" json:"assignee,omitempty"`
+	Type                RequirementType           `gorm:"foreignKey:TypeID;constraint:OnDelete:RESTRICT" json:"type,omitempty"`
+	SourceRelationships []RequirementRelationship `gorm:"foreignKey:SourceRequirementID;constraint:OnDelete:CASCADE" json:"source_relationships,omitempty"`
+	TargetRelationships []RequirementRelationship `gorm:"foreignKey:TargetRequirementID;constraint:OnDelete:CASCADE" json:"target_relationships,omitempty"`
+	Comments            []Comment                 `gorm:"polymorphic:Entity;polymorphicValue:requirement" json:"comments,omitempty"`
 }
 
 // BeforeCreate sets the ID if not already set and ensures default status
@@ -73,7 +73,7 @@ func (r *Requirement) BeforeCreate(tx *gorm.DB) error {
 		}
 		r.ReferenceID = referenceID
 	}
-	
+
 	return nil
 }
 
@@ -111,7 +111,7 @@ func (r *Requirement) IsValidStatus(status RequirementStatus) bool {
 		RequirementStatusActive,
 		RequirementStatusObsolete,
 	}
-	
+
 	for _, validStatus := range validStatuses {
 		if status == validStatus {
 			return true

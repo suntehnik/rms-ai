@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	ErrUserStoryNotFound           = errors.New("user story not found")
-	ErrUserStoryHasRequirements    = errors.New("user story has associated requirements and cannot be deleted")
-	ErrInvalidUserStoryStatus      = errors.New("invalid user story status")
-	ErrInvalidUserStoryTemplate   = errors.New("user story description must follow template: 'As [role], I want [function], so that [goal]'")
+	ErrUserStoryNotFound        = errors.New("user story not found")
+	ErrUserStoryHasRequirements = errors.New("user story has associated requirements and cannot be deleted")
+	ErrInvalidUserStoryStatus   = errors.New("invalid user story status")
+	ErrInvalidUserStoryTemplate = errors.New("user story description must follow template: 'As [role], I want [function], so that [goal]'")
 )
 
 // UserStoryService defines the interface for user story business logic
@@ -35,33 +35,33 @@ type UserStoryService interface {
 
 // CreateUserStoryRequest represents the request to create a user story
 type CreateUserStoryRequest struct {
-	EpicID      uuid.UUID                `json:"epic_id,omitempty"`
-	CreatorID   uuid.UUID                `json:"creator_id" binding:"required"`
-	AssigneeID  *uuid.UUID               `json:"assignee_id,omitempty"`
-	Priority    models.Priority          `json:"priority" binding:"required,min=1,max=4"`
-	Title       string                   `json:"title" binding:"required,max=500"`
-	Description *string                  `json:"description,omitempty"`
+	EpicID      uuid.UUID       `json:"epic_id,omitempty"`
+	CreatorID   uuid.UUID       `json:"creator_id" binding:"required"`
+	AssigneeID  *uuid.UUID      `json:"assignee_id,omitempty"`
+	Priority    models.Priority `json:"priority" binding:"required,min=1,max=4"`
+	Title       string          `json:"title" binding:"required,max=500"`
+	Description *string         `json:"description,omitempty"`
 }
 
 // UpdateUserStoryRequest represents the request to update a user story
 type UpdateUserStoryRequest struct {
-	AssigneeID  *uuid.UUID                `json:"assignee_id,omitempty"`
-	Priority    *models.Priority          `json:"priority,omitempty"`
-	Status      *models.UserStoryStatus   `json:"status,omitempty"`
-	Title       *string                   `json:"title,omitempty"`
-	Description *string                   `json:"description,omitempty"`
+	AssigneeID  *uuid.UUID              `json:"assignee_id,omitempty"`
+	Priority    *models.Priority        `json:"priority,omitempty"`
+	Status      *models.UserStoryStatus `json:"status,omitempty"`
+	Title       *string                 `json:"title,omitempty"`
+	Description *string                 `json:"description,omitempty"`
 }
 
 // UserStoryFilters represents filters for listing user stories
 type UserStoryFilters struct {
-	EpicID     *uuid.UUID                `json:"epic_id,omitempty"`
-	CreatorID  *uuid.UUID                `json:"creator_id,omitempty"`
-	AssigneeID *uuid.UUID                `json:"assignee_id,omitempty"`
-	Status     *models.UserStoryStatus   `json:"status,omitempty"`
-	Priority   *models.Priority          `json:"priority,omitempty"`
-	OrderBy    string                    `json:"order_by,omitempty"`
-	Limit      int                       `json:"limit,omitempty"`
-	Offset     int                       `json:"offset,omitempty"`
+	EpicID     *uuid.UUID              `json:"epic_id,omitempty"`
+	CreatorID  *uuid.UUID              `json:"creator_id,omitempty"`
+	AssigneeID *uuid.UUID              `json:"assignee_id,omitempty"`
+	Status     *models.UserStoryStatus `json:"status,omitempty"`
+	Priority   *models.Priority        `json:"priority,omitempty"`
+	OrderBy    string                  `json:"order_by,omitempty"`
+	Limit      int                     `json:"limit,omitempty"`
+	Offset     int                     `json:"offset,omitempty"`
 }
 
 // userStoryService implements UserStoryService interface
@@ -91,7 +91,7 @@ func (s *userStoryService) validateUserStoryTemplate(description *string) error 
 	}
 
 	desc := strings.ToLower(strings.TrimSpace(*description))
-	
+
 	// Check for required components of user story template
 	hasAs := strings.Contains(desc, "as ")
 	hasIWant := strings.Contains(desc, "i want")
@@ -110,7 +110,7 @@ func (s *userStoryService) CreateUserStory(req CreateUserStoryRequest) (*models.
 	if req.EpicID == uuid.Nil {
 		return nil, fmt.Errorf("epic_id is required")
 	}
-	
+
 	// Validate priority
 	if req.Priority < models.PriorityCritical || req.Priority > models.PriorityLow {
 		return nil, ErrInvalidPriority
@@ -280,7 +280,7 @@ func (s *userStoryService) DeleteUserStory(id uuid.UUID, force bool) error {
 func (s *userStoryService) ListUserStories(filters UserStoryFilters) ([]models.UserStory, error) {
 	// Build filter map
 	filterMap := make(map[string]interface{})
-	
+
 	if filters.EpicID != nil {
 		filterMap["epic_id"] = *filters.EpicID
 	}

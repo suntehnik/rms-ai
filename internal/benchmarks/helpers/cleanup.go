@@ -62,11 +62,11 @@ type MemoryResourceTracker struct {
 // NewBenchmarkCleanupManager creates a new cleanup manager
 func NewBenchmarkCleanupManager(b *testing.B) *BenchmarkCleanupManager {
 	return &BenchmarkCleanupManager{
-		b:              b,
-		cleanupTasks:   make([]CleanupTask, 0),
+		b:                b,
+		cleanupTasks:     make([]CleanupTask, 0),
 		resourceTrackers: make([]ResourceTracker, 0),
-		cleanupTimeout: 30 * time.Second,
-		forceCleanup:   false,
+		cleanupTimeout:   30 * time.Second,
+		forceCleanup:     false,
 	}
 }
 
@@ -88,12 +88,12 @@ func (bcm *BenchmarkCleanupManager) SetForceCleanup(force bool) {
 func (bcm *BenchmarkCleanupManager) AddCleanupTask(task CleanupTask) {
 	bcm.mu.Lock()
 	defer bcm.mu.Unlock()
-	
+
 	// Set default timeout if not specified
 	if task.Timeout == 0 {
 		task.Timeout = 10 * time.Second
 	}
-	
+
 	bcm.cleanupTasks = append(bcm.cleanupTasks, task)
 }
 
@@ -107,7 +107,7 @@ func (bcm *BenchmarkCleanupManager) AddResourceTracker(tracker ResourceTracker) 
 // ExecuteCleanup performs all registered cleanup operations
 func (bcm *BenchmarkCleanupManager) ExecuteCleanup() {
 	bcm.b.Logf("Starting benchmark cleanup...")
-	
+
 	// Sort cleanup tasks by priority (lower number = higher priority)
 	bcm.mu.RLock()
 	tasks := make([]CleanupTask, len(bcm.cleanupTasks))
@@ -115,7 +115,7 @@ func (bcm *BenchmarkCleanupManager) ExecuteCleanup() {
 	trackers := make([]ResourceTracker, len(bcm.resourceTrackers))
 	copy(trackers, bcm.resourceTrackers)
 	bcm.mu.RUnlock()
-	
+
 	// Sort tasks by priority
 	for i := 0; i < len(tasks)-1; i++ {
 		for j := i + 1; j < len(tasks); j++ {
@@ -124,32 +124,32 @@ func (bcm *BenchmarkCleanupManager) ExecuteCleanup() {
 			}
 		}
 	}
-	
+
 	// Execute cleanup tasks
 	for _, task := range tasks {
 		bcm.executeCleanupTask(task)
 	}
-	
+
 	// Clean up tracked resources
 	for _, tracker := range trackers {
 		bcm.cleanupResourceTracker(tracker)
 	}
-	
+
 	// Force garbage collection if requested
 	if bcm.forceCleanup {
 		bcm.forceGarbageCollection()
 	}
-	
+
 	bcm.b.Logf("Benchmark cleanup completed")
 }
 
 // executeCleanupTask executes a single cleanup task with timeout and error handling
 func (bcm *BenchmarkCleanupManager) executeCleanupTask(task CleanupTask) {
 	bcm.b.Logf("Executing cleanup task: %s", task.Name)
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), task.Timeout)
 	defer cancel()
-	
+
 	done := make(chan error, 1)
 	go func() {
 		defer func() {
@@ -159,7 +159,7 @@ func (bcm *BenchmarkCleanupManager) executeCleanupTask(task CleanupTask) {
 		}()
 		done <- task.CleanupFunc()
 	}()
-	
+
 	select {
 	case err := <-done:
 		if err != nil {
@@ -180,16 +180,16 @@ func (bcm *BenchmarkCleanupManager) executeCleanupTask(task CleanupTask) {
 func (bcm *BenchmarkCleanupManager) cleanupResourceTracker(tracker ResourceTracker) {
 	resourceType := tracker.GetResourceType()
 	resourceCount := tracker.GetResourceCount()
-	
+
 	bcm.b.Logf("Cleaning up %d %s resources", resourceCount, resourceType)
-	
+
 	var err error
 	if bcm.forceCleanup {
 		err = tracker.ForceCleanup()
 	} else {
 		err = tracker.Cleanup()
 	}
-	
+
 	if err != nil {
 		bcm.b.Logf("Failed to cleanup %s resources: %v", resourceType, err)
 	} else {
@@ -200,21 +200,21 @@ func (bcm *BenchmarkCleanupManager) cleanupResourceTracker(tracker ResourceTrack
 // forceGarbageCollection performs aggressive garbage collection
 func (bcm *BenchmarkCleanupManager) forceGarbageCollection() {
 	bcm.b.Logf("Forcing garbage collection...")
-	
+
 	var beforeStats, afterStats runtime.MemStats
 	runtime.ReadMemStats(&beforeStats)
-	
+
 	// Run GC multiple times for thorough cleanup
 	runtime.GC()
 	runtime.GC()
 	runtime.GC()
-	
+
 	// Force finalization
 	runtime.GC()
 	runtime.GC()
-	
+
 	runtime.ReadMemStats(&afterStats)
-	
+
 	freedMB := float64(beforeStats.HeapAlloc-afterStats.HeapAlloc) / 1024 / 1024
 	bcm.b.Logf("Garbage collection freed %.2f MB", freedMB)
 }
@@ -223,12 +223,12 @@ func (bcm *BenchmarkCleanupManager) forceGarbageCollection() {
 func (bcm *BenchmarkCleanupManager) GetResourceSummary() map[string]int {
 	bcm.mu.RLock()
 	defer bcm.mu.RUnlock()
-	
+
 	summary := make(map[string]int)
 	for _, tracker := range bcm.resourceTrackers {
 		summary[tracker.GetResourceType()] = tracker.GetResourceCount()
 	}
-	
+
 	return summary
 }
 
@@ -249,13 +249,13 @@ func (drt *DatabaseResourceTracker) GetResourceType() string {
 func (drt *DatabaseResourceTracker) GetResourceCount() int {
 	drt.mu.RLock()
 	defer drt.mu.RUnlock()
-	
+
 	count := 0
 	if drt.db != nil {
 		count++
 	}
 	count += len(drt.transactions)
-	
+
 	return count
 }
 
@@ -270,7 +270,7 @@ func (drt *DatabaseResourceTracker) TrackTransaction(tx *gorm.DB) {
 func (drt *DatabaseResourceTracker) Cleanup() error {
 	drt.mu.Lock()
 	defer drt.mu.Unlock()
-	
+
 	// Rollback any open transactions
 	for i, tx := range drt.transactions {
 		if tx != nil {
@@ -280,17 +280,17 @@ func (drt *DatabaseResourceTracker) Cleanup() error {
 			}
 		}
 	}
-	
+
 	// Clear transaction list
 	drt.transactions = drt.transactions[:0]
-	
+
 	// Close database connection if we own it
 	if drt.db != nil {
 		if sqlDB, err := drt.db.DB(); err == nil {
 			return sqlDB.Close()
 		}
 	}
-	
+
 	return nil
 }
 
@@ -300,7 +300,7 @@ func (drt *DatabaseResourceTracker) ForceCleanup() error {
 	if err := drt.Cleanup(); err != nil {
 		return err
 	}
-	
+
 	// Force close any remaining connections
 	if drt.db != nil {
 		if sqlDB, err := drt.db.DB(); err == nil {
@@ -310,7 +310,7 @@ func (drt *DatabaseResourceTracker) ForceCleanup() error {
 			return sqlDB.Close()
 		}
 	}
-	
+
 	return nil
 }
 
@@ -344,10 +344,10 @@ func (hrt *HTTPResourceTracker) TrackClient(client interface{}) {
 func (hrt *HTTPResourceTracker) Cleanup() error {
 	hrt.mu.Lock()
 	defer hrt.mu.Unlock()
-	
+
 	// Clear client list (HTTP clients don't need explicit cleanup in Go)
 	hrt.clients = hrt.clients[:0]
-	
+
 	return nil
 }
 
@@ -360,7 +360,7 @@ func (hrt *HTTPResourceTracker) ForceCleanup() error {
 func NewMemoryResourceTracker(thresholdMB int64) *MemoryResourceTracker {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
-	
+
 	return &MemoryResourceTracker{
 		initialMemStats: memStats,
 		thresholdMB:     thresholdMB,
@@ -391,10 +391,10 @@ func (mrt *MemoryResourceTracker) ForceCleanup() error {
 	for i := 0; i < 3; i++ {
 		runtime.GC()
 	}
-	
+
 	// Force finalization
 	runtime.GC()
-	
+
 	return nil
 }
 
@@ -408,7 +408,7 @@ func (mrt *MemoryResourceTracker) IsMemoryThresholdExceeded() bool {
 func (mrt *MemoryResourceTracker) GetMemoryUsageDelta() int64 {
 	var currentStats runtime.MemStats
 	runtime.ReadMemStats(&currentStats)
-	
+
 	deltaMB := int64(currentStats.Alloc-mrt.initialMemStats.Alloc) / 1024 / 1024
 	return deltaMB
 }
@@ -428,12 +428,12 @@ func NewBenchmarkResourceManager(b *testing.B, db *gorm.DB) *BenchmarkResourceMa
 	dbTracker := NewDatabaseResourceTracker(db)
 	httpTracker := NewHTTPResourceTracker()
 	memoryTracker := NewMemoryResourceTracker(512) // 512MB threshold
-	
+
 	// Register trackers with cleanup manager
 	cleanupManager.AddResourceTracker(dbTracker)
 	cleanupManager.AddResourceTracker(httpTracker)
 	cleanupManager.AddResourceTracker(memoryTracker)
-	
+
 	return &BenchmarkResourceManager{
 		cleanupManager: cleanupManager,
 		dbTracker:      dbTracker,
@@ -456,7 +456,7 @@ func (brm *BenchmarkResourceManager) RegisterDatabaseCleanup(db *gorm.DB) {
 			return brm.cleanupTestData(db)
 		},
 	})
-	
+
 	// Reset sequences
 	brm.cleanupManager.AddCleanupTask(CleanupTask{
 		Name:        "database_sequence_reset",
@@ -506,20 +506,20 @@ func (brm *BenchmarkResourceManager) ExecuteCleanup() {
 // GetResourceSummary returns a summary of all managed resources
 func (brm *BenchmarkResourceManager) GetResourceSummary() map[string]interface{} {
 	summary := make(map[string]interface{})
-	
+
 	// Basic resource counts
 	resourceCounts := brm.cleanupManager.GetResourceSummary()
 	summary["resource_counts"] = resourceCounts
-	
+
 	// Memory usage details
 	summary["memory_usage_mb"] = brm.memoryTracker.GetResourceCount()
 	summary["memory_delta_mb"] = brm.memoryTracker.GetMemoryUsageDelta()
 	summary["memory_threshold_exceeded"] = brm.memoryTracker.IsMemoryThresholdExceeded()
-	
+
 	// Runtime information
 	summary["goroutine_count"] = runtime.NumGoroutine()
 	summary["gc_count"] = getGCCount()
-	
+
 	return summary
 }
 
@@ -534,13 +534,13 @@ func (brm *BenchmarkResourceManager) cleanupTestData(db *gorm.DB) error {
 		"epics",
 		// Don't delete users as they might be needed for other tests
 	}
-	
+
 	for _, table := range tables {
 		if err := db.Exec(fmt.Sprintf("DELETE FROM %s WHERE created_at > NOW() - INTERVAL '1 hour'", table)).Error; err != nil {
 			brm.b.Logf("Failed to cleanup table %s: %v", table, err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -553,7 +553,7 @@ func (brm *BenchmarkResourceManager) resetDatabaseSequences(db *gorm.DB) error {
 		"requirements_id_seq",
 		"acceptance_criteria_id_seq",
 	}
-	
+
 	for _, seq := range sequences {
 		query := fmt.Sprintf("SELECT setval('%s', 1, false)", seq)
 		if err := db.Exec(query).Error; err != nil {
@@ -561,7 +561,7 @@ func (brm *BenchmarkResourceManager) resetDatabaseSequences(db *gorm.DB) error {
 			brm.b.Logf("Failed to reset sequence %s: %v", seq, err)
 		}
 	}
-	
+
 	return nil
 }
 

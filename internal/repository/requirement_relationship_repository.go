@@ -3,7 +3,7 @@ package repository
 import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	
+
 	"product-requirements-management/internal/models"
 )
 
@@ -40,7 +40,7 @@ func (r *requirementRelationshipRepository) GetByTargetRequirement(targetID uuid
 // GetByRequirement retrieves all relationships for a requirement (both source and target)
 func (r *requirementRelationshipRepository) GetByRequirement(requirementID uuid.UUID) ([]models.RequirementRelationship, error) {
 	var relationships []models.RequirementRelationship
-	if err := r.GetDB().Where("source_requirement_id = ? OR target_requirement_id = ?", 
+	if err := r.GetDB().Where("source_requirement_id = ? OR target_requirement_id = ?",
 		requirementID, requirementID).Find(&relationships).Error; err != nil {
 		return nil, r.handleDBError(err)
 	}
@@ -60,7 +60,7 @@ func (r *requirementRelationshipRepository) GetByType(typeID uuid.UUID) ([]model
 func (r *requirementRelationshipRepository) ExistsRelationship(sourceID, targetID, typeID uuid.UUID) (bool, error) {
 	var count int64
 	if err := r.GetDB().Model(&models.RequirementRelationship{}).
-		Where("source_requirement_id = ? AND target_requirement_id = ? AND relationship_type_id = ?", 
+		Where("source_requirement_id = ? AND target_requirement_id = ? AND relationship_type_id = ?",
 			sourceID, targetID, typeID).Count(&count).Error; err != nil {
 		return false, r.handleDBError(err)
 	}

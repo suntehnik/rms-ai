@@ -12,17 +12,17 @@ import (
 )
 
 var (
-	ErrCommentNotFound           = errors.New("comment not found")
-	ErrCommentHasReplies         = errors.New("comment has replies and cannot be deleted")
-	ErrCommentInvalidEntityType  = errors.New("invalid entity type")
-	ErrCommentEntityNotFound     = errors.New("entity not found")
-	ErrCommentAuthorNotFound     = errors.New("author not found")
-	ErrParentCommentNotFound     = errors.New("parent comment not found")
-	ErrParentCommentWrongEntity  = errors.New("parent comment must be on the same entity")
-	ErrEmptyContent              = errors.New("content cannot be empty")
-	ErrInvalidInlineCommentData  = errors.New("inline comments require linked_text, text_position_start, and text_position_end")
-	ErrInvalidTextPosition       = errors.New("invalid text position: start must be >= 0 and end must be >= start")
-	ErrEmptyLinkedText           = errors.New("linked_text cannot be empty for inline comments")
+	ErrCommentNotFound          = errors.New("comment not found")
+	ErrCommentHasReplies        = errors.New("comment has replies and cannot be deleted")
+	ErrCommentInvalidEntityType = errors.New("invalid entity type")
+	ErrCommentEntityNotFound    = errors.New("entity not found")
+	ErrCommentAuthorNotFound    = errors.New("author not found")
+	ErrParentCommentNotFound    = errors.New("parent comment not found")
+	ErrParentCommentWrongEntity = errors.New("parent comment must be on the same entity")
+	ErrEmptyContent             = errors.New("content cannot be empty")
+	ErrInvalidInlineCommentData = errors.New("inline comments require linked_text, text_position_start, and text_position_end")
+	ErrInvalidTextPosition      = errors.New("invalid text position: start must be >= 0 and end must be >= start")
+	ErrEmptyLinkedText          = errors.New("linked_text cannot be empty for inline comments")
 )
 
 // CommentService defines the interface for comment business logic
@@ -76,23 +76,23 @@ type UpdateCommentRequest struct {
 
 // CommentResponse represents a comment in API responses
 type CommentResponse struct {
-	ID                uuid.UUID                `json:"id"`
-	EntityType        models.EntityType        `json:"entity_type"`
-	EntityID          uuid.UUID                `json:"entity_id"`
-	ParentCommentID   *uuid.UUID               `json:"parent_comment_id"`
-	AuthorID          uuid.UUID                `json:"author_id"`
-	Author            *models.User             `json:"author,omitempty"`
-	CreatedAt         string                   `json:"created_at"`
-	UpdatedAt         string                   `json:"updated_at"`
-	Content           string                   `json:"content"`
-	IsResolved        bool                     `json:"is_resolved"`
-	LinkedText        *string                  `json:"linked_text"`
-	TextPositionStart *int                     `json:"text_position_start"`
-	TextPositionEnd   *int                     `json:"text_position_end"`
-	Replies           []CommentResponse        `json:"replies,omitempty"`
-	IsInline          bool                     `json:"is_inline"`
-	IsReply           bool                     `json:"is_reply"`
-	Depth             int                      `json:"depth"`
+	ID                uuid.UUID         `json:"id"`
+	EntityType        models.EntityType `json:"entity_type"`
+	EntityID          uuid.UUID         `json:"entity_id"`
+	ParentCommentID   *uuid.UUID        `json:"parent_comment_id"`
+	AuthorID          uuid.UUID         `json:"author_id"`
+	Author            *models.User      `json:"author,omitempty"`
+	CreatedAt         string            `json:"created_at"`
+	UpdatedAt         string            `json:"updated_at"`
+	Content           string            `json:"content"`
+	IsResolved        bool              `json:"is_resolved"`
+	LinkedText        *string           `json:"linked_text"`
+	TextPositionStart *int              `json:"text_position_start"`
+	TextPositionEnd   *int              `json:"text_position_end"`
+	Replies           []CommentResponse `json:"replies,omitempty"`
+	IsInline          bool              `json:"is_inline"`
+	IsReply           bool              `json:"is_reply"`
+	Depth             int               `json:"depth"`
 }
 
 // CreateComment creates a new comment
@@ -409,7 +409,7 @@ func (s *commentService) hideInlineComment(comment *models.Comment) error {
 	comment.LinkedText = nil
 	comment.TextPositionStart = nil
 	comment.TextPositionEnd = nil
-	
+
 	// Add a note to the content indicating why it was hidden
 	comment.Content = "[HIDDEN: Linked text was modified or deleted] " + comment.Content
 

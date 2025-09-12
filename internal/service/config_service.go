@@ -304,7 +304,7 @@ func (s *configService) DeleteRequirementType(id uuid.UUID, force bool) error {
 // ListRequirementTypes lists requirement types with optional filtering
 func (s *configService) ListRequirementTypes(filters RequirementTypeFilters) ([]models.RequirementType, error) {
 	filterMap := make(map[string]interface{})
-	
+
 	orderBy := "name"
 	if filters.OrderBy != "" {
 		orderBy = filters.OrderBy
@@ -438,7 +438,7 @@ func (s *configService) DeleteRelationshipType(id uuid.UUID, force bool) error {
 // ListRelationshipTypes lists relationship types with optional filtering
 func (s *configService) ListRelationshipTypes(filters RelationshipTypeFilters) ([]models.RelationshipType, error) {
 	filterMap := make(map[string]interface{})
-	
+
 	orderBy := "name"
 	if filters.OrderBy != "" {
 		orderBy = filters.OrderBy
@@ -606,7 +606,7 @@ func (s *configService) DeleteStatusModel(id uuid.UUID, force bool) error {
 // ListStatusModels lists status models with optional filtering
 func (s *configService) ListStatusModels(filters StatusModelFilters) ([]models.StatusModel, error) {
 	filterMap := make(map[string]interface{})
-	
+
 	if filters.EntityType != "" {
 		filterMap["entity_type"] = filters.EntityType
 	}

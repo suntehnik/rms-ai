@@ -17,11 +17,11 @@ type Config struct {
 	ServiceName    string
 	ServiceVersion string
 	Environment    string
-	
+
 	// Metrics configuration
 	MetricsEnabled bool
 	MetricsPort    string
-	
+
 	// Tracing configuration
 	TracingEnabled  bool
 	TracingEndpoint string
@@ -54,7 +54,7 @@ func Init(ctx context.Context, config Config) (*Observability, error) {
 			Endpoint:       config.TracingEndpoint,
 			Enabled:        config.TracingEnabled,
 		}
-		
+
 		tracer, err := tracing.Init(ctx, tracingConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize tracing: %w", err)
@@ -104,7 +104,7 @@ func (o *Observability) tracingMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Start HTTP span
 		ctx, span := o.Tracer.StartHTTPSpan(c.Request.Context(), c.Request.Method, c.FullPath())
-		
+
 		// Add request attributes
 		tracing.AddSpanAttributes(span, map[string]interface{}{
 			"http.method":      c.Request.Method,

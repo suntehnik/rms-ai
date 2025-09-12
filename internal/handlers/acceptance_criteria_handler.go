@@ -27,7 +27,7 @@ func NewAcceptanceCriteriaHandler(acceptanceCriteriaService service.AcceptanceCr
 // CreateAcceptanceCriteria handles POST /api/v1/user-stories/:id/acceptance-criteria
 func (h *AcceptanceCriteriaHandler) CreateAcceptanceCriteria(c *gin.Context) {
 	userStoryIDParam := c.Param("id")
-	
+
 	// Parse user story ID
 	userStoryID, err := uuid.Parse(userStoryIDParam)
 	if err != nil {
@@ -40,7 +40,7 @@ func (h *AcceptanceCriteriaHandler) CreateAcceptanceCriteria(c *gin.Context) {
 	var req service.CreateAcceptanceCriteriaRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": err.Error(),
 		})
 		return
@@ -74,11 +74,11 @@ func (h *AcceptanceCriteriaHandler) CreateAcceptanceCriteria(c *gin.Context) {
 // GetAcceptanceCriteria handles GET /api/v1/acceptance-criteria/:id
 func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteria(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Try to parse as UUID first, then as reference ID
 	var acceptanceCriteria *models.AcceptanceCriteria
 	var err error
-	
+
 	if id, parseErr := uuid.Parse(idParam); parseErr == nil {
 		acceptanceCriteria, err = h.acceptanceCriteriaService.GetAcceptanceCriteriaByID(id)
 	} else {
@@ -104,7 +104,7 @@ func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteria(c *gin.Context) {
 // UpdateAcceptanceCriteria handles PUT /api/v1/acceptance-criteria/:id
 func (h *AcceptanceCriteriaHandler) UpdateAcceptanceCriteria(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Parse ID (UUID only for updates)
 	id, err := uuid.Parse(idParam)
 	if err != nil {
@@ -117,7 +117,7 @@ func (h *AcceptanceCriteriaHandler) UpdateAcceptanceCriteria(c *gin.Context) {
 	var req service.UpdateAcceptanceCriteriaRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": err.Error(),
 		})
 		return
@@ -144,7 +144,7 @@ func (h *AcceptanceCriteriaHandler) UpdateAcceptanceCriteria(c *gin.Context) {
 // DeleteAcceptanceCriteria handles DELETE /api/v1/acceptance-criteria/:id
 func (h *AcceptanceCriteriaHandler) DeleteAcceptanceCriteria(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Parse ID (UUID only for deletes)
 	id, err := uuid.Parse(idParam)
 	if err != nil {
@@ -167,12 +167,12 @@ func (h *AcceptanceCriteriaHandler) DeleteAcceptanceCriteria(c *gin.Context) {
 		case errors.Is(err, service.ErrAcceptanceCriteriaHasRequirements):
 			c.JSON(http.StatusConflict, gin.H{
 				"error": "Acceptance criteria has associated requirements and cannot be deleted",
-				"hint": "Use force=true to delete with dependencies",
+				"hint":  "Use force=true to delete with dependencies",
 			})
 		case errors.Is(err, service.ErrUserStoryMustHaveAcceptanceCriteria):
 			c.JSON(http.StatusConflict, gin.H{
 				"error": "User story must have at least one acceptance criteria",
-				"hint": "Create another acceptance criteria before deleting this one, or use force=true",
+				"hint":  "Create another acceptance criteria before deleting this one, or use force=true",
 			})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -228,18 +228,18 @@ func (h *AcceptanceCriteriaHandler) ListAcceptanceCriteria(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"acceptance_criteria": acceptanceCriteria,
-		"count": len(acceptanceCriteria),
+		"count":               len(acceptanceCriteria),
 	})
 }
 
 // GetAcceptanceCriteriaByUserStory handles GET /api/v1/user-stories/:id/acceptance-criteria
 func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteriaByUserStory(c *gin.Context) {
 	userStoryIDParam := c.Param("id")
-	
+
 	// Try to parse as UUID first, then as reference ID
 	var userStoryID uuid.UUID
 	var err error
-	
+
 	if id, parseErr := uuid.Parse(userStoryIDParam); parseErr == nil {
 		userStoryID = id
 	} else {
@@ -268,14 +268,14 @@ func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteriaByUserStory(c *gin.Cont
 
 	c.JSON(http.StatusOK, gin.H{
 		"acceptance_criteria": acceptanceCriteria,
-		"count": len(acceptanceCriteria),
+		"count":               len(acceptanceCriteria),
 	})
 }
 
 // GetAcceptanceCriteriaByAuthor handles GET /api/v1/users/:id/acceptance-criteria
 func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteriaByAuthor(c *gin.Context) {
 	authorIDParam := c.Param("id")
-	
+
 	// Parse author ID (UUID only)
 	authorID, err := uuid.Parse(authorIDParam)
 	if err != nil {
@@ -302,6 +302,6 @@ func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteriaByAuthor(c *gin.Context
 
 	c.JSON(http.StatusOK, gin.H{
 		"acceptance_criteria": acceptanceCriteria,
-		"count": len(acceptanceCriteria),
+		"count":               len(acceptanceCriteria),
 	})
 }

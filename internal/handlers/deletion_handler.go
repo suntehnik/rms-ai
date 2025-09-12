@@ -45,24 +45,25 @@ type DeleteRequirementRequest struct {
 }
 
 // ValidateEpicDeletion validates if an epic can be deleted
-// @Summary Validate epic deletion
-// @Description Validates if an epic can be deleted and returns dependency information
-// @Tags deletion
-// @Accept json
-// @Produce json
-// @Param id path string true "Epic ID (UUID or reference ID)"
-// @Success 200 {object} service.DependencyInfo
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /api/epics/{id}/validate-deletion [get]
+//
+//	@Summary		Validate epic deletion
+//	@Description	Validates if an epic can be deleted and returns dependency information
+//	@Tags			deletion
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"Epic ID (UUID or reference ID)"
+//	@Success		200	{object}	service.DependencyInfo
+//	@Failure		400	{object}	ErrorResponse
+//	@Failure		404	{object}	ErrorResponse
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/api/epics/{id}/validate-deletion [get]
 func (h *DeletionHandler) ValidateEpicDeletion(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Try to parse as UUID first, then as reference ID
 	var epicID uuid.UUID
 	var err error
-	
+
 	if epicID, err = uuid.Parse(idParam); err != nil {
 		// If not a valid UUID, treat as reference ID and look up the epic
 		// This would require an epic service to look up by reference ID
@@ -91,12 +92,12 @@ func (h *DeletionHandler) ValidateEpicDeletion(c *gin.Context) {
 			})
 			return
 		}
-		
+
 		h.logger.WithFields(logrus.Fields{
 			"epic_id": epicID,
 			"error":   err.Error(),
 		}).Error("Failed to validate epic deletion")
-		
+
 		c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Error: ErrorDetail{
 				Code:    "VALIDATION_FAILED",
@@ -110,26 +111,27 @@ func (h *DeletionHandler) ValidateEpicDeletion(c *gin.Context) {
 }
 
 // DeleteEpic deletes an epic with validation and cascading
-// @Summary Delete epic
-// @Description Deletes an epic with comprehensive validation and cascading deletion
-// @Tags deletion
-// @Accept json
-// @Produce json
-// @Param id path string true "Epic ID (UUID or reference ID)"
-// @Param request body DeleteEpicRequest false "Deletion options"
-// @Success 200 {object} service.DeletionResult
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 409 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /api/epics/{id}/delete [delete]
+//
+//	@Summary		Delete epic
+//	@Description	Deletes an epic with comprehensive validation and cascading deletion
+//	@Tags			deletion
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string				true	"Epic ID (UUID or reference ID)"
+//	@Param			request	body		DeleteEpicRequest	false	"Deletion options"
+//	@Success		200		{object}	service.DeletionResult
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		409		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/api/epics/{id}/delete [delete]
 func (h *DeletionHandler) DeleteEpic(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Try to parse as UUID first
 	var epicID uuid.UUID
 	var err error
-	
+
 	if epicID, err = uuid.Parse(idParam); err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error: ErrorDetail{
@@ -205,7 +207,7 @@ func (h *DeletionHandler) DeleteEpic(c *gin.Context) {
 				"epic_id": epicID,
 				"error":   err.Error(),
 			}).Error("Failed to delete epic")
-			
+
 			c.JSON(http.StatusInternalServerError, ErrorResponse{
 				Error: ErrorDetail{
 					Code:    "DELETION_FAILED",
@@ -226,23 +228,24 @@ func (h *DeletionHandler) DeleteEpic(c *gin.Context) {
 }
 
 // ValidateUserStoryDeletion validates if a user story can be deleted
-// @Summary Validate user story deletion
-// @Description Validates if a user story can be deleted and returns dependency information
-// @Tags deletion
-// @Accept json
-// @Produce json
-// @Param id path string true "User Story ID (UUID or reference ID)"
-// @Success 200 {object} service.DependencyInfo
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /api/user-stories/{id}/validate-deletion [get]
+//
+//	@Summary		Validate user story deletion
+//	@Description	Validates if a user story can be deleted and returns dependency information
+//	@Tags			deletion
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"User Story ID (UUID or reference ID)"
+//	@Success		200	{object}	service.DependencyInfo
+//	@Failure		400	{object}	ErrorResponse
+//	@Failure		404	{object}	ErrorResponse
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/api/user-stories/{id}/validate-deletion [get]
 func (h *DeletionHandler) ValidateUserStoryDeletion(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	var userStoryID uuid.UUID
 	var err error
-	
+
 	if userStoryID, err = uuid.Parse(idParam); err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error: ErrorDetail{
@@ -269,12 +272,12 @@ func (h *DeletionHandler) ValidateUserStoryDeletion(c *gin.Context) {
 			})
 			return
 		}
-		
+
 		h.logger.WithFields(logrus.Fields{
 			"user_story_id": userStoryID,
 			"error":         err.Error(),
 		}).Error("Failed to validate user story deletion")
-		
+
 		c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Error: ErrorDetail{
 				Code:    "VALIDATION_FAILED",
@@ -288,25 +291,26 @@ func (h *DeletionHandler) ValidateUserStoryDeletion(c *gin.Context) {
 }
 
 // DeleteUserStory deletes a user story with validation and cascading
-// @Summary Delete user story
-// @Description Deletes a user story with comprehensive validation and cascading deletion
-// @Tags deletion
-// @Accept json
-// @Produce json
-// @Param id path string true "User Story ID (UUID or reference ID)"
-// @Param request body DeleteUserStoryRequest false "Deletion options"
-// @Success 200 {object} service.DeletionResult
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 409 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /api/user-stories/{id}/delete [delete]
+//
+//	@Summary		Delete user story
+//	@Description	Deletes a user story with comprehensive validation and cascading deletion
+//	@Tags			deletion
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string					true	"User Story ID (UUID or reference ID)"
+//	@Param			request	body		DeleteUserStoryRequest	false	"Deletion options"
+//	@Success		200		{object}	service.DeletionResult
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		409		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/api/user-stories/{id}/delete [delete]
 func (h *DeletionHandler) DeleteUserStory(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	var userStoryID uuid.UUID
 	var err error
-	
+
 	if userStoryID, err = uuid.Parse(idParam); err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error: ErrorDetail{
@@ -381,7 +385,7 @@ func (h *DeletionHandler) DeleteUserStory(c *gin.Context) {
 				"user_story_id": userStoryID,
 				"error":         err.Error(),
 			}).Error("Failed to delete user story")
-			
+
 			c.JSON(http.StatusInternalServerError, ErrorResponse{
 				Error: ErrorDetail{
 					Code:    "DELETION_FAILED",
@@ -402,23 +406,24 @@ func (h *DeletionHandler) DeleteUserStory(c *gin.Context) {
 }
 
 // ValidateAcceptanceCriteriaDeletion validates if acceptance criteria can be deleted
-// @Summary Validate acceptance criteria deletion
-// @Description Validates if acceptance criteria can be deleted and returns dependency information
-// @Tags deletion
-// @Accept json
-// @Produce json
-// @Param id path string true "Acceptance Criteria ID (UUID or reference ID)"
-// @Success 200 {object} service.DependencyInfo
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /api/acceptance-criteria/{id}/validate-deletion [get]
+//
+//	@Summary		Validate acceptance criteria deletion
+//	@Description	Validates if acceptance criteria can be deleted and returns dependency information
+//	@Tags			deletion
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"Acceptance Criteria ID (UUID or reference ID)"
+//	@Success		200	{object}	service.DependencyInfo
+//	@Failure		400	{object}	ErrorResponse
+//	@Failure		404	{object}	ErrorResponse
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/api/acceptance-criteria/{id}/validate-deletion [get]
 func (h *DeletionHandler) ValidateAcceptanceCriteriaDeletion(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	var acceptanceCriteriaID uuid.UUID
 	var err error
-	
+
 	if acceptanceCriteriaID, err = uuid.Parse(idParam); err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error: ErrorDetail{
@@ -445,12 +450,12 @@ func (h *DeletionHandler) ValidateAcceptanceCriteriaDeletion(c *gin.Context) {
 			})
 			return
 		}
-		
+
 		h.logger.WithFields(logrus.Fields{
 			"acceptance_criteria_id": acceptanceCriteriaID,
 			"error":                  err.Error(),
 		}).Error("Failed to validate acceptance criteria deletion")
-		
+
 		c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Error: ErrorDetail{
 				Code:    "VALIDATION_FAILED",
@@ -464,25 +469,26 @@ func (h *DeletionHandler) ValidateAcceptanceCriteriaDeletion(c *gin.Context) {
 }
 
 // DeleteAcceptanceCriteria deletes acceptance criteria with validation and cascading
-// @Summary Delete acceptance criteria
-// @Description Deletes acceptance criteria with comprehensive validation and cascading deletion
-// @Tags deletion
-// @Accept json
-// @Produce json
-// @Param id path string true "Acceptance Criteria ID (UUID or reference ID)"
-// @Param request body DeleteAcceptanceCriteriaRequest false "Deletion options"
-// @Success 200 {object} service.DeletionResult
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 409 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /api/acceptance-criteria/{id}/delete [delete]
+//
+//	@Summary		Delete acceptance criteria
+//	@Description	Deletes acceptance criteria with comprehensive validation and cascading deletion
+//	@Tags			deletion
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string							true	"Acceptance Criteria ID (UUID or reference ID)"
+//	@Param			request	body		DeleteAcceptanceCriteriaRequest	false	"Deletion options"
+//	@Success		200		{object}	service.DeletionResult
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		409		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/api/acceptance-criteria/{id}/delete [delete]
 func (h *DeletionHandler) DeleteAcceptanceCriteria(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	var acceptanceCriteriaID uuid.UUID
 	var err error
-	
+
 	if acceptanceCriteriaID, err = uuid.Parse(idParam); err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error: ErrorDetail{
@@ -557,7 +563,7 @@ func (h *DeletionHandler) DeleteAcceptanceCriteria(c *gin.Context) {
 				"acceptance_criteria_id": acceptanceCriteriaID,
 				"error":                  err.Error(),
 			}).Error("Failed to delete acceptance criteria")
-			
+
 			c.JSON(http.StatusInternalServerError, ErrorResponse{
 				Error: ErrorDetail{
 					Code:    "DELETION_FAILED",
@@ -578,23 +584,24 @@ func (h *DeletionHandler) DeleteAcceptanceCriteria(c *gin.Context) {
 }
 
 // ValidateRequirementDeletion validates if a requirement can be deleted
-// @Summary Validate requirement deletion
-// @Description Validates if a requirement can be deleted and returns dependency information
-// @Tags deletion
-// @Accept json
-// @Produce json
-// @Param id path string true "Requirement ID (UUID or reference ID)"
-// @Success 200 {object} service.DependencyInfo
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /api/requirements/{id}/validate-deletion [get]
+//
+//	@Summary		Validate requirement deletion
+//	@Description	Validates if a requirement can be deleted and returns dependency information
+//	@Tags			deletion
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"Requirement ID (UUID or reference ID)"
+//	@Success		200	{object}	service.DependencyInfo
+//	@Failure		400	{object}	ErrorResponse
+//	@Failure		404	{object}	ErrorResponse
+//	@Failure		500	{object}	ErrorResponse
+//	@Router			/api/requirements/{id}/validate-deletion [get]
 func (h *DeletionHandler) ValidateRequirementDeletion(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	var requirementID uuid.UUID
 	var err error
-	
+
 	if requirementID, err = uuid.Parse(idParam); err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error: ErrorDetail{
@@ -621,12 +628,12 @@ func (h *DeletionHandler) ValidateRequirementDeletion(c *gin.Context) {
 			})
 			return
 		}
-		
+
 		h.logger.WithFields(logrus.Fields{
 			"requirement_id": requirementID,
 			"error":          err.Error(),
 		}).Error("Failed to validate requirement deletion")
-		
+
 		c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Error: ErrorDetail{
 				Code:    "VALIDATION_FAILED",
@@ -640,25 +647,26 @@ func (h *DeletionHandler) ValidateRequirementDeletion(c *gin.Context) {
 }
 
 // DeleteRequirement deletes a requirement with validation and cascading
-// @Summary Delete requirement
-// @Description Deletes a requirement with comprehensive validation and cascading deletion
-// @Tags deletion
-// @Accept json
-// @Produce json
-// @Param id path string true "Requirement ID (UUID or reference ID)"
-// @Param request body DeleteRequirementRequest false "Deletion options"
-// @Success 200 {object} service.DeletionResult
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 409 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /api/requirements/{id}/delete [delete]
+//
+//	@Summary		Delete requirement
+//	@Description	Deletes a requirement with comprehensive validation and cascading deletion
+//	@Tags			deletion
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string						true	"Requirement ID (UUID or reference ID)"
+//	@Param			request	body		DeleteRequirementRequest	false	"Deletion options"
+//	@Success		200		{object}	service.DeletionResult
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		409		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/api/requirements/{id}/delete [delete]
 func (h *DeletionHandler) DeleteRequirement(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	var requirementID uuid.UUID
 	var err error
-	
+
 	if requirementID, err = uuid.Parse(idParam); err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error: ErrorDetail{
@@ -733,7 +741,7 @@ func (h *DeletionHandler) DeleteRequirement(c *gin.Context) {
 				"requirement_id": requirementID,
 				"error":          err.Error(),
 			}).Error("Failed to delete requirement")
-			
+
 			c.JSON(http.StatusInternalServerError, ErrorResponse{
 				Error: ErrorDetail{
 					Code:    "DELETION_FAILED",
@@ -754,22 +762,23 @@ func (h *DeletionHandler) DeleteRequirement(c *gin.Context) {
 }
 
 // GetDeletionConfirmation provides a confirmation dialog with dependency information
-// @Summary Get deletion confirmation
-// @Description Provides detailed information for user confirmation before deletion
-// @Tags deletion
-// @Accept json
-// @Produce json
-// @Param entity_type query string true "Entity type (epic, user_story, acceptance_criteria, requirement)"
-// @Param id query string true "Entity ID (UUID)"
-// @Success 200 {object} service.DependencyInfo
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /api/deletion/confirm [get]
+//
+//	@Summary		Get deletion confirmation
+//	@Description	Provides detailed information for user confirmation before deletion
+//	@Tags			deletion
+//	@Accept			json
+//	@Produce		json
+//	@Param			entity_type	query		string	true	"Entity type (epic, user_story, acceptance_criteria, requirement)"
+//	@Param			id			query		string	true	"Entity ID (UUID)"
+//	@Success		200			{object}	service.DependencyInfo
+//	@Failure		400			{object}	ErrorResponse
+//	@Failure		404			{object}	ErrorResponse
+//	@Failure		500			{object}	ErrorResponse
+//	@Router			/api/deletion/confirm [get]
 func (h *DeletionHandler) GetDeletionConfirmation(c *gin.Context) {
 	entityType := c.Query("entity_type")
 	idParam := c.Query("id")
-	
+
 	if entityType == "" || idParam == "" {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error: ErrorDetail{
@@ -779,7 +788,7 @@ func (h *DeletionHandler) GetDeletionConfirmation(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	entityID, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
@@ -798,7 +807,7 @@ func (h *DeletionHandler) GetDeletionConfirmation(c *gin.Context) {
 	}).Info("Getting deletion confirmation")
 
 	var depInfo *service.DependencyInfo
-	
+
 	switch entityType {
 	case "epic":
 		depInfo, err = h.deletionService.ValidateEpicDeletion(entityID)
@@ -817,11 +826,11 @@ func (h *DeletionHandler) GetDeletionConfirmation(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	if err != nil {
 		switch err {
-		case service.ErrEpicNotFound, service.ErrUserStoryNotFound, 
-			 service.ErrAcceptanceCriteriaNotFound, service.ErrRequirementNotFound:
+		case service.ErrEpicNotFound, service.ErrUserStoryNotFound,
+			service.ErrAcceptanceCriteriaNotFound, service.ErrRequirementNotFound:
 			c.JSON(http.StatusNotFound, ErrorResponse{
 				Error: ErrorDetail{
 					Code:    "ENTITY_NOT_FOUND",
@@ -834,7 +843,7 @@ func (h *DeletionHandler) GetDeletionConfirmation(c *gin.Context) {
 				"entity_id":   entityID,
 				"error":       err.Error(),
 			}).Error("Failed to validate deletion")
-			
+
 			c.JSON(http.StatusInternalServerError, ErrorResponse{
 				Error: ErrorDetail{
 					Code:    "VALIDATION_FAILED",

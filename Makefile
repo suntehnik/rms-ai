@@ -1,4 +1,4 @@
-.PHONY: build run test test-unit test-integration test-e2e test-fast test-coverage test-unit-coverage test-integration-coverage test-e2e-coverage test-bench test-bench-api test-bench-results test-bench-api-results test-parallel test-race test-run test-debug test-compile test-ci clean deps dev fmt lint migrate-up migrate-down migrate-version build-migrate docker-up docker-down docker-logs docker-clean dev-setup mocks help
+.PHONY: build run test test-unit test-integration test-e2e test-fast test-coverage test-unit-coverage test-integration-coverage test-e2e-coverage test-bench test-bench-api test-bench-results test-bench-api-results test-parallel test-race test-run test-debug test-compile test-ci clean deps dev fmt lint migrate-up migrate-down migrate-version build-migrate docker-up docker-down docker-logs docker-clean dev-setup mocks swagger swagger-fmt swagger-validate swagger-clean help
 
 # Build the application
 build:
@@ -176,6 +176,33 @@ dev-setup: docker-up
 mocks:
 	@echo "Mock generation will be added in future tasks"
 
+# Swagger documentation commands
+swagger:
+	@echo "📚 Generating Swagger documentation..."
+	swag init -g cmd/server/main.go -o docs --parseDependency --parseInternal
+	@echo "✅ Swagger documentation generated in docs/ directory"
+
+swagger-fmt:
+	@echo "🎨 Formatting Swagger comments..."
+	swag fmt -g cmd/server/main.go
+	@echo "✅ Swagger comments formatted"
+
+swagger-validate:
+	@echo "🔍 Validating Swagger documentation..."
+	@if [ -f docs/swagger.json ]; then \
+		echo "Swagger JSON found, validating..."; \
+		swag init -g cmd/server/main.go -o docs --parseDependency --parseInternal --quiet; \
+		echo "✅ Swagger documentation is valid"; \
+	else \
+		echo "❌ No Swagger documentation found. Run 'make swagger' first."; \
+		exit 1; \
+	fi
+
+swagger-clean:
+	@echo "🧹 Cleaning Swagger documentation..."
+	rm -rf docs/docs.go docs/swagger.json docs/swagger.yaml
+	@echo "✅ Swagger documentation cleaned"
+
 # Show help for all available targets
 help:
 	@echo "📋 Available Make targets:"
@@ -214,6 +241,12 @@ help:
 	@echo "  migrate-up         - Apply database migrations"
 	@echo "  migrate-down       - Rollback database migrations"
 	@echo "  migrate-version    - Check migration status"
+	@echo ""
+	@echo "📚 Documentation:"
+	@echo "  swagger            - Generate Swagger documentation"
+	@echo "  swagger-fmt        - Format Swagger comments"
+	@echo "  swagger-validate   - Validate Swagger documentation"
+	@echo "  swagger-clean      - Clean generated Swagger files"
 	@echo ""
 	@echo "🐳 Docker:"
 	@echo "  docker-up          - Start development containers"

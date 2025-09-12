@@ -92,7 +92,7 @@ func (td *TestDatabase) Reset() error {
 	// Список таблиц в порядке зависимостей (сначала зависимые, потом основные)
 	tables := []string{
 		"comments",
-		"requirement_relationships", 
+		"requirement_relationships",
 		"requirements",
 		"acceptance_criteria",
 		"user_stories",
@@ -144,7 +144,7 @@ func (td *TestDatabase) GetRequirementType(name string) (*models.RequirementType
 	return &reqType, err
 }
 
-// GetRelationshipType получает тип связи по имени  
+// GetRelationshipType получает тип связи по имени
 func (td *TestDatabase) GetRelationshipType(name string) (*models.RelationshipType, error) {
 	var relType models.RelationshipType
 	err := td.DB.Where("name = ?", name).First(&relType).Error

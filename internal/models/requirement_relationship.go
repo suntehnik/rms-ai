@@ -9,18 +9,18 @@ import (
 
 // RequirementRelationship represents a relationship between two requirements
 type RequirementRelationship struct {
-	ID                   uuid.UUID `gorm:"type:uuid;primary_key" json:"id"`
-	SourceRequirementID  uuid.UUID `gorm:"not null" json:"source_requirement_id"`
-	TargetRequirementID  uuid.UUID `gorm:"not null" json:"target_requirement_id"`
-	RelationshipTypeID   uuid.UUID `gorm:"not null" json:"relationship_type_id"`
-	CreatedAt            time.Time `json:"created_at"`
-	CreatedBy            uuid.UUID `gorm:"not null" json:"created_by"`
+	ID                  uuid.UUID `gorm:"type:uuid;primary_key" json:"id"`
+	SourceRequirementID uuid.UUID `gorm:"not null" json:"source_requirement_id"`
+	TargetRequirementID uuid.UUID `gorm:"not null" json:"target_requirement_id"`
+	RelationshipTypeID  uuid.UUID `gorm:"not null" json:"relationship_type_id"`
+	CreatedAt           time.Time `json:"created_at"`
+	CreatedBy           uuid.UUID `gorm:"not null" json:"created_by"`
 
 	// Relationships
-	SourceRequirement Requirement       `gorm:"foreignKey:SourceRequirementID;constraint:OnDelete:CASCADE" json:"source_requirement,omitempty"`
-	TargetRequirement Requirement       `gorm:"foreignKey:TargetRequirementID;constraint:OnDelete:CASCADE" json:"target_requirement,omitempty"`
-	RelationshipType  RelationshipType  `gorm:"foreignKey:RelationshipTypeID;constraint:OnDelete:RESTRICT" json:"relationship_type,omitempty"`
-	Creator           User              `gorm:"foreignKey:CreatedBy;constraint:OnDelete:RESTRICT" json:"creator,omitempty"`
+	SourceRequirement Requirement      `gorm:"foreignKey:SourceRequirementID;constraint:OnDelete:CASCADE" json:"source_requirement,omitempty"`
+	TargetRequirement Requirement      `gorm:"foreignKey:TargetRequirementID;constraint:OnDelete:CASCADE" json:"target_requirement,omitempty"`
+	RelationshipType  RelationshipType `gorm:"foreignKey:RelationshipTypeID;constraint:OnDelete:RESTRICT" json:"relationship_type,omitempty"`
+	Creator           User             `gorm:"foreignKey:CreatedBy;constraint:OnDelete:RESTRICT" json:"creator,omitempty"`
 }
 
 // BeforeCreate sets the ID if not already set and validates the relationship
@@ -28,12 +28,12 @@ func (rr *RequirementRelationship) BeforeCreate(tx *gorm.DB) error {
 	if rr.ID == uuid.Nil {
 		rr.ID = uuid.New()
 	}
-	
+
 	// Validate that source and target requirements are different
 	if rr.SourceRequirementID == rr.TargetRequirementID {
 		return gorm.ErrInvalidData
 	}
-	
+
 	return nil
 }
 
@@ -52,7 +52,7 @@ func (rr *RequirementRelationship) GetRelationshipDescription() string {
 	if rr.RelationshipType.Name == "" {
 		return "Unknown relationship"
 	}
-	
+
 	switch rr.RelationshipType.Name {
 	case "depends_on":
 		return "depends on"

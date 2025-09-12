@@ -67,32 +67,32 @@ func (bc *BenchmarkClient) GET(path string) (*http.Response, error) {
 func (bc *BenchmarkClient) executeWithRetry(method, path string, body interface{}) (*http.Response, error) {
 	maxRetries := 3
 	baseDelay := 100 * time.Millisecond
-	
+
 	for attempt := 0; attempt <= maxRetries; attempt++ {
 		resp, err := bc.executeRequest(method, path, body)
-		
+
 		// If successful or non-retryable error, return immediately
 		if err == nil || !bc.isRetryableError(err) {
 			return resp, err
 		}
-		
+
 		// If this was the last attempt, return the error
 		if attempt == maxRetries {
 			return resp, fmt.Errorf("request failed after %d attempts: %w", maxRetries+1, err)
 		}
-		
+
 		// Wait before retrying with exponential backoff
 		delay := time.Duration(attempt+1) * baseDelay
 		time.Sleep(delay)
 	}
-	
+
 	return nil, fmt.Errorf("unexpected retry loop exit")
 }
 
 // executeRequest performs the actual HTTP request
 func (bc *BenchmarkClient) executeRequest(method, path string, body interface{}) (*http.Response, error) {
 	var reqBody io.Reader
-	
+
 	if body != nil {
 		jsonBody, err := json.Marshal(body)
 		if err != nil {
@@ -100,23 +100,23 @@ func (bc *BenchmarkClient) executeRequest(method, path string, body interface{})
 		}
 		reqBody = bytes.NewBuffer(jsonBody)
 	}
-	
+
 	req, err := http.NewRequest(method, bc.BaseURL+path, reqBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create %s request: %w", method, err)
 	}
-	
+
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
-	
+
 	bc.addAuthHeader(req)
-	
+
 	resp, err := bc.Client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP %s request failed: %w", method, err)
 	}
-	
+
 	return resp, nil
 }
 
@@ -125,7 +125,7 @@ func (bc *BenchmarkClient) isRetryableError(err error) bool {
 	if err == nil {
 		return false
 	}
-	
+
 	errStr := err.Error()
 	retryableErrors := []string{
 		"connection refused",
@@ -135,13 +135,13 @@ func (bc *BenchmarkClient) isRetryableError(err error) bool {
 		"no such host",
 		"connection reset by peer",
 	}
-	
+
 	for _, retryableErr := range retryableErrors {
 		if strings.Contains(strings.ToLower(errStr), retryableErr) {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -169,7 +169,7 @@ func (bc *BenchmarkClient) PATCH(path string, body interface{}) (*http.Response,
 func (bc *BenchmarkClient) addAuthHeader(req *http.Request) {
 	bc.mu.RLock()
 	defer bc.mu.RUnlock()
-	
+
 	if bc.Token != "" {
 		req.Header.Set("Authorization", "Bearer "+bc.Token)
 	}
@@ -204,7 +204,7 @@ func (bc *BenchmarkClient) RunParallelRequests(requests []Request, concurrency i
 		wg.Add(1)
 		go func(index int, request Request) {
 			defer wg.Done()
-			
+
 			// Acquire semaphore
 			semaphore <- struct{}{}
 			defer func() { <-semaphore }()
@@ -260,7 +260,7 @@ func (bc *BenchmarkClient) executeRequestFromStruct(req Request) (*http.Response
 // ParseJSONResponse parses a JSON response into the provided interface
 func ParseJSONResponse(resp *http.Response, v interface{}) error {
 	defer resp.Body.Close()
-	
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("failed to read response body: %w", err)

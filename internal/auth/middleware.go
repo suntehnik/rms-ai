@@ -4,8 +4,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"product-requirements-management/internal/models"
+
+	"github.com/gin-gonic/gin"
 )
 
 const (

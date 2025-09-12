@@ -84,7 +84,7 @@ func NewBenchmarkServer(b *testing.B) *BenchmarkServer {
 		Redis:    nil, // No Redis for benchmarks
 	}
 	routes.Setup(router, cfg, dbWrapper)
-	
+
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port),
 		Handler: router,
@@ -110,7 +110,7 @@ func (bs *BenchmarkServer) Start() error {
 	if bs.Server == nil {
 		return fmt.Errorf("server is not initialized")
 	}
-	
+
 	if bs.DB == nil {
 		return fmt.Errorf("database connection is not initialized")
 	}
@@ -130,7 +130,7 @@ func (bs *BenchmarkServer) Start() error {
 				serverErrChan <- fmt.Errorf("server panicked: %v", r)
 			}
 		}()
-		
+
 		if err := bs.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			serverErrChan <- fmt.Errorf("server failed to start: %w", err)
 		}
@@ -140,7 +140,7 @@ func (bs *BenchmarkServer) Start() error {
 	timeout := 30 * time.Second
 	checkInterval := 100 * time.Millisecond
 	maxAttempts := int(timeout / checkInterval)
-	
+
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 	}
@@ -157,26 +157,26 @@ func (bs *BenchmarkServer) Start() error {
 		resp, err := client.Get(bs.BaseURL + "/health")
 		if err == nil && resp.StatusCode == 200 {
 			resp.Body.Close()
-			
+
 			// Additional validation - test basic API endpoint
 			apiResp, apiErr := client.Get(bs.BaseURL + "/api/v1")
 			if apiResp != nil {
 				apiResp.Body.Close()
 			}
-			
+
 			// Accept 404 for API root as it may not have a handler
 			if apiErr == nil && (apiResp.StatusCode == 200 || apiResp.StatusCode == 404) {
 				return nil
 			}
 		}
-		
+
 		if resp != nil {
 			resp.Body.Close()
 		}
-		
+
 		time.Sleep(checkInterval)
 	}
-	
+
 	return fmt.Errorf("server failed to start within %v timeout", timeout)
 }
 
@@ -187,7 +187,7 @@ func (bs *BenchmarkServer) Cleanup() {
 	defer cancel()
 
 	// Cleanup in reverse order of initialization for proper dependency management
-	
+
 	// 1. Shutdown HTTP server gracefully
 	if bs.Server != nil {
 		fmt.Printf("Shutting down HTTP server...\n")
@@ -208,13 +208,13 @@ func (bs *BenchmarkServer) Cleanup() {
 		if sqlDB, err := bs.DB.DB(); err == nil {
 			// Get connection stats before closing
 			stats := sqlDB.Stats()
-			fmt.Printf("Database stats before close - Open: %d, InUse: %d\n", 
+			fmt.Printf("Database stats before close - Open: %d, InUse: %d\n",
 				stats.OpenConnections, stats.InUse)
-			
+
 			// Set connection limits to 0 to force closure of idle connections
 			sqlDB.SetMaxOpenConns(0)
 			sqlDB.SetMaxIdleConns(0)
-			
+
 			if err := sqlDB.Close(); err != nil {
 				fmt.Printf("Database close error: %v\n", err)
 			} else {
@@ -228,14 +228,14 @@ func (bs *BenchmarkServer) Cleanup() {
 	// 3. Terminate container
 	if bs.Container != nil {
 		fmt.Printf("Terminating test container...\n")
-		
+
 		// Use a separate context for container termination
 		containerCtx, containerCancel := context.WithTimeout(context.Background(), 20*time.Second)
 		defer containerCancel()
-		
+
 		if err := bs.Container.Terminate(containerCtx); err != nil {
 			fmt.Printf("Container termination error: %v\n", err)
-			
+
 			// Try to force terminate if graceful termination fails
 			if err := bs.Container.Terminate(context.Background()); err != nil {
 				fmt.Printf("Container force termination error: %v\n", err)
@@ -249,14 +249,14 @@ func (bs *BenchmarkServer) Cleanup() {
 	fmt.Printf("Running garbage collection...\n")
 	runtime.GC()
 	runtime.GC() // Run twice for better cleanup
-	
+
 	fmt.Printf("Benchmark server cleanup completed\n")
 }
 
 // SeedData populates the database with test data for benchmarking
 func (bs *BenchmarkServer) SeedData(entityCounts map[string]int) error {
 	dataGen := NewDataGenerator(bs.DB)
-	
+
 	// Convert map to DataSetConfig
 	config := DataSetConfig{
 		Users:              getIntOrDefault(entityCounts, "users", 10),
@@ -266,7 +266,7 @@ func (bs *BenchmarkServer) SeedData(entityCounts map[string]int) error {
 		AcceptanceCriteria: getIntOrDefault(entityCounts, "acceptance_criteria", 50),
 		Comments:           getIntOrDefault(entityCounts, "comments", 100),
 	}
-	
+
 	return dataGen.GenerateFullDataSet(config)
 }
 
@@ -371,4 +371,3 @@ func setupPostgreSQLContainer(ctx context.Context) (testcontainers.Container, *g
 
 	return container, db, nil
 }
-
