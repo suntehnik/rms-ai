@@ -297,6 +297,7 @@ func BenchmarkAcceptanceCriteriaValidation(b *testing.B) {
 	})
 
 	b.Run("ValidateRequiredFields", func(b *testing.B) {
+		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			// Test missing description (should fail validation)
 			createReq := service.CreateAcceptanceCriteriaRequest{
@@ -312,6 +313,7 @@ func BenchmarkAcceptanceCriteriaValidation(b *testing.B) {
 	})
 
 	b.Run("ValidateInvalidUserStory", func(b *testing.B) {
+		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			// Test with non-existent user story ID
 			invalidUserStoryID := uuid.New()
@@ -328,6 +330,7 @@ func BenchmarkAcceptanceCriteriaValidation(b *testing.B) {
 	})
 
 	b.Run("ValidateInvalidAuthor", func(b *testing.B) {
+		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			// Test with non-existent author ID
 			invalidAuthorID := uuid.New()
@@ -385,6 +388,7 @@ func BenchmarkAcceptanceCriteriaRelationshipOperations(b *testing.B) {
 	b.ResetTimer()
 
 	b.Run("GetAcceptanceCriteriaByReferenceID", func(b *testing.B) {
+		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			ac := acceptanceCriteria[i%len(acceptanceCriteria)]
 			resp, err := client.GET(fmt.Sprintf("/api/v1/acceptance-criteria/%s", ac.ReferenceID))
@@ -396,6 +400,7 @@ func BenchmarkAcceptanceCriteriaRelationshipOperations(b *testing.B) {
 
 	if len(userStoriesWithAC) > 0 {
 		b.Run("GetAcceptanceCriteriaByUserStory", func(b *testing.B) {
+			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				userStory := userStoriesWithAC[i%len(userStoriesWithAC)]
 				resp, err := client.GET(fmt.Sprintf("/api/v1/user-stories/%s/acceptance-criteria", userStory.ID))
@@ -406,21 +411,8 @@ func BenchmarkAcceptanceCriteriaRelationshipOperations(b *testing.B) {
 		})
 	}
 
-	b.Run("GetAcceptanceCriteriaByAuthor", func(b *testing.B) {
-		// Get users who have authored acceptance criteria
-		var users []models.User
-		require.NoError(b, server.DB.Limit(5).Find(&users).Error)
-		require.NotEmpty(b, users)
-
-		for i := 0; i < b.N; i++ {
-			user := users[i%len(users)]
-			resp, err := client.GET(fmt.Sprintf("/api/v1/users/%s/acceptance-criteria", user.ID))
-			require.NoError(b, err)
-			// Accept both 200 (found) and 404 (no acceptance criteria for this user) as valid responses
-			require.True(b, resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNotFound)
-			resp.Body.Close()
-		}
-	})
+	// Note: GetAcceptanceCriteriaByAuthor endpoint (/api/v1/users/:id/acceptance-criteria) 
+	// is not implemented in routes, so we skip this benchmark
 
 	// Test acceptance criteria with requirements relationships
 	var acceptanceCriteriaWithReqs []models.AcceptanceCriteria
@@ -432,6 +424,7 @@ func BenchmarkAcceptanceCriteriaRelationshipOperations(b *testing.B) {
 
 	if len(acceptanceCriteriaWithReqs) > 0 {
 		b.Run("GetAcceptanceCriteriaWithRequirements", func(b *testing.B) {
+			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				ac := acceptanceCriteriaWithReqs[i%len(acceptanceCriteriaWithReqs)]
 				resp, err := client.GET(fmt.Sprintf("/api/v1/acceptance-criteria/%s", ac.ID))
@@ -442,6 +435,7 @@ func BenchmarkAcceptanceCriteriaRelationshipOperations(b *testing.B) {
 		})
 
 		b.Run("DeleteAcceptanceCriteriaWithRequirements", func(b *testing.B) {
+			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				ac := acceptanceCriteriaWithReqs[i%len(acceptanceCriteriaWithReqs)]
 				// Test deletion without force (should fail due to requirements)
