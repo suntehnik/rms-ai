@@ -173,7 +173,7 @@
   - Create pull request
   - _Requirements: 4.4, 4.5_
 
-- [ ] 16. Implement bulk operation API endpoint benchmarks
+- [x] 16. Implement bulk operation API endpoint benchmarks
   - Create feature branch: `git checkout -b  benchmark-bulk-operations`
   - Create batch entity creation benchmarks via API endpoints
   - Add bulk update operation performance tests
@@ -184,7 +184,7 @@
   - Create pull request
   - _Requirements: 2.4, 5.2_
 
-- [ ] 17. Create comment system API endpoint benchmarks
+- [-] 17. Create comment system API endpoint benchmarks
   - Create feature branch: `git checkout -b  benchmark-comment-system`
   - Implement comment CRUD operation benchmarks via HTTP endpoints
   - Add comment threading operation performance tests
