@@ -8,6 +8,7 @@ import (
 	"product-requirements-management/internal/handlers"
 	"product-requirements-management/internal/logger"
 	"product-requirements-management/internal/repository"
+	"product-requirements-management/internal/server/middleware"
 	"product-requirements-management/internal/service"
 	"time"
 
@@ -16,6 +17,9 @@ import (
 
 // Setup configures all routes for the application
 func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
+	// Setup Swagger documentation routes
+	middleware.SetupSwaggerRoutes(router, cfg)
+
 	// Note: Health check endpoints are handled by the health checker in server.go
 	// Only keeping non-conflicting health endpoints here
 	router.GET("/ready", readinessCheck(db))
