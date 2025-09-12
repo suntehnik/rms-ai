@@ -195,7 +195,7 @@
   - Create pull request
   - _Requirements: 5.3, 5.4_
 
-- [ ] 18. Implement concurrent access benchmarks with parallel HTTP runners
+- [-] 18. Implement concurrent access benchmarks with parallel HTTP runners
   - Create feature branch: `git checkout -b  benchmark-concurrent-access`
   - Create multiple simultaneous CRUD operation benchmarks using parallel HTTP clients
   - Add mixed read/write workload testing with concurrent request runners
