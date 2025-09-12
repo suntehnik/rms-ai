@@ -151,7 +151,7 @@
   - Create pull request
   - _Requirements: 1.1, 1.2, 5.1_
 
-- [ ] 14. Implement search API endpoint benchmarks
+- [-] 14. Implement search API endpoint benchmarks
   - Create feature branch: `git checkout -b  benchmark-search-api`
   - Create full-text search performance benchmarks via search API endpoints
   - Add search filtering and pagination benchmarks
