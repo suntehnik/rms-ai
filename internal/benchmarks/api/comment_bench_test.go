@@ -339,10 +339,26 @@ func BenchmarkInlineComments(b *testing.B) {
 	require.NotEmpty(b, users)
 	userID := users[0].ID
 
-	var epics []models.Epic
-	require.NoError(b, server.DB.Limit(1).Find(&epics).Error)
-	require.NotEmpty(b, epics)
-	epicID := epics[0].ID
+	// Create a specific epic with known content for inline comment testing
+	createEpicReq := service.CreateEpicRequest{
+		CreatorID:   userID,
+		Priority:    models.PriorityMedium,
+		Title:       "Epic for Inline Comments",
+		Description: stringPtr("This is a test description for inline comments testing"),
+	}
+
+	resp, err := client.POST("/api/v1/epics", createEpicReq)
+	require.NoError(b, err)
+	require.Equal(b, http.StatusCreated, resp.StatusCode)
+
+	var createdEpic models.Epic
+	require.NoError(b, helpers.ParseJSONResponse(resp, &createdEpic))
+	epicID := createdEpic.ID
+
+	// Use known text from the epic description
+	linkedText := "This is a test"
+	textStart := 0
+	textEnd := 14
 
 	b.ResetTimer()
 
@@ -351,9 +367,9 @@ func BenchmarkInlineComments(b *testing.B) {
 			createReq := service.CreateCommentRequest{
 				AuthorID:          userID,
 				Content:           fmt.Sprintf("Inline comment %d", i),
-				LinkedText:        stringPtr("sample text"),
-				TextPositionStart: intPtr(0),
-				TextPositionEnd:   intPtr(11),
+				LinkedText:        stringPtr(linkedText),
+				TextPositionStart: intPtr(textStart),
+				TextPositionEnd:   intPtr(textEnd),
 			}
 
 			resp, err := client.POST(fmt.Sprintf("/api/v1/epics/%s/comments/inline", epicID), createReq)
@@ -554,9 +570,4 @@ func BenchmarkCommentConcurrentOperations(b *testing.B) {
 			require.Equal(b, http.StatusOK, resp.StatusCode, "Request %d returned wrong status", i)
 		}
 	})
-}
-
-// intPtr creates a pointer to an int value
-func intPtr(i int) *int {
-	return &i
 }

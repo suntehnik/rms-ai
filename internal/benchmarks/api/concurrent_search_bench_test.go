@@ -80,7 +80,7 @@ func BenchmarkConcurrentSearchScalability(b *testing.B) {
 			// Report success rate
 			successRate := float64(successCount) / float64(len(responses)) * 100
 			b.ReportMetric(successRate, "success_rate_%")
-			
+
 			// Calculate average response time
 			var totalDuration time.Duration
 			for _, resp := range responses {
@@ -126,7 +126,7 @@ func BenchmarkConcurrentMixedSearchWorkload(b *testing.B) {
 	b.Run("MixedSearchOperations", func(b *testing.B) {
 		// Create a mix of different search operations
 		requests := make([]helpers.Request, b.N)
-		
+
 		for i := 0; i < b.N; i++ {
 			switch i % 6 {
 			case 0:
@@ -204,8 +204,12 @@ func BenchmarkConcurrentMixedSearchWorkload(b *testing.B) {
 
 		// Report metrics for each operation type
 		for opType, stats := range operationStats {
-			successRate := float64(stats.success) / float64(stats.count) * 100
-			avgDuration := stats.totalDur / time.Duration(stats.count)
+			var successRate float64
+			var avgDuration time.Duration
+			if stats.count > 0 {
+				successRate = float64(stats.success) / float64(stats.count) * 100
+				avgDuration = stats.totalDur / time.Duration(stats.count)
+			}
 			b.Logf("%s: success_rate=%.1f%%, avg_duration=%v", opType, successRate, avgDuration)
 		}
 	})
@@ -213,17 +217,17 @@ func BenchmarkConcurrentMixedSearchWorkload(b *testing.B) {
 	b.Run("ConcurrentComplexQueries", func(b *testing.B) {
 		// Create complex search queries that stress the system
 		requests := make([]helpers.Request, b.N)
-		
+
 		for i := 0; i < b.N; i++ {
 			user := users[i%len(users)]
 			epic := epics[i%len(epics)]
-			priority := (i%4) + 1
+			priority := (i % 4) + 1
 			status := []string{"Backlog", "Draft", "In Progress", "Done"}[i%4]
-			
+
 			// Complex query with multiple filters and sorting
 			requests[i] = helpers.Request{
 				Method: "GET",
-				Path: fmt.Sprintf("/api/v1/search?query=epic feature&creator_id=%s&epic_id=%s&priority=%d&status=%s&sort_by=created_at&sort_order=desc&limit=25", 
+				Path: fmt.Sprintf("/api/v1/search?query=epic feature&creator_id=%s&epic_id=%s&priority=%d&status=%s&sort_by=created_at&sort_order=desc&limit=25",
 					user.ID, epic.ID, priority, url.QueryEscape(status)),
 			}
 		}
@@ -237,7 +241,7 @@ func BenchmarkConcurrentMixedSearchWorkload(b *testing.B) {
 		successCount := 0
 		var totalDuration time.Duration
 		maxDuration := time.Duration(0)
-		
+
 		for _, resp := range responses {
 			if resp.Error == nil && resp.StatusCode == http.StatusOK {
 				successCount++
@@ -248,9 +252,13 @@ func BenchmarkConcurrentMixedSearchWorkload(b *testing.B) {
 			}
 		}
 
-		successRate := float64(successCount) / float64(len(responses)) * 100
-		avgDuration := totalDuration / time.Duration(len(responses))
-		
+		var successRate float64
+		var avgDuration time.Duration
+		if len(responses) > 0 {
+			successRate = float64(successCount) / float64(len(responses)) * 100
+			avgDuration = totalDuration / time.Duration(len(responses))
+		}
+
 		b.ReportMetric(successRate, "success_rate_%")
 		b.ReportMetric(float64(avgDuration.Milliseconds()), "avg_response_ms")
 		b.ReportMetric(float64(maxDuration.Milliseconds()), "max_response_ms")
@@ -322,7 +330,7 @@ func BenchmarkConcurrentSearchWithDifferentDatasets(b *testing.B) {
 			successCount := 0
 			var totalDuration time.Duration
 			var responseSizes []int
-			
+
 			for _, resp := range responses {
 				if resp.Error == nil && resp.StatusCode == http.StatusOK {
 					successCount++
@@ -331,9 +339,13 @@ func BenchmarkConcurrentSearchWithDifferentDatasets(b *testing.B) {
 				totalDuration += resp.Duration
 			}
 
-			successRate := float64(successCount) / float64(len(responses)) * 100
-			avgDuration := totalDuration / time.Duration(len(responses))
-			
+			var successRate float64
+			var avgDuration time.Duration
+			if len(responses) > 0 {
+				successRate = float64(successCount) / float64(len(responses)) * 100
+				avgDuration = totalDuration / time.Duration(len(responses))
+			}
+
 			// Calculate average response size
 			var avgResponseSize float64
 			if len(responseSizes) > 0 {
@@ -366,10 +378,10 @@ func BenchmarkConcurrentSearchStressTest(b *testing.B) {
 	// Create multiple HTTP clients to simulate different users
 	numClients := 5
 	clients := make([]*helpers.BenchmarkClient, numClients)
-	
+
 	for i := 0; i < numClients; i++ {
 		clients[i] = helpers.NewBenchmarkClient(server.BaseURL)
-		
+
 		// Setup authentication for each client
 		authHelper := helpers.NewAuthHelper(server.Config.JWT.Secret)
 		testUser := helpers.GetDefaultTestUser()
@@ -382,16 +394,16 @@ func BenchmarkConcurrentSearchStressTest(b *testing.B) {
 		// Create a large number of concurrent requests
 		totalRequests := b.N
 		requestsPerClient := totalRequests / numClients
-		
+
 		var wg sync.WaitGroup
 		results := make([][]helpers.Response, numClients)
-		
+
 		// Launch concurrent workers
 		for clientIdx := 0; clientIdx < numClients; clientIdx++ {
 			wg.Add(1)
 			go func(idx int, client *helpers.BenchmarkClient) {
 				defer wg.Done()
-				
+
 				// Create requests for this client
 				requests := make([]helpers.Request, requestsPerClient)
 				searchQueries := []string{
@@ -401,7 +413,7 @@ func BenchmarkConcurrentSearchStressTest(b *testing.B) {
 					"system validation epic feature",
 					"acceptance criteria requirement test",
 				}
-				
+
 				for i := 0; i < requestsPerClient; i++ {
 					query := searchQueries[i%len(searchQueries)]
 					requests[i] = helpers.Request{
@@ -409,22 +421,22 @@ func BenchmarkConcurrentSearchStressTest(b *testing.B) {
 						Path:   fmt.Sprintf("/api/v1/search?query=%s&limit=15", url.QueryEscape(query)),
 					}
 				}
-				
+
 				// Execute requests with high concurrency per client
 				responses, err := client.RunParallelRequests(requests, 10)
 				require.NoError(b, err)
 				results[idx] = responses
 			}(clientIdx, clients[clientIdx])
 		}
-		
+
 		wg.Wait()
-		
+
 		// Aggregate results from all clients
 		totalResponses := 0
 		totalSuccess := 0
 		var totalDuration time.Duration
 		maxDuration := time.Duration(0)
-		
+
 		for _, clientResults := range results {
 			for _, resp := range clientResults {
 				totalResponses++
@@ -437,10 +449,14 @@ func BenchmarkConcurrentSearchStressTest(b *testing.B) {
 				}
 			}
 		}
-		
-		successRate := float64(totalSuccess) / float64(totalResponses) * 100
-		avgDuration := totalDuration / time.Duration(totalResponses)
-		
+
+		var successRate float64
+		var avgDuration time.Duration
+		if totalResponses > 0 {
+			successRate = float64(totalSuccess) / float64(totalResponses) * 100
+			avgDuration = totalDuration / time.Duration(totalResponses)
+		}
+
 		b.ReportMetric(successRate, "success_rate_%")
 		b.ReportMetric(float64(avgDuration.Milliseconds()), "avg_response_ms")
 		b.ReportMetric(float64(maxDuration.Milliseconds()), "max_response_ms")
@@ -453,17 +469,17 @@ func BenchmarkConcurrentSearchStressTest(b *testing.B) {
 		if testing.Short() {
 			duration = 2 * time.Second
 		}
-		
+
 		var wg sync.WaitGroup
 		stopChan := make(chan struct{})
 		results := make(chan helpers.Response, 1000)
-		
+
 		// Start multiple workers
 		for i := 0; i < numClients; i++ {
 			wg.Add(1)
 			go func(client *helpers.BenchmarkClient) {
 				defer wg.Done()
-				
+
 				searchQueries := []string{
 					"epic",
 					"user story",
@@ -471,7 +487,7 @@ func BenchmarkConcurrentSearchStressTest(b *testing.B) {
 					"acceptance criteria",
 					"test validation",
 				}
-				
+
 				queryIdx := 0
 				for {
 					select {
@@ -480,21 +496,21 @@ func BenchmarkConcurrentSearchStressTest(b *testing.B) {
 					default:
 						query := searchQueries[queryIdx%len(searchQueries)]
 						queryIdx++
-						
+
 						start := time.Now()
 						resp, err := client.GET(fmt.Sprintf("/api/v1/search?query=%s&limit=10", url.QueryEscape(query)))
 						duration := time.Since(start)
-						
+
 						result := helpers.Response{
 							Duration: duration,
 							Error:    err,
 						}
-						
+
 						if err == nil && resp != nil {
 							result.StatusCode = resp.StatusCode
 							resp.Body.Close()
 						}
-						
+
 						select {
 						case results <- result:
 						default:
@@ -504,34 +520,39 @@ func BenchmarkConcurrentSearchStressTest(b *testing.B) {
 				}
 			}(clients[i])
 		}
-		
+
 		// Let the test run for the specified duration
 		time.Sleep(duration)
 		close(stopChan)
 		wg.Wait()
 		close(results)
-		
+
 		// Collect and analyze results
 		var responses []helpers.Response
 		for result := range results {
 			responses = append(responses, result)
 		}
-		
+
 		if len(responses) > 0 {
 			successCount := 0
 			var totalDuration time.Duration
-			
+
 			for _, resp := range responses {
 				if resp.Error == nil && resp.StatusCode == http.StatusOK {
 					successCount++
 				}
 				totalDuration += resp.Duration
 			}
-			
-			successRate := float64(successCount) / float64(len(responses)) * 100
-			avgDuration := totalDuration / time.Duration(len(responses))
-			requestsPerSecond := float64(len(responses)) / duration.Seconds()
-			
+
+			var successRate float64
+			var avgDuration time.Duration
+			var requestsPerSecond float64
+			if len(responses) > 0 {
+				successRate = float64(successCount) / float64(len(responses)) * 100
+				avgDuration = totalDuration / time.Duration(len(responses))
+				requestsPerSecond = float64(len(responses)) / duration.Seconds()
+			}
+
 			b.ReportMetric(successRate, "success_rate_%")
 			b.ReportMetric(float64(avgDuration.Milliseconds()), "avg_response_ms")
 			b.ReportMetric(requestsPerSecond, "requests_per_second")
@@ -558,12 +579,12 @@ func getOperationType(path string) string {
 
 // contains checks if a string contains a substring
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && 
-		   (s == substr || 
-		    (len(s) > len(substr) && 
-		     (s[:len(substr)] == substr || 
-		      s[len(s)-len(substr):] == substr || 
-		      containsSubstring(s, substr))))
+	return len(s) >= len(substr) &&
+		(s == substr ||
+			(len(s) > len(substr) &&
+				(s[:len(substr)] == substr ||
+					s[len(s)-len(substr):] == substr ||
+					containsSubstring(s, substr))))
 }
 
 // containsSubstring checks if s contains substr as a substring

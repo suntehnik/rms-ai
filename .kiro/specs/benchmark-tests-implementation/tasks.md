@@ -184,7 +184,7 @@
   - Create pull request
   - _Requirements: 2.4, 5.2_
 
-- [-] 17. Create comment system API endpoint benchmarks
+- [x] 17. Create comment system API endpoint benchmarks
   - Create feature branch: `git checkout -b  benchmark-comment-system`
   - Implement comment CRUD operation benchmarks via HTTP endpoints
   - Add comment threading operation performance tests
