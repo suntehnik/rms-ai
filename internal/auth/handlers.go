@@ -4,10 +4,11 @@ import (
 	"net/http"
 	"time"
 
+	"product-requirements-management/internal/models"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"product-requirements-management/internal/models"
 )
 
 // LoginRequest represents a login request
@@ -18,34 +19,34 @@ type LoginRequest struct {
 
 // LoginResponse represents a login response
 type LoginResponse struct {
-	Token     string           `json:"token"`
-	User      UserResponse     `json:"user"`
-	ExpiresAt time.Time        `json:"expires_at"`
+	Token     string       `json:"token"`
+	User      UserResponse `json:"user"`
+	ExpiresAt time.Time    `json:"expires_at"`
 }
 
 // UserResponse represents a user in API responses
 type UserResponse struct {
-	ID        string           `json:"id"`
-	Username  string           `json:"username"`
-	Email     string           `json:"email"`
-	Role      models.UserRole  `json:"role"`
-	CreatedAt time.Time        `json:"created_at"`
-	UpdatedAt time.Time        `json:"updated_at"`
+	ID        string          `json:"id"`
+	Username  string          `json:"username"`
+	Email     string          `json:"email"`
+	Role      models.UserRole `json:"role"`
+	CreatedAt time.Time       `json:"created_at"`
+	UpdatedAt time.Time       `json:"updated_at"`
 }
 
 // CreateUserRequest represents a request to create a new user
 type CreateUserRequest struct {
-	Username string           `json:"username" binding:"required"`
-	Email    string           `json:"email" binding:"required,email"`
-	Password string           `json:"password" binding:"required,min=8"`
-	Role     models.UserRole  `json:"role" binding:"required"`
+	Username string          `json:"username" binding:"required"`
+	Email    string          `json:"email" binding:"required,email"`
+	Password string          `json:"password" binding:"required,min=8"`
+	Role     models.UserRole `json:"role" binding:"required"`
 }
 
 // UpdateUserRequest represents a request to update a user
 type UpdateUserRequest struct {
-	Username string           `json:"username"`
-	Email    string           `json:"email" binding:"omitempty,email"`
-	Role     models.UserRole  `json:"role"`
+	Username string          `json:"username"`
+	Email    string          `json:"email" binding:"omitempty,email"`
+	Role     models.UserRole `json:"role"`
 }
 
 // ChangePasswordRequest represents a request to change password
@@ -185,7 +186,7 @@ func (h *Handlers) GetUsers(c *gin.Context) {
 // GetUser handles getting a specific user (admin only)
 func (h *Handlers) GetUser(c *gin.Context) {
 	userID := c.Param("id")
-	
+
 	var user models.User
 	if err := h.db.Where("id = ?", userID).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -211,7 +212,7 @@ func (h *Handlers) GetUser(c *gin.Context) {
 // UpdateUser handles updating a user (admin only)
 func (h *Handlers) UpdateUser(c *gin.Context) {
 	userID := c.Param("id")
-	
+
 	var req UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -264,7 +265,7 @@ func (h *Handlers) UpdateUser(c *gin.Context) {
 // DeleteUser handles deleting a user (admin only)
 func (h *Handlers) DeleteUser(c *gin.Context) {
 	userID := c.Param("id")
-	
+
 	var user models.User
 	if err := h.db.Where("id = ?", userID).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {

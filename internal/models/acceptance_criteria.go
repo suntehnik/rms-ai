@@ -8,7 +8,7 @@ import (
 )
 
 // Package-level generator instance for AcceptanceCriteria.
-// 
+//
 // This uses the production PostgreSQLReferenceIDGenerator which provides:
 // - Thread-safe reference ID generation for production environments
 // - PostgreSQL advisory locks for atomic generation (lock key: 2147483644)
@@ -77,7 +77,7 @@ func (ac *AcceptanceCriteria) IsEARSFormat() bool {
 	if ac.Description == "" {
 		return false
 	}
-	
+
 	description := ac.Description
 	// Basic validation for EARS format
 	// Check for common EARS keywords
@@ -85,7 +85,7 @@ func (ac *AcceptanceCriteria) IsEARSFormat() bool {
 	hasIf := contains(description, "IF ") || contains(description, "if ")
 	hasThen := contains(description, "THEN ") || contains(description, "then ")
 	hasShall := contains(description, "SHALL ") || contains(description, "shall ")
-	
+
 	// Must have either WHEN or IF, and must have THEN and SHALL
 	return (hasWhen || hasIf) && hasThen && hasShall
 }
@@ -94,4 +94,3 @@ func (ac *AcceptanceCriteria) IsEARSFormat() bool {
 func (ac *AcceptanceCriteria) GetFormattedDescription() string {
 	return ac.Description
 }
-

@@ -7,8 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-
-
 // statusModelRepository implements StatusModelRepository interface
 type statusModelRepository struct {
 	db *gorm.DB
@@ -78,19 +76,19 @@ func (r *statusModelRepository) Delete(id uuid.UUID) error {
 // List retrieves status models with filtering, ordering, and pagination
 func (r *statusModelRepository) List(filters map[string]interface{}, orderBy string, limit, offset int) ([]models.StatusModel, error) {
 	var statusModels []models.StatusModel
-	
+
 	query := r.db.Preload("Statuses").Preload("Transitions")
-	
+
 	// Apply filters
 	for key, value := range filters {
 		query = query.Where(key+" = ?", value)
 	}
-	
+
 	// Apply ordering
 	if orderBy != "" {
 		query = query.Order(orderBy)
 	}
-	
+
 	// Apply pagination
 	if limit > 0 {
 		query = query.Limit(limit)
@@ -98,7 +96,7 @@ func (r *statusModelRepository) List(filters map[string]interface{}, orderBy str
 	if offset > 0 {
 		query = query.Offset(offset)
 	}
-	
+
 	err := query.Find(&statusModels).Error
 	return statusModels, err
 }

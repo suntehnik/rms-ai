@@ -11,11 +11,11 @@ import (
 )
 
 var (
-	ErrEpicNotFound           = errors.New("epic not found")
-	ErrEpicHasUserStories     = errors.New("epic has associated user stories and cannot be deleted")
-	ErrInvalidEpicStatus      = errors.New("invalid epic status")
-	ErrInvalidPriority        = errors.New("invalid priority")
-	ErrUserNotFound           = errors.New("user not found")
+	ErrEpicNotFound       = errors.New("epic not found")
+	ErrEpicHasUserStories = errors.New("epic has associated user stories and cannot be deleted")
+	ErrInvalidEpicStatus  = errors.New("invalid epic status")
+	ErrInvalidPriority    = errors.New("invalid priority")
+	ErrUserNotFound       = errors.New("user not found")
 )
 
 // EpicService defines the interface for epic business logic
@@ -42,11 +42,11 @@ type CreateEpicRequest struct {
 
 // UpdateEpicRequest represents the request to update an epic
 type UpdateEpicRequest struct {
-	AssigneeID  *uuid.UUID      `json:"assignee_id,omitempty"`
-	Priority    *models.Priority `json:"priority,omitempty"`
+	AssigneeID  *uuid.UUID         `json:"assignee_id,omitempty"`
+	Priority    *models.Priority   `json:"priority,omitempty"`
 	Status      *models.EpicStatus `json:"status,omitempty"`
-	Title       *string         `json:"title,omitempty"`
-	Description *string         `json:"description,omitempty"`
+	Title       *string            `json:"title,omitempty"`
+	Description *string            `json:"description,omitempty"`
 }
 
 // EpicFilters represents filters for listing epics
@@ -101,13 +101,13 @@ func (s *epicService) CreateEpic(req CreateEpicRequest) (*models.Epic, error) {
 	}
 
 	epic := &models.Epic{
-		ID:           uuid.New(),
-		CreatorID:    req.CreatorID,
-		AssigneeID:   assigneeID,
-		Priority:     req.Priority,
-		Status:       models.EpicStatusBacklog, // Default status
-		Title:        req.Title,
-		Description:  req.Description,
+		ID:          uuid.New(),
+		CreatorID:   req.CreatorID,
+		AssigneeID:  assigneeID,
+		Priority:    req.Priority,
+		Status:      models.EpicStatusBacklog, // Default status
+		Title:       req.Title,
+		Description: req.Description,
 	}
 
 	if err := s.epicRepo.Create(epic); err != nil {
@@ -228,7 +228,7 @@ func (s *epicService) DeleteEpic(id uuid.UUID, force bool) error {
 func (s *epicService) ListEpics(filters EpicFilters) ([]models.Epic, error) {
 	// Build filter map
 	filterMap := make(map[string]interface{})
-	
+
 	if filters.CreatorID != nil {
 		filterMap["creator_id"] = *filters.CreatorID
 	}

@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	ErrAcceptanceCriteriaNotFound      = errors.New("acceptance criteria not found")
-	ErrAcceptanceCriteriaHasRequirements = errors.New("acceptance criteria has associated requirements and cannot be deleted")
+	ErrAcceptanceCriteriaNotFound          = errors.New("acceptance criteria not found")
+	ErrAcceptanceCriteriaHasRequirements   = errors.New("acceptance criteria has associated requirements and cannot be deleted")
 	ErrUserStoryMustHaveAcceptanceCriteria = errors.New("user story must have at least one acceptance criteria")
 )
 
@@ -191,7 +191,7 @@ func (s *acceptanceCriteriaService) DeleteAcceptanceCriteria(id uuid.UUID, force
 func (s *acceptanceCriteriaService) ListAcceptanceCriteria(filters AcceptanceCriteriaFilters) ([]models.AcceptanceCriteria, error) {
 	// Build filter map
 	filterMap := make(map[string]interface{})
-	
+
 	if filters.UserStoryID != nil {
 		filterMap["user_story_id"] = *filters.UserStoryID
 	}
@@ -259,10 +259,10 @@ func (s *acceptanceCriteriaService) ValidateUserStoryHasAcceptanceCriteria(userS
 	if err != nil {
 		return fmt.Errorf("failed to count acceptance criteria: %w", err)
 	}
-	
+
 	if count == 0 {
 		return ErrUserStoryMustHaveAcceptanceCriteria
 	}
-	
+
 	return nil
 }

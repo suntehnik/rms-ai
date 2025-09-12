@@ -19,16 +19,16 @@ const (
 
 // Comment represents a comment on any entity in the system
 type Comment struct {
-	ID                uuid.UUID  `gorm:"type:uuid;primary_key" json:"id"`
-	EntityType        EntityType `gorm:"not null" json:"entity_type"`
-	EntityID          uuid.UUID  `gorm:"not null" json:"entity_id"`
-	ParentCommentID   *uuid.UUID `json:"parent_comment_id"`
-	AuthorID          uuid.UUID  `gorm:"not null" json:"author_id"`
-	CreatedAt         time.Time  `json:"created_at"`
-	UpdatedAt         time.Time  `json:"updated_at"`
-	Content           string     `gorm:"not null" json:"content"`
-	IsResolved        bool       `json:"is_resolved"`
-	
+	ID              uuid.UUID  `gorm:"type:uuid;primary_key" json:"id"`
+	EntityType      EntityType `gorm:"not null" json:"entity_type"`
+	EntityID        uuid.UUID  `gorm:"not null" json:"entity_id"`
+	ParentCommentID *uuid.UUID `json:"parent_comment_id"`
+	AuthorID        uuid.UUID  `gorm:"not null" json:"author_id"`
+	CreatedAt       time.Time  `json:"created_at"`
+	UpdatedAt       time.Time  `json:"updated_at"`
+	Content         string     `gorm:"not null" json:"content"`
+	IsResolved      bool       `json:"is_resolved"`
+
 	// For inline comments
 	LinkedText        *string `json:"linked_text"`
 	TextPositionStart *int    `json:"text_position_start"`
@@ -61,7 +61,7 @@ func (c *Comment) IsValidEntityType(entityType EntityType) bool {
 		EntityTypeAcceptanceCriteria,
 		EntityTypeRequirement,
 	}
-	
+
 	for _, validType := range validTypes {
 		if entityType == validType {
 			return true
@@ -121,9 +121,9 @@ func (c *Comment) IsValidTextPosition() bool {
 	if !c.IsInlineComment() {
 		return true // General comments don't need text position validation
 	}
-	
-	return c.TextPositionStart != nil && 
-		   c.TextPositionEnd != nil && 
-		   *c.TextPositionStart >= 0 && 
-		   *c.TextPositionEnd >= *c.TextPositionStart
+
+	return c.TextPositionStart != nil &&
+		c.TextPositionEnd != nil &&
+		*c.TextPositionStart >= 0 &&
+		*c.TextPositionEnd >= *c.TextPositionStart
 }

@@ -8,7 +8,7 @@ import (
 )
 
 // Package-level generator instance for Epic reference IDs.
-// 
+//
 // This uses the production PostgreSQLReferenceIDGenerator which provides:
 // - Thread-safe reference ID generation for production environments
 // - PostgreSQL advisory locks for atomic generation (lock key: 2147483647)
@@ -68,7 +68,7 @@ func (e *Epic) BeforeCreate(tx *gorm.DB) error {
 	if e.Status == "" {
 		e.Status = EpicStatusBacklog
 	}
-	
+
 	// Generate reference ID if not set
 	if e.ReferenceID == "" {
 		referenceID, err := epicGenerator.Generate(tx, &Epic{})
@@ -77,7 +77,7 @@ func (e *Epic) BeforeCreate(tx *gorm.DB) error {
 		}
 		e.ReferenceID = referenceID
 	}
-	
+
 	return nil
 }
 
@@ -117,7 +117,7 @@ func (e *Epic) IsValidStatus(status EpicStatus) bool {
 		EpicStatusDone,
 		EpicStatusCancelled,
 	}
-	
+
 	for _, validStatus := range validStatuses {
 		if status == validStatus {
 			return true

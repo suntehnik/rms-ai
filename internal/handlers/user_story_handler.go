@@ -76,11 +76,11 @@ func (h *UserStoryHandler) CreateUserStory(c *gin.Context) {
 // CreateUserStoryInEpic handles POST /api/v1/epics/:id/user-stories
 func (h *UserStoryHandler) CreateUserStoryInEpic(c *gin.Context) {
 	epicIDParam := c.Param("id")
-	
+
 	// Try to parse as UUID first, then as reference ID
 	var epicID uuid.UUID
 	var err error
-	
+
 	if id, parseErr := uuid.Parse(epicIDParam); parseErr == nil {
 		epicID = id
 	} else {
@@ -135,11 +135,11 @@ func (h *UserStoryHandler) CreateUserStoryInEpic(c *gin.Context) {
 // GetUserStory handles GET /api/v1/user-stories/:id
 func (h *UserStoryHandler) GetUserStory(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Try to parse as UUID first, then as reference ID
 	var userStory *models.UserStory
 	var err error
-	
+
 	if id, parseErr := uuid.Parse(idParam); parseErr == nil {
 		userStory, err = h.userStoryService.GetUserStoryByID(id)
 	} else {
@@ -165,7 +165,7 @@ func (h *UserStoryHandler) GetUserStory(c *gin.Context) {
 // UpdateUserStory handles PUT /api/v1/user-stories/:id
 func (h *UserStoryHandler) UpdateUserStory(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Parse ID (UUID only for updates)
 	id, err := uuid.Parse(idParam)
 	if err != nil {
@@ -225,7 +225,7 @@ func (h *UserStoryHandler) UpdateUserStory(c *gin.Context) {
 // DeleteUserStory handles DELETE /api/v1/user-stories/:id
 func (h *UserStoryHandler) DeleteUserStory(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Parse ID (UUID only for deletes)
 	id, err := uuid.Parse(idParam)
 	if err != nil {
@@ -329,11 +329,11 @@ func (h *UserStoryHandler) ListUserStories(c *gin.Context) {
 // GetUserStoryWithAcceptanceCriteria handles GET /api/v1/user-stories/:id/acceptance-criteria
 func (h *UserStoryHandler) GetUserStoryWithAcceptanceCriteria(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Try to parse as UUID first, then as reference ID
 	var userStory *models.UserStory
 	var err error
-	
+
 	if id, parseErr := uuid.Parse(idParam); parseErr == nil {
 		userStory, err = h.userStoryService.GetUserStoryWithAcceptanceCriteria(id)
 	} else {
@@ -364,11 +364,11 @@ func (h *UserStoryHandler) GetUserStoryWithAcceptanceCriteria(c *gin.Context) {
 // GetUserStoryWithRequirements handles GET /api/v1/user-stories/:id/requirements
 func (h *UserStoryHandler) GetUserStoryWithRequirements(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Try to parse as UUID first, then as reference ID
 	var userStory *models.UserStory
 	var err error
-	
+
 	if id, parseErr := uuid.Parse(idParam); parseErr == nil {
 		userStory, err = h.userStoryService.GetUserStoryWithRequirements(id)
 	} else {
@@ -399,7 +399,7 @@ func (h *UserStoryHandler) GetUserStoryWithRequirements(c *gin.Context) {
 // ChangeUserStoryStatus handles PATCH /api/v1/user-stories/:id/status
 func (h *UserStoryHandler) ChangeUserStoryStatus(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Parse ID (UUID only for status changes)
 	id, err := uuid.Parse(idParam)
 	if err != nil {
@@ -412,7 +412,7 @@ func (h *UserStoryHandler) ChangeUserStoryStatus(c *gin.Context) {
 	var req struct {
 		Status models.UserStoryStatus `json:"status" binding:"required"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request body",
@@ -450,7 +450,7 @@ func (h *UserStoryHandler) ChangeUserStoryStatus(c *gin.Context) {
 // AssignUserStory handles PATCH /api/v1/user-stories/:id/assign
 func (h *UserStoryHandler) AssignUserStory(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Parse ID (UUID only for assignments)
 	id, err := uuid.Parse(idParam)
 	if err != nil {
@@ -463,7 +463,7 @@ func (h *UserStoryHandler) AssignUserStory(c *gin.Context) {
 	var req struct {
 		AssigneeID uuid.UUID `json:"assignee_id" binding:"required"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request body",

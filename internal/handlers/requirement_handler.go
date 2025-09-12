@@ -72,11 +72,11 @@ func (h *RequirementHandler) CreateRequirement(c *gin.Context) {
 // CreateRequirementInUserStory handles POST /api/v1/user-stories/:id/requirements
 func (h *RequirementHandler) CreateRequirementInUserStory(c *gin.Context) {
 	userStoryIDParam := c.Param("id")
-	
+
 	// Try to parse as UUID first, then as reference ID
 	var userStoryID uuid.UUID
 	var err error
-	
+
 	if id, parseErr := uuid.Parse(userStoryIDParam); parseErr == nil {
 		userStoryID = id
 	} else {
@@ -88,15 +88,15 @@ func (h *RequirementHandler) CreateRequirementInUserStory(c *gin.Context) {
 
 	// Use a struct without required UserStoryID for this endpoint
 	var reqBody struct {
-		AcceptanceCriteriaID *uuid.UUID               `json:"acceptance_criteria_id,omitempty"`
-		CreatorID            uuid.UUID                `json:"creator_id" binding:"required"`
-		AssigneeID           *uuid.UUID               `json:"assignee_id,omitempty"`
-		Priority             models.Priority          `json:"priority" binding:"required,min=1,max=4"`
-		TypeID               uuid.UUID                `json:"type_id" binding:"required"`
-		Title                string                   `json:"title" binding:"required,max=500"`
-		Description          *string                  `json:"description,omitempty"`
+		AcceptanceCriteriaID *uuid.UUID      `json:"acceptance_criteria_id,omitempty"`
+		CreatorID            uuid.UUID       `json:"creator_id" binding:"required"`
+		AssigneeID           *uuid.UUID      `json:"assignee_id,omitempty"`
+		Priority             models.Priority `json:"priority" binding:"required,min=1,max=4"`
+		TypeID               uuid.UUID       `json:"type_id" binding:"required"`
+		Title                string          `json:"title" binding:"required,max=500"`
+		Description          *string         `json:"description,omitempty"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&reqBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request body",
@@ -154,11 +154,11 @@ func (h *RequirementHandler) CreateRequirementInUserStory(c *gin.Context) {
 // GetRequirement handles GET /api/v1/requirements/:id
 func (h *RequirementHandler) GetRequirement(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Try to parse as UUID first, then as reference ID
 	var requirement *models.Requirement
 	var err error
-	
+
 	if id, parseErr := uuid.Parse(idParam); parseErr == nil {
 		requirement, err = h.requirementService.GetRequirementByID(id)
 	} else {
@@ -184,7 +184,7 @@ func (h *RequirementHandler) GetRequirement(c *gin.Context) {
 // UpdateRequirement handles PUT /api/v1/requirements/:id
 func (h *RequirementHandler) UpdateRequirement(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Parse ID (UUID only for updates)
 	id, err := uuid.Parse(idParam)
 	if err != nil {
@@ -248,7 +248,7 @@ func (h *RequirementHandler) UpdateRequirement(c *gin.Context) {
 // DeleteRequirement handles DELETE /api/v1/requirements/:id
 func (h *RequirementHandler) DeleteRequirement(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Parse ID (UUID only for deletes)
 	id, err := uuid.Parse(idParam)
 	if err != nil {
@@ -364,11 +364,11 @@ func (h *RequirementHandler) ListRequirements(c *gin.Context) {
 // GetRequirementWithRelationships handles GET /api/v1/requirements/:id/relationships
 func (h *RequirementHandler) GetRequirementWithRelationships(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Try to parse as UUID first, then as reference ID
 	var requirement *models.Requirement
 	var err error
-	
+
 	if id, parseErr := uuid.Parse(idParam); parseErr == nil {
 		requirement, err = h.requirementService.GetRequirementWithRelationships(id)
 	} else {
@@ -399,7 +399,7 @@ func (h *RequirementHandler) GetRequirementWithRelationships(c *gin.Context) {
 // ChangeRequirementStatus handles PATCH /api/v1/requirements/:id/status
 func (h *RequirementHandler) ChangeRequirementStatus(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Parse ID (UUID only for status changes)
 	id, err := uuid.Parse(idParam)
 	if err != nil {
@@ -412,7 +412,7 @@ func (h *RequirementHandler) ChangeRequirementStatus(c *gin.Context) {
 	var req struct {
 		Status models.RequirementStatus `json:"status" binding:"required"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request body",
@@ -450,7 +450,7 @@ func (h *RequirementHandler) ChangeRequirementStatus(c *gin.Context) {
 // AssignRequirement handles PATCH /api/v1/requirements/:id/assign
 func (h *RequirementHandler) AssignRequirement(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Parse ID (UUID only for assignments)
 	id, err := uuid.Parse(idParam)
 	if err != nil {
@@ -463,7 +463,7 @@ func (h *RequirementHandler) AssignRequirement(c *gin.Context) {
 	var req struct {
 		AssigneeID uuid.UUID `json:"assignee_id" binding:"required"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request body",
@@ -542,7 +542,7 @@ func (h *RequirementHandler) CreateRelationship(c *gin.Context) {
 // DeleteRelationship handles DELETE /api/v1/requirement-relationships/:id
 func (h *RequirementHandler) DeleteRelationship(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Parse ID (UUID only for deletes)
 	id, err := uuid.Parse(idParam)
 	if err != nil {
@@ -572,11 +572,11 @@ func (h *RequirementHandler) DeleteRelationship(c *gin.Context) {
 // GetRelationshipsByRequirement handles GET /api/v1/requirements/:id/relationships
 func (h *RequirementHandler) GetRelationshipsByRequirement(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Try to parse as UUID first, then as reference ID
 	var requirementID uuid.UUID
 	var err error
-	
+
 	if id, parseErr := uuid.Parse(idParam); parseErr == nil {
 		requirementID = id
 	} else {

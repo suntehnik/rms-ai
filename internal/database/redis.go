@@ -23,16 +23,16 @@ func NewRedisClient(cfg *config.RedisConfig, logger *logrus.Logger) (*RedisClien
 		Addr:     fmt.Sprintf("%s:%s", cfg.Host, cfg.Port),
 		Password: cfg.Password,
 		DB:       cfg.DB,
-		
+
 		// Connection pool settings
 		PoolSize:     10,
 		MinIdleConns: 5,
-		
+
 		// Timeouts
 		DialTimeout:  5 * time.Second,
 		ReadTimeout:  3 * time.Second,
 		WriteTimeout: 3 * time.Second,
-		
+
 		// Retry settings
 		MaxRetries:      3,
 		MinRetryBackoff: 8 * time.Millisecond,
@@ -90,11 +90,11 @@ func (r *RedisClient) DeletePattern(ctx context.Context, pattern string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	if len(keys) > 0 {
 		return r.Del(ctx, keys...).Err()
 	}
-	
+
 	return nil
 }
 

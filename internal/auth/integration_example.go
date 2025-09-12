@@ -3,9 +3,10 @@ package auth
 import (
 	"time"
 
+	"product-requirements-management/internal/config"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"product-requirements-management/internal/config"
 )
 
 // IntegrateWithServer demonstrates how to integrate the authentication system
@@ -15,7 +16,7 @@ func IntegrateWithServer(router *gin.Engine, cfg *config.Config, db *gorm.DB) {
 	// In a real implementation, JWT secret should come from config or environment
 	jwtSecret := "your-jwt-secret-here" // Should come from config in real implementation
 	tokenDuration := 24 * time.Hour     // Should come from config in real implementation
-	
+
 	authService := NewService(jwtSecret, tokenDuration)
 	authHandlers := NewHandlers(authService, db)
 

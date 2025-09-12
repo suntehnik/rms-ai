@@ -3,7 +3,7 @@ package repository
 import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	
+
 	"product-requirements-management/internal/models"
 )
 

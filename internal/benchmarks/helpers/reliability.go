@@ -11,14 +11,14 @@ import (
 
 // BenchmarkReliabilityManager provides comprehensive error handling and recovery mechanisms
 type BenchmarkReliabilityManager struct {
-	b                    *testing.B
-	timeouts             map[string]time.Duration
-	retryConfig          RetryConfig
-	resourceMonitor      *ResourceMonitor
-	cleanupFunctions     []func() error
-	preflightChecks      []PreflightCheck
-	gracefulDegradation  *GracefulDegradationConfig
-	mu                   sync.RWMutex
+	b                   *testing.B
+	timeouts            map[string]time.Duration
+	retryConfig         RetryConfig
+	resourceMonitor     *ResourceMonitor
+	cleanupFunctions    []func() error
+	preflightChecks     []PreflightCheck
+	gracefulDegradation *GracefulDegradationConfig
+	mu                  sync.RWMutex
 }
 
 // RetryConfig defines retry behavior for failed operations
@@ -32,14 +32,14 @@ type RetryConfig struct {
 
 // ResourceMonitor tracks system resource usage and constraints
 type ResourceMonitor struct {
-	MaxMemoryMB       int64
-	MaxGoroutines     int
-	MaxDBConnections  int
-	CheckInterval     time.Duration
-	AlertThresholds   ResourceThresholds
-	mu                sync.RWMutex
-	monitoring        bool
-	stopChan          chan struct{}
+	MaxMemoryMB      int64
+	MaxGoroutines    int
+	MaxDBConnections int
+	CheckInterval    time.Duration
+	AlertThresholds  ResourceThresholds
+	mu               sync.RWMutex
+	monitoring       bool
+	stopChan         chan struct{}
 }
 
 // ResourceThresholds defines when to trigger alerts or degradation
@@ -74,11 +74,11 @@ func NewBenchmarkReliabilityManager(b *testing.B) *BenchmarkReliabilityManager {
 	return &BenchmarkReliabilityManager{
 		b: b,
 		timeouts: map[string]time.Duration{
-			"default":    30 * time.Second,
-			"database":   60 * time.Second,
-			"http":       30 * time.Second,
-			"cleanup":    10 * time.Second,
-			"preflight":  5 * time.Second,
+			"default":   30 * time.Second,
+			"database":  60 * time.Second,
+			"http":      30 * time.Second,
+			"cleanup":   10 * time.Second,
+			"preflight": 5 * time.Second,
 		},
 		retryConfig: RetryConfig{
 			MaxRetries:    3,
@@ -98,8 +98,8 @@ func NewBenchmarkReliabilityManager(b *testing.B) *BenchmarkReliabilityManager {
 			MaxDBConnections: 50,
 			CheckInterval:    1 * time.Second,
 			AlertThresholds: ResourceThresholds{
-				MemoryWarningMB:   512,  // 512MB warning
-				MemoryCriticalMB:  896,  // 896MB critical (leave 128MB buffer)
+				MemoryWarningMB:   512, // 512MB warning
+				MemoryCriticalMB:  896, // 896MB critical (leave 128MB buffer)
 				GoroutineWarning:  500,
 				GoroutineCritical: 800,
 				DBConnWarning:     30,
@@ -129,7 +129,7 @@ func (brm *BenchmarkReliabilityManager) SetTimeout(operation string, timeout tim
 func (brm *BenchmarkReliabilityManager) GetTimeout(operation string) time.Duration {
 	brm.mu.RLock()
 	defer brm.mu.RUnlock()
-	
+
 	if timeout, exists := brm.timeouts[operation]; exists {
 		return timeout
 	}
@@ -159,15 +159,15 @@ func (brm *BenchmarkReliabilityManager) RunPreflightChecks() error {
 
 	for _, check := range checks {
 		brm.b.Logf("Running preflight check: %s", check.Name)
-		
+
 		ctx, cancel := context.WithTimeout(context.Background(), brm.GetTimeout("preflight"))
 		defer cancel()
-		
+
 		done := make(chan error, 1)
 		go func() {
 			done <- check.CheckFunc()
 		}()
-		
+
 		select {
 		case err := <-done:
 			if err != nil {
@@ -185,7 +185,7 @@ func (brm *BenchmarkReliabilityManager) RunPreflightChecks() error {
 			brm.b.Logf("Optional preflight check '%s' timed out", check.Name)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -193,14 +193,14 @@ func (brm *BenchmarkReliabilityManager) RunPreflightChecks() error {
 func (brm *BenchmarkReliabilityManager) StartResourceMonitoring() {
 	brm.resourceMonitor.mu.Lock()
 	defer brm.resourceMonitor.mu.Unlock()
-	
+
 	if brm.resourceMonitor.monitoring {
 		return // Already monitoring
 	}
-	
+
 	brm.resourceMonitor.monitoring = true
 	brm.resourceMonitor.stopChan = make(chan struct{})
-	
+
 	go brm.monitorResources()
 }
 
@@ -208,11 +208,11 @@ func (brm *BenchmarkReliabilityManager) StartResourceMonitoring() {
 func (brm *BenchmarkReliabilityManager) StopResourceMonitoring() {
 	brm.resourceMonitor.mu.Lock()
 	defer brm.resourceMonitor.mu.Unlock()
-	
+
 	if !brm.resourceMonitor.monitoring {
 		return
 	}
-	
+
 	brm.resourceMonitor.monitoring = false
 	close(brm.resourceMonitor.stopChan)
 }
@@ -221,7 +221,7 @@ func (brm *BenchmarkReliabilityManager) StopResourceMonitoring() {
 func (brm *BenchmarkReliabilityManager) monitorResources() {
 	ticker := time.NewTicker(brm.resourceMonitor.CheckInterval)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-ticker.C:
@@ -236,29 +236,29 @@ func (brm *BenchmarkReliabilityManager) monitorResources() {
 func (brm *BenchmarkReliabilityManager) checkResourceUsage() {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
-	
+
 	currentMemoryMB := int64(memStats.Alloc / 1024 / 1024)
 	currentGoroutines := runtime.NumGoroutine()
-	
+
 	thresholds := brm.resourceMonitor.AlertThresholds
-	
+
 	// Check memory usage
 	if currentMemoryMB >= thresholds.MemoryCriticalMB {
-		brm.b.Logf("CRITICAL: Memory usage at %d MB (threshold: %d MB)", 
+		brm.b.Logf("CRITICAL: Memory usage at %d MB (threshold: %d MB)",
 			currentMemoryMB, thresholds.MemoryCriticalMB)
 		brm.triggerGracefulDegradation("memory_critical")
 	} else if currentMemoryMB >= thresholds.MemoryWarningMB {
-		brm.b.Logf("WARNING: Memory usage at %d MB (threshold: %d MB)", 
+		brm.b.Logf("WARNING: Memory usage at %d MB (threshold: %d MB)",
 			currentMemoryMB, thresholds.MemoryWarningMB)
 	}
-	
+
 	// Check goroutine count
 	if currentGoroutines >= thresholds.GoroutineCritical {
-		brm.b.Logf("CRITICAL: Goroutine count at %d (threshold: %d)", 
+		brm.b.Logf("CRITICAL: Goroutine count at %d (threshold: %d)",
 			currentGoroutines, thresholds.GoroutineCritical)
 		brm.triggerGracefulDegradation("goroutine_critical")
 	} else if currentGoroutines >= thresholds.GoroutineWarning {
-		brm.b.Logf("WARNING: Goroutine count at %d (threshold: %d)", 
+		brm.b.Logf("WARNING: Goroutine count at %d (threshold: %d)",
 			currentGoroutines, thresholds.GoroutineWarning)
 	}
 }
@@ -266,23 +266,23 @@ func (brm *BenchmarkReliabilityManager) checkResourceUsage() {
 // triggerGracefulDegradation activates degradation measures based on resource constraints
 func (brm *BenchmarkReliabilityManager) triggerGracefulDegradation(reason string) {
 	brm.b.Logf("Triggering graceful degradation due to: %s", reason)
-	
+
 	config := brm.gracefulDegradation
-	
+
 	switch reason {
 	case "memory_critical":
 		// Force garbage collection
 		runtime.GC()
 		runtime.GC() // Run twice for better cleanup
-		
+
 		// Enable fast mode to reduce memory allocations
 		config.EnableFastMode = true
 		config.UseSimplifiedData = true
-		
+
 	case "goroutine_critical":
 		// Reduce concurrency to limit goroutine creation
 		config.ReduceConcurrency = true
-		
+
 	case "db_critical":
 		// Skip non-essential database operations
 		config.SkipNonEssentialOps = true
@@ -296,10 +296,10 @@ func (brm *BenchmarkReliabilityManager) ExecuteWithRetry(
 ) error {
 	ctx, cancel := context.WithTimeout(context.Background(), brm.GetTimeout(operation))
 	defer cancel()
-	
+
 	config := brm.retryConfig
 	delay := config.InitialDelay
-	
+
 	for attempt := 0; attempt <= config.MaxRetries; attempt++ {
 		if attempt > 0 {
 			// Wait before retry
@@ -308,20 +308,20 @@ func (brm *BenchmarkReliabilityManager) ExecuteWithRetry(
 			case <-ctx.Done():
 				return fmt.Errorf("operation '%s' timed out during retry %d", operation, attempt)
 			}
-			
+
 			// Increase delay for next attempt
 			delay = time.Duration(float64(delay) * config.BackoffFactor)
 			if delay > config.MaxDelay {
 				delay = config.MaxDelay
 			}
 		}
-		
+
 		// Execute function with timeout
 		done := make(chan error, 1)
 		go func() {
 			done <- fn()
 		}()
-		
+
 		select {
 		case err := <-done:
 			if err == nil {
@@ -330,20 +330,20 @@ func (brm *BenchmarkReliabilityManager) ExecuteWithRetry(
 				}
 				return nil
 			}
-			
+
 			// Check if error is retryable
 			if attempt < config.MaxRetries && brm.isRetryableError(err) {
 				brm.b.Logf("Operation '%s' failed on attempt %d, retrying: %v", operation, attempt+1, err)
 				continue
 			}
-			
+
 			return fmt.Errorf("operation '%s' failed after %d attempts: %w", operation, attempt+1, err)
-			
+
 		case <-ctx.Done():
 			return fmt.Errorf("operation '%s' timed out on attempt %d", operation, attempt+1)
 		}
 	}
-	
+
 	return fmt.Errorf("operation '%s' exhausted all retry attempts", operation)
 }
 
@@ -352,14 +352,14 @@ func (brm *BenchmarkReliabilityManager) isRetryableError(err error) bool {
 	if err == nil {
 		return false
 	}
-	
+
 	errStr := err.Error()
 	for _, retryableErr := range brm.retryConfig.RetryableErrors {
 		if contains(errStr, retryableErr) {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -370,12 +370,12 @@ func (brm *BenchmarkReliabilityManager) ExecuteWithTimeout(
 ) error {
 	ctx, cancel := context.WithTimeout(context.Background(), brm.GetTimeout(operation))
 	defer cancel()
-	
+
 	done := make(chan error, 1)
 	go func() {
 		done <- fn()
 	}()
-	
+
 	select {
 	case err := <-done:
 		return err
@@ -387,12 +387,12 @@ func (brm *BenchmarkReliabilityManager) ExecuteWithTimeout(
 // Cleanup executes all registered cleanup functions
 func (brm *BenchmarkReliabilityManager) Cleanup() {
 	brm.StopResourceMonitoring()
-	
+
 	brm.mu.RLock()
 	cleanupFuncs := make([]func() error, len(brm.cleanupFunctions))
 	copy(cleanupFuncs, brm.cleanupFunctions)
 	brm.mu.RUnlock()
-	
+
 	for i, cleanup := range cleanupFuncs {
 		err := brm.ExecuteWithTimeout("cleanup", cleanup)
 		if err != nil {
@@ -410,12 +410,12 @@ func (brm *BenchmarkReliabilityManager) GetGracefulDegradationConfig() *Graceful
 func (brm *BenchmarkReliabilityManager) IsResourceConstrained() bool {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
-	
+
 	currentMemoryMB := int64(memStats.Alloc / 1024 / 1024)
 	currentGoroutines := runtime.NumGoroutine()
-	
+
 	thresholds := brm.resourceMonitor.AlertThresholds
-	
+
 	return currentMemoryMB >= thresholds.MemoryWarningMB ||
 		currentGoroutines >= thresholds.GoroutineWarning
 }
@@ -425,19 +425,19 @@ func (brm *BenchmarkReliabilityManager) AdjustConcurrencyForConstraints(requeste
 	if !brm.gracefulDegradation.ReduceConcurrency {
 		return requestedConcurrency
 	}
-	
+
 	if brm.IsResourceConstrained() {
 		// Reduce concurrency by 50% under resource constraints
 		adjusted := requestedConcurrency / 2
 		if adjusted < 1 {
 			adjusted = 1
 		}
-		
-		brm.b.Logf("Reducing concurrency from %d to %d due to resource constraints", 
+
+		brm.b.Logf("Reducing concurrency from %d to %d due to resource constraints",
 			requestedConcurrency, adjusted)
 		return adjusted
 	}
-	
+
 	return requestedConcurrency
 }
 
@@ -446,14 +446,14 @@ func (brm *BenchmarkReliabilityManager) ShouldSkipOperation(operationType string
 	if !brm.gracefulDegradation.SkipNonEssentialOps {
 		return false
 	}
-	
+
 	nonEssentialOps := []string{
 		"detailed_metrics",
 		"complex_queries",
 		"bulk_operations",
 		"relationship_traversal",
 	}
-	
+
 	if brm.IsResourceConstrained() {
 		for _, nonEssential := range nonEssentialOps {
 			if operationType == nonEssential {
@@ -462,18 +462,18 @@ func (brm *BenchmarkReliabilityManager) ShouldSkipOperation(operationType string
 			}
 		}
 	}
-	
+
 	return false
 }
 
 // contains checks if a string contains a substring (case-insensitive)
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && 
-		(s == substr || 
-		 len(s) > len(substr) && 
-		 (s[:len(substr)] == substr || 
-		  s[len(s)-len(substr):] == substr || 
-		  containsSubstring(s, substr)))
+	return len(s) >= len(substr) &&
+		(s == substr ||
+			len(s) > len(substr) &&
+				(s[:len(substr)] == substr ||
+					s[len(s)-len(substr):] == substr ||
+					containsSubstring(s, substr)))
 }
 
 // containsSubstring performs a simple substring search
@@ -488,9 +488,9 @@ func containsSubstring(s, substr string) bool {
 
 // BenchmarkTimeoutManager manages timeouts for different benchmark operations
 type BenchmarkTimeoutManager struct {
-	defaultTimeout time.Duration
+	defaultTimeout    time.Duration
 	operationTimeouts map[string]time.Duration
-	mu sync.RWMutex
+	mu                sync.RWMutex
 }
 
 // NewBenchmarkTimeoutManager creates a new timeout manager
@@ -498,12 +498,12 @@ func NewBenchmarkTimeoutManager() *BenchmarkTimeoutManager {
 	return &BenchmarkTimeoutManager{
 		defaultTimeout: 30 * time.Second,
 		operationTimeouts: map[string]time.Duration{
-			"server_start":     60 * time.Second,
-			"database_setup":   120 * time.Second,
-			"data_generation":  180 * time.Second,
-			"http_request":     10 * time.Second,
-			"bulk_operation":   300 * time.Second,
-			"cleanup":          30 * time.Second,
+			"server_start":    60 * time.Second,
+			"database_setup":  120 * time.Second,
+			"data_generation": 180 * time.Second,
+			"http_request":    10 * time.Second,
+			"bulk_operation":  300 * time.Second,
+			"cleanup":         30 * time.Second,
 		},
 	}
 }
@@ -519,7 +519,7 @@ func (btm *BenchmarkTimeoutManager) SetOperationTimeout(operation string, timeou
 func (btm *BenchmarkTimeoutManager) GetOperationTimeout(operation string) time.Duration {
 	btm.mu.RLock()
 	defer btm.mu.RUnlock()
-	
+
 	if timeout, exists := btm.operationTimeouts[operation]; exists {
 		return timeout
 	}
@@ -531,12 +531,12 @@ func (btm *BenchmarkTimeoutManager) WithTimeout(operation string, fn func() erro
 	timeout := btm.GetOperationTimeout(operation)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	
+
 	done := make(chan error, 1)
 	go func() {
 		done <- fn()
 	}()
-	
+
 	select {
 	case err := <-done:
 		return err

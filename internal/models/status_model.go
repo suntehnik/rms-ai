@@ -7,8 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-
-
 // StatusModel represents a configurable status model for different entity types
 type StatusModel struct {
 	ID          uuid.UUID  `gorm:"type:uuid;primary_key" json:"id"`
@@ -38,9 +36,9 @@ type Status struct {
 	UpdatedAt     time.Time `json:"updated_at"`
 
 	// Relationships
-	StatusModel       StatusModel        `gorm:"foreignKey:StatusModelID;constraint:OnDelete:CASCADE" json:"status_model,omitempty"`
-	FromTransitions   []StatusTransition `gorm:"foreignKey:FromStatusID;constraint:OnDelete:CASCADE" json:"from_transitions,omitempty"`
-	ToTransitions     []StatusTransition `gorm:"foreignKey:ToStatusID;constraint:OnDelete:CASCADE" json:"to_transitions,omitempty"`
+	StatusModel     StatusModel        `gorm:"foreignKey:StatusModelID;constraint:OnDelete:CASCADE" json:"status_model,omitempty"`
+	FromTransitions []StatusTransition `gorm:"foreignKey:FromStatusID;constraint:OnDelete:CASCADE" json:"from_transitions,omitempty"`
+	ToTransitions   []StatusTransition `gorm:"foreignKey:ToStatusID;constraint:OnDelete:CASCADE" json:"to_transitions,omitempty"`
 }
 
 // StatusTransition represents allowed transitions between statuses
@@ -49,8 +47,8 @@ type StatusTransition struct {
 	StatusModelID uuid.UUID `gorm:"not null" json:"status_model_id"`
 	FromStatusID  uuid.UUID `gorm:"not null" json:"from_status_id"`
 	ToStatusID    uuid.UUID `gorm:"not null" json:"to_status_id"`
-	Name          *string   `json:"name"`          // Optional name for the transition
-	Description   *string   `json:"description"`   // Optional description
+	Name          *string   `json:"name"`        // Optional name for the transition
+	Description   *string   `json:"description"` // Optional description
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 
@@ -154,8 +152,6 @@ func GetDefaultStatusesForRequirement() []Status {
 	}
 }
 
-
-
 // IsValidEntityType checks if the entity type is valid
 func IsValidEntityType(entityType EntityType) bool {
 	validTypes := []EntityType{
@@ -164,7 +160,7 @@ func IsValidEntityType(entityType EntityType) bool {
 		EntityTypeAcceptanceCriteria,
 		EntityTypeRequirement,
 	}
-	
+
 	for _, validType := range validTypes {
 		if entityType == validType {
 			return true
@@ -200,31 +196,31 @@ func (sm *StatusModel) CanTransitionTo(fromStatusID, toStatusID uuid.UUID) bool 
 	if len(sm.Transitions) == 0 {
 		return true
 	}
-	
+
 	// Check if there's an explicit transition defined
 	for _, transition := range sm.Transitions {
 		if transition.FromStatusID == fromStatusID && transition.ToStatusID == toStatusID {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
 // GetAvailableTransitions returns all available transitions from a given status
 func (sm *StatusModel) GetAvailableTransitions(fromStatusID uuid.UUID) []StatusTransition {
 	var availableTransitions []StatusTransition
-	
+
 	// If no transitions are defined, return empty slice (all transitions allowed)
 	if len(sm.Transitions) == 0 {
 		return availableTransitions
 	}
-	
+
 	for _, transition := range sm.Transitions {
 		if transition.FromStatusID == fromStatusID {
 			availableTransitions = append(availableTransitions, transition)
 		}
 	}
-	
+
 	return availableTransitions
 }

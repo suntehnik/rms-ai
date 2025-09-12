@@ -1,0 +1,641 @@
+basePath: /api/v1
+definitions:
+  internal_handlers.DeleteAcceptanceCriteriaRequest:
+    properties:
+      force:
+        type: boolean
+    type: object
+  internal_handlers.DeleteEpicRequest:
+    properties:
+      force:
+        type: boolean
+    type: object
+  internal_handlers.DeleteRequirementRequest:
+    properties:
+      force:
+        type: boolean
+    type: object
+  internal_handlers.DeleteUserStoryRequest:
+    properties:
+      force:
+        type: boolean
+    type: object
+  internal_handlers.ErrorDetail:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  internal_handlers.ErrorResponse:
+    properties:
+      error:
+        $ref: '#/definitions/internal_handlers.ErrorDetail'
+    type: object
+  product-requirements-management_internal_service.CascadeDeletePreview:
+    properties:
+      entity_id:
+        type: string
+      entity_type:
+        type: string
+      reference_id:
+        type: string
+      title:
+        type: string
+    type: object
+  product-requirements-management_internal_service.CascadeDeletedEntity:
+    properties:
+      entity_id:
+        type: string
+      entity_type:
+        type: string
+      reference_id:
+        type: string
+    type: object
+  product-requirements-management_internal_service.DeletionResult:
+    properties:
+      audit_log_id:
+        type: string
+      cascade_deleted:
+        items:
+          $ref: '#/definitions/product-requirements-management_internal_service.CascadeDeletedEntity'
+        type: array
+      deleted_at:
+        type: string
+      deleted_by:
+        type: string
+      entity_id:
+        type: string
+      entity_type:
+        type: string
+      reference_id:
+        type: string
+      transaction_id:
+        type: string
+    type: object
+  product-requirements-management_internal_service.DependencyDetail:
+    properties:
+      entity_id:
+        type: string
+      entity_type:
+        type: string
+      reason:
+        type: string
+      reference_id:
+        type: string
+      title:
+        type: string
+    type: object
+  product-requirements-management_internal_service.DependencyInfo:
+    properties:
+      can_delete:
+        type: boolean
+      cascade_delete_count:
+        type: integer
+      cascade_delete_entities:
+        items:
+          $ref: '#/definitions/product-requirements-management_internal_service.CascadeDeletePreview'
+        type: array
+      dependencies:
+        items:
+          $ref: '#/definitions/product-requirements-management_internal_service.DependencyDetail'
+        type: array
+      requires_confirmation:
+        type: boolean
+    type: object
+  product-requirements-management_internal_service.SearchResponse:
+    properties:
+      executed_at:
+        type: string
+      limit:
+        type: integer
+      offset:
+        type: integer
+      query:
+        type: string
+      results:
+        items:
+          $ref: '#/definitions/product-requirements-management_internal_service.SearchResult'
+        type: array
+      total:
+        type: integer
+    type: object
+  product-requirements-management_internal_service.SearchResult:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      priority:
+        type: integer
+      reference_id:
+        type: string
+      relevance:
+        type: number
+      status:
+        type: string
+      title:
+        type: string
+      type:
+        description: epic, user_story, acceptance_criteria, requirement
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: API for managing product requirements through hierarchical structure
+    of Epics, User Stories, and Requirements
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Product Requirements Management API
+  version: 1.0.0
+paths:
+  /api/acceptance-criteria/{id}/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes acceptance criteria with comprehensive validation and cascading
+        deletion
+      parameters:
+      - description: Acceptance Criteria ID (UUID or reference ID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Deletion options
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/internal_handlers.DeleteAcceptanceCriteriaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.DeletionResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: Delete acceptance criteria
+      tags:
+      - deletion
+  /api/acceptance-criteria/{id}/validate-deletion:
+    get:
+      consumes:
+      - application/json
+      description: Validates if acceptance criteria can be deleted and returns dependency
+        information
+      parameters:
+      - description: Acceptance Criteria ID (UUID or reference ID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.DependencyInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: Validate acceptance criteria deletion
+      tags:
+      - deletion
+  /api/deletion/confirm:
+    get:
+      consumes:
+      - application/json
+      description: Provides detailed information for user confirmation before deletion
+      parameters:
+      - description: Entity type (epic, user_story, acceptance_criteria, requirement)
+        in: query
+        name: entity_type
+        required: true
+        type: string
+      - description: Entity ID (UUID)
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.DependencyInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: Get deletion confirmation
+      tags:
+      - deletion
+  /api/epics/{id}/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an epic with comprehensive validation and cascading deletion
+      parameters:
+      - description: Epic ID (UUID or reference ID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Deletion options
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/internal_handlers.DeleteEpicRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.DeletionResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: Delete epic
+      tags:
+      - deletion
+  /api/epics/{id}/validate-deletion:
+    get:
+      consumes:
+      - application/json
+      description: Validates if an epic can be deleted and returns dependency information
+      parameters:
+      - description: Epic ID (UUID or reference ID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.DependencyInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: Validate epic deletion
+      tags:
+      - deletion
+  /api/requirements/{id}/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a requirement with comprehensive validation and cascading
+        deletion
+      parameters:
+      - description: Requirement ID (UUID or reference ID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Deletion options
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/internal_handlers.DeleteRequirementRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.DeletionResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: Delete requirement
+      tags:
+      - deletion
+  /api/requirements/{id}/validate-deletion:
+    get:
+      consumes:
+      - application/json
+      description: Validates if a requirement can be deleted and returns dependency
+        information
+      parameters:
+      - description: Requirement ID (UUID or reference ID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.DependencyInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: Validate requirement deletion
+      tags:
+      - deletion
+  /api/search:
+    get:
+      consumes:
+      - application/json
+      description: Performs full-text search and filtering across epics, user stories,
+        acceptance criteria, and requirements
+      parameters:
+      - description: Search query text
+        in: query
+        name: query
+        type: string
+      - description: Filter by creator ID (UUID)
+        in: query
+        name: creator_id
+        type: string
+      - description: Filter by assignee ID (UUID)
+        in: query
+        name: assignee_id
+        type: string
+      - description: Filter by priority (1-4)
+        in: query
+        name: priority
+        type: integer
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      - description: Filter by creation date from (RFC3339 format)
+        in: query
+        name: created_from
+        type: string
+      - description: Filter by creation date to (RFC3339 format)
+        in: query
+        name: created_to
+        type: string
+      - description: Filter by epic ID (UUID)
+        in: query
+        name: epic_id
+        type: string
+      - description: Filter by user story ID (UUID)
+        in: query
+        name: user_story_id
+        type: string
+      - description: Filter by acceptance criteria ID (UUID)
+        in: query
+        name: acceptance_criteria_id
+        type: string
+      - description: Filter by requirement type ID (UUID)
+        in: query
+        name: requirement_type_id
+        type: string
+      - description: Filter by author ID (UUID)
+        in: query
+        name: author_id
+        type: string
+      - default: created_at
+        description: Sort by field (priority, created_at, last_modified, title)
+        in: query
+        name: sort_by
+        type: string
+      - default: desc
+        description: Sort order (asc, desc)
+        in: query
+        name: sort_order
+        type: string
+      - default: 50
+        description: Limit number of results (max 100)
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.SearchResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: Search across all entities
+      tags:
+      - search
+  /api/search/suggestions:
+    get:
+      consumes:
+      - application/json
+      description: Get search suggestions based on partial query
+      parameters:
+      - description: Partial search query
+        in: query
+        name: query
+        required: true
+        type: string
+      - default: 10
+        description: Limit number of suggestions
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              items:
+                type: string
+              type: array
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: Get search suggestions
+      tags:
+      - search
+  /api/user-stories/{id}/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a user story with comprehensive validation and cascading
+        deletion
+      parameters:
+      - description: User Story ID (UUID or reference ID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Deletion options
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/internal_handlers.DeleteUserStoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.DeletionResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: Delete user story
+      tags:
+      - deletion
+  /api/user-stories/{id}/validate-deletion:
+    get:
+      consumes:
+      - application/json
+      description: Validates if a user story can be deleted and returns dependency
+        information
+      parameters:
+      - description: User Story ID (UUID or reference ID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.DependencyInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: Validate user story deletion
+      tags:
+      - deletion
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

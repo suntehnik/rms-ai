@@ -3,7 +3,7 @@ package repository
 import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	
+
 	"product-requirements-management/internal/models"
 )
 
@@ -73,7 +73,7 @@ func (r *commentRepository) GetByStatus(isResolved bool) ([]models.Comment, erro
 // GetInlineComments retrieves inline comments for an entity
 func (r *commentRepository) GetInlineComments(entityType models.EntityType, entityID uuid.UUID) ([]models.Comment, error) {
 	var comments []models.Comment
-	if err := r.GetDB().Where("entity_type = ? AND entity_id = ? AND linked_text IS NOT NULL", 
+	if err := r.GetDB().Where("entity_type = ? AND entity_id = ? AND linked_text IS NOT NULL",
 		entityType, entityID).Order("text_position_start ASC").Find(&comments).Error; err != nil {
 		return nil, r.handleDBError(err)
 	}

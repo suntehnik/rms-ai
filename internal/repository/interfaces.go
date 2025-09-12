@@ -3,29 +3,29 @@ package repository
 import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	
+
 	"product-requirements-management/internal/models"
 )
 
 // Type aliases for models to make interfaces cleaner
 type (
-	User                      = models.User
-	Epic                      = models.Epic
-	UserStory                 = models.UserStory
-	AcceptanceCriteria        = models.AcceptanceCriteria
-	Requirement               = models.Requirement
-	RequirementType           = models.RequirementType
-	RelationshipType          = models.RelationshipType
-	RequirementRelationship   = models.RequirementRelationship
-	Comment                   = models.Comment
-	StatusModel               = models.StatusModel
-	Status                    = models.Status
-	StatusTransition          = models.StatusTransition
-	EpicStatus                = models.EpicStatus
-	UserStoryStatus           = models.UserStoryStatus
-	RequirementStatus         = models.RequirementStatus
-	Priority                  = models.Priority
-	EntityType                = models.EntityType
+	User                    = models.User
+	Epic                    = models.Epic
+	UserStory               = models.UserStory
+	AcceptanceCriteria      = models.AcceptanceCriteria
+	Requirement             = models.Requirement
+	RequirementType         = models.RequirementType
+	RelationshipType        = models.RelationshipType
+	RequirementRelationship = models.RequirementRelationship
+	Comment                 = models.Comment
+	StatusModel             = models.StatusModel
+	Status                  = models.Status
+	StatusTransition        = models.StatusTransition
+	EpicStatus              = models.EpicStatus
+	UserStoryStatus         = models.UserStoryStatus
+	RequirementStatus       = models.RequirementStatus
+	Priority                = models.Priority
+	EntityType              = models.EntityType
 )
 
 // Repository defines the common interface for all repositories

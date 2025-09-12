@@ -75,7 +75,7 @@ func GetLargeDataSet() DataSetConfig {
 // CreateUsers generates the specified number of users
 func (dg *DataGenerator) CreateUsers(count int) ([]*models.User, error) {
 	users := make([]*models.User, 0, count)
-	
+
 	// Create password hash once for all users (for performance)
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte("benchmark123"), bcrypt.DefaultCost)
 	if err != nil {
@@ -110,11 +110,11 @@ func (dg *DataGenerator) CreateEpics(count int, users []*models.User) ([]*models
 	}
 
 	epics := make([]*models.Epic, 0, count)
-	
+
 	for i := 0; i < count; i++ {
 		creator := users[dg.rand.Intn(len(users))]
 		assignee := users[dg.rand.Intn(len(users))]
-		
+
 		epic := &models.Epic{
 			ID:           uuid.New(),
 			ReferenceID:  fmt.Sprintf("EP-%03d", i+1),
@@ -146,12 +146,12 @@ func (dg *DataGenerator) CreateUserStories(storiesPerEpic int, epics []*models.E
 
 	userStories := make([]*models.UserStory, 0, len(epics)*storiesPerEpic)
 	storyCounter := 1
-	
+
 	for _, epic := range epics {
 		for j := 0; j < storiesPerEpic; j++ {
 			creator := users[dg.rand.Intn(len(users))]
 			assignee := users[dg.rand.Intn(len(users))]
-			
+
 			userStory := &models.UserStory{
 				ID:           uuid.New(),
 				ReferenceID:  fmt.Sprintf("US-%03d", storyCounter),
@@ -195,13 +195,13 @@ func (dg *DataGenerator) CreateRequirements(requirementsPerUS int, userStories [
 
 	requirements := make([]*models.Requirement, 0, len(userStories)*requirementsPerUS)
 	reqCounter := 1
-	
+
 	for _, userStory := range userStories {
 		for j := 0; j < requirementsPerUS; j++ {
 			creator := users[dg.rand.Intn(len(users))]
 			assignee := users[dg.rand.Intn(len(users))]
 			reqType := reqTypes[dg.rand.Intn(len(reqTypes))]
-			
+
 			requirement := &models.Requirement{
 				ID:           uuid.New(),
 				ReferenceID:  fmt.Sprintf("REQ-%03d", reqCounter),
@@ -236,11 +236,11 @@ func (dg *DataGenerator) CreateAcceptanceCriteria(count int, userStories []*mode
 	}
 
 	acceptanceCriteria := make([]*models.AcceptanceCriteria, 0, count)
-	
+
 	for i := 0; i < count; i++ {
 		userStory := userStories[dg.rand.Intn(len(userStories))]
 		author := users[dg.rand.Intn(len(users))]
-		
+
 		ac := &models.AcceptanceCriteria{
 			ID:           uuid.New(),
 			ReferenceID:  fmt.Sprintf("AC-%03d", i+1),
@@ -306,11 +306,11 @@ func (dg *DataGenerator) CreateComments(count int, users []*models.User, epics [
 	}
 
 	comments := make([]*models.Comment, 0, count)
-	
+
 	for i := 0; i < count; i++ {
 		author := users[dg.rand.Intn(len(users))]
 		entity := entities[dg.rand.Intn(len(entities))]
-		
+
 		comment := &models.Comment{
 			ID:         uuid.New(),
 			EntityType: entity.Type,
@@ -403,7 +403,7 @@ func (dg *DataGenerator) CleanupDatabase() error {
 		if err := dg.DB.Raw(query).Scan(&exists).Error; err != nil {
 			return fmt.Errorf("failed to check if table %s exists: %w", table, err)
 		}
-		
+
 		if exists {
 			if err := dg.DB.Exec(fmt.Sprintf("DELETE FROM %s", table)).Error; err != nil {
 				return fmt.Errorf("failed to cleanup table %s: %w", table, err)
