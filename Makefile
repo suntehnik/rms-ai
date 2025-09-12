@@ -1,4 +1,4 @@
-.PHONY: build run test test-unit test-integration test-e2e test-fast test-coverage test-unit-coverage test-integration-coverage test-e2e-coverage test-bench test-parallel test-race test-run test-debug test-compile test-ci clean deps dev fmt lint migrate-up migrate-down migrate-version build-migrate docker-up docker-down docker-logs docker-clean dev-setup mocks help
+.PHONY: build run test test-unit test-integration test-e2e test-fast test-coverage test-unit-coverage test-integration-coverage test-e2e-coverage test-bench test-bench-api test-bench-results test-bench-api-results test-parallel test-race test-run test-debug test-compile test-ci clean deps dev fmt lint migrate-up migrate-down migrate-version build-migrate docker-up docker-down docker-logs docker-clean dev-setup mocks help
 
 # Build the application
 build:
@@ -61,10 +61,31 @@ test-e2e-coverage:
 	go tool cover -html=coverage-e2e.out -o coverage-e2e.html
 	@echo "✅ E2E test coverage report: coverage-e2e.html"
 
-# Run performance benchmarks
+# Run performance benchmarks (all benchmarks)
 test-bench:
 	@echo "🏃 Running performance benchmarks..."
-	go test -bench=. -benchmem ./internal/service/... ./tests/integration/...
+	go test -bench=. -benchmem -benchtime=3s -timeout=30m ./internal/service/... ./internal/repository/... ./internal/benchmarks/... ./tests/integration/...
+	@echo "✅ Performance benchmarks completed"
+
+# Run API endpoint benchmarks specifically
+test-bench-api:
+	@echo "🌐 Running API endpoint benchmarks..."
+	go test -bench=. -benchmem -benchtime=3s -timeout=30m ./internal/benchmarks/api/...
+	@echo "✅ API endpoint benchmarks completed"
+
+# Run benchmarks with result file generation
+test-bench-results:
+	@echo "📊 Running benchmarks with result file generation..."
+	@mkdir -p benchmark-results
+	go test -bench=. -benchmem -benchtime=3s -timeout=30m ./internal/service/... ./internal/repository/... ./internal/benchmarks/... ./tests/integration/... | tee benchmark-results/benchmark-$(shell date +%Y%m%d-%H%M%S).txt
+	@echo "✅ Benchmark results saved to benchmark-results/"
+
+# Run API benchmarks with result file generation
+test-bench-api-results:
+	@echo "📊 Running API benchmarks with result file generation..."
+	@mkdir -p benchmark-results
+	go test -bench=. -benchmem -benchtime=3s -timeout=30m ./internal/benchmarks/api/... | tee benchmark-results/api-benchmark-$(shell date +%Y%m%d-%H%M%S).txt
+	@echo "✅ API benchmark results saved to benchmark-results/"
 
 # Run tests in parallel (for CI/CD)
 test-parallel:
@@ -179,7 +200,10 @@ help:
 	@echo "  test-e2e-coverage  - Generate E2E test coverage"
 	@echo ""
 	@echo "🔧 Advanced Testing:"
-	@echo "  test-bench         - Run performance benchmarks"
+	@echo "  test-bench         - Run performance benchmarks (all)"
+	@echo "  test-bench-api     - Run API endpoint benchmarks only"
+	@echo "  test-bench-results - Run benchmarks with result file generation"
+	@echo "  test-bench-api-results - Run API benchmarks with result files"
 	@echo "  test-parallel      - Run tests in parallel"
 	@echo "  test-race          - Run tests with race detection"
 	@echo "  test-debug         - Run tests in debug mode"

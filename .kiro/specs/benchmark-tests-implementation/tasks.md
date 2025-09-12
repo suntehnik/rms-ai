@@ -195,7 +195,7 @@
   - Create pull request
   - _Requirements: 5.3, 5.4_
 
-- [-] 18. Implement concurrent access benchmarks with parallel HTTP runners
+- [x] 18. Implement concurrent access benchmarks with parallel HTTP runners
   - Create feature branch: `git checkout -b  benchmark-concurrent-access`
   - Create multiple simultaneous CRUD operation benchmarks using parallel HTTP clients
   - Add mixed read/write workload testing with concurrent request runners
@@ -217,7 +217,7 @@
   - Create pull request
   - _Requirements: 5.2, 5.4, 5.5_
 
-- [ ] 20. Update Makefile integration for benchmark execution
+- [-] 20. Update Makefile integration for benchmark execution
   - Create feature branch: `git checkout -b  benchmark-makefile-integration`
   - Extend existing `make test-bench` target to include new API endpoint benchmarks
   - Add `make test-bench-api` target for API-specific benchmark execution

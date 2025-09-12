@@ -55,6 +55,9 @@ pids
 # Coverage directory used by tools like istanbul
 coverage/
 
+# Benchmark results
+benchmark-results/
+
 # Database files
 *.db
 *.sqlite
