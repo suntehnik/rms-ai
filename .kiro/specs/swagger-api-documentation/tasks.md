@@ -20,7 +20,7 @@
     - _Requirements: 2.1, 2.2, 4.4_
 
 - [-] 3. Document core entity models with Swagger annotations
-  - [ ] 3.1 Add Swagger annotations to Epic model
+  - [x] 3.1 Add Swagger annotations to Epic model
     - Add field-level documentation with examples and validation rules
     - Document Epic status enum values and descriptions
     - Include relationship documentation for UserStories
