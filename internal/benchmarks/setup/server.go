@@ -13,10 +13,11 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	gormlogger "gorm.io/gorm/logger"
 
 	"product-requirements-management/internal/config"
 	"product-requirements-management/internal/database"
+	"product-requirements-management/internal/logger"
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/server/routes"
 )
@@ -66,6 +67,9 @@ func NewBenchmarkServer(b *testing.B) *BenchmarkServer {
 			Format: "json",
 		},
 	}
+
+	// Initialize logger for benchmarks
+	logger.Init(&cfg.Log)
 
 	// Set up Gin in release mode for benchmarks
 	gin.SetMode(gin.ReleaseMode)
@@ -344,7 +348,7 @@ func setupPostgreSQLContainer(ctx context.Context) (testcontainers.Container, *g
 		host, "benchmark_user", "benchmark_pass", "benchmark_test", mappedPort.Port(), "disable")
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent), // Silent for benchmarks
+		Logger: gormlogger.Default.LogMode(gormlogger.Silent), // Silent for benchmarks
 		NowFunc: func() time.Time {
 			return time.Now().UTC()
 		},
