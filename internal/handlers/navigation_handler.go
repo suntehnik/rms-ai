@@ -93,11 +93,11 @@ func (h *NavigationHandler) GetHierarchy(c *gin.Context) {
 // GetEpicHierarchy handles GET /api/v1/hierarchy/epics/:id
 func (h *NavigationHandler) GetEpicHierarchy(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Try to parse as UUID first, then as reference ID
 	var epicID uuid.UUID
 	var err error
-	
+
 	if id, parseErr := uuid.Parse(idParam); parseErr == nil {
 		epicID = id
 	} else {
@@ -148,11 +148,11 @@ func (h *NavigationHandler) GetEpicHierarchy(c *gin.Context) {
 // GetUserStoryHierarchy handles GET /api/v1/hierarchy/user-stories/:id
 func (h *NavigationHandler) GetUserStoryHierarchy(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Try to parse as UUID first, then as reference ID
 	var userStoryID uuid.UUID
 	var err error
-	
+
 	if id, parseErr := uuid.Parse(idParam); parseErr == nil {
 		userStoryID = id
 	} else {
@@ -204,7 +204,7 @@ func (h *NavigationHandler) GetUserStoryHierarchy(c *gin.Context) {
 func (h *NavigationHandler) GetEntityPath(c *gin.Context) {
 	entityType := c.Param("entity_type")
 	idParam := c.Param("id")
-	
+
 	// Validate entity type
 	if !isValidEntityType(entityType) {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -216,7 +216,7 @@ func (h *NavigationHandler) GetEntityPath(c *gin.Context) {
 	// Try to parse as UUID first, then as reference ID
 	var entityID uuid.UUID
 	var err error
-	
+
 	if id, parseErr := uuid.Parse(idParam); parseErr == nil {
 		entityID = id
 	} else {

@@ -15,7 +15,7 @@ type ReferenceIDGenerator interface {
 }
 
 // PostgreSQLReferenceIDGenerator implements reference ID generation for production use.
-// 
+//
 // This generator is designed for production, integration, and e2e test environments where:
 // - Thread-safety and concurrency handling are critical
 // - PostgreSQL advisory locks provide atomic reference ID generation
@@ -73,12 +73,12 @@ func (g *PostgreSQLReferenceIDGenerator) Generate(tx *gorm.DB, model interface{}
 		if err := tx.Raw("SELECT pg_try_advisory_xact_lock(?)", g.lockKey).Scan(&lockAcquired).Error; err != nil {
 			return "", fmt.Errorf("failed to acquire advisory lock: %w", err)
 		}
-		
+
 		if !lockAcquired {
 			// If lock not acquired, fall back to UUID-based ID
 			return fmt.Sprintf("%s-%s", g.prefix, uuid.New().String()[:8]), nil
 		}
-		
+
 		// Lock acquired, safely generate sequential reference ID
 		var count int64
 		if err := tx.Model(model).Count(&count).Error; err != nil {
@@ -86,7 +86,7 @@ func (g *PostgreSQLReferenceIDGenerator) Generate(tx *gorm.DB, model interface{}
 		}
 		return fmt.Sprintf("%s-%03d", g.prefix, count+1), nil
 	}
-	
+
 	// For non-PostgreSQL databases (like SQLite in tests), use simple count method
 	var count int64
 	if err := tx.Model(model).Count(&count).Error; err != nil {

@@ -9,10 +9,10 @@ import (
 )
 
 var (
-	ErrNotFound      = errors.New("record not found")
-	ErrInvalidID     = errors.New("invalid ID format")
-	ErrDuplicateKey  = errors.New("duplicate key violation")
-	ErrForeignKey    = errors.New("foreign key constraint violation")
+	ErrNotFound     = errors.New("record not found")
+	ErrInvalidID    = errors.New("invalid ID format")
+	ErrDuplicateKey = errors.New("duplicate key violation")
+	ErrForeignKey   = errors.New("foreign key constraint violation")
 )
 
 // BaseRepository provides common CRUD operations for all entities

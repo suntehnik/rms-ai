@@ -21,24 +21,24 @@ type MetricsCollector struct {
 	StartDBStats  sql.DBStats
 	EndDBStats    sql.DBStats
 	DB            *gorm.DB
-	
+
 	// Response tracking
 	ResponseTracker *ResponseTimeTracker
-	
+
 	// Concurrent access tracking
-	mu                sync.RWMutex
-	ConcurrentOps     int64
-	MaxConcurrentOps  int64
-	ErrorCount        int64
-	SuccessCount      int64
+	mu               sync.RWMutex
+	ConcurrentOps    int64
+	MaxConcurrentOps int64
+	ErrorCount       int64
+	SuccessCount     int64
 }
 
 // BenchmarkMetrics contains detailed performance metrics
 type BenchmarkMetrics struct {
 	// Timing metrics
-	Duration          time.Duration
-	OperationsPerSec  float64
-	
+	Duration         time.Duration
+	OperationsPerSec float64
+
 	// Memory metrics
 	MemoryAllocated   uint64
 	MemoryAllocations int64
@@ -46,34 +46,34 @@ type BenchmarkMetrics struct {
 	HeapSize          uint64
 	GCPauses          []time.Duration
 	GCCount           uint32
-	
+
 	// Database metrics
-	DBConnections     DBConnectionMetrics
-	DBQueries         int64
-	
+	DBConnections DBConnectionMetrics
+	DBQueries     int64
+
 	// Response metrics
-	ResponseTimes     []time.Duration
-	ResponseSizes     []int64
+	ResponseTimes       []time.Duration
+	ResponseSizes       []int64
 	ResponsePercentiles map[string]time.Duration
-	
+
 	// Concurrency metrics
-	MaxConcurrentOps  int64
-	ErrorRate         float64
-	ThroughputPerSec  float64
-	
+	MaxConcurrentOps int64
+	ErrorRate        float64
+	ThroughputPerSec float64
+
 	// System metrics
-	CPUUsage          float64
-	GoroutineCount    int
+	CPUUsage       float64
+	GoroutineCount int
 }
 
 // DBConnectionMetrics contains database connection pool metrics
 type DBConnectionMetrics struct {
-	OpenConnections     int
-	InUseConnections    int
-	IdleConnections     int
-	MaxOpenConnections  int
-	WaitCount           int64
-	WaitDuration        time.Duration
+	OpenConnections    int
+	InUseConnections   int
+	IdleConnections    int
+	MaxOpenConnections int
+	WaitCount          int64
+	WaitDuration       time.Duration
 }
 
 // NewMetricsCollector creates a new metrics collector
@@ -95,14 +95,14 @@ func NewMetricsCollectorWithoutDB() *MetricsCollector {
 func (mc *MetricsCollector) StartMeasurement() {
 	mc.StartTime = time.Now()
 	runtime.ReadMemStats(&mc.StartMemStats)
-	
+
 	// Collect database stats if available
 	if mc.DB != nil {
 		if sqlDB, err := mc.DB.DB(); err == nil {
 			mc.StartDBStats = sqlDB.Stats()
 		}
 	}
-	
+
 	// Reset counters
 	mc.mu.Lock()
 	mc.ConcurrentOps = 0
@@ -110,7 +110,7 @@ func (mc *MetricsCollector) StartMeasurement() {
 	mc.ErrorCount = 0
 	mc.SuccessCount = 0
 	mc.mu.Unlock()
-	
+
 	// Force GC to get clean baseline
 	runtime.GC()
 }
@@ -119,7 +119,7 @@ func (mc *MetricsCollector) StartMeasurement() {
 func (mc *MetricsCollector) EndMeasurement() BenchmarkMetrics {
 	mc.EndTime = time.Now()
 	runtime.ReadMemStats(&mc.EndMemStats)
-	
+
 	// Collect final database stats
 	var dbMetrics DBConnectionMetrics
 	if mc.DB != nil {
@@ -128,13 +128,13 @@ func (mc *MetricsCollector) EndMeasurement() BenchmarkMetrics {
 			dbMetrics = mc.getDBConnectionMetrics()
 		}
 	}
-	
+
 	duration := mc.EndTime.Sub(mc.StartTime)
-	
+
 	// Calculate response percentiles
 	responseTimes, responseSizes := mc.ResponseTracker.GetMetrics()
 	percentiles := CalculatePercentiles(responseTimes)
-	
+
 	// Calculate rates
 	mc.mu.RLock()
 	totalOps := mc.SuccessCount + mc.ErrorCount
@@ -142,7 +142,7 @@ func (mc *MetricsCollector) EndMeasurement() BenchmarkMetrics {
 	if totalOps > 0 {
 		errorRate = float64(mc.ErrorCount) / float64(totalOps)
 	}
-	
+
 	opsPerSec := float64(0)
 	throughputPerSec := float64(0)
 	if duration.Seconds() > 0 {
@@ -156,7 +156,7 @@ func (mc *MetricsCollector) EndMeasurement() BenchmarkMetrics {
 		// Timing metrics
 		Duration:         duration,
 		OperationsPerSec: opsPerSec,
-		
+
 		// Memory metrics
 		MemoryAllocated:   mc.EndMemStats.TotalAlloc - mc.StartMemStats.TotalAlloc,
 		MemoryAllocations: int64(mc.EndMemStats.Mallocs - mc.StartMemStats.Mallocs),
@@ -164,20 +164,20 @@ func (mc *MetricsCollector) EndMeasurement() BenchmarkMetrics {
 		HeapSize:          mc.EndMemStats.HeapAlloc,
 		GCPauses:          mc.getGCPauses(),
 		GCCount:           mc.EndMemStats.NumGC - mc.StartMemStats.NumGC,
-		
+
 		// Database metrics
 		DBConnections: dbMetrics,
-		
+
 		// Response metrics
 		ResponseTimes:       responseTimes,
 		ResponseSizes:       responseSizes,
 		ResponsePercentiles: percentiles,
-		
+
 		// Concurrency metrics
 		MaxConcurrentOps: maxConcurrent,
 		ErrorRate:        errorRate,
 		ThroughputPerSec: throughputPerSec,
-		
+
 		// System metrics
 		GoroutineCount: runtime.NumGoroutine(),
 	}
@@ -191,11 +191,11 @@ func (mc *MetricsCollector) ReportMetrics(b *testing.B, metrics BenchmarkMetrics
 		b.ReportMetric(float64(metrics.MemoryAllocations)/float64(b.N), "allocs/op")
 		b.ReportMetric(float64(metrics.MemoryFreed)/float64(b.N), "frees/op")
 	}
-	
+
 	// Report heap size and GC metrics
 	b.ReportMetric(float64(metrics.HeapSize)/1024/1024, "heap_mb")
 	b.ReportMetric(float64(metrics.GCCount), "gc_count")
-	
+
 	// Report average GC pause time
 	if len(metrics.GCPauses) > 0 {
 		var totalPause time.Duration
@@ -205,7 +205,7 @@ func (mc *MetricsCollector) ReportMetrics(b *testing.B, metrics BenchmarkMetrics
 		avgPause := totalPause / time.Duration(len(metrics.GCPauses))
 		b.ReportMetric(float64(avgPause.Nanoseconds())/1e6, "gc_pause_ms")
 	}
-	
+
 	// Report database connection metrics
 	if metrics.DBConnections.OpenConnections > 0 {
 		b.ReportMetric(float64(metrics.DBConnections.OpenConnections), "db_open_conns")
@@ -214,7 +214,7 @@ func (mc *MetricsCollector) ReportMetrics(b *testing.B, metrics BenchmarkMetrics
 		b.ReportMetric(float64(metrics.DBConnections.WaitCount), "db_wait_count")
 		b.ReportMetric(float64(metrics.DBConnections.WaitDuration.Nanoseconds())/1e6, "db_wait_ms")
 	}
-	
+
 	// Report response time percentiles
 	if len(metrics.ResponsePercentiles) > 0 {
 		if p50, ok := metrics.ResponsePercentiles["p50"]; ok {
@@ -230,14 +230,14 @@ func (mc *MetricsCollector) ReportMetrics(b *testing.B, metrics BenchmarkMetrics
 			b.ReportMetric(float64(p99.Nanoseconds())/1e6, "p99_ms")
 		}
 	}
-	
+
 	// Report throughput and concurrency metrics
 	b.ReportMetric(metrics.OperationsPerSec, "ops/sec")
 	b.ReportMetric(metrics.ThroughputPerSec, "success/sec")
 	b.ReportMetric(metrics.ErrorRate*100, "error_rate_%")
 	b.ReportMetric(float64(metrics.MaxConcurrentOps), "max_concurrent")
 	b.ReportMetric(float64(metrics.GoroutineCount), "goroutines")
-	
+
 	// Report average response size
 	if len(metrics.ResponseSizes) > 0 {
 		var totalSize int64
@@ -280,7 +280,7 @@ Total Responses: %d
 		metrics.OperationsPerSec,
 		metrics.ThroughputPerSec,
 		metrics.ErrorRate*100,
-		
+
 		float64(metrics.MemoryAllocated)/1024/1024,
 		metrics.MemoryAllocations,
 		metrics.MemoryFreed,
@@ -288,16 +288,16 @@ Total Responses: %d
 		metrics.GCCount,
 		len(metrics.GCPauses),
 		mc.getAverageGCPause(metrics.GCPauses),
-		
+
 		metrics.DBConnections.OpenConnections,
 		metrics.DBConnections.InUseConnections,
 		metrics.DBConnections.IdleConnections,
 		metrics.DBConnections.WaitCount,
 		metrics.DBConnections.WaitDuration,
-		
+
 		len(metrics.ResponseTimes),
 	)
-	
+
 	// Add percentiles if available
 	if len(metrics.ResponsePercentiles) > 0 {
 		report += "Response Time Percentiles:\n"
@@ -305,18 +305,18 @@ Total Responses: %d
 			report += fmt.Sprintf("  %s: %v\n", percentile, duration)
 		}
 	}
-	
+
 	return report
 }
 
 // getGCPauses extracts GC pause times from memory stats
 func (mc *MetricsCollector) getGCPauses() []time.Duration {
 	var pauses []time.Duration
-	
+
 	// Get GC pauses that occurred during measurement
 	startGC := mc.StartMemStats.NumGC
 	endGC := mc.EndMemStats.NumGC
-	
+
 	if endGC > startGC {
 		// Extract pause times for GCs that occurred during measurement
 		for i := startGC; i < endGC && i < uint32(len(mc.EndMemStats.PauseNs)); i++ {
@@ -326,19 +326,19 @@ func (mc *MetricsCollector) getGCPauses() []time.Duration {
 			}
 		}
 	}
-	
+
 	return pauses
 }
 
 // getDBConnectionMetrics extracts database connection pool metrics
 func (mc *MetricsCollector) getDBConnectionMetrics() DBConnectionMetrics {
 	return DBConnectionMetrics{
-		OpenConnections:     mc.EndDBStats.OpenConnections,
-		InUseConnections:    mc.EndDBStats.InUse,
-		IdleConnections:     mc.EndDBStats.Idle,
-		MaxOpenConnections:  mc.EndDBStats.MaxOpenConnections,
-		WaitCount:           mc.EndDBStats.WaitCount,
-		WaitDuration:        mc.EndDBStats.WaitDuration,
+		OpenConnections:    mc.EndDBStats.OpenConnections,
+		InUseConnections:   mc.EndDBStats.InUse,
+		IdleConnections:    mc.EndDBStats.Idle,
+		MaxOpenConnections: mc.EndDBStats.MaxOpenConnections,
+		WaitCount:          mc.EndDBStats.WaitCount,
+		WaitDuration:       mc.EndDBStats.WaitDuration,
 		// Note: MaxIdleConnections, MaxLifetime, MaxIdleTime are not available in sql.DBStats
 		// These would need to be tracked separately if needed
 	}
@@ -349,12 +349,12 @@ func (mc *MetricsCollector) getAverageGCPause(pauses []time.Duration) time.Durat
 	if len(pauses) == 0 {
 		return 0
 	}
-	
+
 	var total time.Duration
 	for _, pause := range pauses {
 		total += pause
 	}
-	
+
 	return total / time.Duration(len(pauses))
 }
 
@@ -362,7 +362,7 @@ func (mc *MetricsCollector) getAverageGCPause(pauses []time.Duration) time.Durat
 func (mc *MetricsCollector) IncrementConcurrentOps() {
 	mc.mu.Lock()
 	defer mc.mu.Unlock()
-	
+
 	mc.ConcurrentOps++
 	if mc.ConcurrentOps > mc.MaxConcurrentOps {
 		mc.MaxConcurrentOps = mc.ConcurrentOps
@@ -373,7 +373,7 @@ func (mc *MetricsCollector) IncrementConcurrentOps() {
 func (mc *MetricsCollector) DecrementConcurrentOps() {
 	mc.mu.Lock()
 	defer mc.mu.Unlock()
-	
+
 	if mc.ConcurrentOps > 0 {
 		mc.ConcurrentOps--
 	}
@@ -383,7 +383,7 @@ func (mc *MetricsCollector) DecrementConcurrentOps() {
 func (mc *MetricsCollector) RecordSuccess() {
 	mc.mu.Lock()
 	defer mc.mu.Unlock()
-	
+
 	mc.SuccessCount++
 }
 
@@ -391,7 +391,7 @@ func (mc *MetricsCollector) RecordSuccess() {
 func (mc *MetricsCollector) RecordError() {
 	mc.mu.Lock()
 	defer mc.mu.Unlock()
-	
+
 	mc.ErrorCount++
 }
 
@@ -419,7 +419,7 @@ func NewResponseTimeTracker() *ResponseTimeTracker {
 func (rtt *ResponseTimeTracker) RecordResponse(duration time.Duration, size int64) {
 	rtt.mu.Lock()
 	defer rtt.mu.Unlock()
-	
+
 	rtt.ResponseTimes = append(rtt.ResponseTimes, duration)
 	rtt.ResponseSizes = append(rtt.ResponseSizes, size)
 }
@@ -428,14 +428,14 @@ func (rtt *ResponseTimeTracker) RecordResponse(duration time.Duration, size int6
 func (rtt *ResponseTimeTracker) GetMetrics() ([]time.Duration, []int64) {
 	rtt.mu.RLock()
 	defer rtt.mu.RUnlock()
-	
+
 	// Return copies to avoid race conditions
 	times := make([]time.Duration, len(rtt.ResponseTimes))
 	sizes := make([]int64, len(rtt.ResponseSizes))
-	
+
 	copy(times, rtt.ResponseTimes)
 	copy(sizes, rtt.ResponseSizes)
-	
+
 	return times, sizes
 }
 
@@ -443,7 +443,7 @@ func (rtt *ResponseTimeTracker) GetMetrics() ([]time.Duration, []int64) {
 func (rtt *ResponseTimeTracker) Reset() {
 	rtt.mu.Lock()
 	defer rtt.mu.Unlock()
-	
+
 	rtt.ResponseTimes = rtt.ResponseTimes[:0]
 	rtt.ResponseSizes = rtt.ResponseSizes[:0]
 }
@@ -452,7 +452,7 @@ func (rtt *ResponseTimeTracker) Reset() {
 func (rtt *ResponseTimeTracker) GetCount() int {
 	rtt.mu.RLock()
 	defer rtt.mu.RUnlock()
-	
+
 	return len(rtt.ResponseTimes)
 }
 
@@ -584,34 +584,34 @@ func (brf *BenchmarkResultFormatter) ToCSV() string {
 		brf.Metrics.MaxConcurrentOps,
 		len(brf.Metrics.ResponseTimes),
 	)
-	
+
 	return header + "\n" + data
 }
 
 // CompareMetrics compares two benchmark metrics and returns a comparison report
 func CompareMetrics(baseline, current BenchmarkMetrics) string {
 	report := "=== Benchmark Comparison Report ===\n"
-	
+
 	// Duration comparison
 	durationChange := float64(current.Duration-baseline.Duration) / float64(baseline.Duration) * 100
 	report += fmt.Sprintf("Duration: %v -> %v (%.2f%% change)\n", baseline.Duration, current.Duration, durationChange)
-	
+
 	// Throughput comparison
 	throughputChange := (current.ThroughputPerSec - baseline.ThroughputPerSec) / baseline.ThroughputPerSec * 100
-	report += fmt.Sprintf("Throughput: %.2f -> %.2f ops/sec (%.2f%% change)\n", 
+	report += fmt.Sprintf("Throughput: %.2f -> %.2f ops/sec (%.2f%% change)\n",
 		baseline.ThroughputPerSec, current.ThroughputPerSec, throughputChange)
-	
+
 	// Memory comparison
 	memoryChange := float64(int64(current.MemoryAllocated)-int64(baseline.MemoryAllocated)) / float64(baseline.MemoryAllocated) * 100
 	report += fmt.Sprintf("Memory: %.2f -> %.2f MB (%.2f%% change)\n",
 		float64(baseline.MemoryAllocated)/1024/1024,
 		float64(current.MemoryAllocated)/1024/1024,
 		memoryChange)
-	
+
 	// Error rate comparison
 	errorRateChange := (current.ErrorRate - baseline.ErrorRate) * 100
 	report += fmt.Sprintf("Error Rate: %.2f%% -> %.2f%% (%.2f%% point change)\n",
 		baseline.ErrorRate*100, current.ErrorRate*100, errorRateChange)
-	
+
 	return report
 }

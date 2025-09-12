@@ -6,35 +6,35 @@ import (
 
 // Repositories holds all repository instances
 type Repositories struct {
-	User                      UserRepository
-	Epic                      EpicRepository
-	UserStory                 UserStoryRepository
-	AcceptanceCriteria        AcceptanceCriteriaRepository
-	Requirement               RequirementRepository
-	RequirementType           RequirementTypeRepository
-	RelationshipType          RelationshipTypeRepository
-	RequirementRelationship   RequirementRelationshipRepository
-	Comment                   CommentRepository
-	StatusModel               StatusModelRepository
-	Status                    StatusRepository
-	StatusTransition          StatusTransitionRepository
+	User                    UserRepository
+	Epic                    EpicRepository
+	UserStory               UserStoryRepository
+	AcceptanceCriteria      AcceptanceCriteriaRepository
+	Requirement             RequirementRepository
+	RequirementType         RequirementTypeRepository
+	RelationshipType        RelationshipTypeRepository
+	RequirementRelationship RequirementRelationshipRepository
+	Comment                 CommentRepository
+	StatusModel             StatusModelRepository
+	Status                  StatusRepository
+	StatusTransition        StatusTransitionRepository
 }
 
 // NewRepositories creates a new instance of all repositories
 func NewRepositories(db *gorm.DB) *Repositories {
 	return &Repositories{
-		User:                      NewUserRepository(db),
-		Epic:                      NewEpicRepository(db),
-		UserStory:                 NewUserStoryRepository(db),
-		AcceptanceCriteria:        NewAcceptanceCriteriaRepository(db),
-		Requirement:               NewRequirementRepository(db),
-		RequirementType:           NewRequirementTypeRepository(db),
-		RelationshipType:          NewRelationshipTypeRepository(db),
-		RequirementRelationship:   NewRequirementRelationshipRepository(db),
-		Comment:                   NewCommentRepository(db),
-		StatusModel:               NewStatusModelRepository(db),
-		Status:                    NewStatusRepository(db),
-		StatusTransition:          NewStatusTransitionRepository(db),
+		User:                    NewUserRepository(db),
+		Epic:                    NewEpicRepository(db),
+		UserStory:               NewUserStoryRepository(db),
+		AcceptanceCriteria:      NewAcceptanceCriteriaRepository(db),
+		Requirement:             NewRequirementRepository(db),
+		RequirementType:         NewRequirementTypeRepository(db),
+		RelationshipType:        NewRelationshipTypeRepository(db),
+		RequirementRelationship: NewRequirementRelationshipRepository(db),
+		Comment:                 NewCommentRepository(db),
+		StatusModel:             NewStatusModelRepository(db),
+		Status:                  NewStatusRepository(db),
+		StatusTransition:        NewStatusTransitionRepository(db),
 	}
 }
 
@@ -44,18 +44,18 @@ func (r *Repositories) WithTransaction(fn func(*Repositories) error) error {
 	return r.User.WithTransaction(func(tx *gorm.DB) error {
 		// Create new repository instances with the transaction
 		txRepos := &Repositories{
-			User:                      NewUserRepository(tx),
-			Epic:                      NewEpicRepository(tx),
-			UserStory:                 NewUserStoryRepository(tx),
-			AcceptanceCriteria:        NewAcceptanceCriteriaRepository(tx),
-			Requirement:               NewRequirementRepository(tx),
-			RequirementType:           NewRequirementTypeRepository(tx),
-			RelationshipType:          NewRelationshipTypeRepository(tx),
-			RequirementRelationship:   NewRequirementRelationshipRepository(tx),
-			Comment:                   NewCommentRepository(tx),
-			StatusModel:               NewStatusModelRepository(tx),
-			Status:                    NewStatusRepository(tx),
-			StatusTransition:          NewStatusTransitionRepository(tx),
+			User:                    NewUserRepository(tx),
+			Epic:                    NewEpicRepository(tx),
+			UserStory:               NewUserStoryRepository(tx),
+			AcceptanceCriteria:      NewAcceptanceCriteriaRepository(tx),
+			Requirement:             NewRequirementRepository(tx),
+			RequirementType:         NewRequirementTypeRepository(tx),
+			RelationshipType:        NewRelationshipTypeRepository(tx),
+			RequirementRelationship: NewRequirementRelationshipRepository(tx),
+			Comment:                 NewCommentRepository(tx),
+			StatusModel:             NewStatusModelRepository(tx),
+			Status:                  NewStatusRepository(tx),
+			StatusTransition:        NewStatusTransitionRepository(tx),
 		}
 		return fn(txRepos)
 	})

@@ -122,7 +122,7 @@ func (s *navigationService) GetHierarchy(filters HierarchyFilters) (*HierarchyRe
 
 	// Build filter map for repository
 	filterMap := make(map[string]interface{})
-	
+
 	if epicFilters.CreatorID != nil {
 		filterMap["creator_id"] = *epicFilters.CreatorID
 	}
@@ -156,32 +156,32 @@ func (s *navigationService) GetHierarchy(filters HierarchyFilters) (*HierarchyRe
 
 	// Build hierarchy response
 	hierarchyEpics := make([]EpicHierarchy, 0, len(epics))
-	
+
 	for _, epic := range epics {
 		epicHierarchy := EpicHierarchy{Epic: &epic}
-		
+
 		// Check if we should expand user stories
 		if shouldExpand(filters.Expand, "user_stories") {
 			userStories, err := s.getUserStoriesForEpic(epic.ID, filters.OrderBy, filters.OrderDirection)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get user stories for epic %s: %w", epic.ID, err)
 			}
-			
+
 			// Build user story hierarchies
 			for _, userStory := range userStories {
 				userStoryHierarchy := UserStoryHierarchy{UserStory: &userStory}
-				
+
 				// Check if we should expand requirements and acceptance criteria
 				if shouldExpand(filters.Expand, "requirements") {
 					requirements, err := s.getRequirementsForUserStory(userStory.ID, filters.OrderBy, filters.OrderDirection)
 					if err != nil {
 						return nil, fmt.Errorf("failed to get requirements for user story %s: %w", userStory.ID, err)
 					}
-					
+
 					// Build requirement hierarchies
 					for _, requirement := range requirements {
 						reqHierarchy := RequirementHierarchy{Requirement: &requirement}
-						
+
 						if shouldExpand(filters.Expand, "relationships") {
 							relationships, err := s.relationshipRepo.GetByRequirement(requirement.ID)
 							if err != nil {
@@ -189,11 +189,11 @@ func (s *navigationService) GetHierarchy(filters HierarchyFilters) (*HierarchyRe
 							}
 							reqHierarchy.Relationships = relationships
 						}
-						
+
 						userStoryHierarchy.Requirements = append(userStoryHierarchy.Requirements, reqHierarchy)
 					}
 				}
-				
+
 				if shouldExpand(filters.Expand, "acceptance_criteria") {
 					acceptanceCriteria, err := s.acceptanceCriteriaRepo.GetByUserStory(userStory.ID)
 					if err != nil {
@@ -201,11 +201,11 @@ func (s *navigationService) GetHierarchy(filters HierarchyFilters) (*HierarchyRe
 					}
 					userStoryHierarchy.AcceptanceCriteria = acceptanceCriteria
 				}
-				
+
 				epicHierarchy.UserStories = append(epicHierarchy.UserStories, userStoryHierarchy)
 			}
 		}
-		
+
 		hierarchyEpics = append(hierarchyEpics, epicHierarchy)
 	}
 
@@ -246,7 +246,7 @@ func (s *navigationService) GetEpicHierarchy(epicID uuid.UUID, expand, orderBy, 
 
 			for _, requirement := range requirements {
 				reqHierarchy := RequirementHierarchy{Requirement: &requirement}
-				
+
 				if shouldExpand(expand, "relationships") {
 					relationships, err := s.relationshipRepo.GetByRequirement(requirement.ID)
 					if err != nil {
@@ -254,7 +254,7 @@ func (s *navigationService) GetEpicHierarchy(epicID uuid.UUID, expand, orderBy, 
 					}
 					reqHierarchy.Relationships = relationships
 				}
-				
+
 				userStoryHierarchy.Requirements = append(userStoryHierarchy.Requirements, reqHierarchy)
 			}
 		}
@@ -295,7 +295,7 @@ func (s *navigationService) GetUserStoryHierarchy(userStoryID uuid.UUID, expand,
 
 		for _, requirement := range requirements {
 			reqHierarchy := RequirementHierarchy{Requirement: &requirement}
-			
+
 			if shouldExpand(expand, "relationships") {
 				relationships, err := s.relationshipRepo.GetByRequirement(requirement.ID)
 				if err != nil {
@@ -303,7 +303,7 @@ func (s *navigationService) GetUserStoryHierarchy(userStoryID uuid.UUID, expand,
 				}
 				reqHierarchy.Relationships = relationships
 			}
-			
+
 			userStoryHierarchy.Requirements = append(userStoryHierarchy.Requirements, reqHierarchy)
 		}
 	}
@@ -522,17 +522,17 @@ func (s *navigationService) getUserStoriesForEpic(epicID uuid.UUID, orderBy, ord
 		EpicID:  &epicID,
 		OrderBy: orderBy,
 	}
-	
+
 	// Apply order direction if specified
 	if orderDirection == "desc" {
 		filters.OrderBy = orderBy + " desc"
 	}
-	
+
 	// Use the service layer instead of repository directly
 	// For now, we'll use the repository method directly
 	filterMap := make(map[string]interface{})
 	filterMap["epic_id"] = epicID
-	
+
 	orderByClause := "created_at DESC"
 	if orderBy != "" {
 		orderByClause = orderBy
@@ -540,7 +540,7 @@ func (s *navigationService) getUserStoriesForEpic(epicID uuid.UUID, orderBy, ord
 			orderByClause += " DESC"
 		}
 	}
-	
+
 	return s.userStoryRepo.List(filterMap, orderByClause, 100, 0)
 }
 
@@ -549,7 +549,7 @@ func (s *navigationService) getRequirementsForUserStory(userStoryID uuid.UUID, o
 	// Use the repository method directly
 	filterMap := make(map[string]interface{})
 	filterMap["user_story_id"] = userStoryID
-	
+
 	orderByClause := "created_at DESC"
 	if orderBy != "" {
 		orderByClause = orderBy
@@ -557,7 +557,7 @@ func (s *navigationService) getRequirementsForUserStory(userStoryID uuid.UUID, o
 			orderByClause += " DESC"
 		}
 	}
-	
+
 	return s.requirementRepo.List(filterMap, orderByClause, 100, 0)
 }
 
@@ -566,7 +566,7 @@ func shouldExpand(expand, field string) bool {
 	if expand == "" {
 		return false
 	}
-	
+
 	// Handle comma-separated expansion fields
 	fields := strings.Split(expand, ",")
 	for _, f := range fields {
@@ -574,7 +574,7 @@ func shouldExpand(expand, field string) bool {
 			return true
 		}
 	}
-	
+
 	return false
 }
 

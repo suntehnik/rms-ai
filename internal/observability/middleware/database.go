@@ -90,7 +90,7 @@ func (p *DatabaseMetricsPlugin) beforeCallback(operation string) func(*gorm.DB) 
 			if table == "" && db.Statement.Schema != nil {
 				table = db.Statement.Schema.Table
 			}
-			
+
 			ctx, span := p.tracer.StartDatabaseSpan(db.Statement.Context, operation, table)
 			db.Statement.Context = ctx
 			db.Set("metrics:span", span)

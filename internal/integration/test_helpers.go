@@ -19,9 +19,9 @@ func createTestUser(t *testing.T, db *gorm.DB) *models.User {
 		Email:    fmt.Sprintf("test_%s@example.com", uuid.New().String()[:8]),
 		Role:     models.RoleUser,
 	}
-	
+
 	err := db.Create(user).Error
 	require.NoError(t, err)
-	
+
 	return user
 }

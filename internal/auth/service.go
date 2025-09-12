@@ -4,9 +4,10 @@ import (
 	"errors"
 	"time"
 
+	"product-requirements-management/internal/models"
+
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
-	"product-requirements-management/internal/models"
 )
 
 var (
@@ -18,9 +19,9 @@ var (
 
 // Claims represents the JWT claims
 type Claims struct {
-	UserID   string           `json:"user_id"`
-	Username string           `json:"username"`
-	Role     models.UserRole  `json:"role"`
+	UserID   string          `json:"user_id"`
+	Username string          `json:"username"`
+	Role     models.UserRole `json:"role"`
 	jwt.RegisteredClaims
 }
 

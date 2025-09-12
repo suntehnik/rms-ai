@@ -27,15 +27,15 @@ type User struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 
 	// Relationships
-	CreatedEpics              []Epic              `gorm:"foreignKey:CreatorID" json:"-"`
-	AssignedEpics             []Epic              `gorm:"foreignKey:AssigneeID" json:"-"`
-	CreatedUserStories        []UserStory         `gorm:"foreignKey:CreatorID" json:"-"`
-	AssignedUserStories       []UserStory         `gorm:"foreignKey:AssigneeID" json:"-"`
-	AuthoredAcceptanceCriteria []AcceptanceCriteria `gorm:"foreignKey:AuthorID" json:"-"`
-	CreatedRequirements       []Requirement       `gorm:"foreignKey:CreatorID" json:"-"`
-	AssignedRequirements      []Requirement       `gorm:"foreignKey:AssigneeID" json:"-"`
-	Comments                  []Comment           `gorm:"foreignKey:AuthorID" json:"-"`
-	CreatedRelationships      []RequirementRelationship `gorm:"foreignKey:CreatedBy" json:"-"`
+	CreatedEpics               []Epic                    `gorm:"foreignKey:CreatorID" json:"-"`
+	AssignedEpics              []Epic                    `gorm:"foreignKey:AssigneeID" json:"-"`
+	CreatedUserStories         []UserStory               `gorm:"foreignKey:CreatorID" json:"-"`
+	AssignedUserStories        []UserStory               `gorm:"foreignKey:AssigneeID" json:"-"`
+	AuthoredAcceptanceCriteria []AcceptanceCriteria      `gorm:"foreignKey:AuthorID" json:"-"`
+	CreatedRequirements        []Requirement             `gorm:"foreignKey:CreatorID" json:"-"`
+	AssignedRequirements       []Requirement             `gorm:"foreignKey:AssigneeID" json:"-"`
+	Comments                   []Comment                 `gorm:"foreignKey:AuthorID" json:"-"`
+	CreatedRelationships       []RequirementRelationship `gorm:"foreignKey:CreatedBy" json:"-"`
 }
 
 // BeforeCreate sets the ID if not already set

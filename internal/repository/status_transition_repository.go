@@ -7,8 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-
-
 // statusTransitionRepository implements StatusTransitionRepository interface
 type statusTransitionRepository struct {
 	db *gorm.DB
@@ -66,19 +64,19 @@ func (r *statusTransitionRepository) Delete(id uuid.UUID) error {
 // List retrieves status transitions with filtering, ordering, and pagination
 func (r *statusTransitionRepository) List(filters map[string]interface{}, orderBy string, limit, offset int) ([]models.StatusTransition, error) {
 	var transitions []models.StatusTransition
-	
+
 	query := r.db.Preload("StatusModel").Preload("FromStatus").Preload("ToStatus")
-	
+
 	// Apply filters
 	for key, value := range filters {
 		query = query.Where(key+" = ?", value)
 	}
-	
+
 	// Apply ordering
 	if orderBy != "" {
 		query = query.Order(orderBy)
 	}
-	
+
 	// Apply pagination
 	if limit > 0 {
 		query = query.Limit(limit)
@@ -86,7 +84,7 @@ func (r *statusTransitionRepository) List(filters map[string]interface{}, orderB
 	if offset > 0 {
 		query = query.Offset(offset)
 	}
-	
+
 	err := query.Find(&transitions).Error
 	return transitions, err
 }

@@ -68,7 +68,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 		logger.Logger,
 	)
 	commentService := service.NewCommentService(repos)
-	
+
 	// Initialize search service
 	var searchService *service.SearchService
 	if redisClient != nil {
@@ -313,7 +313,7 @@ func deepHealthCheck(db *database.DB) gin.HandlerFunc {
 		defer cancel()
 
 		healthCheck := db.CheckHealth(ctx)
-		
+
 		status := http.StatusOK
 		if healthCheck.Overall.Status != "healthy" {
 			status = http.StatusServiceUnavailable

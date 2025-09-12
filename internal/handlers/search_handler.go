@@ -45,31 +45,32 @@ type SearchRequest struct {
 }
 
 // Search handles search requests
-// @Summary Search across all entities
-// @Description Performs full-text search and filtering across epics, user stories, acceptance criteria, and requirements
-// @Tags search
-// @Accept json
-// @Produce json
-// @Param query query string false "Search query text"
-// @Param creator_id query string false "Filter by creator ID (UUID)"
-// @Param assignee_id query string false "Filter by assignee ID (UUID)"
-// @Param priority query int false "Filter by priority (1-4)"
-// @Param status query string false "Filter by status"
-// @Param created_from query string false "Filter by creation date from (RFC3339 format)"
-// @Param created_to query string false "Filter by creation date to (RFC3339 format)"
-// @Param epic_id query string false "Filter by epic ID (UUID)"
-// @Param user_story_id query string false "Filter by user story ID (UUID)"
-// @Param acceptance_criteria_id query string false "Filter by acceptance criteria ID (UUID)"
-// @Param requirement_type_id query string false "Filter by requirement type ID (UUID)"
-// @Param author_id query string false "Filter by author ID (UUID)"
-// @Param sort_by query string false "Sort by field (priority, created_at, last_modified, title)" default(created_at)
-// @Param sort_order query string false "Sort order (asc, desc)" default(desc)
-// @Param limit query int false "Limit number of results (max 100)" default(50)
-// @Param offset query int false "Offset for pagination" default(0)
-// @Success 200 {object} service.SearchResponse
-// @Failure 400 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /api/search [get]
+//
+//	@Summary		Search across all entities
+//	@Description	Performs full-text search and filtering across epics, user stories, acceptance criteria, and requirements
+//	@Tags			search
+//	@Accept			json
+//	@Produce		json
+//	@Param			query					query		string	false	"Search query text"
+//	@Param			creator_id				query		string	false	"Filter by creator ID (UUID)"
+//	@Param			assignee_id				query		string	false	"Filter by assignee ID (UUID)"
+//	@Param			priority				query		int		false	"Filter by priority (1-4)"
+//	@Param			status					query		string	false	"Filter by status"
+//	@Param			created_from			query		string	false	"Filter by creation date from (RFC3339 format)"
+//	@Param			created_to				query		string	false	"Filter by creation date to (RFC3339 format)"
+//	@Param			epic_id					query		string	false	"Filter by epic ID (UUID)"
+//	@Param			user_story_id			query		string	false	"Filter by user story ID (UUID)"
+//	@Param			acceptance_criteria_id	query		string	false	"Filter by acceptance criteria ID (UUID)"
+//	@Param			requirement_type_id		query		string	false	"Filter by requirement type ID (UUID)"
+//	@Param			author_id				query		string	false	"Filter by author ID (UUID)"
+//	@Param			sort_by					query		string	false	"Sort by field (priority, created_at, last_modified, title)"	default(created_at)
+//	@Param			sort_order				query		string	false	"Sort order (asc, desc)"										default(desc)
+//	@Param			limit					query		int		false	"Limit number of results (max 100)"								default(50)
+//	@Param			offset					query		int		false	"Offset for pagination"											default(0)
+//	@Success		200						{object}	service.SearchResponse
+//	@Failure		400						{object}	ErrorResponse
+//	@Failure		500						{object}	ErrorResponse
+//	@Router			/api/search [get]
 func (h *SearchHandler) Search(c *gin.Context) {
 	correlationID, _ := c.Get("correlation_id")
 	logger := h.logger.WithField("correlation_id", correlationID)
@@ -252,17 +253,18 @@ func (h *SearchHandler) parseSearchOptions(c *gin.Context) (service.SearchOption
 }
 
 // SearchSuggestions handles search suggestion requests
-// @Summary Get search suggestions
-// @Description Get search suggestions based on partial query
-// @Tags search
-// @Accept json
-// @Produce json
-// @Param query query string true "Partial search query"
-// @Param limit query int false "Limit number of suggestions" default(10)
-// @Success 200 {object} map[string][]string
-// @Failure 400 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /api/search/suggestions [get]
+//
+//	@Summary		Get search suggestions
+//	@Description	Get search suggestions based on partial query
+//	@Tags			search
+//	@Accept			json
+//	@Produce		json
+//	@Param			query	query		string	true	"Partial search query"
+//	@Param			limit	query		int		false	"Limit number of suggestions"	default(10)
+//	@Success		200		{object}	map[string][]string
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/api/search/suggestions [get]
 func (h *SearchHandler) SearchSuggestions(c *gin.Context) {
 	correlationID, _ := c.Get("correlation_id")
 	logger := h.logger.WithField("correlation_id", correlationID)

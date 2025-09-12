@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/redis/go-redis/v9"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
 	"product-requirements-management/internal/models"
@@ -68,12 +68,12 @@ type SearchResponse struct {
 
 // SearchService provides search and filtering functionality
 type SearchService struct {
-	db          *gorm.DB
-	redisClient *redis.Client
-	epicRepo    repository.EpicRepository
+	db            *gorm.DB
+	redisClient   *redis.Client
+	epicRepo      repository.EpicRepository
 	userStoryRepo repository.UserStoryRepository
-	acRepo      repository.AcceptanceCriteriaRepository
-	reqRepo     repository.RequirementRepository
+	acRepo        repository.AcceptanceCriteriaRepository
+	reqRepo       repository.RequirementRepository
 }
 
 // NewSearchService creates a new search service
@@ -146,7 +146,7 @@ func (s *SearchService) Search(ctx context.Context, options SearchOptions) (*Sea
 
 	// Generate cache key
 	cacheKey := s.generateCacheKey(options)
-	
+
 	// Try to get from cache first
 	if s.redisClient != nil {
 		if cached, err := s.getFromCache(ctx, cacheKey); err == nil && cached != nil {
@@ -214,7 +214,7 @@ func (s *SearchService) performFullTextSearch(ctx context.Context, options Searc
 
 	// Prepare search query - escape special characters and create tsquery
 	searchQuery := s.prepareSearchQuery(options.Query)
-	
+
 	// Search in epics
 	epicResults, err := s.searchEpics(searchQuery, options)
 	if err != nil {
@@ -250,7 +250,7 @@ func (s *SearchService) performFullTextSearch(ctx context.Context, options Searc
 	total = int64(len(results))
 	start := options.Offset
 	end := start + options.Limit
-	
+
 	// Ensure safe pagination bounds
 	if start < 0 {
 		start = 0
@@ -306,7 +306,7 @@ func (s *SearchService) performFilterSearch(ctx context.Context, options SearchO
 	total = int64(len(results))
 	start := options.Offset
 	end := start + options.Limit
-	
+
 	// Ensure safe pagination bounds
 	if start < 0 {
 		start = 0
@@ -331,14 +331,14 @@ func (s *SearchService) prepareSearchQuery(query string) string {
 	if cleaned == "" {
 		return ""
 	}
-	
+
 	// Split by spaces and join with &
 	words := strings.Fields(cleaned)
 	for i, word := range words {
 		// Add prefix matching with :*
 		words[i] = word + ":*"
 	}
-	
+
 	return strings.Join(words, " & ")
 }
 
@@ -397,10 +397,10 @@ func (s *SearchService) InvalidateCache(ctx context.Context) error {
 // searchEpics performs full-text search on epics
 func (s *SearchService) searchEpics(searchQuery string, options SearchOptions) ([]SearchResult, error) {
 	var epics []models.Epic
-	
+
 	query := s.db.Model(&models.Epic{}).
-		Select("id, reference_id, title, description, priority, status, created_at, " +
-			"ts_rank(to_tsvector('english', reference_id || ' ' || title || ' ' || COALESCE(description, '')), " +
+		Select("id, reference_id, title, description, priority, status, created_at, "+
+			"ts_rank(to_tsvector('english', reference_id || ' ' || title || ' ' || COALESCE(description, '')), "+
 			"plainto_tsquery('english', ?)) as relevance", options.Query).
 		Where("to_tsvector('english', reference_id || ' ' || title || ' ' || COALESCE(description, '')) @@ plainto_tsquery('english', ?)", options.Query)
 
@@ -432,10 +432,10 @@ func (s *SearchService) searchEpics(searchQuery string, options SearchOptions) (
 // searchUserStories performs full-text search on user stories
 func (s *SearchService) searchUserStories(searchQuery string, options SearchOptions) ([]SearchResult, error) {
 	var userStories []models.UserStory
-	
+
 	query := s.db.Model(&models.UserStory{}).
-		Select("id, reference_id, title, description, priority, status, created_at, " +
-			"ts_rank(to_tsvector('english', reference_id || ' ' || title || ' ' || COALESCE(description, '')), " +
+		Select("id, reference_id, title, description, priority, status, created_at, "+
+			"ts_rank(to_tsvector('english', reference_id || ' ' || title || ' ' || COALESCE(description, '')), "+
 			"plainto_tsquery('english', ?)) as relevance", options.Query).
 		Where("to_tsvector('english', reference_id || ' ' || title || ' ' || COALESCE(description, '')) @@ plainto_tsquery('english', ?)", options.Query)
 
@@ -467,10 +467,10 @@ func (s *SearchService) searchUserStories(searchQuery string, options SearchOpti
 // searchAcceptanceCriteria performs full-text search on acceptance criteria
 func (s *SearchService) searchAcceptanceCriteria(searchQuery string, options SearchOptions) ([]SearchResult, error) {
 	var acceptanceCriteria []models.AcceptanceCriteria
-	
+
 	query := s.db.Model(&models.AcceptanceCriteria{}).
-		Select("id, reference_id, description, created_at, " +
-			"ts_rank(to_tsvector('english', reference_id || ' ' || COALESCE(description, '')), " +
+		Select("id, reference_id, description, created_at, "+
+			"ts_rank(to_tsvector('english', reference_id || ' ' || COALESCE(description, '')), "+
 			"plainto_tsquery('english', ?)) as relevance", options.Query).
 		Where("to_tsvector('english', reference_id || ' ' || COALESCE(description, '')) @@ plainto_tsquery('english', ?)", options.Query)
 
@@ -501,10 +501,10 @@ func (s *SearchService) searchAcceptanceCriteria(searchQuery string, options Sea
 // searchRequirements performs full-text search on requirements
 func (s *SearchService) searchRequirements(searchQuery string, options SearchOptions) ([]SearchResult, error) {
 	var requirements []models.Requirement
-	
+
 	query := s.db.Model(&models.Requirement{}).
-		Select("id, reference_id, title, description, priority, status, created_at, " +
-			"ts_rank(to_tsvector('english', reference_id || ' ' || title || ' ' || COALESCE(description, '')), " +
+		Select("id, reference_id, title, description, priority, status, created_at, "+
+			"ts_rank(to_tsvector('english', reference_id || ' ' || title || ' ' || COALESCE(description, '')), "+
 			"plainto_tsquery('english', ?)) as relevance", options.Query).
 		Where("to_tsvector('english', reference_id || ' ' || title || ' ' || COALESCE(description, '')) @@ plainto_tsquery('english', ?)", options.Query)
 
@@ -536,7 +536,7 @@ func (s *SearchService) searchRequirements(searchQuery string, options SearchOpt
 // filterEpics performs filtering on epics without full-text search
 func (s *SearchService) filterEpics(options SearchOptions) ([]SearchResult, error) {
 	var epics []models.Epic
-	
+
 	query := s.db.Model(&models.Epic{}).
 		Select("id, reference_id, title, description, priority, status, created_at")
 
@@ -568,7 +568,7 @@ func (s *SearchService) filterEpics(options SearchOptions) ([]SearchResult, erro
 // filterUserStories performs filtering on user stories without full-text search
 func (s *SearchService) filterUserStories(options SearchOptions) ([]SearchResult, error) {
 	var userStories []models.UserStory
-	
+
 	query := s.db.Model(&models.UserStory{}).
 		Select("id, reference_id, title, description, priority, status, created_at")
 
@@ -600,7 +600,7 @@ func (s *SearchService) filterUserStories(options SearchOptions) ([]SearchResult
 // filterAcceptanceCriteria performs filtering on acceptance criteria without full-text search
 func (s *SearchService) filterAcceptanceCriteria(options SearchOptions) ([]SearchResult, error) {
 	var acceptanceCriteria []models.AcceptanceCriteria
-	
+
 	query := s.db.Model(&models.AcceptanceCriteria{}).
 		Select("id, reference_id, description, created_at")
 
@@ -631,7 +631,7 @@ func (s *SearchService) filterAcceptanceCriteria(options SearchOptions) ([]Searc
 // filterRequirements performs filtering on requirements without full-text search
 func (s *SearchService) filterRequirements(options SearchOptions) ([]SearchResult, error) {
 	var requirements []models.Requirement
-	
+
 	query := s.db.Model(&models.Requirement{}).
 		Select("id, reference_id, title, description, priority, status, created_at")
 
@@ -766,9 +766,9 @@ func (s *SearchService) sortResults(results []SearchResult, sortBy, sortOrder st
 
 	// For simplicity, we'll implement basic sorting
 	// In a production system, you might want to use a more sophisticated sorting library
-	
+
 	// Note: This is a basic implementation. For better performance with large datasets,
 	// sorting should be done at the database level
-	
+
 	return results
 }

@@ -29,7 +29,7 @@ func (h *EpicHandler) CreateEpic(c *gin.Context) {
 	var req service.CreateEpicRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": err.Error(),
 		})
 		return
@@ -60,11 +60,11 @@ func (h *EpicHandler) CreateEpic(c *gin.Context) {
 // GetEpic handles GET /api/v1/epics/:id
 func (h *EpicHandler) GetEpic(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Try to parse as UUID first, then as reference ID
 	var epic *models.Epic
 	var err error
-	
+
 	if id, parseErr := uuid.Parse(idParam); parseErr == nil {
 		epic, err = h.epicService.GetEpicByID(id)
 	} else {
@@ -90,7 +90,7 @@ func (h *EpicHandler) GetEpic(c *gin.Context) {
 // UpdateEpic handles PUT /api/v1/epics/:id
 func (h *EpicHandler) UpdateEpic(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Parse ID (UUID only for updates)
 	id, err := uuid.Parse(idParam)
 	if err != nil {
@@ -103,7 +103,7 @@ func (h *EpicHandler) UpdateEpic(c *gin.Context) {
 	var req service.UpdateEpicRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": err.Error(),
 		})
 		return
@@ -146,7 +146,7 @@ func (h *EpicHandler) UpdateEpic(c *gin.Context) {
 // DeleteEpic handles DELETE /api/v1/epics/:id
 func (h *EpicHandler) DeleteEpic(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Parse ID (UUID only for deletes)
 	id, err := uuid.Parse(idParam)
 	if err != nil {
@@ -169,7 +169,7 @@ func (h *EpicHandler) DeleteEpic(c *gin.Context) {
 		case errors.Is(err, service.ErrEpicHasUserStories):
 			c.JSON(http.StatusConflict, gin.H{
 				"error": "Epic has associated user stories and cannot be deleted",
-				"hint": "Use force=true to delete with dependencies",
+				"hint":  "Use force=true to delete with dependencies",
 			})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -244,11 +244,11 @@ func (h *EpicHandler) ListEpics(c *gin.Context) {
 // GetEpicWithUserStories handles GET /api/v1/epics/:id/user-stories
 func (h *EpicHandler) GetEpicWithUserStories(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Try to parse as UUID first, then as reference ID
 	var epic *models.Epic
 	var err error
-	
+
 	if id, parseErr := uuid.Parse(idParam); parseErr == nil {
 		epic, err = h.epicService.GetEpicWithUserStories(id)
 	} else {
@@ -279,7 +279,7 @@ func (h *EpicHandler) GetEpicWithUserStories(c *gin.Context) {
 // ChangeEpicStatus handles PATCH /api/v1/epics/:id/status
 func (h *EpicHandler) ChangeEpicStatus(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Parse ID (UUID only for status changes)
 	id, err := uuid.Parse(idParam)
 	if err != nil {
@@ -292,10 +292,10 @@ func (h *EpicHandler) ChangeEpicStatus(c *gin.Context) {
 	var req struct {
 		Status models.EpicStatus `json:"status" binding:"required"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": err.Error(),
 		})
 		return
@@ -330,7 +330,7 @@ func (h *EpicHandler) ChangeEpicStatus(c *gin.Context) {
 // AssignEpic handles PATCH /api/v1/epics/:id/assign
 func (h *EpicHandler) AssignEpic(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	// Parse ID (UUID only for assignments)
 	id, err := uuid.Parse(idParam)
 	if err != nil {
@@ -343,10 +343,10 @@ func (h *EpicHandler) AssignEpic(c *gin.Context) {
 	var req struct {
 		AssigneeID uuid.UUID `json:"assignee_id" binding:"required"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": err.Error(),
 		})
 		return

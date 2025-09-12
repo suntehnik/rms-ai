@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"gorm.io/gorm"
-	
+
 	"product-requirements-management/internal/models"
 )
 

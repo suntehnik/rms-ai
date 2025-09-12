@@ -12,10 +12,10 @@ import (
 // Metrics holds all Prometheus metrics
 type Metrics struct {
 	// HTTP metrics
-	HTTPRequestsTotal     *prometheus.CounterVec
-	HTTPRequestDuration   *prometheus.HistogramVec
-	HTTPRequestsInFlight  *prometheus.GaugeVec
-	HTTPResponseSize      *prometheus.HistogramVec
+	HTTPRequestsTotal    *prometheus.CounterVec
+	HTTPRequestDuration  *prometheus.HistogramVec
+	HTTPRequestsInFlight *prometheus.GaugeVec
+	HTTPResponseSize     *prometheus.HistogramVec
 
 	// Database metrics
 	DatabaseConnections   *prometheus.GaugeVec
@@ -23,17 +23,17 @@ type Metrics struct {
 	DatabaseQueryDuration *prometheus.HistogramVec
 
 	// Business metrics
-	EntitiesTotal         *prometheus.CounterVec
-	EntitiesCreated       *prometheus.CounterVec
-	EntitiesUpdated       *prometheus.CounterVec
-	EntitiesDeleted       *prometheus.CounterVec
-	CommentsTotal         *prometheus.CounterVec
-	SearchQueries         *prometheus.CounterVec
-	SearchDuration        *prometheus.HistogramVec
+	EntitiesTotal   *prometheus.CounterVec
+	EntitiesCreated *prometheus.CounterVec
+	EntitiesUpdated *prometheus.CounterVec
+	EntitiesDeleted *prometheus.CounterVec
+	CommentsTotal   *prometheus.CounterVec
+	SearchQueries   *prometheus.CounterVec
+	SearchDuration  *prometheus.HistogramVec
 
 	// System metrics
-	ApplicationInfo       *prometheus.GaugeVec
-	ApplicationUptime     *prometheus.CounterVec
+	ApplicationInfo   *prometheus.GaugeVec
+	ApplicationUptime *prometheus.CounterVec
 }
 
 var (
@@ -182,20 +182,20 @@ func Init(serviceName, version string) *Metrics {
 func (m *Metrics) PrometheusMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
-		
+
 		// Increment in-flight requests
 		m.HTTPRequestsInFlight.WithLabelValues(c.Request.Method, c.FullPath()).Inc()
-		
+
 		// Process request
 		c.Next()
-		
+
 		// Decrement in-flight requests
 		m.HTTPRequestsInFlight.WithLabelValues(c.Request.Method, c.FullPath()).Dec()
-		
+
 		// Record metrics
 		duration := time.Since(start).Seconds()
 		statusCode := strconv.Itoa(c.Writer.Status())
-		
+
 		m.HTTPRequestsTotal.WithLabelValues(c.Request.Method, c.FullPath(), statusCode).Inc()
 		m.HTTPRequestDuration.WithLabelValues(c.Request.Method, c.FullPath(), statusCode).Observe(duration)
 		m.HTTPResponseSize.WithLabelValues(c.Request.Method, c.FullPath(), statusCode).Observe(float64(c.Writer.Size()))

@@ -58,7 +58,7 @@ func (h *ConfigHandler) CreateRequirementType(c *gin.Context) {
 // GetRequirementType handles GET /api/v1/config/requirement-types/:id
 func (h *ConfigHandler) GetRequirementType(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -87,7 +87,7 @@ func (h *ConfigHandler) GetRequirementType(c *gin.Context) {
 // UpdateRequirementType handles PUT /api/v1/config/requirement-types/:id
 func (h *ConfigHandler) UpdateRequirementType(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -130,7 +130,7 @@ func (h *ConfigHandler) UpdateRequirementType(c *gin.Context) {
 // DeleteRequirementType handles DELETE /api/v1/config/requirement-types/:id
 func (h *ConfigHandler) DeleteRequirementType(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -195,7 +195,7 @@ func (h *ConfigHandler) ListRequirementTypes(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"requirement_types": requirementTypes,
-		"count":            len(requirementTypes),
+		"count":             len(requirementTypes),
 	})
 }
 
@@ -233,7 +233,7 @@ func (h *ConfigHandler) CreateRelationshipType(c *gin.Context) {
 // GetRelationshipType handles GET /api/v1/config/relationship-types/:id
 func (h *ConfigHandler) GetRelationshipType(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -262,7 +262,7 @@ func (h *ConfigHandler) GetRelationshipType(c *gin.Context) {
 // UpdateRelationshipType handles PUT /api/v1/config/relationship-types/:id
 func (h *ConfigHandler) UpdateRelationshipType(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -305,7 +305,7 @@ func (h *ConfigHandler) UpdateRelationshipType(c *gin.Context) {
 // DeleteRelationshipType handles DELETE /api/v1/config/relationship-types/:id
 func (h *ConfigHandler) DeleteRelationshipType(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -370,7 +370,7 @@ func (h *ConfigHandler) ListRelationshipTypes(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"relationship_types": relationshipTypes,
-		"count":             len(relationshipTypes),
+		"count":              len(relationshipTypes),
 	})
 }
 
@@ -412,7 +412,7 @@ func (h *ConfigHandler) CreateStatusModel(c *gin.Context) {
 // GetStatusModel handles GET /api/v1/config/status-models/:id
 func (h *ConfigHandler) GetStatusModel(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -441,7 +441,7 @@ func (h *ConfigHandler) GetStatusModel(c *gin.Context) {
 // UpdateStatusModel handles PUT /api/v1/config/status-models/:id
 func (h *ConfigHandler) UpdateStatusModel(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -484,7 +484,7 @@ func (h *ConfigHandler) UpdateStatusModel(c *gin.Context) {
 // DeleteStatusModel handles DELETE /api/v1/config/status-models/:id
 func (h *ConfigHandler) DeleteStatusModel(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -548,14 +548,14 @@ func (h *ConfigHandler) ListStatusModels(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"status_models": statusModels,
-		"count":        len(statusModels),
+		"count":         len(statusModels),
 	})
 }
 
 // GetDefaultStatusModel handles GET /api/v1/config/status-models/default/:entity_type
 func (h *ConfigHandler) GetDefaultStatusModel(c *gin.Context) {
 	entityTypeParam := c.Param("entity_type")
-	
+
 	statusModel, err := h.configService.GetDefaultStatusModelByEntityType(models.EntityType(entityTypeParam))
 	if err != nil {
 		if errors.Is(err, service.ErrStatusModelNotFound) {
@@ -611,7 +611,7 @@ func (h *ConfigHandler) CreateStatus(c *gin.Context) {
 // GetStatus handles GET /api/v1/config/statuses/:id
 func (h *ConfigHandler) GetStatus(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -640,7 +640,7 @@ func (h *ConfigHandler) GetStatus(c *gin.Context) {
 // UpdateStatus handles PUT /api/v1/config/statuses/:id
 func (h *ConfigHandler) UpdateStatus(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -683,7 +683,7 @@ func (h *ConfigHandler) UpdateStatus(c *gin.Context) {
 // DeleteStatus handles DELETE /api/v1/config/statuses/:id
 func (h *ConfigHandler) DeleteStatus(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -716,7 +716,7 @@ func (h *ConfigHandler) DeleteStatus(c *gin.Context) {
 // ListStatusesByModel handles GET /api/v1/config/status-models/:id/statuses
 func (h *ConfigHandler) ListStatusesByModel(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -735,7 +735,7 @@ func (h *ConfigHandler) ListStatusesByModel(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"statuses": statuses,
-		"count":   len(statuses),
+		"count":    len(statuses),
 	})
 }
 
@@ -785,7 +785,7 @@ func (h *ConfigHandler) CreateStatusTransition(c *gin.Context) {
 // GetStatusTransition handles GET /api/v1/config/status-transitions/:id
 func (h *ConfigHandler) GetStatusTransition(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -814,7 +814,7 @@ func (h *ConfigHandler) GetStatusTransition(c *gin.Context) {
 // UpdateStatusTransition handles PUT /api/v1/config/status-transitions/:id
 func (h *ConfigHandler) UpdateStatusTransition(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -853,7 +853,7 @@ func (h *ConfigHandler) UpdateStatusTransition(c *gin.Context) {
 // DeleteStatusTransition handles DELETE /api/v1/config/status-transitions/:id
 func (h *ConfigHandler) DeleteStatusTransition(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -883,7 +883,7 @@ func (h *ConfigHandler) DeleteStatusTransition(c *gin.Context) {
 // ListStatusTransitionsByModel handles GET /api/v1/config/status-models/:id/transitions
 func (h *ConfigHandler) ListStatusTransitionsByModel(c *gin.Context) {
 	idParam := c.Param("id")
-	
+
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -902,6 +902,6 @@ func (h *ConfigHandler) ListStatusTransitionsByModel(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"transitions": transitions,
-		"count":      len(transitions),
+		"count":       len(transitions),
 	})
 }

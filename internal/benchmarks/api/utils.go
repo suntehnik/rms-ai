@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	
+
 	"product-requirements-management/internal/benchmarks/helpers"
 )
 
@@ -31,7 +31,7 @@ func validateTestData(b *testing.B, dataName string, dataLength, requiredLength 
 		b.Fatalf("No %s available for benchmark testing", dataName)
 	}
 	if requiredLength > 0 && dataLength < requiredLength {
-		b.Logf("Warning: Only %d %s available, but %d required. Will cycle through available data.", 
+		b.Logf("Warning: Only %d %s available, but %d required. Will cycle through available data.",
 			dataLength, dataName, requiredLength)
 	}
 }
@@ -49,12 +49,12 @@ func validateUUIDArray(b *testing.B, ids []uuid.UUID, index int, arrayName strin
 	if len(ids) == 0 {
 		b.Fatalf("No %s available for benchmark testing", arrayName)
 	}
-	
+
 	safeIdx := safeIndex(index, len(ids))
 	if ids[safeIdx] == uuid.Nil {
 		b.Fatalf("Invalid UUID at index %d in %s array", safeIdx, arrayName)
 	}
-	
+
 	return safeIdx
 }
 
@@ -62,7 +62,7 @@ func validateUUIDArray(b *testing.B, ids []uuid.UUID, index int, arrayName strin
 func ensureMinimumTestData(b *testing.B, counts map[string]int, minimums map[string]int) {
 	for dataType, minimum := range minimums {
 		if actual, exists := counts[dataType]; !exists || actual < minimum {
-			b.Fatalf("Insufficient %s for benchmark: need at least %d, got %d", 
+			b.Fatalf("Insufficient %s for benchmark: need at least %d, got %d",
 				dataType, minimum, actual)
 		}
 	}
@@ -70,60 +70,60 @@ func ensureMinimumTestData(b *testing.B, counts map[string]int, minimums map[str
 
 // BenchmarkDataRequirements defines minimum data requirements for different benchmark types
 type BenchmarkDataRequirements struct {
-	Users      int
-	Epics      int
-	UserStories int
+	Users        int
+	Epics        int
+	UserStories  int
 	Requirements int
-	Comments   int
+	Comments     int
 }
 
 // GetCRUDRequirements returns minimum data requirements for CRUD benchmarks
 func GetCRUDRequirements() BenchmarkDataRequirements {
 	return BenchmarkDataRequirements{
-		Users:      1,
-		Epics:      1,
-		UserStories: 1,
+		Users:        1,
+		Epics:        1,
+		UserStories:  1,
 		Requirements: 0,
-		Comments:   0,
+		Comments:     0,
 	}
 }
 
 // GetListingRequirements returns minimum data requirements for listing benchmarks
 func GetListingRequirements() BenchmarkDataRequirements {
 	return BenchmarkDataRequirements{
-		Users:      5,
-		Epics:      10,
-		UserStories: 20,
+		Users:        5,
+		Epics:        10,
+		UserStories:  20,
 		Requirements: 50,
-		Comments:   10,
+		Comments:     10,
 	}
 }
 
 // GetConcurrencyRequirements returns minimum data requirements for concurrency benchmarks
 func GetConcurrencyRequirements() BenchmarkDataRequirements {
 	return BenchmarkDataRequirements{
-		Users:      10,
-		Epics:      20,
-		UserStories: 50,
+		Users:        10,
+		Epics:        20,
+		UserStories:  50,
 		Requirements: 100,
-		Comments:   20,
+		Comments:     20,
 	}
 }
 
 // ValidateBenchmarkData validates that sufficient test data exists for the benchmark type
 func ValidateBenchmarkData(b *testing.B, actualCounts, requirements BenchmarkDataRequirements) {
 	validations := map[string][2]int{
-		"users":       {actualCounts.Users, requirements.Users},
-		"epics":       {actualCounts.Epics, requirements.Epics},
+		"users":        {actualCounts.Users, requirements.Users},
+		"epics":        {actualCounts.Epics, requirements.Epics},
 		"user_stories": {actualCounts.UserStories, requirements.UserStories},
 		"requirements": {actualCounts.Requirements, requirements.Requirements},
-		"comments":    {actualCounts.Comments, requirements.Comments},
+		"comments":     {actualCounts.Comments, requirements.Comments},
 	}
 
 	for dataType, counts := range validations {
 		actual, required := counts[0], counts[1]
 		if required > 0 && actual < required {
-			b.Logf("Warning: %s has %d items, benchmark requires %d. Will cycle through available data.", 
+			b.Logf("Warning: %s has %d items, benchmark requires %d. Will cycle through available data.",
 				dataType, actual, required)
 		}
 		if actual == 0 && required > 0 {
@@ -202,11 +202,11 @@ func NewBenchmarkDataValidator(b *testing.B) *BenchmarkDataValidator {
 
 // BenchmarkTestRunner provides enhanced test execution with reliability features
 type BenchmarkTestRunner struct {
-	b                *testing.B
-	reliabilityMgr   *helpers.BenchmarkReliabilityManager
-	validator        *helpers.BenchmarkValidator
-	resourceMgr      *helpers.BenchmarkResourceManager
-	timeoutMgr       *helpers.BenchmarkTimeoutManager
+	b              *testing.B
+	reliabilityMgr *helpers.BenchmarkReliabilityManager
+	validator      *helpers.BenchmarkValidator
+	resourceMgr    *helpers.BenchmarkResourceManager
+	timeoutMgr     *helpers.BenchmarkTimeoutManager
 }
 
 // NewBenchmarkTestRunner creates a new test runner with reliability features
@@ -215,7 +215,7 @@ func NewBenchmarkTestRunner(b *testing.B, db *gorm.DB) *BenchmarkTestRunner {
 	validator := helpers.NewBenchmarkValidator(b, reliabilityMgr)
 	resourceMgr := helpers.NewBenchmarkResourceManager(b, db)
 	timeoutMgr := helpers.NewBenchmarkTimeoutManager()
-	
+
 	return &BenchmarkTestRunner{
 		b:              b,
 		reliabilityMgr: reliabilityMgr,
@@ -233,7 +233,7 @@ func (btr *BenchmarkTestRunner) ExecuteWithReliability(
 	// Start resource monitoring
 	btr.reliabilityMgr.StartResourceMonitoring()
 	defer btr.reliabilityMgr.StopResourceMonitoring()
-	
+
 	// Execute with retry and timeout
 	return btr.reliabilityMgr.ExecuteWithRetry(operationName, operation)
 }
@@ -249,7 +249,7 @@ func (btr *BenchmarkTestRunner) SetupBenchmarkEnvironment(db *gorm.DB, baseURL s
 			return btr.validator.ValidateDatabaseConnection(db)
 		},
 	})
-	
+
 	btr.reliabilityMgr.AddPreflightCheck(helpers.PreflightCheck{
 		Name:        "server_availability",
 		Description: "Verify HTTP server is running",
@@ -258,7 +258,7 @@ func (btr *BenchmarkTestRunner) SetupBenchmarkEnvironment(db *gorm.DB, baseURL s
 			return btr.validator.ValidateServerAvailability(baseURL)
 		},
 	})
-	
+
 	btr.reliabilityMgr.AddPreflightCheck(helpers.PreflightCheck{
 		Name:        "resource_availability",
 		Description: "Check system resource availability",
@@ -267,12 +267,12 @@ func (btr *BenchmarkTestRunner) SetupBenchmarkEnvironment(db *gorm.DB, baseURL s
 			return btr.validator.ValidateTestEnvironment()
 		},
 	})
-	
+
 	// Run preflight checks
 	if err := btr.reliabilityMgr.RunPreflightChecks(); err != nil {
 		return fmt.Errorf("preflight checks failed: %w", err)
 	}
-	
+
 	// Validate prerequisites
 	return btr.validator.ValidatePrerequisites(db, baseURL)
 }
@@ -284,7 +284,7 @@ func (btr *BenchmarkTestRunner) Cleanup() {
 			btr.b.Logf("Panic during cleanup: %v", r)
 		}
 	}()
-	
+
 	btr.resourceMgr.ExecuteCleanup()
 	btr.reliabilityMgr.Cleanup()
 }
@@ -307,10 +307,10 @@ func (btr *BenchmarkTestRunner) GetResourceManager() *helpers.BenchmarkResourceM
 // ValidateUUIDs ensures all UUIDs in the slice are valid (not nil)
 func (bdv *BenchmarkDataValidator) ValidateUUIDs(ids []uuid.UUID, dataType string) {
 	bdv.errorHandler.RequireNotEmpty(ids, "No %s IDs available", dataType)
-	
+
 	for i, id := range ids {
 		if id == uuid.Nil {
-			bdv.errorHandler.RequireNoError(fmt.Errorf("invalid UUID at index %d", i), 
+			bdv.errorHandler.RequireNoError(fmt.Errorf("invalid UUID at index %d", i),
 				"Invalid %s UUID found", dataType)
 		}
 	}
@@ -319,7 +319,7 @@ func (bdv *BenchmarkDataValidator) ValidateUUIDs(ids []uuid.UUID, dataType strin
 // ValidateMinimumCount ensures we have at least the minimum required items
 func (bdv *BenchmarkDataValidator) ValidateMinimumCount(actual, minimum int, dataType string) {
 	if actual < minimum {
-		bdv.errorHandler.RequireNoError(fmt.Errorf("insufficient data"), 
+		bdv.errorHandler.RequireNoError(fmt.Errorf("insufficient data"),
 			"Need at least %d %s, got %d", minimum, dataType, actual)
 	}
 }
@@ -327,7 +327,7 @@ func (bdv *BenchmarkDataValidator) ValidateMinimumCount(actual, minimum int, dat
 // ValidateNonZeroCount ensures we have at least one item
 func (bdv *BenchmarkDataValidator) ValidateNonZeroCount(count int, dataType string) {
 	if count == 0 {
-		bdv.errorHandler.RequireNoError(fmt.Errorf("no data available"), 
+		bdv.errorHandler.RequireNoError(fmt.Errorf("no data available"),
 			"No %s available for benchmark", dataType)
 	}
 }

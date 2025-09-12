@@ -11,12 +11,12 @@ import (
 )
 
 var (
-	ErrRequirementNotFound           = errors.New("requirement not found")
-	ErrRequirementHasRelationships   = errors.New("requirement has associated relationships and cannot be deleted")
-	ErrInvalidRequirementStatus      = errors.New("invalid requirement status")
+	ErrRequirementNotFound         = errors.New("requirement not found")
+	ErrRequirementHasRelationships = errors.New("requirement has associated relationships and cannot be deleted")
+	ErrInvalidRequirementStatus    = errors.New("invalid requirement status")
 
-	ErrCircularRelationship          = errors.New("circular relationship detected")
-	ErrDuplicateRelationship         = errors.New("relationship already exists")
+	ErrCircularRelationship  = errors.New("circular relationship detected")
+	ErrDuplicateRelationship = errors.New("relationship already exists")
 )
 
 // RequirementService defines the interface for requirement business logic
@@ -39,14 +39,14 @@ type RequirementService interface {
 
 // CreateRequirementRequest represents the request to create a requirement
 type CreateRequirementRequest struct {
-	UserStoryID          uuid.UUID                `json:"user_story_id" binding:"required"`
-	AcceptanceCriteriaID *uuid.UUID               `json:"acceptance_criteria_id,omitempty"`
-	CreatorID            uuid.UUID                `json:"creator_id" binding:"required"`
-	AssigneeID           *uuid.UUID               `json:"assignee_id,omitempty"`
-	Priority             models.Priority          `json:"priority" binding:"required,min=1,max=4"`
-	TypeID               uuid.UUID                `json:"type_id" binding:"required"`
-	Title                string                   `json:"title" binding:"required,max=500"`
-	Description          *string                  `json:"description,omitempty"`
+	UserStoryID          uuid.UUID       `json:"user_story_id" binding:"required"`
+	AcceptanceCriteriaID *uuid.UUID      `json:"acceptance_criteria_id,omitempty"`
+	CreatorID            uuid.UUID       `json:"creator_id" binding:"required"`
+	AssigneeID           *uuid.UUID      `json:"assignee_id,omitempty"`
+	Priority             models.Priority `json:"priority" binding:"required,min=1,max=4"`
+	TypeID               uuid.UUID       `json:"type_id" binding:"required"`
+	Title                string          `json:"title" binding:"required,max=500"`
+	Description          *string         `json:"description,omitempty"`
 }
 
 // UpdateRequirementRequest represents the request to update a requirement
@@ -76,10 +76,10 @@ type RequirementFilters struct {
 
 // CreateRelationshipRequest represents the request to create a requirement relationship
 type CreateRelationshipRequest struct {
-	SourceRequirementID  uuid.UUID `json:"source_requirement_id" binding:"required"`
-	TargetRequirementID  uuid.UUID `json:"target_requirement_id" binding:"required"`
-	RelationshipTypeID   uuid.UUID `json:"relationship_type_id" binding:"required"`
-	CreatedBy            uuid.UUID `json:"created_by" binding:"required"`
+	SourceRequirementID uuid.UUID `json:"source_requirement_id" binding:"required"`
+	TargetRequirementID uuid.UUID `json:"target_requirement_id" binding:"required"`
+	RelationshipTypeID  uuid.UUID `json:"relationship_type_id" binding:"required"`
+	CreatedBy           uuid.UUID `json:"created_by" binding:"required"`
 }
 
 // requirementService implements RequirementService interface
@@ -314,7 +314,7 @@ func (s *requirementService) DeleteRequirement(id uuid.UUID, force bool) error {
 func (s *requirementService) ListRequirements(filters RequirementFilters) ([]models.Requirement, error) {
 	// Build filter map
 	filterMap := make(map[string]interface{})
-	
+
 	if filters.UserStoryID != nil {
 		filterMap["user_story_id"] = *filters.UserStoryID
 	}
