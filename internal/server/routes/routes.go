@@ -16,9 +16,8 @@ import (
 
 // Setup configures all routes for the application
 func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
-	// Health check endpoints
-	router.GET("/health", healthCheck)
-	router.GET("/health/deep", deepHealthCheck(db))
+	// Note: Health check endpoints are handled by the health checker in server.go
+	// Only keeping non-conflicting health endpoints here
 	router.GET("/ready", readinessCheck(db))
 	router.GET("/live", livenessCheck)
 
