@@ -76,7 +76,7 @@
     - Include examples of complex relationship queries
     - _Requirements: 6.1, 6.2, 6.4_
 
-- [-] 6. Implement Requirement and AcceptanceCriteria endpoints documentation
+- [x] 6. Implement Requirement and AcceptanceCriteria endpoints documentation
   - [x] 6.1 Document Requirement CRUD and relationship operations
     - Add Swagger annotations to all Requirement handler methods
     - Document requirement relationship creation and management
@@ -89,14 +89,14 @@
     - Include validation rules and business logic constraints
     - _Requirements: 1.2, 1.3, 2.1, 2.2, 6.1_
 
-- [ ] 7. Implement Comment system documentation
-  - [ ] 7.1 Document Comment CRUD operations
+- [x] 7. Implement Comment system documentation
+  - [x] 7.1 Document Comment CRUD operations
     - Add Swagger annotations to comment creation, update, and deletion
     - Document threaded comment structure and reply mechanisms
     - Include comment resolution and status management
     - _Requirements: 1.2, 1.3, 2.1, 2.2_
 
-  - [ ] 7.2 Document inline comment functionality
+  - [x] 7.2 Document inline comment functionality
     - Add annotations to inline comment creation and validation endpoints
     - Document text position tracking and linked text functionality
     - Include examples of inline comment workflows
