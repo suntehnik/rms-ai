@@ -102,14 +102,14 @@
     - Include examples of inline comment workflows
     - _Requirements: 1.2, 1.3, 2.1, 2.2, 6.1_
 
-- [ ] 8. Implement Search and Configuration endpoints documentation
-  - [ ] 8.1 Document Search API functionality
+- [x] 8. Implement Search and Configuration endpoints documentation
+  - [x] 8.1 Document Search API functionality
     - Add Swagger annotations to search endpoints with all filter parameters
     - Document full-text search capabilities and result ranking
     - Include pagination, sorting, and filtering examples
     - _Requirements: 1.2, 1.3, 7.1, 7.2, 7.3, 7.4, 7.5_
 
-  - [ ] 8.2 Document Configuration and Admin endpoints
+  - [x] 8.2 Document Configuration and Admin endpoints
     - Add annotations to RequirementType and RelationshipType management
     - Document status model configuration and transition rules
     - Include administrative operation examples and security requirements
