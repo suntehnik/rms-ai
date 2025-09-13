@@ -20,20 +20,21 @@ import (
 var acceptanceCriteriaGenerator = NewPostgreSQLReferenceIDGenerator(2147483644, "AC")
 
 // AcceptanceCriteria represents acceptance criteria for a user story
+// @Description Testable conditions that define when a user story is considered complete and acceptable
 type AcceptanceCriteria struct {
-	ID           uuid.UUID `gorm:"type:uuid;primary_key" json:"id"`
-	ReferenceID  string    `gorm:"uniqueIndex;not null" json:"reference_id"`
-	UserStoryID  uuid.UUID `gorm:"not null" json:"user_story_id"`
-	AuthorID     uuid.UUID `gorm:"not null" json:"author_id"`
-	CreatedAt    time.Time `json:"created_at"`
-	LastModified time.Time `json:"last_modified"`
-	Description  string    `gorm:"not null" json:"description"`
+	ID           uuid.UUID `gorm:"type:uuid;primary_key" json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`                                                                                           // Unique identifier for the acceptance criteria
+	ReferenceID  string    `gorm:"uniqueIndex;not null" json:"reference_id" example:"AC-001"`                                                                                                                // Human-readable reference identifier
+	UserStoryID  uuid.UUID `gorm:"not null" json:"user_story_id" example:"123e4567-e89b-12d3-a456-426614174001"`                                                                                             // ID of the parent user story
+	AuthorID     uuid.UUID `gorm:"not null" json:"author_id" example:"123e4567-e89b-12d3-a456-426614174002"`                                                                                                 // ID of the user who authored this acceptance criteria
+	CreatedAt    time.Time `json:"created_at" example:"2023-01-01T00:00:00Z"`                                                                                                                                // Timestamp when the acceptance criteria was created
+	LastModified time.Time `json:"last_modified" example:"2023-01-02T12:30:00Z"`                                                                                                                             // Timestamp when the acceptance criteria was last modified
+	Description  string    `gorm:"not null" json:"description" validate:"required" example:"WHEN a user enters valid credentials THEN the system SHALL authenticate the user and redirect to the dashboard"` // EARS format description of the acceptance criteria
 
 	// Relationships
-	UserStory    UserStory     `gorm:"foreignKey:UserStoryID;constraint:OnDelete:CASCADE" json:"user_story,omitempty"`
-	Author       User          `gorm:"foreignKey:AuthorID;constraint:OnDelete:RESTRICT" json:"author,omitempty"`
-	Requirements []Requirement `gorm:"foreignKey:AcceptanceCriteriaID;constraint:OnDelete:SET NULL" json:"requirements,omitempty"`
-	Comments     []Comment     `gorm:"polymorphic:Entity;polymorphicValue:acceptance_criteria" json:"comments,omitempty"`
+	UserStory    UserStory     `gorm:"foreignKey:UserStoryID;constraint:OnDelete:CASCADE" json:"user_story,omitempty"`             // Parent user story that this acceptance criteria belongs to
+	Author       User          `gorm:"foreignKey:AuthorID;constraint:OnDelete:RESTRICT" json:"author,omitempty"`                   // User who authored this acceptance criteria
+	Requirements []Requirement `gorm:"foreignKey:AcceptanceCriteriaID;constraint:OnDelete:SET NULL" json:"requirements,omitempty"` // Requirements linked to this acceptance criteria
+	Comments     []Comment     `gorm:"polymorphic:Entity;polymorphicValue:acceptance_criteria" json:"comments,omitempty"`          // Comments associated with this acceptance criteria
 }
 
 // BeforeCreate sets the ID and ReferenceID if not already set

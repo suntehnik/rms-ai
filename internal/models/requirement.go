@@ -20,39 +20,42 @@ import (
 var requirementGenerator = NewPostgreSQLReferenceIDGenerator(2147483645, "REQ")
 
 // RequirementStatus represents the status of a requirement
+// @Description Status of a requirement in the workflow lifecycle
+// @Example "Draft"
 type RequirementStatus string
 
 const (
-	RequirementStatusDraft    RequirementStatus = "Draft"
-	RequirementStatusActive   RequirementStatus = "Active"
-	RequirementStatusObsolete RequirementStatus = "Obsolete"
+	RequirementStatusDraft    RequirementStatus = "Draft"    // Draft - requirement is being written and refined
+	RequirementStatusActive   RequirementStatus = "Active"   // Active - requirement is approved and being implemented
+	RequirementStatusObsolete RequirementStatus = "Obsolete" // Obsolete - requirement is no longer needed or has been superseded
 )
 
 // Requirement represents a detailed requirement in the system
+// @Description A detailed requirement that specifies what needs to be implemented within a user story
 type Requirement struct {
-	ID                   uuid.UUID         `gorm:"type:uuid;primary_key" json:"id"`
-	ReferenceID          string            `gorm:"uniqueIndex;not null" json:"reference_id"`
-	UserStoryID          uuid.UUID         `gorm:"not null" json:"user_story_id"`
-	AcceptanceCriteriaID *uuid.UUID        `json:"acceptance_criteria_id"`
-	CreatorID            uuid.UUID         `gorm:"not null" json:"creator_id"`
-	AssigneeID           uuid.UUID         `gorm:"not null" json:"assignee_id"`
-	CreatedAt            time.Time         `json:"created_at"`
-	LastModified         time.Time         `json:"last_modified"`
-	Priority             Priority          `gorm:"not null" json:"priority"`
-	Status               RequirementStatus `gorm:"not null" json:"status"`
-	TypeID               uuid.UUID         `gorm:"not null" json:"type_id"`
-	Title                string            `gorm:"not null" json:"title"`
-	Description          *string           `json:"description"`
+	ID                   uuid.UUID         `gorm:"type:uuid;primary_key" json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`                                                                                                                                             // Unique identifier for the requirement
+	ReferenceID          string            `gorm:"uniqueIndex;not null" json:"reference_id" example:"REQ-001"`                                                                                                                                                                 // Human-readable reference identifier
+	UserStoryID          uuid.UUID         `gorm:"not null" json:"user_story_id" example:"123e4567-e89b-12d3-a456-426614174001"`                                                                                                                                               // ID of the parent user story
+	AcceptanceCriteriaID *uuid.UUID        `json:"acceptance_criteria_id" example:"123e4567-e89b-12d3-a456-426614174002"`                                                                                                                                                      // Optional ID of linked acceptance criteria
+	CreatorID            uuid.UUID         `gorm:"not null" json:"creator_id" example:"123e4567-e89b-12d3-a456-426614174003"`                                                                                                                                                  // ID of the user who created the requirement
+	AssigneeID           uuid.UUID         `gorm:"not null" json:"assignee_id" example:"123e4567-e89b-12d3-a456-426614174004"`                                                                                                                                                 // ID of the user assigned to implement the requirement
+	CreatedAt            time.Time         `json:"created_at" example:"2023-01-01T00:00:00Z"`                                                                                                                                                                                  // Timestamp when the requirement was created
+	LastModified         time.Time         `json:"last_modified" example:"2023-01-02T12:30:00Z"`                                                                                                                                                                               // Timestamp when the requirement was last modified
+	Priority             Priority          `gorm:"not null" json:"priority" validate:"required,min=1,max=4" example:"2"`                                                                                                                                                       // Priority level (1=Critical, 2=High, 3=Medium, 4=Low)
+	Status               RequirementStatus `gorm:"not null" json:"status" validate:"required" example:"Draft"`                                                                                                                                                                 // Current status of the requirement
+	TypeID               uuid.UUID         `gorm:"not null" json:"type_id" example:"123e4567-e89b-12d3-a456-426614174005"`                                                                                                                                                     // ID of the requirement type (Functional, Non-Functional, etc.)
+	Title                string            `gorm:"not null" json:"title" validate:"required,max=500" example:"User authentication must support OAuth 2.0"`                                                                                                                     // Brief title describing the requirement
+	Description          *string           `json:"description" example:"The system shall support OAuth 2.0 authentication flow with support for Google, GitHub, and Microsoft providers. The implementation must handle token refresh and provide secure session management."` // Detailed description of the requirement
 
 	// Relationships
-	UserStory           UserStory                 `gorm:"foreignKey:UserStoryID;constraint:OnDelete:CASCADE" json:"user_story,omitempty"`
-	AcceptanceCriteria  *AcceptanceCriteria       `gorm:"foreignKey:AcceptanceCriteriaID;constraint:OnDelete:SET NULL" json:"acceptance_criteria,omitempty"`
-	Creator             User                      `gorm:"foreignKey:CreatorID;constraint:OnDelete:RESTRICT" json:"creator,omitempty"`
-	Assignee            User                      `gorm:"foreignKey:AssigneeID;constraint:OnDelete:RESTRICT" json:"assignee,omitempty"`
-	Type                RequirementType           `gorm:"foreignKey:TypeID;constraint:OnDelete:RESTRICT" json:"type,omitempty"`
-	SourceRelationships []RequirementRelationship `gorm:"foreignKey:SourceRequirementID;constraint:OnDelete:CASCADE" json:"source_relationships,omitempty"`
-	TargetRelationships []RequirementRelationship `gorm:"foreignKey:TargetRequirementID;constraint:OnDelete:CASCADE" json:"target_relationships,omitempty"`
-	Comments            []Comment                 `gorm:"polymorphic:Entity;polymorphicValue:requirement" json:"comments,omitempty"`
+	UserStory           UserStory                 `gorm:"foreignKey:UserStoryID;constraint:OnDelete:CASCADE" json:"user_story,omitempty"`                    // Parent user story containing this requirement
+	AcceptanceCriteria  *AcceptanceCriteria       `gorm:"foreignKey:AcceptanceCriteriaID;constraint:OnDelete:SET NULL" json:"acceptance_criteria,omitempty"` // Optional linked acceptance criteria
+	Creator             User                      `gorm:"foreignKey:CreatorID;constraint:OnDelete:RESTRICT" json:"creator,omitempty"`                        // User who created this requirement
+	Assignee            User                      `gorm:"foreignKey:AssigneeID;constraint:OnDelete:RESTRICT" json:"assignee,omitempty"`                      // User assigned to implement this requirement
+	Type                RequirementType           `gorm:"foreignKey:TypeID;constraint:OnDelete:RESTRICT" json:"type,omitempty"`                              // Type classification of this requirement
+	SourceRelationships []RequirementRelationship `gorm:"foreignKey:SourceRequirementID;constraint:OnDelete:CASCADE" json:"source_relationships,omitempty"`  // Relationships where this requirement is the source
+	TargetRelationships []RequirementRelationship `gorm:"foreignKey:TargetRequirementID;constraint:OnDelete:CASCADE" json:"target_relationships,omitempty"`  // Relationships where this requirement is the target
+	Comments            []Comment                 `gorm:"polymorphic:Entity;polymorphicValue:requirement" json:"comments,omitempty"`                         // Comments associated with this requirement
 }
 
 // BeforeCreate sets the ID if not already set and ensures default status

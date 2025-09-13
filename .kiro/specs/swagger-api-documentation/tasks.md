@@ -19,45 +19,45 @@
     - Implement pagination metadata models for list endpoints
     - _Requirements: 2.1, 2.2, 4.4_
 
-- [-] 3. Document core entity models with Swagger annotations
+- [x] 3. Document core entity models with Swagger annotations
   - [x] 3.1 Add Swagger annotations to Epic model
     - Add field-level documentation with examples and validation rules
     - Document Epic status enum values and descriptions
     - Include relationship documentation for UserStories
     - _Requirements: 2.3, 6.1, 6.3_
 
-  - [ ] 3.2 Add Swagger annotations to UserStory model
+  - [x] 3.2 Add Swagger annotations to UserStory model
     - Document UserStory fields with validation constraints and examples
     - Add status enum documentation and relationship mappings
     - Include acceptance criteria and requirement relationships
     - _Requirements: 2.3, 6.1, 6.3_
 
-  - [ ] 3.3 Add Swagger annotations to Requirement and AcceptanceCriteria models
+  - [x] 3.3 Add Swagger annotations to Requirement and AcceptanceCriteria models
     - Document all fields with types, constraints, and examples
     - Add relationship documentation for requirement dependencies
     - Include status and type enum documentation
     - _Requirements: 2.3, 6.1, 6.3_
 
-  - [ ] 3.4 Add Swagger annotations to Comment and User models
+  - [x] 3.4 Add Swagger annotations to Comment and User models
     - Document comment threading and inline comment structures
     - Add user role and authentication field documentation
     - Include entity relationship mappings for comments
     - _Requirements: 2.3, 6.1, 6.3_
 
-- [ ] 4. Implement Epic endpoints documentation
-  - [ ] 4.1 Document Epic CRUD operations
+- [x] 4. Implement Epic endpoints documentation
+  - [x] 4.1 Document Epic CRUD operations
     - Add Swagger annotations to CreateEpic, GetEpic, UpdateEpic, DeleteEpic handlers
     - Include request/response examples and all possible status codes
     - Document query parameters for filtering and pagination
     - _Requirements: 1.2, 1.3, 2.1, 2.2, 4.1_
 
-  - [ ] 4.2 Document Epic relationship endpoints
+  - [x] 4.2 Document Epic relationship endpoints
     - Add annotations to GetEpicWithUserStories and nested creation endpoints
     - Document hierarchical response structures and relationship patterns
     - Include examples of nested resource operations
     - _Requirements: 6.1, 6.2, 6.4_
 
-  - [ ] 4.3 Document Epic status and assignment operations
+  - [x] 4.3 Document Epic status and assignment operations
     - Add annotations to ChangeEpicStatus and AssignEpic endpoints
     - Document status transition rules and validation
     - Include assignment workflow examples

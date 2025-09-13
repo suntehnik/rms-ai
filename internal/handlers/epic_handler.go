@@ -25,6 +25,16 @@ func NewEpicHandler(epicService service.EpicService) *EpicHandler {
 }
 
 // CreateEpic handles POST /api/v1/epics
+// @Summary Create a new epic
+// @Description Create a new epic with the provided details. The epic will be assigned a unique reference ID (EP-XXX format) and default status of "Backlog".
+// @Tags epics
+// @Accept json
+// @Produce json
+// @Param epic body service.CreateEpicRequest true "Epic creation request"
+// @Success 201 {object} models.Epic "Successfully created epic"
+// @Failure 400 {object} map[string]interface{} "Invalid request body, creator/assignee not found, or invalid priority"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/epics [post]
 func (h *EpicHandler) CreateEpic(c *gin.Context) {
 	var req service.CreateEpicRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -58,6 +68,16 @@ func (h *EpicHandler) CreateEpic(c *gin.Context) {
 }
 
 // GetEpic handles GET /api/v1/epics/:id
+// @Summary Get an epic by ID or reference ID
+// @Description Retrieve a single epic by its UUID or reference ID (e.g., EP-001). Supports both formats for flexible access.
+// @Tags epics
+// @Accept json
+// @Produce json
+// @Param id path string true "Epic ID (UUID) or reference ID (EP-XXX)" example("123e4567-e89b-12d3-a456-426614174000")
+// @Success 200 {object} models.Epic "Epic found successfully"
+// @Failure 404 {object} map[string]interface{} "Epic not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/epics/{id} [get]
 func (h *EpicHandler) GetEpic(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -88,6 +108,18 @@ func (h *EpicHandler) GetEpic(c *gin.Context) {
 }
 
 // UpdateEpic handles PUT /api/v1/epics/:id
+// @Summary Update an existing epic
+// @Description Update an epic's properties. Only provided fields will be updated. Supports partial updates with validation for status transitions and priority values.
+// @Tags epics
+// @Accept json
+// @Produce json
+// @Param id path string true "Epic UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param epic body service.UpdateEpicRequest true "Epic update request"
+// @Success 200 {object} models.Epic "Epic updated successfully"
+// @Failure 400 {object} map[string]interface{} "Invalid request body, epic ID format, assignee not found, invalid priority, invalid status, or invalid status transition"
+// @Failure 404 {object} map[string]interface{} "Epic not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/epics/{id} [put]
 func (h *EpicHandler) UpdateEpic(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -144,6 +176,19 @@ func (h *EpicHandler) UpdateEpic(c *gin.Context) {
 }
 
 // DeleteEpic handles DELETE /api/v1/epics/:id
+// @Summary Delete an epic
+// @Description Delete an epic by UUID. By default, epics with associated user stories cannot be deleted unless force=true is specified.
+// @Tags epics
+// @Accept json
+// @Produce json
+// @Param id path string true "Epic UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param force query boolean false "Force delete even if epic has user stories" example(false)
+// @Success 204 "Epic deleted successfully"
+// @Failure 400 {object} map[string]interface{} "Invalid epic ID format"
+// @Failure 404 {object} map[string]interface{} "Epic not found"
+// @Failure 409 {object} map[string]interface{} "Epic has associated user stories and cannot be deleted (use force=true to override)"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/epics/{id} [delete]
 func (h *EpicHandler) DeleteEpic(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -183,6 +228,21 @@ func (h *EpicHandler) DeleteEpic(c *gin.Context) {
 }
 
 // ListEpics handles GET /api/v1/epics
+// @Summary List epics with filtering and pagination
+// @Description Retrieve a list of epics with optional filtering by creator, assignee, status, and priority. Supports pagination and custom ordering.
+// @Tags epics
+// @Accept json
+// @Produce json
+// @Param creator_id query string false "Filter by creator UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174001")
+// @Param assignee_id query string false "Filter by assignee UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174002")
+// @Param status query string false "Filter by epic status" Enums(Backlog,Draft,In Progress,Done,Cancelled) example("Backlog")
+// @Param priority query integer false "Filter by priority level" minimum(1) maximum(4) example(1)
+// @Param order_by query string false "Order results by field" example("created_at DESC")
+// @Param limit query integer false "Maximum number of results to return" minimum(1) maximum(100) default(50) example(20)
+// @Param offset query integer false "Number of results to skip for pagination" minimum(0) default(0) example(0)
+// @Success 200 {object} map[string]interface{} "List of epics with count"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/epics [get]
 func (h *EpicHandler) ListEpics(c *gin.Context) {
 	var filters service.EpicFilters
 
@@ -242,6 +302,16 @@ func (h *EpicHandler) ListEpics(c *gin.Context) {
 }
 
 // GetEpicWithUserStories handles GET /api/v1/epics/:id/user-stories
+// @Summary Get an epic with its user stories
+// @Description Retrieve an epic along with all its associated user stories. This endpoint provides a hierarchical view of the epic and its child user stories, including their acceptance criteria and requirements if available.
+// @Tags epics
+// @Accept json
+// @Produce json
+// @Param id path string true "Epic ID (UUID) or reference ID (EP-XXX)" example("123e4567-e89b-12d3-a456-426614174000")
+// @Success 200 {object} models.Epic "Epic with user stories retrieved successfully"
+// @Failure 404 {object} map[string]interface{} "Epic not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/epics/{id}/user-stories [get]
 func (h *EpicHandler) GetEpicWithUserStories(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -277,6 +347,18 @@ func (h *EpicHandler) GetEpicWithUserStories(c *gin.Context) {
 }
 
 // ChangeEpicStatus handles PATCH /api/v1/epics/:id/status
+// @Summary Change the status of an epic
+// @Description Update the workflow status of an epic. The system validates status transitions and ensures only valid status changes are allowed. All status transitions are currently permitted as per business requirements.
+// @Tags epics
+// @Accept json
+// @Produce json
+// @Param id path string true "Epic UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param status body service.ChangeEpicStatusRequest true "Status change request"
+// @Success 200 {object} models.Epic "Epic status updated successfully"
+// @Failure 400 {object} map[string]interface{} "Invalid epic ID format, request body, epic status, or status transition"
+// @Failure 404 {object} map[string]interface{} "Epic not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/epics/{id}/status [patch]
 func (h *EpicHandler) ChangeEpicStatus(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -289,9 +371,7 @@ func (h *EpicHandler) ChangeEpicStatus(c *gin.Context) {
 		return
 	}
 
-	var req struct {
-		Status models.EpicStatus `json:"status" binding:"required"`
-	}
+	var req service.ChangeEpicStatusRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -328,6 +408,18 @@ func (h *EpicHandler) ChangeEpicStatus(c *gin.Context) {
 }
 
 // AssignEpic handles PATCH /api/v1/epics/:id/assign
+// @Summary Assign an epic to a user
+// @Description Assign an epic to a specific user by updating the assignee_id. The system validates that the assignee user exists before making the assignment.
+// @Tags epics
+// @Accept json
+// @Produce json
+// @Param id path string true "Epic UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param assignment body service.AssignEpicRequest true "Assignment request"
+// @Success 200 {object} models.Epic "Epic assigned successfully"
+// @Failure 400 {object} map[string]interface{} "Invalid epic ID format, request body, or assignee not found"
+// @Failure 404 {object} map[string]interface{} "Epic not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/epics/{id}/assign [patch]
 func (h *EpicHandler) AssignEpic(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -340,9 +432,7 @@ func (h *EpicHandler) AssignEpic(c *gin.Context) {
 		return
 	}
 
-	var req struct {
-		AssigneeID uuid.UUID `json:"assignee_id" binding:"required"`
-	}
+	var req service.AssignEpicRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{

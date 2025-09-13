@@ -8,36 +8,39 @@ import (
 )
 
 // EntityType represents the type of entity that can be commented on
+// @Description Type of entity that can receive comments in the system
+// @Example "epic"
 type EntityType string
 
 const (
-	EntityTypeEpic               EntityType = "epic"
-	EntityTypeUserStory          EntityType = "user_story"
-	EntityTypeAcceptanceCriteria EntityType = "acceptance_criteria"
-	EntityTypeRequirement        EntityType = "requirement"
+	EntityTypeEpic               EntityType = "epic"                // Epic - top-level feature container
+	EntityTypeUserStory          EntityType = "user_story"          // User Story - feature requirement within an epic
+	EntityTypeAcceptanceCriteria EntityType = "acceptance_criteria" // Acceptance Criteria - testable conditions for user stories
+	EntityTypeRequirement        EntityType = "requirement"         // Requirement - detailed technical requirement
 )
 
 // Comment represents a comment on any entity in the system
+// @Description A comment that can be attached to any entity, supporting both general and inline comments with threading
 type Comment struct {
-	ID              uuid.UUID  `gorm:"type:uuid;primary_key" json:"id"`
-	EntityType      EntityType `gorm:"not null" json:"entity_type"`
-	EntityID        uuid.UUID  `gorm:"not null" json:"entity_id"`
-	ParentCommentID *uuid.UUID `json:"parent_comment_id"`
-	AuthorID        uuid.UUID  `gorm:"not null" json:"author_id"`
-	CreatedAt       time.Time  `json:"created_at"`
-	UpdatedAt       time.Time  `json:"updated_at"`
-	Content         string     `gorm:"not null" json:"content"`
-	IsResolved      bool       `json:"is_resolved"`
+	ID              uuid.UUID  `gorm:"type:uuid;primary_key" json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`                                         // Unique identifier for the comment
+	EntityType      EntityType `gorm:"not null" json:"entity_type" validate:"required" example:"epic"`                                                         // Type of entity this comment is attached to
+	EntityID        uuid.UUID  `gorm:"not null" json:"entity_id" example:"123e4567-e89b-12d3-a456-426614174001"`                                               // ID of the entity this comment is attached to
+	ParentCommentID *uuid.UUID `json:"parent_comment_id" example:"123e4567-e89b-12d3-a456-426614174002"`                                                       // Optional ID of parent comment for threaded discussions
+	AuthorID        uuid.UUID  `gorm:"not null" json:"author_id" example:"123e4567-e89b-12d3-a456-426614174003"`                                               // ID of the user who authored this comment
+	CreatedAt       time.Time  `json:"created_at" example:"2023-01-01T00:00:00Z"`                                                                              // Timestamp when the comment was created
+	UpdatedAt       time.Time  `json:"updated_at" example:"2023-01-02T12:30:00Z"`                                                                              // Timestamp when the comment was last updated
+	Content         string     `gorm:"not null" json:"content" validate:"required" example:"This requirement needs clarification on the authentication flow."` // Text content of the comment
+	IsResolved      bool       `json:"is_resolved" example:"false"`                                                                                            // Whether this comment has been resolved
 
 	// For inline comments
-	LinkedText        *string `json:"linked_text"`
-	TextPositionStart *int    `json:"text_position_start"`
-	TextPositionEnd   *int    `json:"text_position_end"`
+	LinkedText        *string `json:"linked_text" example:"OAuth 2.0 authentication flow"` // Text that this inline comment is linked to
+	TextPositionStart *int    `json:"text_position_start" example:"45"`                    // Start position of linked text for inline comments
+	TextPositionEnd   *int    `json:"text_position_end" example:"73"`                      // End position of linked text for inline comments
 
 	// Relationships
-	ParentComment *Comment  `gorm:"foreignKey:ParentCommentID;constraint:OnDelete:CASCADE" json:"parent_comment,omitempty"`
-	Author        User      `gorm:"foreignKey:AuthorID;constraint:OnDelete:RESTRICT" json:"author,omitempty"`
-	Replies       []Comment `gorm:"foreignKey:ParentCommentID;constraint:OnDelete:CASCADE" json:"replies,omitempty"`
+	ParentComment *Comment  `gorm:"foreignKey:ParentCommentID;constraint:OnDelete:CASCADE" json:"parent_comment,omitempty"` // Parent comment for threaded discussions
+	Author        User      `gorm:"foreignKey:AuthorID;constraint:OnDelete:RESTRICT" json:"author,omitempty"`               // User who authored this comment
+	Replies       []Comment `gorm:"foreignKey:ParentCommentID;constraint:OnDelete:CASCADE" json:"replies,omitempty"`        // Replies to this comment
 }
 
 // BeforeCreate sets the ID if not already set

@@ -32,32 +32,134 @@ type EpicService interface {
 }
 
 // CreateEpicRequest represents the request to create an epic
+// @Description Request payload for creating a new epic
 type CreateEpicRequest struct {
-	CreatorID   uuid.UUID       `json:"creator_id" binding:"required"`
-	AssigneeID  *uuid.UUID      `json:"assignee_id,omitempty"`
-	Priority    models.Priority `json:"priority" binding:"required,min=1,max=4"`
-	Title       string          `json:"title" binding:"required,max=500"`
-	Description *string         `json:"description,omitempty"`
+	// CreatorID is the UUID of the user creating the epic
+	// @Description UUID of the user who is creating this epic (required)
+	// @Example "123e4567-e89b-12d3-a456-426614174001"
+	CreatorID uuid.UUID `json:"creator_id" binding:"required"`
+
+	// AssigneeID is the UUID of the user to assign the epic to (optional, defaults to creator)
+	// @Description UUID of the user to assign this epic to (optional, defaults to creator if not provided)
+	// @Example "123e4567-e89b-12d3-a456-426614174002"
+	AssigneeID *uuid.UUID `json:"assignee_id,omitempty"`
+
+	// Priority is the importance level of the epic
+	// @Description Priority level of the epic (1=Critical, 2=High, 3=Medium, 4=Low)
+	// @Minimum 1
+	// @Maximum 4
+	// @Example 1
+	Priority models.Priority `json:"priority" binding:"required,min=1,max=4"`
+
+	// Title is the name/summary of the epic
+	// @Description Title or name of the epic (required, max 500 characters)
+	// @MaxLength 500
+	// @Example "User Authentication System"
+	Title string `json:"title" binding:"required,max=500"`
+
+	// Description provides detailed information about the epic
+	// @Description Detailed description of the epic's purpose and scope (optional, max 5000 characters)
+	// @MaxLength 5000
+	// @Example "Implement a comprehensive user authentication and authorization system with JWT tokens, role-based access control, and secure password management."
+	Description *string `json:"description,omitempty"`
 }
 
 // UpdateEpicRequest represents the request to update an epic
+// @Description Request payload for updating an existing epic (all fields are optional)
 type UpdateEpicRequest struct {
-	AssigneeID  *uuid.UUID         `json:"assignee_id,omitempty"`
-	Priority    *models.Priority   `json:"priority,omitempty"`
-	Status      *models.EpicStatus `json:"status,omitempty"`
-	Title       *string            `json:"title,omitempty"`
-	Description *string            `json:"description,omitempty"`
+	// AssigneeID is the UUID of the user to assign the epic to
+	// @Description UUID of the user to assign this epic to (optional)
+	// @Example "123e4567-e89b-12d3-a456-426614174002"
+	AssigneeID *uuid.UUID `json:"assignee_id,omitempty"`
+
+	// Priority is the importance level of the epic
+	// @Description Priority level of the epic (1=Critical, 2=High, 3=Medium, 4=Low) (optional)
+	// @Minimum 1
+	// @Maximum 4
+	// @Example 2
+	Priority *models.Priority `json:"priority,omitempty"`
+
+	// Status is the workflow state of the epic
+	// @Description Current status of the epic in the workflow (optional)
+	// @Enum Backlog,Draft,In Progress,Done,Cancelled
+	// @Example "In Progress"
+	Status *models.EpicStatus `json:"status,omitempty"`
+
+	// Title is the name/summary of the epic
+	// @Description Title or name of the epic (optional, max 500 characters)
+	// @MaxLength 500
+	// @Example "Enhanced User Authentication System"
+	Title *string `json:"title,omitempty"`
+
+	// Description provides detailed information about the epic
+	// @Description Detailed description of the epic's purpose and scope (optional, max 5000 characters)
+	// @MaxLength 5000
+	// @Example "Enhanced implementation with multi-factor authentication and advanced security features."
+	Description *string `json:"description,omitempty"`
 }
 
 // EpicFilters represents filters for listing epics
+// @Description Filters and pagination options for listing epics
 type EpicFilters struct {
-	CreatorID  *uuid.UUID         `json:"creator_id,omitempty"`
-	AssigneeID *uuid.UUID         `json:"assignee_id,omitempty"`
-	Status     *models.EpicStatus `json:"status,omitempty"`
-	Priority   *models.Priority   `json:"priority,omitempty"`
-	OrderBy    string             `json:"order_by,omitempty"`
-	Limit      int                `json:"limit,omitempty"`
-	Offset     int                `json:"offset,omitempty"`
+	// CreatorID filters epics by creator
+	// @Description Filter epics by creator UUID (optional)
+	// @Example "123e4567-e89b-12d3-a456-426614174001"
+	CreatorID *uuid.UUID `json:"creator_id,omitempty"`
+
+	// AssigneeID filters epics by assignee
+	// @Description Filter epics by assignee UUID (optional)
+	// @Example "123e4567-e89b-12d3-a456-426614174002"
+	AssigneeID *uuid.UUID `json:"assignee_id,omitempty"`
+
+	// Status filters epics by status
+	// @Description Filter epics by status (optional)
+	// @Enum Backlog,Draft,In Progress,Done,Cancelled
+	// @Example "Backlog"
+	Status *models.EpicStatus `json:"status,omitempty"`
+
+	// Priority filters epics by priority level
+	// @Description Filter epics by priority level (optional)
+	// @Minimum 1
+	// @Maximum 4
+	// @Example 1
+	Priority *models.Priority `json:"priority,omitempty"`
+
+	// OrderBy specifies the field and direction for sorting
+	// @Description Order results by field and direction (optional, default: "created_at DESC")
+	// @Example "created_at DESC"
+	OrderBy string `json:"order_by,omitempty"`
+
+	// Limit specifies the maximum number of results
+	// @Description Maximum number of results to return (optional, default: 50, max: 100)
+	// @Minimum 1
+	// @Maximum 100
+	// @Example 20
+	Limit int `json:"limit,omitempty"`
+
+	// Offset specifies the number of results to skip
+	// @Description Number of results to skip for pagination (optional, default: 0)
+	// @Minimum 0
+	// @Example 0
+	Offset int `json:"offset,omitempty"`
+}
+
+// ChangeEpicStatusRequest represents the request to change an epic's status
+// @Description Request payload for changing an epic's status
+type ChangeEpicStatusRequest struct {
+	// Status is the new workflow state for the epic
+	// @Description New status for the epic
+	// @Enum Backlog,Draft,In Progress,Done,Cancelled
+	// @Example "In Progress"
+	Status models.EpicStatus `json:"status" binding:"required"`
+}
+
+// AssignEpicRequest represents the request to assign an epic to a user
+// @Description Request payload for assigning an epic to a user
+type AssignEpicRequest struct {
+	// AssigneeID is the UUID of the user to assign the epic to
+	// @Description UUID of the user to assign this epic to
+	// @Example "123e4567-e89b-12d3-a456-426614174002"
+	AssigneeID uuid.UUID `json:"assignee_id" binding:"required"`
 }
 
 // epicService implements EpicService interface

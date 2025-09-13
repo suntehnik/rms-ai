@@ -74,6 +74,17 @@ func (h *UserStoryHandler) CreateUserStory(c *gin.Context) {
 }
 
 // CreateUserStoryInEpic handles POST /api/v1/epics/:id/user-stories
+// @Summary Create a new user story within an epic
+// @Description Create a new user story that belongs to the specified epic. This is a nested resource creation that establishes the parent-child relationship between epic and user story. The epic ID from the URL path will override any epic_id in the request body.
+// @Tags epics
+// @Accept json
+// @Produce json
+// @Param id path string true "Epic UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param user_story body service.CreateUserStoryRequest true "User story creation request (epic_id will be overridden by path parameter)"
+// @Success 201 {object} models.UserStory "Successfully created user story within epic"
+// @Failure 400 {object} map[string]interface{} "Invalid epic ID format, request body, creator/assignee not found, epic not found, invalid priority, or invalid user story template"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/epics/{id}/user-stories [post]
 func (h *UserStoryHandler) CreateUserStoryInEpic(c *gin.Context) {
 	epicIDParam := c.Param("id")
 
