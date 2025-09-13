@@ -25,6 +25,16 @@ func NewRequirementHandler(requirementService service.RequirementService) *Requi
 }
 
 // CreateRequirement handles POST /api/v1/requirements
+// @Summary Create a new requirement
+// @Description Create a new detailed requirement with specified properties. Requires a valid user story ID, creator, and requirement type. The assignee defaults to the creator if not specified.
+// @Tags requirements
+// @Accept json
+// @Produce json
+// @Param requirement body service.CreateRequirementRequest true "Requirement creation request with all required fields"
+// @Success 201 {object} models.Requirement "Successfully created requirement"
+// @Failure 400 {object} map[string]interface{} "Invalid request body, creator/assignee not found, user story not found, requirement type not found, acceptance criteria not found, or invalid priority"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/requirements [post]
 func (h *RequirementHandler) CreateRequirement(c *gin.Context) {
 	var req service.CreateRequirementRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -163,6 +173,16 @@ func (h *RequirementHandler) CreateRequirementInUserStory(c *gin.Context) {
 }
 
 // GetRequirement handles GET /api/v1/requirements/:id
+// @Summary Get a requirement by ID or reference ID
+// @Description Retrieve a specific requirement by its UUID or human-readable reference ID (e.g., REQ-001). Returns the requirement with all its properties and relationships.
+// @Tags requirements
+// @Accept json
+// @Produce json
+// @Param id path string true "Requirement UUID or reference ID" example("123e4567-e89b-12d3-a456-426614174000")
+// @Success 200 {object} models.Requirement "Successfully retrieved requirement"
+// @Failure 404 {object} map[string]interface{} "Requirement not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/requirements/{id} [get]
 func (h *RequirementHandler) GetRequirement(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -193,6 +213,18 @@ func (h *RequirementHandler) GetRequirement(c *gin.Context) {
 }
 
 // UpdateRequirement handles PUT /api/v1/requirements/:id
+// @Summary Update an existing requirement
+// @Description Update a requirement's properties including acceptance criteria, assignee, priority, status, type, title, and description. Only provided fields will be updated. Status transitions are validated according to business rules.
+// @Tags requirements
+// @Accept json
+// @Produce json
+// @Param id path string true "Requirement UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param requirement body service.UpdateRequirementRequest true "Requirement update request with optional fields"
+// @Success 200 {object} models.Requirement "Successfully updated requirement"
+// @Failure 400 {object} map[string]interface{} "Invalid requirement ID format, request body, assignee not found, requirement type not found, acceptance criteria not found, invalid priority, invalid requirement status, or invalid status transition"
+// @Failure 404 {object} map[string]interface{} "Requirement not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/requirements/{id} [put]
 func (h *RequirementHandler) UpdateRequirement(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -257,6 +289,19 @@ func (h *RequirementHandler) UpdateRequirement(c *gin.Context) {
 }
 
 // DeleteRequirement handles DELETE /api/v1/requirements/:id
+// @Summary Delete a requirement
+// @Description Delete a requirement by its UUID. By default, deletion is prevented if the requirement has associated relationships. Use force=true query parameter to delete with all dependencies.
+// @Tags requirements
+// @Accept json
+// @Produce json
+// @Param id path string true "Requirement UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param force query boolean false "Force delete with dependencies" example(false)
+// @Success 204 "Successfully deleted requirement"
+// @Failure 400 {object} map[string]interface{} "Invalid requirement ID format"
+// @Failure 404 {object} map[string]interface{} "Requirement not found"
+// @Failure 409 {object} map[string]interface{} "Requirement has associated relationships and cannot be deleted (use force=true)"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/requirements/{id} [delete]
 func (h *RequirementHandler) DeleteRequirement(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -296,6 +341,24 @@ func (h *RequirementHandler) DeleteRequirement(c *gin.Context) {
 }
 
 // ListRequirements handles GET /api/v1/requirements
+// @Summary List requirements with filtering and pagination
+// @Description Retrieve a list of requirements with optional filtering by user story, acceptance criteria, creator, assignee, status, priority, and type. Supports pagination and custom ordering.
+// @Tags requirements
+// @Accept json
+// @Produce json
+// @Param user_story_id query string false "Filter by user story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param acceptance_criteria_id query string false "Filter by acceptance criteria UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174001")
+// @Param creator_id query string false "Filter by creator UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174002")
+// @Param assignee_id query string false "Filter by assignee UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174003")
+// @Param status query string false "Filter by requirement status" Enums(draft, in_review, approved, implemented, tested, rejected) example("draft")
+// @Param priority query integer false "Filter by priority level" minimum(1) maximum(4) example(2)
+// @Param type_id query string false "Filter by requirement type UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174004")
+// @Param order_by query string false "Order by field (e.g., 'created_at DESC', 'priority ASC')" example("created_at DESC")
+// @Param limit query integer false "Maximum number of results" minimum(1) maximum(100) example(50)
+// @Param offset query integer false "Number of results to skip" minimum(0) example(0)
+// @Success 200 {object} map[string]interface{} "Successfully retrieved requirements list with count"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/requirements [get]
 func (h *RequirementHandler) ListRequirements(c *gin.Context) {
 	var filters service.RequirementFilters
 
@@ -373,6 +436,16 @@ func (h *RequirementHandler) ListRequirements(c *gin.Context) {
 }
 
 // GetRequirementWithRelationships handles GET /api/v1/requirements/:id/relationships
+// @Summary Get a requirement with all its relationships
+// @Description Retrieve a specific requirement by its UUID or reference ID, including all incoming and outgoing relationships with other requirements. This provides a complete view of requirement dependencies.
+// @Tags requirements
+// @Accept json
+// @Produce json
+// @Param id path string true "Requirement UUID or reference ID" example("123e4567-e89b-12d3-a456-426614174000")
+// @Success 200 {object} models.Requirement "Successfully retrieved requirement with relationships"
+// @Failure 404 {object} map[string]interface{} "Requirement not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/requirements/{id}/relationships [get]
 func (h *RequirementHandler) GetRequirementWithRelationships(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -408,6 +481,18 @@ func (h *RequirementHandler) GetRequirementWithRelationships(c *gin.Context) {
 }
 
 // ChangeRequirementStatus handles PATCH /api/v1/requirements/:id/status
+// @Summary Change requirement status
+// @Description Update the status of a requirement. Status transitions are validated according to business rules to ensure proper workflow progression (e.g., draft → in_review → approved → implemented → tested).
+// @Tags requirements
+// @Accept json
+// @Produce json
+// @Param id path string true "Requirement UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param status body object true "Status change request" example({"status":"in_review"})
+// @Success 200 {object} models.Requirement "Successfully changed requirement status"
+// @Failure 400 {object} map[string]interface{} "Invalid requirement ID format, request body, invalid requirement status, or invalid status transition"
+// @Failure 404 {object} map[string]interface{} "Requirement not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/requirements/{id}/status [patch]
 func (h *RequirementHandler) ChangeRequirementStatus(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -459,6 +544,18 @@ func (h *RequirementHandler) ChangeRequirementStatus(c *gin.Context) {
 }
 
 // AssignRequirement handles PATCH /api/v1/requirements/:id/assign
+// @Summary Assign requirement to a user
+// @Description Assign a requirement to a specific user by updating the assignee field. The assignee must be a valid user in the system.
+// @Tags requirements
+// @Accept json
+// @Produce json
+// @Param id path string true "Requirement UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param assignment body object true "Assignment request" example({"assignee_id":"123e4567-e89b-12d3-a456-426614174001"})
+// @Success 200 {object} models.Requirement "Successfully assigned requirement"
+// @Failure 400 {object} map[string]interface{} "Invalid requirement ID format, request body, or assignee not found"
+// @Failure 404 {object} map[string]interface{} "Requirement not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/requirements/{id}/assign [patch]
 func (h *RequirementHandler) AssignRequirement(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -506,6 +603,17 @@ func (h *RequirementHandler) AssignRequirement(c *gin.Context) {
 }
 
 // CreateRelationship handles POST /api/v1/requirements/:id/relationships
+// @Summary Create a relationship between requirements
+// @Description Create a typed relationship between two requirements (e.g., depends_on, blocks, relates_to, conflicts_with, derives_from). Prevents circular relationships and duplicate relationships. Validates that both requirements and the relationship type exist.
+// @Tags requirements
+// @Accept json
+// @Produce json
+// @Param relationship body service.CreateRelationshipRequest true "Relationship creation request with source, target, type, and creator"
+// @Success 201 {object} models.RequirementRelationship "Successfully created requirement relationship"
+// @Failure 400 {object} map[string]interface{} "Invalid request body, source/target requirement not found, relationship type not found, creator not found, or circular relationship detected"
+// @Failure 409 {object} map[string]interface{} "Relationship already exists"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/requirements/relationships [post]
 func (h *RequirementHandler) CreateRelationship(c *gin.Context) {
 	var req service.CreateRelationshipRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -551,6 +659,17 @@ func (h *RequirementHandler) CreateRelationship(c *gin.Context) {
 }
 
 // DeleteRelationship handles DELETE /api/v1/requirement-relationships/:id
+// @Summary Delete a requirement relationship
+// @Description Delete a specific relationship between requirements by its UUID. This removes the dependency or association between the two requirements.
+// @Tags requirements
+// @Accept json
+// @Produce json
+// @Param id path string true "Relationship UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Success 204 "Successfully deleted relationship"
+// @Failure 400 {object} map[string]interface{} "Invalid relationship ID format"
+// @Failure 404 {object} map[string]interface{} "Relationship not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/requirement-relationships/{id} [delete]
 func (h *RequirementHandler) DeleteRelationship(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -581,6 +700,16 @@ func (h *RequirementHandler) DeleteRelationship(c *gin.Context) {
 }
 
 // GetRelationshipsByRequirement handles GET /api/v1/requirements/:id/relationships
+// @Summary Get all relationships for a requirement
+// @Description Retrieve all incoming and outgoing relationships for a specific requirement by its UUID or reference ID. Returns both relationships where the requirement is the source and where it is the target.
+// @Tags requirements
+// @Accept json
+// @Produce json
+// @Param id path string true "Requirement UUID or reference ID" example("123e4567-e89b-12d3-a456-426614174000")
+// @Success 200 {object} map[string]interface{} "Successfully retrieved relationships list with count"
+// @Failure 404 {object} map[string]interface{} "Requirement not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/requirements/{id}/relationships [get]
 func (h *RequirementHandler) GetRelationshipsByRequirement(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -627,6 +756,16 @@ func (h *RequirementHandler) GetRelationshipsByRequirement(c *gin.Context) {
 }
 
 // SearchRequirements handles GET /api/v1/requirements/search
+// @Summary Search requirements by text
+// @Description Perform full-text search across requirement titles and descriptions using PostgreSQL's text search capabilities. Returns requirements that match the search query with relevance ranking.
+// @Tags requirements
+// @Accept json
+// @Produce json
+// @Param q query string true "Search query text" example("authentication validation")
+// @Success 200 {object} map[string]interface{} "Successfully retrieved search results with count and query"
+// @Failure 400 {object} map[string]interface{} "Search query parameter 'q' is required"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/requirements/search [get]
 func (h *RequirementHandler) SearchRequirements(c *gin.Context) {
 	searchText := c.Query("q")
 	if searchText == "" {

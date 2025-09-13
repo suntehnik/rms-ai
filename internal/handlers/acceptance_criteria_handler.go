@@ -83,6 +83,16 @@ func (h *AcceptanceCriteriaHandler) CreateAcceptanceCriteria(c *gin.Context) {
 }
 
 // GetAcceptanceCriteria handles GET /api/v1/acceptance-criteria/:id
+// @Summary Get acceptance criteria by ID or reference ID
+// @Description Retrieve specific acceptance criteria by its UUID or human-readable reference ID (e.g., AC-001). Returns the acceptance criteria with all its properties including the testable condition and associated user story.
+// @Tags acceptance-criteria
+// @Accept json
+// @Produce json
+// @Param id path string true "Acceptance criteria UUID or reference ID" example("123e4567-e89b-12d3-a456-426614174000")
+// @Success 200 {object} models.AcceptanceCriteria "Successfully retrieved acceptance criteria"
+// @Failure 404 {object} map[string]interface{} "Acceptance criteria not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/acceptance-criteria/{id} [get]
 func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteria(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -113,6 +123,18 @@ func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteria(c *gin.Context) {
 }
 
 // UpdateAcceptanceCriteria handles PUT /api/v1/acceptance-criteria/:id
+// @Summary Update existing acceptance criteria
+// @Description Update acceptance criteria properties including the testable condition text and description. Only provided fields will be updated, maintaining the relationship to the parent user story.
+// @Tags acceptance-criteria
+// @Accept json
+// @Produce json
+// @Param id path string true "Acceptance criteria UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param acceptance_criteria body service.UpdateAcceptanceCriteriaRequest true "Acceptance criteria update request with optional fields"
+// @Success 200 {object} models.AcceptanceCriteria "Successfully updated acceptance criteria"
+// @Failure 400 {object} map[string]interface{} "Invalid acceptance criteria ID format or request body"
+// @Failure 404 {object} map[string]interface{} "Acceptance criteria not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/acceptance-criteria/{id} [put]
 func (h *AcceptanceCriteriaHandler) UpdateAcceptanceCriteria(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -153,6 +175,19 @@ func (h *AcceptanceCriteriaHandler) UpdateAcceptanceCriteria(c *gin.Context) {
 }
 
 // DeleteAcceptanceCriteria handles DELETE /api/v1/acceptance-criteria/:id
+// @Summary Delete acceptance criteria
+// @Description Delete acceptance criteria by its UUID. Deletion is prevented if the acceptance criteria has associated requirements or if it's the last acceptance criteria for a user story. Use force=true to override these constraints.
+// @Tags acceptance-criteria
+// @Accept json
+// @Produce json
+// @Param id path string true "Acceptance criteria UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param force query boolean false "Force delete with dependencies and constraints" example(false)
+// @Success 204 "Successfully deleted acceptance criteria"
+// @Failure 400 {object} map[string]interface{} "Invalid acceptance criteria ID format"
+// @Failure 404 {object} map[string]interface{} "Acceptance criteria not found"
+// @Failure 409 {object} map[string]interface{} "Acceptance criteria has associated requirements or is the last one for user story (use force=true)"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/acceptance-criteria/{id} [delete]
 func (h *AcceptanceCriteriaHandler) DeleteAcceptanceCriteria(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -197,6 +232,19 @@ func (h *AcceptanceCriteriaHandler) DeleteAcceptanceCriteria(c *gin.Context) {
 }
 
 // ListAcceptanceCriteria handles GET /api/v1/acceptance-criteria
+// @Summary List acceptance criteria with filtering and pagination
+// @Description Retrieve a list of acceptance criteria with optional filtering by user story and author. Supports pagination and custom ordering to help organize testable conditions across the system.
+// @Tags acceptance-criteria
+// @Accept json
+// @Produce json
+// @Param user_story_id query string false "Filter by user story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param author_id query string false "Filter by author UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174001")
+// @Param order_by query string false "Order by field (e.g., 'created_at DESC', 'reference_id ASC')" example("created_at DESC")
+// @Param limit query integer false "Maximum number of results" minimum(1) maximum(100) example(50)
+// @Param offset query integer false "Number of results to skip" minimum(0) example(0)
+// @Success 200 {object} map[string]interface{} "Successfully retrieved acceptance criteria list with count"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/acceptance-criteria [get]
 func (h *AcceptanceCriteriaHandler) ListAcceptanceCriteria(c *gin.Context) {
 	var filters service.AcceptanceCriteriaFilters
 
@@ -295,6 +343,17 @@ func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteriaByUserStory(c *gin.Cont
 }
 
 // GetAcceptanceCriteriaByAuthor handles GET /api/v1/users/:id/acceptance-criteria
+// @Summary Get acceptance criteria by author
+// @Description Retrieve all acceptance criteria created by a specific user. This endpoint helps track which testable conditions were authored by each team member.
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "Author UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Success 200 {object} map[string]interface{} "Successfully retrieved acceptance criteria list with count"
+// @Failure 400 {object} map[string]interface{} "Invalid author ID format"
+// @Failure 404 {object} map[string]interface{} "Author not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/users/{id}/acceptance-criteria [get]
 func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteriaByAuthor(c *gin.Context) {
 	authorIDParam := c.Param("id")
 

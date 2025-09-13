@@ -237,3 +237,135 @@ type NestedUserStoryCreationExample struct {
 	Title       string    `json:"title" example:"User Profile Management"`
 	Description string    `json:"description" example:"As a registered user, I want to manage my profile information, so that I can keep my account details up to date."`
 } // @name NestedUserStoryCreationExample
+
+// RequirementRelationshipExamples provides examples of requirement relationship operations
+// @Description Examples of requirement relationship creation and management
+
+// RequirementWithRelationshipsExample represents a requirement with all its relationships
+// @Description Example response for GET /api/v1/requirements/{id}/relationships showing complete relationship view
+type RequirementWithRelationshipsExample struct {
+	ID                  uuid.UUID `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ReferenceID         string    `json:"reference_id" example:"REQ-001"`
+	Title               string    `json:"title" example:"User authentication validation"`
+	Description         string    `json:"description" example:"The system must validate user credentials against the database"`
+	Status              string    `json:"status" example:"draft"`
+	Priority            int       `json:"priority" example:"2"`
+	SourceRelationships []struct {
+		ID                  uuid.UUID `json:"id" example:"456e7890-e89b-12d3-a456-426614174001"`
+		TargetRequirementID uuid.UUID `json:"target_requirement_id" example:"789e0123-e89b-12d3-a456-426614174002"`
+		RelationshipType    string    `json:"relationship_type" example:"depends_on"`
+		TargetRequirement   struct {
+			ID          uuid.UUID `json:"id" example:"789e0123-e89b-12d3-a456-426614174002"`
+			ReferenceID string    `json:"reference_id" example:"REQ-002"`
+			Title       string    `json:"title" example:"Database connection setup"`
+		} `json:"target_requirement"`
+	} `json:"source_relationships"`
+	TargetRelationships []struct {
+		ID                  uuid.UUID `json:"id" example:"abc1234d-e89b-12d3-a456-426614174003"`
+		SourceRequirementID uuid.UUID `json:"source_requirement_id" example:"def5678e-e89b-12d3-a456-426614174004"`
+		RelationshipType    string    `json:"relationship_type" example:"blocks"`
+		SourceRequirement   struct {
+			ID          uuid.UUID `json:"id" example:"def5678e-e89b-12d3-a456-426614174004"`
+			ReferenceID string    `json:"reference_id" example:"REQ-003"`
+			Title       string    `json:"title" example:"User interface design"`
+		} `json:"source_requirement"`
+	} `json:"target_relationships"`
+} // @name RequirementWithRelationshipsExample
+
+// RequirementListResponse represents a paginated list of requirements
+// @Description Example response for GET /api/v1/requirements with filtering and pagination
+type RequirementListResponse struct {
+	Requirements []struct {
+		ID                   uuid.UUID  `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+		ReferenceID          string     `json:"reference_id" example:"REQ-001"`
+		UserStoryID          uuid.UUID  `json:"user_story_id" example:"456e7890-e89b-12d3-a456-426614174001"`
+		AcceptanceCriteriaID *uuid.UUID `json:"acceptance_criteria_id,omitempty" example:"789e0123-e89b-12d3-a456-426614174002"`
+		Title                string     `json:"title" example:"User authentication validation"`
+		Description          string     `json:"description" example:"The system must validate user credentials against the database"`
+		Status               string     `json:"status" example:"draft"`
+		Priority             int        `json:"priority" example:"2"`
+		CreatedAt            time.Time  `json:"created_at" example:"2023-01-15T10:30:00Z"`
+	} `json:"requirements"`
+	Count int `json:"count" example:"15"`
+} // @name RequirementListResponse
+
+// RequirementRelationshipCreationExample represents relationship creation request
+// @Description Example request for POST /api/v1/requirements/relationships showing relationship creation
+type RequirementRelationshipCreationExample struct {
+	SourceRequirementID uuid.UUID `json:"source_requirement_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	TargetRequirementID uuid.UUID `json:"target_requirement_id" example:"456e7890-e89b-12d3-a456-426614174001"`
+	RelationshipTypeID  uuid.UUID `json:"relationship_type_id" example:"789e0123-e89b-12d3-a456-426614174002"`
+	CreatedBy           uuid.UUID `json:"created_by" example:"abc1234d-e89b-12d3-a456-426614174003"`
+} // @name RequirementRelationshipCreationExample
+
+// RequirementStatusChangeExample represents status change request
+// @Description Example request for PATCH /api/v1/requirements/{id}/status showing status transition
+type RequirementStatusChangeExample struct {
+	Status string `json:"status" example:"in_review"`
+} // @name RequirementStatusChangeExample
+
+// RequirementAssignmentExample represents assignment request
+// @Description Example request for PATCH /api/v1/requirements/{id}/assign showing assignment operation
+type RequirementAssignmentExample struct {
+	AssigneeID uuid.UUID `json:"assignee_id" example:"123e4567-e89b-12d3-a456-426614174001"`
+} // @name RequirementAssignmentExample
+
+// AcceptanceCriteriaExamples provides examples of acceptance criteria operations
+// @Description Examples of acceptance criteria creation and management
+
+// AcceptanceCriteriaListResponse represents a paginated list of acceptance criteria
+// @Description Example response for GET /api/v1/acceptance-criteria with filtering and pagination
+type AcceptanceCriteriaListResponse struct {
+	AcceptanceCriteria []struct {
+		ID          uuid.UUID `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+		ReferenceID string    `json:"reference_id" example:"AC-001"`
+		UserStoryID uuid.UUID `json:"user_story_id" example:"456e7890-e89b-12d3-a456-426614174001"`
+		AuthorID    uuid.UUID `json:"author_id" example:"789e0123-e89b-12d3-a456-426614174002"`
+		Description string    `json:"description" example:"WHEN user enters valid email and password THEN system SHALL authenticate user and redirect to dashboard"`
+		CreatedAt   time.Time `json:"created_at" example:"2023-01-15T10:30:00Z"`
+	} `json:"acceptance_criteria"`
+	Count int `json:"count" example:"8"`
+} // @name AcceptanceCriteriaListResponse
+
+// AcceptanceCriteriaCreationExample represents acceptance criteria creation request
+// @Description Example request for POST /api/v1/user-stories/{id}/acceptance-criteria showing nested creation
+type AcceptanceCriteriaCreationExample struct {
+	AuthorID    uuid.UUID `json:"author_id" example:"123e4567-e89b-12d3-a456-426614174001"`
+	Description string    `json:"description" example:"WHEN user enters valid email and password THEN system SHALL authenticate user and redirect to dashboard"`
+} // @name AcceptanceCriteriaCreationExample
+
+// AcceptanceCriteriaUpdateExample represents acceptance criteria update request
+// @Description Example request for PUT /api/v1/acceptance-criteria/{id} showing update operation
+type AcceptanceCriteriaUpdateExample struct {
+	Description string `json:"description" example:"WHEN user enters valid email and password THEN system SHALL authenticate user, log the session, and redirect to dashboard"`
+} // @name AcceptanceCriteriaUpdateExample
+
+// RequirementSearchResponse represents search results for requirements
+// @Description Example response for GET /api/v1/requirements/search showing full-text search results
+type RequirementSearchResponse struct {
+	Requirements []struct {
+		ID          uuid.UUID `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+		ReferenceID string    `json:"reference_id" example:"REQ-001"`
+		Title       string    `json:"title" example:"User authentication validation"`
+		Description string    `json:"description" example:"The system must validate user credentials against the database"`
+		Status      string    `json:"status" example:"draft"`
+		Priority    int       `json:"priority" example:"2"`
+		Relevance   float64   `json:"relevance,omitempty" example:"0.85"`
+	} `json:"requirements"`
+	Count int    `json:"count" example:"5"`
+	Query string `json:"query" example:"authentication validation"`
+} // @name RequirementSearchResponse
+
+// CircularDependencyPreventionExample represents circular dependency error
+// @Description Example error response when attempting to create circular relationships
+type CircularDependencyPreventionExample struct {
+	Error string `json:"error" example:"Cannot create relationship between the same requirement"`
+	Code  string `json:"code" example:"CIRCULAR_RELATIONSHIP"`
+} // @name CircularDependencyPreventionExample
+
+// DuplicateRelationshipExample represents duplicate relationship error
+// @Description Example error response when attempting to create duplicate relationships
+type DuplicateRelationshipExample struct {
+	Error string `json:"error" example:"Relationship already exists"`
+	Code  string `json:"code" example:"DUPLICATE_RELATIONSHIP"`
+} // @name DuplicateRelationshipExample

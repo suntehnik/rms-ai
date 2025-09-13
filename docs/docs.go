@@ -731,6 +731,252 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/acceptance-criteria": {
+            "get": {
+                "description": "Retrieve a list of acceptance criteria with optional filtering by user story and author. Supports pagination and custom ordering to help organize testable conditions across the system.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "acceptance-criteria"
+                ],
+                "summary": "List acceptance criteria with filtering and pagination",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Filter by user story UUID",
+                        "name": "user_story_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174001\"",
+                        "description": "Filter by author UUID",
+                        "name": "author_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "\"created_at DESC\"",
+                        "description": "Order by field (e.g., 'created_at DESC', 'reference_id ASC')",
+                        "name": "order_by",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "example": 50,
+                        "description": "Maximum number of results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "example": 0,
+                        "description": "Number of results to skip",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved acceptance criteria list with count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/acceptance-criteria/{id}": {
+            "get": {
+                "description": "Retrieve specific acceptance criteria by its UUID or human-readable reference ID (e.g., AC-001). Returns the acceptance criteria with all its properties including the testable condition and associated user story.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "acceptance-criteria"
+                ],
+                "summary": "Get acceptance criteria by ID or reference ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Acceptance criteria UUID or reference ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved acceptance criteria",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.AcceptanceCriteria"
+                        }
+                    },
+                    "404": {
+                        "description": "Acceptance criteria not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update acceptance criteria properties including the testable condition text and description. Only provided fields will be updated, maintaining the relationship to the parent user story.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "acceptance-criteria"
+                ],
+                "summary": "Update existing acceptance criteria",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Acceptance criteria UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Acceptance criteria update request with optional fields",
+                        "name": "acceptance_criteria",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateAcceptanceCriteriaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated acceptance criteria",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.AcceptanceCriteria"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid acceptance criteria ID format or request body",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Acceptance criteria not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete acceptance criteria by its UUID. Deletion is prevented if the acceptance criteria has associated requirements or if it's the last acceptance criteria for a user story. Use force=true to override these constraints.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "acceptance-criteria"
+                ],
+                "summary": "Delete acceptance criteria",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Acceptance criteria UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "example": false,
+                        "description": "Force delete with dependencies and constraints",
+                        "name": "force",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted acceptance criteria"
+                    },
+                    "400": {
+                        "description": "Invalid acceptance criteria ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Acceptance criteria not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "Acceptance criteria has associated requirements or is the last one for user story (use force=true)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/epics": {
             "get": {
                 "description": "Retrieve a list of epics with optional filtering by creator, assignee, status, and priority. Supports pagination and custom ordering.",
@@ -1263,6 +1509,677 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid epic ID format, request body, creator/assignee not found, epic not found, invalid priority, or invalid user story template",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/requirement-relationships/{id}": {
+            "delete": {
+                "description": "Delete a specific relationship between requirements by its UUID. This removes the dependency or association between the two requirements.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requirements"
+                ],
+                "summary": "Delete a requirement relationship",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Relationship UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted relationship"
+                    },
+                    "400": {
+                        "description": "Invalid relationship ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Relationship not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/requirements": {
+            "get": {
+                "description": "Retrieve a list of requirements with optional filtering by user story, acceptance criteria, creator, assignee, status, priority, and type. Supports pagination and custom ordering.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requirements"
+                ],
+                "summary": "List requirements with filtering and pagination",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Filter by user story UUID",
+                        "name": "user_story_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174001\"",
+                        "description": "Filter by acceptance criteria UUID",
+                        "name": "acceptance_criteria_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174002\"",
+                        "description": "Filter by creator UUID",
+                        "name": "creator_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174003\"",
+                        "description": "Filter by assignee UUID",
+                        "name": "assignee_id",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "draft",
+                            "in_review",
+                            "approved",
+                            "implemented",
+                            "tested",
+                            "rejected"
+                        ],
+                        "type": "string",
+                        "example": "\"draft\"",
+                        "description": "Filter by requirement status",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 4,
+                        "minimum": 1,
+                        "type": "integer",
+                        "example": 2,
+                        "description": "Filter by priority level",
+                        "name": "priority",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174004\"",
+                        "description": "Filter by requirement type UUID",
+                        "name": "type_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "\"created_at DESC\"",
+                        "description": "Order by field (e.g., 'created_at DESC', 'priority ASC')",
+                        "name": "order_by",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "example": 50,
+                        "description": "Maximum number of results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "example": 0,
+                        "description": "Number of results to skip",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved requirements list with count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new detailed requirement with specified properties. Requires a valid user story ID, creator, and requirement type. The assignee defaults to the creator if not specified.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requirements"
+                ],
+                "summary": "Create a new requirement",
+                "parameters": [
+                    {
+                        "description": "Requirement creation request with all required fields",
+                        "name": "requirement",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateRequirementRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created requirement",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body, creator/assignee not found, user story not found, requirement type not found, acceptance criteria not found, or invalid priority",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/requirements/relationships": {
+            "post": {
+                "description": "Create a typed relationship between two requirements (e.g., depends_on, blocks, relates_to, conflicts_with, derives_from). Prevents circular relationships and duplicate relationships. Validates that both requirements and the relationship type exist.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requirements"
+                ],
+                "summary": "Create a relationship between requirements",
+                "parameters": [
+                    {
+                        "description": "Relationship creation request with source, target, type, and creator",
+                        "name": "relationship",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateRelationshipRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created requirement relationship",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.RequirementRelationship"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body, source/target requirement not found, relationship type not found, creator not found, or circular relationship detected",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "Relationship already exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/requirements/search": {
+            "get": {
+                "description": "Perform full-text search across requirement titles and descriptions using PostgreSQL's text search capabilities. Returns requirements that match the search query with relevance ranking.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requirements"
+                ],
+                "summary": "Search requirements by text",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"authentication validation\"",
+                        "description": "Search query text",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved search results with count and query",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Search query parameter 'q' is required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/requirements/{id}": {
+            "get": {
+                "description": "Retrieve a specific requirement by its UUID or human-readable reference ID (e.g., REQ-001). Returns the requirement with all its properties and relationships.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requirements"
+                ],
+                "summary": "Get a requirement by ID or reference ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Requirement UUID or reference ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved requirement",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                        }
+                    },
+                    "404": {
+                        "description": "Requirement not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a requirement's properties including acceptance criteria, assignee, priority, status, type, title, and description. Only provided fields will be updated. Status transitions are validated according to business rules.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requirements"
+                ],
+                "summary": "Update an existing requirement",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Requirement UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Requirement update request with optional fields",
+                        "name": "requirement",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateRequirementRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated requirement",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid requirement ID format, request body, assignee not found, requirement type not found, acceptance criteria not found, invalid priority, invalid requirement status, or invalid status transition",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Requirement not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a requirement by its UUID. By default, deletion is prevented if the requirement has associated relationships. Use force=true query parameter to delete with all dependencies.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requirements"
+                ],
+                "summary": "Delete a requirement",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Requirement UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "example": false,
+                        "description": "Force delete with dependencies",
+                        "name": "force",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted requirement"
+                    },
+                    "400": {
+                        "description": "Invalid requirement ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Requirement not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "Requirement has associated relationships and cannot be deleted (use force=true)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/requirements/{id}/assign": {
+            "patch": {
+                "description": "Assign a requirement to a specific user by updating the assignee field. The assignee must be a valid user in the system.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requirements"
+                ],
+                "summary": "Assign requirement to a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Requirement UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Assignment request",
+                        "name": "assignment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully assigned requirement",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid requirement ID format, request body, or assignee not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Requirement not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/requirements/{id}/relationships": {
+            "get": {
+                "description": "Retrieve all incoming and outgoing relationships for a specific requirement by its UUID or reference ID. Returns both relationships where the requirement is the source and where it is the target.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requirements"
+                ],
+                "summary": "Get all relationships for a requirement",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Requirement UUID or reference ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved relationships list with count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Requirement not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/requirements/{id}/status": {
+            "patch": {
+                "description": "Update the status of a requirement. Status transitions are validated according to business rules to ensure proper workflow progression (e.g., draft → in_review → approved → implemented → tested).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requirements"
+                ],
+                "summary": "Change requirement status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Requirement UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Status change request",
+                        "name": "status",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully changed requirement status",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid requirement ID format, request body, invalid requirement status, or invalid status transition",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Requirement not found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -1920,6 +2837,62 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "User story not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/{id}/acceptance-criteria": {
+            "get": {
+                "description": "Retrieve all acceptance criteria created by a specific user. This endpoint helps track which testable conditions were authored by each team member.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get acceptance criteria by author",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Author UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved acceptance criteria list with count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid author ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Author not found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -2938,6 +3911,72 @@ const docTemplate = `{
                 }
             }
         },
+        "product-requirements-management_internal_service.CreateRelationshipRequest": {
+            "type": "object",
+            "required": [
+                "created_by",
+                "relationship_type_id",
+                "source_requirement_id",
+                "target_requirement_id"
+            ],
+            "properties": {
+                "created_by": {
+                    "type": "string"
+                },
+                "relationship_type_id": {
+                    "type": "string"
+                },
+                "source_requirement_id": {
+                    "type": "string"
+                },
+                "target_requirement_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "product-requirements-management_internal_service.CreateRequirementRequest": {
+            "type": "object",
+            "required": [
+                "creator_id",
+                "priority",
+                "title",
+                "type_id",
+                "user_story_id"
+            ],
+            "properties": {
+                "acceptance_criteria_id": {
+                    "type": "string"
+                },
+                "assignee_id": {
+                    "type": "string"
+                },
+                "creator_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "priority": {
+                    "maximum": 4,
+                    "minimum": 1,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Priority"
+                        }
+                    ]
+                },
+                "title": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "type_id": {
+                    "type": "string"
+                },
+                "user_story_id": {
+                    "type": "string"
+                }
+            }
+        },
         "product-requirements-management_internal_service.CreateUserStoryRequest": {
             "description": "Request structure for creating a new user story",
             "type": "object",
@@ -3117,6 +4156,14 @@ const docTemplate = `{
                 }
             }
         },
+        "product-requirements-management_internal_service.UpdateAcceptanceCriteriaRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                }
+            }
+        },
         "product-requirements-management_internal_service.UpdateEpicRequest": {
             "description": "Request payload for updating an existing epic (all fields are optional)",
             "type": "object",
@@ -3147,6 +4194,32 @@ const docTemplate = `{
                 },
                 "title": {
                     "description": "Title is the name/summary of the epic\n@Description Title or name of the epic (optional, max 500 characters)\n@MaxLength 500\n@Example \"Enhanced User Authentication System\"",
+                    "type": "string"
+                }
+            }
+        },
+        "product-requirements-management_internal_service.UpdateRequirementRequest": {
+            "type": "object",
+            "properties": {
+                "acceptance_criteria_id": {
+                    "type": "string"
+                },
+                "assignee_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "priority": {
+                    "$ref": "#/definitions/product-requirements-management_internal_models.Priority"
+                },
+                "status": {
+                    "$ref": "#/definitions/product-requirements-management_internal_models.RequirementStatus"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type_id": {
                     "type": "string"
                 }
             }

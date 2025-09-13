@@ -76,14 +76,14 @@
     - Include examples of complex relationship queries
     - _Requirements: 6.1, 6.2, 6.4_
 
-- [ ] 6. Implement Requirement and AcceptanceCriteria endpoints documentation
-  - [ ] 6.1 Document Requirement CRUD and relationship operations
+- [-] 6. Implement Requirement and AcceptanceCriteria endpoints documentation
+  - [x] 6.1 Document Requirement CRUD and relationship operations
     - Add Swagger annotations to all Requirement handler methods
     - Document requirement relationship creation and management
     - Include dependency mapping and circular dependency prevention
     - _Requirements: 1.2, 1.3, 2.1, 2.2, 6.1, 6.2_
 
-  - [ ] 6.2 Document AcceptanceCriteria operations
+  - [x] 6.2 Document AcceptanceCriteria operations
     - Add annotations to AcceptanceCriteria CRUD operations
     - Document relationship to UserStories and Requirements
     - Include validation rules and business logic constraints
