@@ -127,6 +127,14 @@ type SearchResponseDoc struct {
 	ExecutedAt time.Time `json:"executed_at" example:"2023-01-01T12:00:00Z"`
 } // @name SearchResponse
 
+// SearchSuggestionsResponse represents search suggestions grouped by category
+// @Description Search suggestions response with categorized suggestions for query completion
+type SearchSuggestionsResponse struct {
+	Titles       []string `json:"titles" example:"User Authentication System,User Profile Management,Authentication Service"`
+	ReferenceIDs []string `json:"reference_ids" example:"EP-001,US-042,REQ-123,AC-089"`
+	Statuses     []string `json:"statuses" example:"Backlog,Draft,In Progress,Done,Cancelled,Active,Obsolete"`
+} // @name SearchSuggestionsResponse
+
 // BulkOperationResponse represents a response for bulk operations
 // @Description Response for bulk operations with success and failure counts
 type BulkOperationResponse struct {
@@ -484,3 +492,149 @@ type InlineCommentPositionExample struct {
 	TextPositionEnd   int    `json:"text_position_end" example:"60"`
 	CommentContent    string `json:"comment_content" example:"Which specific OAuth 2.0 flow should be implemented? Authorization Code, Implicit, or Client Credentials?"`
 } // @name InlineCommentPositionExample
+
+// Configuration Management Response Types
+
+// RequirementTypeListResponse represents a list of requirement types
+// @Description Response structure for requirement type list endpoints
+type RequirementTypeListResponse struct {
+	RequirementTypes []struct {
+		ID          uuid.UUID `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+		Name        string    `json:"name" example:"Functional Requirement"`
+		Description *string   `json:"description,omitempty" example:"Requirements that specify what the system should do"`
+		CreatedAt   time.Time `json:"created_at" example:"2023-01-01T00:00:00Z"`
+		UpdatedAt   time.Time `json:"updated_at" example:"2023-01-01T00:00:00Z"`
+	} `json:"requirement_types"`
+	Count int `json:"count" example:"5"`
+} // @name RequirementTypeListResponse
+
+// RelationshipTypeListResponse represents a list of relationship types
+// @Description Response structure for relationship type list endpoints
+type RelationshipTypeListResponse struct {
+	RelationshipTypes []struct {
+		ID          uuid.UUID `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+		Name        string    `json:"name" example:"depends_on"`
+		Description *string   `json:"description,omitempty" example:"Indicates that one requirement depends on another"`
+		CreatedAt   time.Time `json:"created_at" example:"2023-01-01T00:00:00Z"`
+		UpdatedAt   time.Time `json:"updated_at" example:"2023-01-01T00:00:00Z"`
+	} `json:"relationship_types"`
+	Count int `json:"count" example:"8"`
+} // @name RelationshipTypeListResponse
+
+// StatusModelListResponse represents a list of status models
+// @Description Response structure for status model list endpoints
+type StatusModelListResponse struct {
+	StatusModels []struct {
+		ID          uuid.UUID `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+		EntityType  string    `json:"entity_type" example:"epic"`
+		Name        string    `json:"name" example:"Default Epic Workflow"`
+		Description *string   `json:"description,omitempty" example:"Standard workflow for epic management"`
+		IsDefault   bool      `json:"is_default" example:"true"`
+		CreatedAt   time.Time `json:"created_at" example:"2023-01-01T00:00:00Z"`
+		UpdatedAt   time.Time `json:"updated_at" example:"2023-01-01T00:00:00Z"`
+	} `json:"status_models"`
+	Count int `json:"count" example:"4"`
+} // @name StatusModelListResponse
+
+// StatusListResponse represents a list of statuses
+// @Description Response structure for status list endpoints
+type StatusListResponse struct {
+	Statuses []struct {
+		ID            uuid.UUID `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+		StatusModelID uuid.UUID `json:"status_model_id" example:"456e7890-e89b-12d3-a456-426614174001"`
+		Name          string    `json:"name" example:"Backlog"`
+		Description   *string   `json:"description,omitempty" example:"Items waiting to be started"`
+		Color         *string   `json:"color,omitempty" example:"#6B7280"`
+		IsInitial     bool      `json:"is_initial" example:"true"`
+		IsFinal       bool      `json:"is_final" example:"false"`
+		Order         int       `json:"order" example:"1"`
+		CreatedAt     time.Time `json:"created_at" example:"2023-01-01T00:00:00Z"`
+		UpdatedAt     time.Time `json:"updated_at" example:"2023-01-01T00:00:00Z"`
+	} `json:"statuses"`
+	Count int `json:"count" example:"6"`
+} // @name StatusListResponse
+
+// StatusTransitionListResponse represents a list of status transitions
+// @Description Response structure for status transition list endpoints
+type StatusTransitionListResponse struct {
+	Transitions []struct {
+		ID            uuid.UUID `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+		StatusModelID uuid.UUID `json:"status_model_id" example:"456e7890-e89b-12d3-a456-426614174001"`
+		FromStatusID  uuid.UUID `json:"from_status_id" example:"789e0123-e89b-12d3-a456-426614174002"`
+		ToStatusID    uuid.UUID `json:"to_status_id" example:"abc1234d-e89b-12d3-a456-426614174003"`
+		Name          *string   `json:"name,omitempty" example:"Start Work"`
+		Description   *string   `json:"description,omitempty" example:"Transition from backlog to in progress"`
+		FromStatus    struct {
+			ID   uuid.UUID `json:"id" example:"789e0123-e89b-12d3-a456-426614174002"`
+			Name string    `json:"name" example:"Backlog"`
+		} `json:"from_status"`
+		ToStatus struct {
+			ID   uuid.UUID `json:"id" example:"abc1234d-e89b-12d3-a456-426614174003"`
+			Name string    `json:"name" example:"In Progress"`
+		} `json:"to_status"`
+		CreatedAt time.Time `json:"created_at" example:"2023-01-01T00:00:00Z"`
+		UpdatedAt time.Time `json:"updated_at" example:"2023-01-01T00:00:00Z"`
+	} `json:"transitions"`
+	Count int `json:"count" example:"12"`
+} // @name StatusTransitionListResponse
+
+// Configuration Examples and Workflows
+
+// StatusWorkflowExample represents a complete status workflow configuration
+// @Description Example showing a complete status workflow with statuses and transitions
+type StatusWorkflowExample struct {
+	StatusModel struct {
+		ID          uuid.UUID `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+		EntityType  string    `json:"entity_type" example:"epic"`
+		Name        string    `json:"name" example:"Epic Workflow"`
+		Description string    `json:"description" example:"Standard workflow for epic lifecycle management"`
+		IsDefault   bool      `json:"is_default" example:"true"`
+	} `json:"status_model"`
+	Statuses []struct {
+		ID        uuid.UUID `json:"id" example:"456e7890-e89b-12d3-a456-426614174001"`
+		Name      string    `json:"name" example:"Backlog"`
+		IsInitial bool      `json:"is_initial" example:"true"`
+		IsFinal   bool      `json:"is_final" example:"false"`
+		Order     int       `json:"order" example:"1"`
+	} `json:"statuses"`
+	Transitions []struct {
+		ID           uuid.UUID `json:"id" example:"789e0123-e89b-12d3-a456-426614174002"`
+		FromStatusID uuid.UUID `json:"from_status_id" example:"456e7890-e89b-12d3-a456-426614174001"`
+		ToStatusID   uuid.UUID `json:"to_status_id" example:"abc1234d-e89b-12d3-a456-426614174003"`
+		Name         string    `json:"name" example:"Start Epic"`
+	} `json:"transitions"`
+} // @name StatusWorkflowExample
+
+// RequirementTypeUsageExample represents requirement type usage patterns
+// @Description Example showing how requirement types are used to categorize requirements
+type RequirementTypeUsageExample struct {
+	RequirementType struct {
+		ID          uuid.UUID `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+		Name        string    `json:"name" example:"Security Requirement"`
+		Description string    `json:"description" example:"Requirements related to system security and data protection"`
+	} `json:"requirement_type"`
+	UsageCount int `json:"usage_count" example:"15"`
+	Examples   []struct {
+		ID          uuid.UUID `json:"id" example:"456e7890-e89b-12d3-a456-426614174001"`
+		ReferenceID string    `json:"reference_id" example:"REQ-042"`
+		Title       string    `json:"title" example:"User authentication must use OAuth 2.0"`
+	} `json:"examples"`
+} // @name RequirementTypeUsageExample
+
+// RelationshipTypeUsageExample represents relationship type usage patterns
+// @Description Example showing how relationship types define requirement dependencies
+type RelationshipTypeUsageExample struct {
+	RelationshipType struct {
+		ID          uuid.UUID `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+		Name        string    `json:"name" example:"depends_on"`
+		Description string    `json:"description" example:"Source requirement depends on target requirement"`
+	} `json:"relationship_type"`
+	UsageCount int `json:"usage_count" example:"8"`
+	Examples   []struct {
+		ID                  uuid.UUID `json:"id" example:"456e7890-e89b-12d3-a456-426614174001"`
+		SourceRequirementID uuid.UUID `json:"source_requirement_id" example:"789e0123-e89b-12d3-a456-426614174002"`
+		TargetRequirementID uuid.UUID `json:"target_requirement_id" example:"abc1234d-e89b-12d3-a456-426614174003"`
+		SourceTitle         string    `json:"source_title" example:"User login validation"`
+		TargetTitle         string    `json:"target_title" example:"Database connection setup"`
+	} `json:"examples"`
+} // @name RelationshipTypeUsageExample

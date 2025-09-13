@@ -47,29 +47,29 @@ type SearchRequest struct {
 // Search handles search requests
 //
 //	@Summary		Search across all entities
-//	@Description	Performs full-text search and filtering across epics, user stories, acceptance criteria, and requirements
+//	@Description	Performs full-text search and filtering across epics, user stories, acceptance criteria, and requirements. Supports PostgreSQL full-text search with ranking and comprehensive filtering options. Results are cached for performance.
 //	@Tags			search
 //	@Accept			json
 //	@Produce		json
-//	@Param			query					query		string	false	"Search query text"
-//	@Param			creator_id				query		string	false	"Filter by creator ID (UUID)"
-//	@Param			assignee_id				query		string	false	"Filter by assignee ID (UUID)"
-//	@Param			priority				query		int		false	"Filter by priority (1-4)"
-//	@Param			status					query		string	false	"Filter by status"
-//	@Param			created_from			query		string	false	"Filter by creation date from (RFC3339 format)"
-//	@Param			created_to				query		string	false	"Filter by creation date to (RFC3339 format)"
-//	@Param			epic_id					query		string	false	"Filter by epic ID (UUID)"
-//	@Param			user_story_id			query		string	false	"Filter by user story ID (UUID)"
-//	@Param			acceptance_criteria_id	query		string	false	"Filter by acceptance criteria ID (UUID)"
-//	@Param			requirement_type_id		query		string	false	"Filter by requirement type ID (UUID)"
-//	@Param			author_id				query		string	false	"Filter by author ID (UUID)"
-//	@Param			sort_by					query		string	false	"Sort by field (priority, created_at, last_modified, title)"	default(created_at)
-//	@Param			sort_order				query		string	false	"Sort order (asc, desc)"										default(desc)
-//	@Param			limit					query		int		false	"Limit number of results (max 100)"								default(50)
-//	@Param			offset					query		int		false	"Offset for pagination"											default(0)
-//	@Success		200						{object}	service.SearchResponse
-//	@Failure		400						{object}	ErrorResponse
-//	@Failure		500						{object}	ErrorResponse
+//	@Param			query					query		string	false	"Full-text search query. Searches across titles, descriptions, and reference IDs. Supports PostgreSQL text search syntax with automatic prefix matching."	example("user authentication")
+//	@Param			creator_id				query		string	false	"Filter by creator ID (UUID format)"																																		example("123e4567-e89b-12d3-a456-426614174000")
+//	@Param			assignee_id				query		string	false	"Filter by assignee ID (UUID format)"																																		example("123e4567-e89b-12d3-a456-426614174001")
+//	@Param			priority				query		int		false	"Filter by priority level (1=Critical, 2=High, 3=Medium, 4=Low)"																											example(1)
+//	@Param			status					query		string	false	"Filter by status (backlog, draft, in_progress, done, cancelled, active, obsolete)"																					example("in_progress")
+//	@Param			created_from			query		string	false	"Filter by creation date from (RFC3339 format: YYYY-MM-DDTHH:MM:SSZ)"																								example("2023-01-01T00:00:00Z")
+//	@Param			created_to				query		string	false	"Filter by creation date to (RFC3339 format: YYYY-MM-DDTHH:MM:SSZ)"																								example("2023-12-31T23:59:59Z")
+//	@Param			epic_id					query		string	false	"Filter by parent epic ID (UUID format). Returns user stories, acceptance criteria, and requirements within the epic."												example("123e4567-e89b-12d3-a456-426614174002")
+//	@Param			user_story_id			query		string	false	"Filter by parent user story ID (UUID format). Returns acceptance criteria and requirements within the user story."												example("123e4567-e89b-12d3-a456-426614174003")
+//	@Param			acceptance_criteria_id	query		string	false	"Filter by parent acceptance criteria ID (UUID format). Returns requirements within the acceptance criteria."														example("123e4567-e89b-12d3-a456-426614174004")
+//	@Param			requirement_type_id		query		string	false	"Filter by requirement type ID (UUID format). Only applies to requirement entities."																					example("123e4567-e89b-12d3-a456-426614174005")
+//	@Param			author_id				query		string	false	"Filter by author ID (UUID format). Applies to comments and acceptance criteria."																						example("123e4567-e89b-12d3-a456-426614174006")
+//	@Param			sort_by					query		string	false	"Sort by field: priority, created_at, last_modified, title, relevance (relevance only available with query)"														default(created_at)	example("priority")
+//	@Param			sort_order				query		string	false	"Sort order: asc (ascending) or desc (descending)"																													default(desc)			example("asc")
+//	@Param			limit					query		int		false	"Maximum number of results to return (1-100)"																															default(50)				example(20)
+//	@Param			offset					query		int		false	"Number of results to skip for pagination (0-based)"																													default(0)				example(0)
+//	@Success		200						{object}	service.SearchResponse	"Successful search with results, pagination metadata, and execution details"
+//	@Failure		400						{object}	ErrorResponse			"Invalid search parameters (invalid UUID format, out of range values, invalid sort fields)"
+//	@Failure		500						{object}	ErrorResponse			"Internal server error during search operation"
 //	@Router			/api/search [get]
 func (h *SearchHandler) Search(c *gin.Context) {
 	correlationID, _ := c.Get("correlation_id")
@@ -255,15 +255,15 @@ func (h *SearchHandler) parseSearchOptions(c *gin.Context) (service.SearchOption
 // SearchSuggestions handles search suggestion requests
 //
 //	@Summary		Get search suggestions
-//	@Description	Get search suggestions based on partial query
+//	@Description	Provides search suggestions based on partial query input. Returns matching titles, reference IDs, and available status values to help users construct effective search queries.
 //	@Tags			search
 //	@Accept			json
 //	@Produce		json
-//	@Param			query	query		string	true	"Partial search query"
-//	@Param			limit	query		int		false	"Limit number of suggestions"	default(10)
-//	@Success		200		{object}	map[string][]string
-//	@Failure		400		{object}	ErrorResponse
-//	@Failure		500		{object}	ErrorResponse
+//	@Param			query	query		string	true	"Partial search query for generating suggestions. Minimum 2 characters recommended."	example("auth")
+//	@Param			limit	query		int		false	"Maximum number of suggestions per category (1-50)"										default(10)	example(5)
+//	@Success		200		{object}	SearchSuggestionsResponse	"Search suggestions grouped by category"
+//	@Failure		400		{object}	ErrorResponse				"Invalid parameters (missing query, invalid limit)"
+//	@Failure		500		{object}	ErrorResponse				"Internal server error during suggestion generation"
 //	@Router			/api/search/suggestions [get]
 func (h *SearchHandler) SearchSuggestions(c *gin.Context) {
 	correlationID, _ := c.Get("correlation_id")
