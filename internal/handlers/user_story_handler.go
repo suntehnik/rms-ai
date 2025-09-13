@@ -25,6 +25,16 @@ func NewUserStoryHandler(userStoryService service.UserStoryService) *UserStoryHa
 }
 
 // CreateUserStory handles POST /api/v1/user-stories
+// @Summary Create a new user story
+// @Description Create a new user story with the provided details. The epic_id must be specified in the request body to establish the parent-child relationship. The user story description should follow the template format: 'As [role], I want [function], so that [goal]'.
+// @Tags user-stories
+// @Accept json
+// @Produce json
+// @Param user_story body service.CreateUserStoryRequest true "User story creation request"
+// @Success 201 {object} models.UserStory "Successfully created user story"
+// @Failure 400 {object} map[string]interface{} "Invalid request body, epic_id required, creator/assignee not found, epic not found, invalid priority, or invalid user story template"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/user-stories [post]
 func (h *UserStoryHandler) CreateUserStory(c *gin.Context) {
 	var req service.CreateUserStoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -144,6 +154,16 @@ func (h *UserStoryHandler) CreateUserStoryInEpic(c *gin.Context) {
 }
 
 // GetUserStory handles GET /api/v1/user-stories/:id
+// @Summary Get a user story by ID or reference ID
+// @Description Retrieve a specific user story by its UUID or human-readable reference ID (e.g., US-001). Returns the user story with basic information excluding related entities.
+// @Tags user-stories
+// @Accept json
+// @Produce json
+// @Param id path string true "User story UUID or reference ID" example("123e4567-e89b-12d3-a456-426614174000") example("US-001")
+// @Success 200 {object} models.UserStory "Successfully retrieved user story"
+// @Failure 404 {object} map[string]interface{} "User story not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/user-stories/{id} [get]
 func (h *UserStoryHandler) GetUserStory(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -174,6 +194,18 @@ func (h *UserStoryHandler) GetUserStory(c *gin.Context) {
 }
 
 // UpdateUserStory handles PUT /api/v1/user-stories/:id
+// @Summary Update a user story
+// @Description Update an existing user story by its UUID. All fields in the request body are optional and will only update the provided fields. The user story description should follow the template format if provided.
+// @Tags user-stories
+// @Accept json
+// @Produce json
+// @Param id path string true "User story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param user_story body service.UpdateUserStoryRequest true "User story update request"
+// @Success 200 {object} models.UserStory "Successfully updated user story"
+// @Failure 400 {object} map[string]interface{} "Invalid user story ID format, request body, assignee not found, invalid priority, invalid status, invalid status transition, or invalid user story template"
+// @Failure 404 {object} map[string]interface{} "User story not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/user-stories/{id} [put]
 func (h *UserStoryHandler) UpdateUserStory(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -234,6 +266,19 @@ func (h *UserStoryHandler) UpdateUserStory(c *gin.Context) {
 }
 
 // DeleteUserStory handles DELETE /api/v1/user-stories/:id
+// @Summary Delete a user story
+// @Description Delete a user story by its UUID. By default, deletion will fail if the user story has associated requirements or acceptance criteria. Use the force=true query parameter to delete with all dependencies.
+// @Tags user-stories
+// @Accept json
+// @Produce json
+// @Param id path string true "User story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param force query boolean false "Force delete with all dependencies" example(false)
+// @Success 204 "Successfully deleted user story"
+// @Failure 400 {object} map[string]interface{} "Invalid user story ID format"
+// @Failure 404 {object} map[string]interface{} "User story not found"
+// @Failure 409 {object} map[string]interface{} "User story has associated requirements and cannot be deleted (use force=true)"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/user-stories/{id} [delete]
 func (h *UserStoryHandler) DeleteUserStory(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -273,6 +318,22 @@ func (h *UserStoryHandler) DeleteUserStory(c *gin.Context) {
 }
 
 // ListUserStories handles GET /api/v1/user-stories
+// @Summary List user stories with filtering and pagination
+// @Description Retrieve a list of user stories with optional filtering by epic, creator, assignee, status, and priority. Supports pagination and custom sorting.
+// @Tags user-stories
+// @Accept json
+// @Produce json
+// @Param epic_id query string false "Filter by epic UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param creator_id query string false "Filter by creator UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174001")
+// @Param assignee_id query string false "Filter by assignee UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174002")
+// @Param status query string false "Filter by user story status" Enums(Backlog,Draft,In Progress,Done,Cancelled) example("Backlog")
+// @Param priority query integer false "Filter by priority level" minimum(1) maximum(4) example(2)
+// @Param order_by query string false "Sort order for results" example("created_at DESC") example("priority ASC") example("title ASC")
+// @Param limit query integer false "Maximum number of results to return" minimum(1) maximum(100) default(50) example(20)
+// @Param offset query integer false "Number of results to skip for pagination" minimum(0) default(0) example(0)
+// @Success 200 {object} map[string]interface{} "Successfully retrieved user stories list with count"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/user-stories [get]
 func (h *UserStoryHandler) ListUserStories(c *gin.Context) {
 	var filters service.UserStoryFilters
 
@@ -338,6 +399,16 @@ func (h *UserStoryHandler) ListUserStories(c *gin.Context) {
 }
 
 // GetUserStoryWithAcceptanceCriteria handles GET /api/v1/user-stories/:id/acceptance-criteria
+// @Summary Get user story with acceptance criteria
+// @Description Retrieve a specific user story by its UUID or reference ID, including all associated acceptance criteria. This endpoint provides hierarchical data showing the user story and its testable conditions.
+// @Tags user-stories
+// @Accept json
+// @Produce json
+// @Param id path string true "User story UUID or reference ID" example("123e4567-e89b-12d3-a456-426614174000") example("US-001")
+// @Success 200 {object} models.UserStory "Successfully retrieved user story with acceptance criteria"
+// @Failure 404 {object} map[string]interface{} "User story not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/user-stories/{id}/acceptance-criteria [get]
 func (h *UserStoryHandler) GetUserStoryWithAcceptanceCriteria(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -373,6 +444,16 @@ func (h *UserStoryHandler) GetUserStoryWithAcceptanceCriteria(c *gin.Context) {
 }
 
 // GetUserStoryWithRequirements handles GET /api/v1/user-stories/:id/requirements
+// @Summary Get user story with requirements
+// @Description Retrieve a specific user story by its UUID or reference ID, including all associated detailed requirements. This endpoint provides hierarchical data showing the user story and its technical requirements.
+// @Tags user-stories
+// @Accept json
+// @Produce json
+// @Param id path string true "User story UUID or reference ID" example("123e4567-e89b-12d3-a456-426614174000") example("US-001")
+// @Success 200 {object} models.UserStory "Successfully retrieved user story with requirements"
+// @Failure 404 {object} map[string]interface{} "User story not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/user-stories/{id}/requirements [get]
 func (h *UserStoryHandler) GetUserStoryWithRequirements(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -408,6 +489,18 @@ func (h *UserStoryHandler) GetUserStoryWithRequirements(c *gin.Context) {
 }
 
 // ChangeUserStoryStatus handles PATCH /api/v1/user-stories/:id/status
+// @Summary Change user story status
+// @Description Update the status of a user story. All status transitions are allowed by default. Valid statuses are: Backlog, Draft, In Progress, Done, Cancelled.
+// @Tags user-stories
+// @Accept json
+// @Produce json
+// @Param id path string true "User story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param status body object true "Status change request" example({"status": "In Progress"})
+// @Success 200 {object} models.UserStory "Successfully changed user story status"
+// @Failure 400 {object} map[string]interface{} "Invalid user story ID format, request body, invalid status, or invalid status transition"
+// @Failure 404 {object} map[string]interface{} "User story not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/user-stories/{id}/status [patch]
 func (h *UserStoryHandler) ChangeUserStoryStatus(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -459,6 +552,18 @@ func (h *UserStoryHandler) ChangeUserStoryStatus(c *gin.Context) {
 }
 
 // AssignUserStory handles PATCH /api/v1/user-stories/:id/assign
+// @Summary Assign user story to a user
+// @Description Assign a user story to a specific user by updating the assignee_id. The assignee must be a valid user in the system.
+// @Tags user-stories
+// @Accept json
+// @Produce json
+// @Param id path string true "User story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param assignment body object true "Assignment request" example({"assignee_id": "123e4567-e89b-12d3-a456-426614174003"})
+// @Success 200 {object} models.UserStory "Successfully assigned user story"
+// @Failure 400 {object} map[string]interface{} "Invalid user story ID format, request body, or assignee not found"
+// @Failure 404 {object} map[string]interface{} "User story not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/user-stories/{id}/assign [patch]
 func (h *UserStoryHandler) AssignUserStory(c *gin.Context) {
 	idParam := c.Param("id")
 

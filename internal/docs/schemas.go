@@ -179,3 +179,61 @@ type InternalServerError ErrorResponse
 // ServiceUnavailableError represents a 503 Service Unavailable error
 // @Description Service Unavailable - Service temporarily unavailable
 type ServiceUnavailableError ErrorResponse
+
+// UserStoryRelationshipExamples provides examples of hierarchical data retrieval patterns
+// @Description Examples of complex relationship queries for user stories
+
+// UserStoryWithAcceptanceCriteriaExample represents a user story with acceptance criteria
+// @Description Example response for GET /api/v1/user-stories/{id}/acceptance-criteria showing hierarchical data
+type UserStoryWithAcceptanceCriteriaExample struct {
+	ID                 uuid.UUID `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ReferenceID        string    `json:"reference_id" example:"US-001"`
+	Title              string    `json:"title" example:"User Login with Email and Password"`
+	AcceptanceCriteria []struct {
+		ID          uuid.UUID `json:"id" example:"456e7890-e89b-12d3-a456-426614174001"`
+		ReferenceID string    `json:"reference_id" example:"AC-001"`
+		Title       string    `json:"title" example:"Valid email format validation"`
+		Description string    `json:"description" example:"WHEN user enters email THEN system SHALL validate email format"`
+	} `json:"acceptance_criteria"`
+} // @name UserStoryWithAcceptanceCriteriaExample
+
+// UserStoryWithRequirementsExample represents a user story with requirements
+// @Description Example response for GET /api/v1/user-stories/{id}/requirements showing hierarchical data
+type UserStoryWithRequirementsExample struct {
+	ID           uuid.UUID `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ReferenceID  string    `json:"reference_id" example:"US-001"`
+	Title        string    `json:"title" example:"User Login with Email and Password"`
+	Requirements []struct {
+		ID          uuid.UUID `json:"id" example:"789e0123-e89b-12d3-a456-426614174002"`
+		ReferenceID string    `json:"reference_id" example:"REQ-001"`
+		Title       string    `json:"title" example:"Email validation service integration"`
+		Description string    `json:"description" example:"The system must integrate with email validation service to verify email format and domain validity"`
+		Priority    int       `json:"priority" example:"2"`
+		Status      string    `json:"status" example:"Draft"`
+	} `json:"requirements"`
+} // @name UserStoryWithRequirementsExample
+
+// UserStoryListResponse represents a paginated list of user stories
+// @Description Example response for GET /api/v1/user-stories with filtering and pagination
+type UserStoryListResponse struct {
+	UserStories []struct {
+		ID          uuid.UUID `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+		ReferenceID string    `json:"reference_id" example:"US-001"`
+		EpicID      uuid.UUID `json:"epic_id" example:"456e7890-e89b-12d3-a456-426614174001"`
+		Title       string    `json:"title" example:"User Login with Email and Password"`
+		Status      string    `json:"status" example:"Backlog"`
+		Priority    int       `json:"priority" example:"2"`
+		CreatedAt   time.Time `json:"created_at" example:"2023-01-15T10:30:00Z"`
+	} `json:"user_stories"`
+	Count int `json:"count" example:"25"`
+} // @name UserStoryListResponse
+
+// NestedUserStoryCreationExample represents nested creation within epic context
+// @Description Example request for POST /api/v1/epics/{id}/user-stories showing nested resource creation
+type NestedUserStoryCreationExample struct {
+	CreatorID   uuid.UUID `json:"creator_id" example:"123e4567-e89b-12d3-a456-426614174001"`
+	AssigneeID  uuid.UUID `json:"assignee_id,omitempty" example:"123e4567-e89b-12d3-a456-426614174002"`
+	Priority    int       `json:"priority" example:"2"`
+	Title       string    `json:"title" example:"User Profile Management"`
+	Description string    `json:"description" example:"As a registered user, I want to manage my profile information, so that I can keep my account details up to date."`
+} // @name NestedUserStoryCreationExample

@@ -70,6 +70,17 @@ func (h *RequirementHandler) CreateRequirement(c *gin.Context) {
 }
 
 // CreateRequirementInUserStory handles POST /api/v1/user-stories/:id/requirements
+// @Summary Create a requirement within a user story
+// @Description Create a new detailed requirement that belongs to the specified user story. This is a nested resource creation that establishes the parent-child relationship between user story and requirement. The user story ID from the URL path will be used as the parent.
+// @Tags user-stories
+// @Accept json
+// @Produce json
+// @Param id path string true "User story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param requirement body object true "Requirement creation request (user_story_id will be set from path parameter)" example({"creator_id":"123e4567-e89b-12d3-a456-426614174001","priority":2,"type_id":"123e4567-e89b-12d3-a456-426614174002","title":"User authentication validation","description":"The system must validate user credentials against the database"})
+// @Success 201 {object} models.Requirement "Successfully created requirement within user story"
+// @Failure 400 {object} map[string]interface{} "Invalid user story ID format, request body, creator/assignee not found, user story not found, requirement type not found, acceptance criteria not found, or invalid priority"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/user-stories/{id}/requirements [post]
 func (h *RequirementHandler) CreateRequirementInUserStory(c *gin.Context) {
 	userStoryIDParam := c.Param("id")
 

@@ -34,34 +34,127 @@ type UserStoryService interface {
 }
 
 // CreateUserStoryRequest represents the request to create a user story
+// @Description Request structure for creating a new user story
 type CreateUserStoryRequest struct {
-	EpicID      uuid.UUID       `json:"epic_id,omitempty"`
-	CreatorID   uuid.UUID       `json:"creator_id" binding:"required"`
-	AssigneeID  *uuid.UUID      `json:"assignee_id,omitempty"`
-	Priority    models.Priority `json:"priority" binding:"required,min=1,max=4"`
-	Title       string          `json:"title" binding:"required,max=500"`
-	Description *string         `json:"description,omitempty"`
+	// EpicID is the UUID of the epic this user story belongs to
+	// @Description UUID of the epic that will contain this user story (required for direct creation)
+	// @Example "123e4567-e89b-12d3-a456-426614174000"
+	EpicID uuid.UUID `json:"epic_id,omitempty"`
+
+	// CreatorID is the UUID of the user creating the user story
+	// @Description UUID of the user who is creating this user story (required)
+	// @Example "123e4567-e89b-12d3-a456-426614174001"
+	CreatorID uuid.UUID `json:"creator_id" binding:"required"`
+
+	// AssigneeID is the UUID of the user assigned to the user story
+	// @Description UUID of the user to assign this user story to (optional, defaults to creator)
+	// @Example "123e4567-e89b-12d3-a456-426614174002"
+	AssigneeID *uuid.UUID `json:"assignee_id,omitempty"`
+
+	// Priority indicates the importance level of the user story
+	// @Description Priority level of the user story (1=Critical, 2=High, 3=Medium, 4=Low)
+	// @Minimum 1
+	// @Maximum 4
+	// @Example 2
+	Priority models.Priority `json:"priority" binding:"required,min=1,max=4"`
+
+	// Title is the name/summary of the user story
+	// @Description Title or name of the user story (required, max 500 characters)
+	// @MaxLength 500
+	// @Example "User Login with Email and Password"
+	Title string `json:"title" binding:"required,max=500"`
+
+	// Description provides detailed information about the user story
+	// @Description Detailed description following the template 'As [role], I want [function], so that [goal]' (optional, max 2000 characters)
+	// @MaxLength 2000
+	// @Example "As a registered user, I want to log in with my email and password, so that I can access my personalized dashboard and account features."
+	Description *string `json:"description,omitempty"`
 }
 
 // UpdateUserStoryRequest represents the request to update a user story
+// @Description Request structure for updating an existing user story (all fields are optional)
 type UpdateUserStoryRequest struct {
-	AssigneeID  *uuid.UUID              `json:"assignee_id,omitempty"`
-	Priority    *models.Priority        `json:"priority,omitempty"`
-	Status      *models.UserStoryStatus `json:"status,omitempty"`
-	Title       *string                 `json:"title,omitempty"`
-	Description *string                 `json:"description,omitempty"`
+	// AssigneeID is the UUID of the user to assign the user story to
+	// @Description UUID of the user to assign this user story to (optional)
+	// @Example "123e4567-e89b-12d3-a456-426614174002"
+	AssigneeID *uuid.UUID `json:"assignee_id,omitempty"`
+
+	// Priority indicates the importance level of the user story
+	// @Description Priority level of the user story (1=Critical, 2=High, 3=Medium, 4=Low) (optional)
+	// @Minimum 1
+	// @Maximum 4
+	// @Example 3
+	Priority *models.Priority `json:"priority,omitempty"`
+
+	// Status represents the current workflow state of the user story
+	// @Description Current status of the user story in the workflow (optional)
+	// @Enum Backlog,Draft,In Progress,Done,Cancelled
+	// @Example "In Progress"
+	Status *models.UserStoryStatus `json:"status,omitempty"`
+
+	// Title is the name/summary of the user story
+	// @Description Title or name of the user story (optional, max 500 characters)
+	// @MaxLength 500
+	// @Example "Enhanced User Login with Two-Factor Authentication"
+	Title *string `json:"title,omitempty"`
+
+	// Description provides detailed information about the user story
+	// @Description Detailed description following the template 'As [role], I want [function], so that [goal]' (optional, max 2000 characters)
+	// @MaxLength 2000
+	// @Example "As a security-conscious user, I want to enable two-factor authentication on my account, so that I can protect my personal information from unauthorized access."
+	Description *string `json:"description,omitempty"`
 }
 
 // UserStoryFilters represents filters for listing user stories
+// @Description Filter and pagination options for listing user stories
 type UserStoryFilters struct {
-	EpicID     *uuid.UUID              `json:"epic_id,omitempty"`
-	CreatorID  *uuid.UUID              `json:"creator_id,omitempty"`
-	AssigneeID *uuid.UUID              `json:"assignee_id,omitempty"`
-	Status     *models.UserStoryStatus `json:"status,omitempty"`
-	Priority   *models.Priority        `json:"priority,omitempty"`
-	OrderBy    string                  `json:"order_by,omitempty"`
-	Limit      int                     `json:"limit,omitempty"`
-	Offset     int                     `json:"offset,omitempty"`
+	// EpicID filters user stories by epic
+	// @Description Filter user stories by epic UUID (optional)
+	// @Example "123e4567-e89b-12d3-a456-426614174000"
+	EpicID *uuid.UUID `json:"epic_id,omitempty"`
+
+	// CreatorID filters user stories by creator
+	// @Description Filter user stories by creator UUID (optional)
+	// @Example "123e4567-e89b-12d3-a456-426614174001"
+	CreatorID *uuid.UUID `json:"creator_id,omitempty"`
+
+	// AssigneeID filters user stories by assignee
+	// @Description Filter user stories by assignee UUID (optional)
+	// @Example "123e4567-e89b-12d3-a456-426614174002"
+	AssigneeID *uuid.UUID `json:"assignee_id,omitempty"`
+
+	// Status filters user stories by status
+	// @Description Filter user stories by status (optional)
+	// @Enum Backlog,Draft,In Progress,Done,Cancelled
+	// @Example "Backlog"
+	Status *models.UserStoryStatus `json:"status,omitempty"`
+
+	// Priority filters user stories by priority
+	// @Description Filter user stories by priority level (optional)
+	// @Minimum 1
+	// @Maximum 4
+	// @Example 2
+	Priority *models.Priority `json:"priority,omitempty"`
+
+	// OrderBy specifies the sort order
+	// @Description Sort order for results (optional, default: "created_at DESC")
+	// @Example "created_at DESC"
+	// @Example "priority ASC"
+	// @Example "title ASC"
+	OrderBy string `json:"order_by,omitempty"`
+
+	// Limit specifies the maximum number of results
+	// @Description Maximum number of results to return (optional, default: 50, max: 100)
+	// @Minimum 1
+	// @Maximum 100
+	// @Example 20
+	Limit int `json:"limit,omitempty"`
+
+	// Offset specifies the number of results to skip
+	// @Description Number of results to skip for pagination (optional, default: 0)
+	// @Minimum 0
+	// @Example 0
+	Offset int `json:"offset,omitempty"`
 }
 
 // userStoryService implements UserStoryService interface

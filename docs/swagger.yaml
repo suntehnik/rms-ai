@@ -32,6 +32,717 @@ definitions:
       error:
         $ref: '#/definitions/internal_handlers.ErrorDetail'
     type: object
+  product-requirements-management_internal_models.AcceptanceCriteria:
+    description: Testable conditions that define when a user story is considered complete
+      and acceptable
+    properties:
+      author:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.User'
+        description: User who authored this acceptance criteria
+      author_id:
+        description: ID of the user who authored this acceptance criteria
+        example: 123e4567-e89b-12d3-a456-426614174002
+        type: string
+      comments:
+        description: Comments associated with this acceptance criteria
+        items:
+          $ref: '#/definitions/product-requirements-management_internal_models.Comment'
+        type: array
+      created_at:
+        description: Timestamp when the acceptance criteria was created
+        example: "2023-01-01T00:00:00Z"
+        type: string
+      description:
+        description: EARS format description of the acceptance criteria
+        example: WHEN a user enters valid credentials THEN the system SHALL authenticate
+          the user and redirect to the dashboard
+        type: string
+      id:
+        description: Unique identifier for the acceptance criteria
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+      last_modified:
+        description: Timestamp when the acceptance criteria was last modified
+        example: "2023-01-02T12:30:00Z"
+        type: string
+      reference_id:
+        description: Human-readable reference identifier
+        example: AC-001
+        type: string
+      requirements:
+        description: Requirements linked to this acceptance criteria
+        items:
+          $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
+        type: array
+      user_story:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+        description: Relationships
+      user_story_id:
+        description: ID of the parent user story
+        example: 123e4567-e89b-12d3-a456-426614174001
+        type: string
+    required:
+    - description
+    type: object
+  product-requirements-management_internal_models.Comment:
+    description: A comment that can be attached to any entity, supporting both general
+      and inline comments with threading
+    properties:
+      author:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.User'
+        description: User who authored this comment
+      author_id:
+        description: ID of the user who authored this comment
+        example: 123e4567-e89b-12d3-a456-426614174003
+        type: string
+      content:
+        description: Text content of the comment
+        example: This requirement needs clarification on the authentication flow.
+        type: string
+      created_at:
+        description: Timestamp when the comment was created
+        example: "2023-01-01T00:00:00Z"
+        type: string
+      entity_id:
+        description: ID of the entity this comment is attached to
+        example: 123e4567-e89b-12d3-a456-426614174001
+        type: string
+      entity_type:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.EntityType'
+        description: Type of entity this comment is attached to
+        example: epic
+      id:
+        description: Unique identifier for the comment
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+      is_resolved:
+        description: Whether this comment has been resolved
+        example: false
+        type: boolean
+      linked_text:
+        description: For inline comments
+        example: OAuth 2.0 authentication flow
+        type: string
+      parent_comment:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.Comment'
+        description: Relationships
+      parent_comment_id:
+        description: Optional ID of parent comment for threaded discussions
+        example: 123e4567-e89b-12d3-a456-426614174002
+        type: string
+      replies:
+        description: Replies to this comment
+        items:
+          $ref: '#/definitions/product-requirements-management_internal_models.Comment'
+        type: array
+      text_position_end:
+        description: End position of linked text for inline comments
+        example: 73
+        type: integer
+      text_position_start:
+        description: Start position of linked text for inline comments
+        example: 45
+        type: integer
+      updated_at:
+        description: Timestamp when the comment was last updated
+        example: "2023-01-02T12:30:00Z"
+        type: string
+    required:
+    - content
+    - entity_type
+    type: object
+  product-requirements-management_internal_models.EntityType:
+    description: Type of entity that can receive comments in the system
+    enum:
+    - epic
+    - user_story
+    - acceptance_criteria
+    - requirement
+    type: string
+    x-enum-comments:
+      EntityTypeAcceptanceCriteria: Acceptance Criteria - testable conditions for
+        user stories
+      EntityTypeEpic: Epic - top-level feature container
+      EntityTypeRequirement: Requirement - detailed technical requirement
+      EntityTypeUserStory: User Story - feature requirement within an epic
+    x-enum-descriptions:
+    - Epic - top-level feature container
+    - User Story - feature requirement within an epic
+    - Acceptance Criteria - testable conditions for user stories
+    - Requirement - detailed technical requirement
+    x-enum-varnames:
+    - EntityTypeEpic
+    - EntityTypeUserStory
+    - EntityTypeAcceptanceCriteria
+    - EntityTypeRequirement
+  product-requirements-management_internal_models.Epic:
+    description: Epic is a large body of work that can be broken down into smaller
+      user stories. It represents a significant feature or initiative that delivers
+      business value.
+    properties:
+      assignee:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.User'
+        description: |-
+          Assignee contains the user information of who is assigned to the epic
+          @Description User currently assigned to this epic (populated when requested with ?include=assignee)
+      assignee_id:
+        description: |-
+          AssigneeID is the UUID of the user assigned to the epic
+          @Description UUID of the user currently assigned to work on this epic
+          @Example "123e4567-e89b-12d3-a456-426614174002"
+        type: string
+      comments:
+        description: |-
+          Comments contains all comments associated with this epic
+          @Description List of comments on this epic (populated when requested with ?include=comments)
+        items:
+          $ref: '#/definitions/product-requirements-management_internal_models.Comment'
+        type: array
+      created_at:
+        description: |-
+          CreatedAt is the timestamp when the epic was created
+          @Description Timestamp when the epic was created (RFC3339 format)
+          @Example "2023-01-15T10:30:00Z"
+        type: string
+      creator:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.User'
+        description: |-
+          Creator contains the user information of who created the epic
+          @Description User who created this epic (populated when requested with ?include=creator)
+      creator_id:
+        description: |-
+          CreatorID is the UUID of the user who created the epic
+          @Description UUID of the user who created this epic
+          @Example "123e4567-e89b-12d3-a456-426614174001"
+        type: string
+      description:
+        description: |-
+          Description provides detailed information about the epic
+          @Description Detailed description of the epic's purpose and scope (optional, max 5000 characters)
+          @MaxLength 5000
+          @Example "Implement a comprehensive user authentication and authorization system with JWT tokens, role-based access control, and secure password management."
+        maxLength: 5000
+        type: string
+      id:
+        description: |-
+          ID is the unique identifier for the epic
+          @Description Unique UUID identifier for the epic
+          @Example "123e4567-e89b-12d3-a456-426614174000"
+        type: string
+      last_modified:
+        description: |-
+          LastModified is the timestamp when the epic was last updated
+          @Description Timestamp when the epic was last modified (RFC3339 format)
+          @Example "2023-01-16T14:45:30Z"
+        type: string
+      priority:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.Priority'
+        description: |-
+          Priority indicates the importance level of the epic
+          @Description Priority level of the epic (1=Critical, 2=High, 3=Medium, 4=Low)
+          @Minimum 1
+          @Maximum 4
+          @Example 1
+        maximum: 4
+        minimum: 1
+      reference_id:
+        description: |-
+          ReferenceID is the human-readable identifier for the epic
+          @Description Human-readable reference identifier (auto-generated, format: EP-XXX)
+          @Example "EP-001"
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.EpicStatus'
+        description: |-
+          Status represents the current workflow state of the epic
+          @Description Current status of the epic in the workflow
+          @Enum Backlog,Draft,In Progress,Done,Cancelled
+          @Example "Backlog"
+      title:
+        description: |-
+          Title is the name/summary of the epic
+          @Description Title or name of the epic (required, max 500 characters)
+          @MaxLength 500
+          @Example "User Authentication System"
+        maxLength: 500
+        type: string
+      user_stories:
+        description: |-
+          UserStories contains all user stories that belong to this epic
+          @Description List of user stories that belong to this epic (populated when requested with ?include=user_stories)
+        items:
+          $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+        type: array
+    required:
+    - priority
+    - status
+    - title
+    type: object
+  product-requirements-management_internal_models.EpicStatus:
+    description: Status of an epic in the workflow lifecycle
+    enum:
+    - Backlog
+    - Draft
+    - In Progress
+    - Done
+    - Cancelled
+    type: string
+    x-enum-comments:
+      EpicStatusBacklog: Epic is in the backlog - not yet started, awaiting prioritization
+      EpicStatusCancelled: Epic has been cancelled - will not be implemented
+      EpicStatusDone: Epic is completed - all user stories finished
+      EpicStatusDraft: Epic is in draft state - being defined and refined
+      EpicStatusInProgress: Epic is being actively worked on
+    x-enum-descriptions:
+    - Epic is in the backlog - not yet started, awaiting prioritization
+    - Epic is in draft state - being defined and refined
+    - Epic is being actively worked on
+    - Epic is completed - all user stories finished
+    - Epic has been cancelled - will not be implemented
+    x-enum-varnames:
+    - EpicStatusBacklog
+    - EpicStatusDraft
+    - EpicStatusInProgress
+    - EpicStatusDone
+    - EpicStatusCancelled
+  product-requirements-management_internal_models.Priority:
+    description: Priority level for entities (1=Critical, 2=High, 3=Medium, 4=Low)
+    enum:
+    - 1
+    - 2
+    - 3
+    - 4
+    type: integer
+    x-enum-comments:
+      PriorityCritical: Critical priority - highest urgency, immediate attention required
+      PriorityHigh: High priority - important, should be addressed soon
+      PriorityLow: Low priority - nice to have, can be deferred
+      PriorityMedium: Medium priority - normal importance, standard timeline
+    x-enum-descriptions:
+    - Critical priority - highest urgency, immediate attention required
+    - High priority - important, should be addressed soon
+    - Medium priority - normal importance, standard timeline
+    - Low priority - nice to have, can be deferred
+    x-enum-varnames:
+    - PriorityCritical
+    - PriorityHigh
+    - PriorityMedium
+    - PriorityLow
+  product-requirements-management_internal_models.RelationshipType:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      requirement_relationships:
+        description: Relationships
+        items:
+          $ref: '#/definitions/product-requirements-management_internal_models.RequirementRelationship'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  product-requirements-management_internal_models.Requirement:
+    description: A detailed requirement that specifies what needs to be implemented
+      within a user story
+    properties:
+      acceptance_criteria:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.AcceptanceCriteria'
+        description: Optional linked acceptance criteria
+      acceptance_criteria_id:
+        description: Optional ID of linked acceptance criteria
+        example: 123e4567-e89b-12d3-a456-426614174002
+        type: string
+      assignee:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.User'
+        description: User assigned to implement this requirement
+      assignee_id:
+        description: ID of the user assigned to implement the requirement
+        example: 123e4567-e89b-12d3-a456-426614174004
+        type: string
+      comments:
+        description: Comments associated with this requirement
+        items:
+          $ref: '#/definitions/product-requirements-management_internal_models.Comment'
+        type: array
+      created_at:
+        description: Timestamp when the requirement was created
+        example: "2023-01-01T00:00:00Z"
+        type: string
+      creator:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.User'
+        description: User who created this requirement
+      creator_id:
+        description: ID of the user who created the requirement
+        example: 123e4567-e89b-12d3-a456-426614174003
+        type: string
+      description:
+        description: Detailed description of the requirement
+        example: The system shall support OAuth 2.0 authentication flow with support
+          for Google, GitHub, and Microsoft providers. The implementation must handle
+          token refresh and provide secure session management.
+        type: string
+      id:
+        description: Unique identifier for the requirement
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+      last_modified:
+        description: Timestamp when the requirement was last modified
+        example: "2023-01-02T12:30:00Z"
+        type: string
+      priority:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.Priority'
+        description: Priority level (1=Critical, 2=High, 3=Medium, 4=Low)
+        example: 2
+        maximum: 4
+        minimum: 1
+      reference_id:
+        description: Human-readable reference identifier
+        example: REQ-001
+        type: string
+      source_relationships:
+        description: Relationships where this requirement is the source
+        items:
+          $ref: '#/definitions/product-requirements-management_internal_models.RequirementRelationship'
+        type: array
+      status:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.RequirementStatus'
+        description: Current status of the requirement
+        example: Draft
+      target_relationships:
+        description: Relationships where this requirement is the target
+        items:
+          $ref: '#/definitions/product-requirements-management_internal_models.RequirementRelationship'
+        type: array
+      title:
+        description: Brief title describing the requirement
+        example: User authentication must support OAuth 2.0
+        maxLength: 500
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.RequirementType'
+        description: Type classification of this requirement
+      type_id:
+        description: ID of the requirement type (Functional, Non-Functional, etc.)
+        example: 123e4567-e89b-12d3-a456-426614174005
+        type: string
+      user_story:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+        description: Relationships
+      user_story_id:
+        description: ID of the parent user story
+        example: 123e4567-e89b-12d3-a456-426614174001
+        type: string
+    required:
+    - priority
+    - status
+    - title
+    type: object
+  product-requirements-management_internal_models.RequirementRelationship:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: string
+      creator:
+        $ref: '#/definitions/product-requirements-management_internal_models.User'
+      id:
+        type: string
+      relationship_type:
+        $ref: '#/definitions/product-requirements-management_internal_models.RelationshipType'
+      relationship_type_id:
+        type: string
+      source_requirement:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
+        description: Relationships
+      source_requirement_id:
+        type: string
+      target_requirement:
+        $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
+      target_requirement_id:
+        type: string
+    type: object
+  product-requirements-management_internal_models.RequirementStatus:
+    description: Status of a requirement in the workflow lifecycle
+    enum:
+    - Draft
+    - Active
+    - Obsolete
+    type: string
+    x-enum-comments:
+      RequirementStatusActive: Active - requirement is approved and being implemented
+      RequirementStatusDraft: Draft - requirement is being written and refined
+      RequirementStatusObsolete: Obsolete - requirement is no longer needed or has
+        been superseded
+    x-enum-descriptions:
+    - Draft - requirement is being written and refined
+    - Active - requirement is approved and being implemented
+    - Obsolete - requirement is no longer needed or has been superseded
+    x-enum-varnames:
+    - RequirementStatusDraft
+    - RequirementStatusActive
+    - RequirementStatusObsolete
+  product-requirements-management_internal_models.RequirementType:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      requirements:
+        description: Relationships
+        items:
+          $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  product-requirements-management_internal_models.User:
+    description: A user account in the system with authentication and role-based permissions
+    properties:
+      created_at:
+        description: Timestamp when the user account was created
+        example: "2023-01-01T00:00:00Z"
+        type: string
+      email:
+        description: Unique email address for login and notifications
+        example: john.doe@example.com
+        type: string
+      id:
+        description: Unique identifier for the user
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.UserRole'
+        description: User role determining permissions
+        example: User
+      updated_at:
+        description: Timestamp when the user account was last updated
+        example: "2023-01-02T12:30:00Z"
+        type: string
+      username:
+        description: Unique username for login
+        example: john_doe
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - email
+    - role
+    - username
+    type: object
+  product-requirements-management_internal_models.UserRole:
+    description: Role that determines user permissions and access levels in the system
+    enum:
+    - Administrator
+    - User
+    - Commenter
+    type: string
+    x-enum-comments:
+      RoleAdministrator: Administrator - full system access including user and configuration
+        management
+      RoleCommenter: Commenter - can only add comments, limited editing capabilities
+      RoleUser: User - can create, edit, and delete entities
+    x-enum-descriptions:
+    - Administrator - full system access including user and configuration management
+    - User - can create, edit, and delete entities
+    - Commenter - can only add comments, limited editing capabilities
+    x-enum-varnames:
+    - RoleAdministrator
+    - RoleUser
+    - RoleCommenter
+  product-requirements-management_internal_models.UserStory:
+    description: User story is a short, simple description of a feature told from
+      the perspective of the person who desires the new capability. It belongs to
+      an epic and can have multiple acceptance criteria and requirements.
+    properties:
+      acceptance_criteria:
+        description: |-
+          AcceptanceCriteria contains all acceptance criteria that belong to this user story
+          @Description List of acceptance criteria that define when this user story is considered complete (populated when requested with ?include=acceptance_criteria)
+        items:
+          $ref: '#/definitions/product-requirements-management_internal_models.AcceptanceCriteria'
+        type: array
+      assignee:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.User'
+        description: |-
+          Assignee contains the user information of who is assigned to the user story
+          @Description User currently assigned to this user story (populated when requested with ?include=assignee)
+      assignee_id:
+        description: |-
+          AssigneeID is the UUID of the user assigned to the user story
+          @Description UUID of the user currently assigned to work on this user story
+          @Example "123e4567-e89b-12d3-a456-426614174003"
+        type: string
+      comments:
+        description: |-
+          Comments contains all comments associated with this user story
+          @Description List of comments on this user story (populated when requested with ?include=comments)
+        items:
+          $ref: '#/definitions/product-requirements-management_internal_models.Comment'
+        type: array
+      created_at:
+        description: |-
+          CreatedAt is the timestamp when the user story was created
+          @Description Timestamp when the user story was created (RFC3339 format)
+          @Example "2023-01-15T10:30:00Z"
+        type: string
+      creator:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.User'
+        description: |-
+          Creator contains the user information of who created the user story
+          @Description User who created this user story (populated when requested with ?include=creator)
+      creator_id:
+        description: |-
+          CreatorID is the UUID of the user who created the user story
+          @Description UUID of the user who created this user story
+          @Example "123e4567-e89b-12d3-a456-426614174002"
+        type: string
+      description:
+        description: |-
+          Description provides detailed information about the user story
+          @Description Detailed description of the user story, preferably in the format 'As [role], I want [function], so that [goal]' (optional, max 2000 characters)
+          @MaxLength 2000
+          @Example "As a registered user, I want to log in with my email and password, so that I can access my personalized dashboard and account features."
+        maxLength: 2000
+        type: string
+      epic:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.Epic'
+        description: |-
+          Relationships
+          Epic contains the epic information this user story belongs to
+          @Description Epic that contains this user story (populated when requested with ?include=epic)
+      epic_id:
+        description: |-
+          EpicID is the UUID of the epic this user story belongs to
+          @Description UUID of the epic that contains this user story
+          @Example "123e4567-e89b-12d3-a456-426614174001"
+        type: string
+      id:
+        description: |-
+          ID is the unique identifier for the user story
+          @Description Unique UUID identifier for the user story
+          @Example "123e4567-e89b-12d3-a456-426614174000"
+        type: string
+      last_modified:
+        description: |-
+          LastModified is the timestamp when the user story was last updated
+          @Description Timestamp when the user story was last modified (RFC3339 format)
+          @Example "2023-01-16T14:45:30Z"
+        type: string
+      priority:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.Priority'
+        description: |-
+          Priority indicates the importance level of the user story
+          @Description Priority level of the user story (1=Critical, 2=High, 3=Medium, 4=Low)
+          @Minimum 1
+          @Maximum 4
+          @Example 2
+        maximum: 4
+        minimum: 1
+      reference_id:
+        description: |-
+          ReferenceID is the human-readable identifier for the user story
+          @Description Human-readable reference identifier (auto-generated, format: US-XXX)
+          @Example "US-001"
+        type: string
+      requirements:
+        description: |-
+          Requirements contains all requirements that belong to this user story
+          @Description List of detailed requirements that belong to this user story (populated when requested with ?include=requirements)
+        items:
+          $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
+        type: array
+      status:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.UserStoryStatus'
+        description: |-
+          Status represents the current workflow state of the user story
+          @Description Current status of the user story in the workflow
+          @Enum Backlog,Draft,In Progress,Done,Cancelled
+          @Example "Backlog"
+      title:
+        description: |-
+          Title is the name/summary of the user story
+          @Description Title or name of the user story (required, max 500 characters)
+          @MaxLength 500
+          @Example "User Login with Email and Password"
+        maxLength: 500
+        type: string
+    required:
+    - priority
+    - status
+    - title
+    type: object
+  product-requirements-management_internal_models.UserStoryStatus:
+    description: Status of a user story in the workflow lifecycle
+    enum:
+    - Backlog
+    - Draft
+    - In Progress
+    - Done
+    - Cancelled
+    type: string
+    x-enum-comments:
+      UserStoryStatusBacklog: User story is in the backlog - not yet started, awaiting
+        prioritization
+      UserStoryStatusCancelled: User story has been cancelled and will not be implemented
+      UserStoryStatusDone: User story has been completed and meets acceptance criteria
+      UserStoryStatusDraft: User story is being drafted - requirements are being defined
+      UserStoryStatusInProgress: User story is actively being worked on
+    x-enum-descriptions:
+    - User story is in the backlog - not yet started, awaiting prioritization
+    - User story is being drafted - requirements are being defined
+    - User story is actively being worked on
+    - User story has been completed and meets acceptance criteria
+    - User story has been cancelled and will not be implemented
+    x-enum-varnames:
+    - UserStoryStatusBacklog
+    - UserStoryStatusDraft
+    - UserStoryStatusInProgress
+    - UserStoryStatusDone
+    - UserStoryStatusCancelled
+  product-requirements-management_internal_service.AssignEpicRequest:
+    description: Request payload for assigning an epic to a user
+    properties:
+      assignee_id:
+        description: |-
+          AssigneeID is the UUID of the user to assign the epic to
+          @Description UUID of the user to assign this epic to
+          @Example "123e4567-e89b-12d3-a456-426614174002"
+        type: string
+    required:
+    - assignee_id
+    type: object
   product-requirements-management_internal_service.CascadeDeletePreview:
     properties:
       entity_id:
@@ -51,6 +762,130 @@ definitions:
         type: string
       reference_id:
         type: string
+    type: object
+  product-requirements-management_internal_service.ChangeEpicStatusRequest:
+    description: Request payload for changing an epic's status
+    properties:
+      status:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.EpicStatus'
+        description: |-
+          Status is the new workflow state for the epic
+          @Description New status for the epic
+          @Enum Backlog,Draft,In Progress,Done,Cancelled
+          @Example "In Progress"
+    required:
+    - status
+    type: object
+  product-requirements-management_internal_service.CreateAcceptanceCriteriaRequest:
+    properties:
+      author_id:
+        type: string
+      description:
+        type: string
+      user_story_id:
+        type: string
+    required:
+    - author_id
+    - description
+    type: object
+  product-requirements-management_internal_service.CreateEpicRequest:
+    description: Request payload for creating a new epic
+    properties:
+      assignee_id:
+        description: |-
+          AssigneeID is the UUID of the user to assign the epic to (optional, defaults to creator)
+          @Description UUID of the user to assign this epic to (optional, defaults to creator if not provided)
+          @Example "123e4567-e89b-12d3-a456-426614174002"
+        type: string
+      creator_id:
+        description: |-
+          CreatorID is the UUID of the user creating the epic
+          @Description UUID of the user who is creating this epic (required)
+          @Example "123e4567-e89b-12d3-a456-426614174001"
+        type: string
+      description:
+        description: |-
+          Description provides detailed information about the epic
+          @Description Detailed description of the epic's purpose and scope (optional, max 5000 characters)
+          @MaxLength 5000
+          @Example "Implement a comprehensive user authentication and authorization system with JWT tokens, role-based access control, and secure password management."
+        type: string
+      priority:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.Priority'
+        description: |-
+          Priority is the importance level of the epic
+          @Description Priority level of the epic (1=Critical, 2=High, 3=Medium, 4=Low)
+          @Minimum 1
+          @Maximum 4
+          @Example 1
+        maximum: 4
+        minimum: 1
+      title:
+        description: |-
+          Title is the name/summary of the epic
+          @Description Title or name of the epic (required, max 500 characters)
+          @MaxLength 500
+          @Example "User Authentication System"
+        maxLength: 500
+        type: string
+    required:
+    - creator_id
+    - priority
+    - title
+    type: object
+  product-requirements-management_internal_service.CreateUserStoryRequest:
+    description: Request structure for creating a new user story
+    properties:
+      assignee_id:
+        description: |-
+          AssigneeID is the UUID of the user assigned to the user story
+          @Description UUID of the user to assign this user story to (optional, defaults to creator)
+          @Example "123e4567-e89b-12d3-a456-426614174002"
+        type: string
+      creator_id:
+        description: |-
+          CreatorID is the UUID of the user creating the user story
+          @Description UUID of the user who is creating this user story (required)
+          @Example "123e4567-e89b-12d3-a456-426614174001"
+        type: string
+      description:
+        description: |-
+          Description provides detailed information about the user story
+          @Description Detailed description following the template 'As [role], I want [function], so that [goal]' (optional, max 2000 characters)
+          @MaxLength 2000
+          @Example "As a registered user, I want to log in with my email and password, so that I can access my personalized dashboard and account features."
+        type: string
+      epic_id:
+        description: |-
+          EpicID is the UUID of the epic this user story belongs to
+          @Description UUID of the epic that will contain this user story (required for direct creation)
+          @Example "123e4567-e89b-12d3-a456-426614174000"
+        type: string
+      priority:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.Priority'
+        description: |-
+          Priority indicates the importance level of the user story
+          @Description Priority level of the user story (1=Critical, 2=High, 3=Medium, 4=Low)
+          @Minimum 1
+          @Maximum 4
+          @Example 2
+        maximum: 4
+        minimum: 1
+      title:
+        description: |-
+          Title is the name/summary of the user story
+          @Description Title or name of the user story (required, max 500 characters)
+          @MaxLength 500
+          @Example "User Login with Email and Password"
+        maxLength: 500
+        type: string
+    required:
+    - creator_id
+    - priority
+    - title
     type: object
   product-requirements-management_internal_service.DeletionResult:
     properties:
@@ -140,6 +975,89 @@ definitions:
         type: string
       type:
         description: epic, user_story, acceptance_criteria, requirement
+        type: string
+    type: object
+  product-requirements-management_internal_service.UpdateEpicRequest:
+    description: Request payload for updating an existing epic (all fields are optional)
+    properties:
+      assignee_id:
+        description: |-
+          AssigneeID is the UUID of the user to assign the epic to
+          @Description UUID of the user to assign this epic to (optional)
+          @Example "123e4567-e89b-12d3-a456-426614174002"
+        type: string
+      description:
+        description: |-
+          Description provides detailed information about the epic
+          @Description Detailed description of the epic's purpose and scope (optional, max 5000 characters)
+          @MaxLength 5000
+          @Example "Enhanced implementation with multi-factor authentication and advanced security features."
+        type: string
+      priority:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.Priority'
+        description: |-
+          Priority is the importance level of the epic
+          @Description Priority level of the epic (1=Critical, 2=High, 3=Medium, 4=Low) (optional)
+          @Minimum 1
+          @Maximum 4
+          @Example 2
+      status:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.EpicStatus'
+        description: |-
+          Status is the workflow state of the epic
+          @Description Current status of the epic in the workflow (optional)
+          @Enum Backlog,Draft,In Progress,Done,Cancelled
+          @Example "In Progress"
+      title:
+        description: |-
+          Title is the name/summary of the epic
+          @Description Title or name of the epic (optional, max 500 characters)
+          @MaxLength 500
+          @Example "Enhanced User Authentication System"
+        type: string
+    type: object
+  product-requirements-management_internal_service.UpdateUserStoryRequest:
+    description: Request structure for updating an existing user story (all fields
+      are optional)
+    properties:
+      assignee_id:
+        description: |-
+          AssigneeID is the UUID of the user to assign the user story to
+          @Description UUID of the user to assign this user story to (optional)
+          @Example "123e4567-e89b-12d3-a456-426614174002"
+        type: string
+      description:
+        description: |-
+          Description provides detailed information about the user story
+          @Description Detailed description following the template 'As [role], I want [function], so that [goal]' (optional, max 2000 characters)
+          @MaxLength 2000
+          @Example "As a security-conscious user, I want to enable two-factor authentication on my account, so that I can protect my personal information from unauthorized access."
+        type: string
+      priority:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.Priority'
+        description: |-
+          Priority indicates the importance level of the user story
+          @Description Priority level of the user story (1=Critical, 2=High, 3=Medium, 4=Low) (optional)
+          @Minimum 1
+          @Maximum 4
+          @Example 3
+      status:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.UserStoryStatus'
+        description: |-
+          Status represents the current workflow state of the user story
+          @Description Current status of the user story in the workflow (optional)
+          @Enum Backlog,Draft,In Progress,Done,Cancelled
+          @Example "In Progress"
+      title:
+        description: |-
+          Title is the name/summary of the user story
+          @Description Title or name of the user story (optional, max 500 characters)
+          @MaxLength 500
+          @Example "Enhanced User Login with Two-Factor Authentication"
         type: string
     type: object
 host: localhost:8080
@@ -632,6 +1550,898 @@ paths:
       summary: Validate user story deletion
       tags:
       - deletion
+  /api/v1/epics:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of epics with optional filtering by creator, assignee,
+        status, and priority. Supports pagination and custom ordering.
+      parameters:
+      - description: Filter by creator UUID
+        example: '"123e4567-e89b-12d3-a456-426614174001"'
+        format: uuid
+        in: query
+        name: creator_id
+        type: string
+      - description: Filter by assignee UUID
+        example: '"123e4567-e89b-12d3-a456-426614174002"'
+        format: uuid
+        in: query
+        name: assignee_id
+        type: string
+      - description: Filter by epic status
+        enum:
+        - Backlog
+        - Draft
+        - In Progress
+        - Done
+        - Cancelled
+        example: '"Backlog"'
+        in: query
+        name: status
+        type: string
+      - description: Filter by priority level
+        example: 1
+        in: query
+        maximum: 4
+        minimum: 1
+        name: priority
+        type: integer
+      - description: Order results by field
+        example: '"created_at DESC"'
+        in: query
+        name: order_by
+        type: string
+      - default: 50
+        description: Maximum number of results to return
+        example: 20
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of results to skip for pagination
+        example: 0
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of epics with count
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: List epics with filtering and pagination
+      tags:
+      - epics
+    post:
+      consumes:
+      - application/json
+      description: Create a new epic with the provided details. The epic will be assigned
+        a unique reference ID (EP-XXX format) and default status of "Backlog".
+      parameters:
+      - description: Epic creation request
+        in: body
+        name: epic
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.CreateEpicRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created epic
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_models.Epic'
+        "400":
+          description: Invalid request body, creator/assignee not found, or invalid
+            priority
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Create a new epic
+      tags:
+      - epics
+  /api/v1/epics/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an epic by UUID. By default, epics with associated user
+        stories cannot be deleted unless force=true is specified.
+      parameters:
+      - description: Epic UUID
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Force delete even if epic has user stories
+        example: false
+        in: query
+        name: force
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Epic deleted successfully
+        "400":
+          description: Invalid epic ID format
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Epic not found
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Epic has associated user stories and cannot be deleted (use
+            force=true to override)
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Delete an epic
+      tags:
+      - epics
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single epic by its UUID or reference ID (e.g., EP-001).
+        Supports both formats for flexible access.
+      parameters:
+      - description: Epic ID (UUID) or reference ID (EP-XXX)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Epic found successfully
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_models.Epic'
+        "404":
+          description: Epic not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get an epic by ID or reference ID
+      tags:
+      - epics
+    put:
+      consumes:
+      - application/json
+      description: Update an epic's properties. Only provided fields will be updated.
+        Supports partial updates with validation for status transitions and priority
+        values.
+      parameters:
+      - description: Epic UUID
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Epic update request
+        in: body
+        name: epic
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.UpdateEpicRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Epic updated successfully
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_models.Epic'
+        "400":
+          description: Invalid request body, epic ID format, assignee not found, invalid
+            priority, invalid status, or invalid status transition
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Epic not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Update an existing epic
+      tags:
+      - epics
+  /api/v1/epics/{id}/assign:
+    patch:
+      consumes:
+      - application/json
+      description: Assign an epic to a specific user by updating the assignee_id.
+        The system validates that the assignee user exists before making the assignment.
+      parameters:
+      - description: Epic UUID
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Assignment request
+        in: body
+        name: assignment
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.AssignEpicRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Epic assigned successfully
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_models.Epic'
+        "400":
+          description: Invalid epic ID format, request body, or assignee not found
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Epic not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Assign an epic to a user
+      tags:
+      - epics
+  /api/v1/epics/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Update the workflow status of an epic. The system validates status
+        transitions and ensures only valid status changes are allowed. All status
+        transitions are currently permitted as per business requirements.
+      parameters:
+      - description: Epic UUID
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status change request
+        in: body
+        name: status
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.ChangeEpicStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Epic status updated successfully
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_models.Epic'
+        "400":
+          description: Invalid epic ID format, request body, epic status, or status
+            transition
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Epic not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Change the status of an epic
+      tags:
+      - epics
+  /api/v1/epics/{id}/user-stories:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve an epic along with all its associated user stories. This
+        endpoint provides a hierarchical view of the epic and its child user stories,
+        including their acceptance criteria and requirements if available.
+      parameters:
+      - description: Epic ID (UUID) or reference ID (EP-XXX)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Epic with user stories retrieved successfully
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_models.Epic'
+        "404":
+          description: Epic not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get an epic with its user stories
+      tags:
+      - epics
+    post:
+      consumes:
+      - application/json
+      description: Create a new user story that belongs to the specified epic. This
+        is a nested resource creation that establishes the parent-child relationship
+        between epic and user story. The epic ID from the URL path will override any
+        epic_id in the request body.
+      parameters:
+      - description: Epic UUID
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User story creation request (epic_id will be overridden by path
+          parameter)
+        in: body
+        name: user_story
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.CreateUserStoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created user story within epic
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+        "400":
+          description: Invalid epic ID format, request body, creator/assignee not
+            found, epic not found, invalid priority, or invalid user story template
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Create a new user story within an epic
+      tags:
+      - epics
+  /api/v1/user-stories:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of user stories with optional filtering by epic,
+        creator, assignee, status, and priority. Supports pagination and custom sorting.
+      parameters:
+      - description: Filter by epic UUID
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        format: uuid
+        in: query
+        name: epic_id
+        type: string
+      - description: Filter by creator UUID
+        example: '"123e4567-e89b-12d3-a456-426614174001"'
+        format: uuid
+        in: query
+        name: creator_id
+        type: string
+      - description: Filter by assignee UUID
+        example: '"123e4567-e89b-12d3-a456-426614174002"'
+        format: uuid
+        in: query
+        name: assignee_id
+        type: string
+      - description: Filter by user story status
+        enum:
+        - Backlog
+        - Draft
+        - In Progress
+        - Done
+        - Cancelled
+        example: '"Backlog"'
+        in: query
+        name: status
+        type: string
+      - description: Filter by priority level
+        example: 2
+        in: query
+        maximum: 4
+        minimum: 1
+        name: priority
+        type: integer
+      - description: Sort order for results
+        example: '"created_at DESC"'
+        in: query
+        name: order_by
+        type: string
+      - default: 50
+        description: Maximum number of results to return
+        example: 20
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of results to skip for pagination
+        example: 0
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved user stories list with count
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: List user stories with filtering and pagination
+      tags:
+      - user-stories
+    post:
+      consumes:
+      - application/json
+      description: 'Create a new user story with the provided details. The epic_id
+        must be specified in the request body to establish the parent-child relationship.
+        The user story description should follow the template format: ''As [role],
+        I want [function], so that [goal]''.'
+      parameters:
+      - description: User story creation request
+        in: body
+        name: user_story
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.CreateUserStoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created user story
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+        "400":
+          description: Invalid request body, epic_id required, creator/assignee not
+            found, epic not found, invalid priority, or invalid user story template
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Create a new user story
+      tags:
+      - user-stories
+  /api/v1/user-stories/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a user story by its UUID. By default, deletion will fail
+        if the user story has associated requirements or acceptance criteria. Use
+        the force=true query parameter to delete with all dependencies.
+      parameters:
+      - description: User story UUID
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Force delete with all dependencies
+        example: false
+        in: query
+        name: force
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Successfully deleted user story
+        "400":
+          description: Invalid user story ID format
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: User story not found
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: User story has associated requirements and cannot be deleted
+            (use force=true)
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Delete a user story
+      tags:
+      - user-stories
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific user story by its UUID or human-readable reference
+        ID (e.g., US-001). Returns the user story with basic information excluding
+        related entities.
+      parameters:
+      - description: User story UUID or reference ID
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved user story
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+        "404":
+          description: User story not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get a user story by ID or reference ID
+      tags:
+      - user-stories
+    put:
+      consumes:
+      - application/json
+      description: Update an existing user story by its UUID. All fields in the request
+        body are optional and will only update the provided fields. The user story
+        description should follow the template format if provided.
+      parameters:
+      - description: User story UUID
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User story update request
+        in: body
+        name: user_story
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.UpdateUserStoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated user story
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+        "400":
+          description: Invalid user story ID format, request body, assignee not found,
+            invalid priority, invalid status, invalid status transition, or invalid
+            user story template
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: User story not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Update a user story
+      tags:
+      - user-stories
+  /api/v1/user-stories/{id}/acceptance-criteria:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific user story by its UUID or reference ID, including
+        all associated acceptance criteria. This endpoint provides hierarchical data
+        showing the user story and its testable conditions.
+      parameters:
+      - description: User story UUID or reference ID
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved user story with acceptance criteria
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+        "404":
+          description: User story not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get user story with acceptance criteria
+      tags:
+      - user-stories
+    post:
+      consumes:
+      - application/json
+      description: Create new acceptance criteria that belongs to the specified user
+        story. This is a nested resource creation that establishes the parent-child
+        relationship between user story and acceptance criteria. The user story ID
+        from the URL path will be used as the parent.
+      parameters:
+      - description: User story UUID
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Acceptance criteria creation request (user_story_id will be set
+          from path parameter)
+        in: body
+        name: acceptance_criteria
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.CreateAcceptanceCriteriaRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created acceptance criteria within user story
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_models.AcceptanceCriteria'
+        "400":
+          description: Invalid user story ID format, request body, user story not
+            found, or author not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Create acceptance criteria within a user story
+      tags:
+      - user-stories
+  /api/v1/user-stories/{id}/assign:
+    patch:
+      consumes:
+      - application/json
+      description: Assign a user story to a specific user by updating the assignee_id.
+        The assignee must be a valid user in the system.
+      parameters:
+      - description: User story UUID
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Assignment request
+        in: body
+        name: assignment
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully assigned user story
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+        "400":
+          description: Invalid user story ID format, request body, or assignee not
+            found
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: User story not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Assign user story to a user
+      tags:
+      - user-stories
+  /api/v1/user-stories/{id}/requirements:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific user story by its UUID or reference ID, including
+        all associated detailed requirements. This endpoint provides hierarchical
+        data showing the user story and its technical requirements.
+      parameters:
+      - description: User story UUID or reference ID
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved user story with requirements
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+        "404":
+          description: User story not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get user story with requirements
+      tags:
+      - user-stories
+    post:
+      consumes:
+      - application/json
+      description: Create a new detailed requirement that belongs to the specified
+        user story. This is a nested resource creation that establishes the parent-child
+        relationship between user story and requirement. The user story ID from the
+        URL path will be used as the parent.
+      parameters:
+      - description: User story UUID
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Requirement creation request (user_story_id will be set from
+          path parameter)
+        in: body
+        name: requirement
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created requirement within user story
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
+        "400":
+          description: Invalid user story ID format, request body, creator/assignee
+            not found, user story not found, requirement type not found, acceptance
+            criteria not found, or invalid priority
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Create a requirement within a user story
+      tags:
+      - user-stories
+  /api/v1/user-stories/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: 'Update the status of a user story. All status transitions are
+        allowed by default. Valid statuses are: Backlog, Draft, In Progress, Done,
+        Cancelled.'
+      parameters:
+      - description: User story UUID
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status change request
+        in: body
+        name: status
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully changed user story status
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+        "400":
+          description: Invalid user story ID format, request body, invalid status,
+            or invalid status transition
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: User story not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Change user story status
+      tags:
+      - user-stories
 securityDefinitions:
   BearerAuth:
     description: Type "Bearer" followed by a space and JWT token.

@@ -730,6 +730,1210 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/v1/epics": {
+            "get": {
+                "description": "Retrieve a list of epics with optional filtering by creator, assignee, status, and priority. Supports pagination and custom ordering.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "epics"
+                ],
+                "summary": "List epics with filtering and pagination",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174001\"",
+                        "description": "Filter by creator UUID",
+                        "name": "creator_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174002\"",
+                        "description": "Filter by assignee UUID",
+                        "name": "assignee_id",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "Backlog",
+                            "Draft",
+                            "In Progress",
+                            "Done",
+                            "Cancelled"
+                        ],
+                        "type": "string",
+                        "example": "\"Backlog\"",
+                        "description": "Filter by epic status",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 4,
+                        "minimum": 1,
+                        "type": "integer",
+                        "example": 1,
+                        "description": "Filter by priority level",
+                        "name": "priority",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "\"created_at DESC\"",
+                        "description": "Order results by field",
+                        "name": "order_by",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 50,
+                        "example": 20,
+                        "description": "Maximum number of results to return",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "description": "Number of results to skip for pagination",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of epics with count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new epic with the provided details. The epic will be assigned a unique reference ID (EP-XXX format) and default status of \"Backlog\".",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "epics"
+                ],
+                "summary": "Create a new epic",
+                "parameters": [
+                    {
+                        "description": "Epic creation request",
+                        "name": "epic",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateEpicRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created epic",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Epic"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body, creator/assignee not found, or invalid priority",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/epics/{id}": {
+            "get": {
+                "description": "Retrieve a single epic by its UUID or reference ID (e.g., EP-001). Supports both formats for flexible access.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "epics"
+                ],
+                "summary": "Get an epic by ID or reference ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Epic ID (UUID) or reference ID (EP-XXX)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Epic found successfully",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Epic"
+                        }
+                    },
+                    "404": {
+                        "description": "Epic not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update an epic's properties. Only provided fields will be updated. Supports partial updates with validation for status transitions and priority values.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "epics"
+                ],
+                "summary": "Update an existing epic",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Epic UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Epic update request",
+                        "name": "epic",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateEpicRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Epic updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Epic"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body, epic ID format, assignee not found, invalid priority, invalid status, or invalid status transition",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Epic not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete an epic by UUID. By default, epics with associated user stories cannot be deleted unless force=true is specified.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "epics"
+                ],
+                "summary": "Delete an epic",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Epic UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "example": false,
+                        "description": "Force delete even if epic has user stories",
+                        "name": "force",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Epic deleted successfully"
+                    },
+                    "400": {
+                        "description": "Invalid epic ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Epic not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "Epic has associated user stories and cannot be deleted (use force=true to override)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/epics/{id}/assign": {
+            "patch": {
+                "description": "Assign an epic to a specific user by updating the assignee_id. The system validates that the assignee user exists before making the assignment.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "epics"
+                ],
+                "summary": "Assign an epic to a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Epic UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Assignment request",
+                        "name": "assignment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.AssignEpicRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Epic assigned successfully",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Epic"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid epic ID format, request body, or assignee not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Epic not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/epics/{id}/status": {
+            "patch": {
+                "description": "Update the workflow status of an epic. The system validates status transitions and ensures only valid status changes are allowed. All status transitions are currently permitted as per business requirements.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "epics"
+                ],
+                "summary": "Change the status of an epic",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Epic UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Status change request",
+                        "name": "status",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.ChangeEpicStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Epic status updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Epic"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid epic ID format, request body, epic status, or status transition",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Epic not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/epics/{id}/user-stories": {
+            "get": {
+                "description": "Retrieve an epic along with all its associated user stories. This endpoint provides a hierarchical view of the epic and its child user stories, including their acceptance criteria and requirements if available.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "epics"
+                ],
+                "summary": "Get an epic with its user stories",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Epic ID (UUID) or reference ID (EP-XXX)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Epic with user stories retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Epic"
+                        }
+                    },
+                    "404": {
+                        "description": "Epic not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new user story that belongs to the specified epic. This is a nested resource creation that establishes the parent-child relationship between epic and user story. The epic ID from the URL path will override any epic_id in the request body.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "epics"
+                ],
+                "summary": "Create a new user story within an epic",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Epic UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User story creation request (epic_id will be overridden by path parameter)",
+                        "name": "user_story",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateUserStoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created user story within epic",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid epic ID format, request body, creator/assignee not found, epic not found, invalid priority, or invalid user story template",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user-stories": {
+            "get": {
+                "description": "Retrieve a list of user stories with optional filtering by epic, creator, assignee, status, and priority. Supports pagination and custom sorting.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user-stories"
+                ],
+                "summary": "List user stories with filtering and pagination",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Filter by epic UUID",
+                        "name": "epic_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174001\"",
+                        "description": "Filter by creator UUID",
+                        "name": "creator_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174002\"",
+                        "description": "Filter by assignee UUID",
+                        "name": "assignee_id",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "Backlog",
+                            "Draft",
+                            "In Progress",
+                            "Done",
+                            "Cancelled"
+                        ],
+                        "type": "string",
+                        "example": "\"Backlog\"",
+                        "description": "Filter by user story status",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 4,
+                        "minimum": 1,
+                        "type": "integer",
+                        "example": 2,
+                        "description": "Filter by priority level",
+                        "name": "priority",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "\"created_at DESC\"",
+                        "description": "Sort order for results",
+                        "name": "order_by",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 50,
+                        "example": 20,
+                        "description": "Maximum number of results to return",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "description": "Number of results to skip for pagination",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved user stories list with count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new user story with the provided details. The epic_id must be specified in the request body to establish the parent-child relationship. The user story description should follow the template format: 'As [role], I want [function], so that [goal]'.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user-stories"
+                ],
+                "summary": "Create a new user story",
+                "parameters": [
+                    {
+                        "description": "User story creation request",
+                        "name": "user_story",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateUserStoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created user story",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body, epic_id required, creator/assignee not found, epic not found, invalid priority, or invalid user story template",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user-stories/{id}": {
+            "get": {
+                "description": "Retrieve a specific user story by its UUID or human-readable reference ID (e.g., US-001). Returns the user story with basic information excluding related entities.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user-stories"
+                ],
+                "summary": "Get a user story by ID or reference ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "User story UUID or reference ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved user story",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                        }
+                    },
+                    "404": {
+                        "description": "User story not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update an existing user story by its UUID. All fields in the request body are optional and will only update the provided fields. The user story description should follow the template format if provided.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user-stories"
+                ],
+                "summary": "Update a user story",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "User story UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User story update request",
+                        "name": "user_story",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateUserStoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated user story",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user story ID format, request body, assignee not found, invalid priority, invalid status, invalid status transition, or invalid user story template",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "User story not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a user story by its UUID. By default, deletion will fail if the user story has associated requirements or acceptance criteria. Use the force=true query parameter to delete with all dependencies.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user-stories"
+                ],
+                "summary": "Delete a user story",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "User story UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "example": false,
+                        "description": "Force delete with all dependencies",
+                        "name": "force",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted user story"
+                    },
+                    "400": {
+                        "description": "Invalid user story ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "User story not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "User story has associated requirements and cannot be deleted (use force=true)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user-stories/{id}/acceptance-criteria": {
+            "get": {
+                "description": "Retrieve a specific user story by its UUID or reference ID, including all associated acceptance criteria. This endpoint provides hierarchical data showing the user story and its testable conditions.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user-stories"
+                ],
+                "summary": "Get user story with acceptance criteria",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "User story UUID or reference ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved user story with acceptance criteria",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                        }
+                    },
+                    "404": {
+                        "description": "User story not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create new acceptance criteria that belongs to the specified user story. This is a nested resource creation that establishes the parent-child relationship between user story and acceptance criteria. The user story ID from the URL path will be used as the parent.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user-stories"
+                ],
+                "summary": "Create acceptance criteria within a user story",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "User story UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Acceptance criteria creation request (user_story_id will be set from path parameter)",
+                        "name": "acceptance_criteria",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateAcceptanceCriteriaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created acceptance criteria within user story",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.AcceptanceCriteria"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user story ID format, request body, user story not found, or author not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user-stories/{id}/assign": {
+            "patch": {
+                "description": "Assign a user story to a specific user by updating the assignee_id. The assignee must be a valid user in the system.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user-stories"
+                ],
+                "summary": "Assign user story to a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "User story UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Assignment request",
+                        "name": "assignment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully assigned user story",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user story ID format, request body, or assignee not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "User story not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user-stories/{id}/requirements": {
+            "get": {
+                "description": "Retrieve a specific user story by its UUID or reference ID, including all associated detailed requirements. This endpoint provides hierarchical data showing the user story and its technical requirements.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user-stories"
+                ],
+                "summary": "Get user story with requirements",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "User story UUID or reference ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved user story with requirements",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                        }
+                    },
+                    "404": {
+                        "description": "User story not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new detailed requirement that belongs to the specified user story. This is a nested resource creation that establishes the parent-child relationship between user story and requirement. The user story ID from the URL path will be used as the parent.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user-stories"
+                ],
+                "summary": "Create a requirement within a user story",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "User story UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Requirement creation request (user_story_id will be set from path parameter)",
+                        "name": "requirement",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created requirement within user story",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user story ID format, request body, creator/assignee not found, user story not found, requirement type not found, acceptance criteria not found, or invalid priority",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user-stories/{id}/status": {
+            "patch": {
+                "description": "Update the status of a user story. All status transitions are allowed by default. Valid statuses are: Backlog, Draft, In Progress, Done, Cancelled.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user-stories"
+                ],
+                "summary": "Change user story status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "User story UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Status change request",
+                        "name": "status",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully changed user story status",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user story ID format, request body, invalid status, or invalid status transition",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "User story not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -784,6 +1988,852 @@ const docTemplate = `{
                 }
             }
         },
+        "product-requirements-management_internal_models.AcceptanceCriteria": {
+            "description": "Testable conditions that define when a user story is considered complete and acceptable",
+            "type": "object",
+            "required": [
+                "description"
+            ],
+            "properties": {
+                "author": {
+                    "description": "User who authored this acceptance criteria",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                        }
+                    ]
+                },
+                "author_id": {
+                    "description": "ID of the user who authored this acceptance criteria",
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174002"
+                },
+                "comments": {
+                    "description": "Comments associated with this acceptance criteria",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.Comment"
+                    }
+                },
+                "created_at": {
+                    "description": "Timestamp when the acceptance criteria was created",
+                    "type": "string",
+                    "example": "2023-01-01T00:00:00Z"
+                },
+                "description": {
+                    "description": "EARS format description of the acceptance criteria",
+                    "type": "string",
+                    "example": "WHEN a user enters valid credentials THEN the system SHALL authenticate the user and redirect to the dashboard"
+                },
+                "id": {
+                    "description": "Unique identifier for the acceptance criteria",
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                },
+                "last_modified": {
+                    "description": "Timestamp when the acceptance criteria was last modified",
+                    "type": "string",
+                    "example": "2023-01-02T12:30:00Z"
+                },
+                "reference_id": {
+                    "description": "Human-readable reference identifier",
+                    "type": "string",
+                    "example": "AC-001"
+                },
+                "requirements": {
+                    "description": "Requirements linked to this acceptance criteria",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                    }
+                },
+                "user_story": {
+                    "description": "Relationships",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                        }
+                    ]
+                },
+                "user_story_id": {
+                    "description": "ID of the parent user story",
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174001"
+                }
+            }
+        },
+        "product-requirements-management_internal_models.Comment": {
+            "description": "A comment that can be attached to any entity, supporting both general and inline comments with threading",
+            "type": "object",
+            "required": [
+                "content",
+                "entity_type"
+            ],
+            "properties": {
+                "author": {
+                    "description": "User who authored this comment",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                        }
+                    ]
+                },
+                "author_id": {
+                    "description": "ID of the user who authored this comment",
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174003"
+                },
+                "content": {
+                    "description": "Text content of the comment",
+                    "type": "string",
+                    "example": "This requirement needs clarification on the authentication flow."
+                },
+                "created_at": {
+                    "description": "Timestamp when the comment was created",
+                    "type": "string",
+                    "example": "2023-01-01T00:00:00Z"
+                },
+                "entity_id": {
+                    "description": "ID of the entity this comment is attached to",
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174001"
+                },
+                "entity_type": {
+                    "description": "Type of entity this comment is attached to",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.EntityType"
+                        }
+                    ],
+                    "example": "epic"
+                },
+                "id": {
+                    "description": "Unique identifier for the comment",
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                },
+                "is_resolved": {
+                    "description": "Whether this comment has been resolved",
+                    "type": "boolean",
+                    "example": false
+                },
+                "linked_text": {
+                    "description": "For inline comments",
+                    "type": "string",
+                    "example": "OAuth 2.0 authentication flow"
+                },
+                "parent_comment": {
+                    "description": "Relationships",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Comment"
+                        }
+                    ]
+                },
+                "parent_comment_id": {
+                    "description": "Optional ID of parent comment for threaded discussions",
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174002"
+                },
+                "replies": {
+                    "description": "Replies to this comment",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.Comment"
+                    }
+                },
+                "text_position_end": {
+                    "description": "End position of linked text for inline comments",
+                    "type": "integer",
+                    "example": 73
+                },
+                "text_position_start": {
+                    "description": "Start position of linked text for inline comments",
+                    "type": "integer",
+                    "example": 45
+                },
+                "updated_at": {
+                    "description": "Timestamp when the comment was last updated",
+                    "type": "string",
+                    "example": "2023-01-02T12:30:00Z"
+                }
+            }
+        },
+        "product-requirements-management_internal_models.EntityType": {
+            "description": "Type of entity that can receive comments in the system",
+            "type": "string",
+            "enum": [
+                "epic",
+                "user_story",
+                "acceptance_criteria",
+                "requirement"
+            ],
+            "x-enum-comments": {
+                "EntityTypeAcceptanceCriteria": "Acceptance Criteria - testable conditions for user stories",
+                "EntityTypeEpic": "Epic - top-level feature container",
+                "EntityTypeRequirement": "Requirement - detailed technical requirement",
+                "EntityTypeUserStory": "User Story - feature requirement within an epic"
+            },
+            "x-enum-descriptions": [
+                "Epic - top-level feature container",
+                "User Story - feature requirement within an epic",
+                "Acceptance Criteria - testable conditions for user stories",
+                "Requirement - detailed technical requirement"
+            ],
+            "x-enum-varnames": [
+                "EntityTypeEpic",
+                "EntityTypeUserStory",
+                "EntityTypeAcceptanceCriteria",
+                "EntityTypeRequirement"
+            ]
+        },
+        "product-requirements-management_internal_models.Epic": {
+            "description": "Epic is a large body of work that can be broken down into smaller user stories. It represents a significant feature or initiative that delivers business value.",
+            "type": "object",
+            "required": [
+                "priority",
+                "status",
+                "title"
+            ],
+            "properties": {
+                "assignee": {
+                    "description": "Assignee contains the user information of who is assigned to the epic\n@Description User currently assigned to this epic (populated when requested with ?include=assignee)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                        }
+                    ]
+                },
+                "assignee_id": {
+                    "description": "AssigneeID is the UUID of the user assigned to the epic\n@Description UUID of the user currently assigned to work on this epic\n@Example \"123e4567-e89b-12d3-a456-426614174002\"",
+                    "type": "string"
+                },
+                "comments": {
+                    "description": "Comments contains all comments associated with this epic\n@Description List of comments on this epic (populated when requested with ?include=comments)",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.Comment"
+                    }
+                },
+                "created_at": {
+                    "description": "CreatedAt is the timestamp when the epic was created\n@Description Timestamp when the epic was created (RFC3339 format)\n@Example \"2023-01-15T10:30:00Z\"",
+                    "type": "string"
+                },
+                "creator": {
+                    "description": "Creator contains the user information of who created the epic\n@Description User who created this epic (populated when requested with ?include=creator)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                        }
+                    ]
+                },
+                "creator_id": {
+                    "description": "CreatorID is the UUID of the user who created the epic\n@Description UUID of the user who created this epic\n@Example \"123e4567-e89b-12d3-a456-426614174001\"",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description provides detailed information about the epic\n@Description Detailed description of the epic's purpose and scope (optional, max 5000 characters)\n@MaxLength 5000\n@Example \"Implement a comprehensive user authentication and authorization system with JWT tokens, role-based access control, and secure password management.\"",
+                    "type": "string",
+                    "maxLength": 5000
+                },
+                "id": {
+                    "description": "ID is the unique identifier for the epic\n@Description Unique UUID identifier for the epic\n@Example \"123e4567-e89b-12d3-a456-426614174000\"",
+                    "type": "string"
+                },
+                "last_modified": {
+                    "description": "LastModified is the timestamp when the epic was last updated\n@Description Timestamp when the epic was last modified (RFC3339 format)\n@Example \"2023-01-16T14:45:30Z\"",
+                    "type": "string"
+                },
+                "priority": {
+                    "description": "Priority indicates the importance level of the epic\n@Description Priority level of the epic (1=Critical, 2=High, 3=Medium, 4=Low)\n@Minimum 1\n@Maximum 4\n@Example 1",
+                    "maximum": 4,
+                    "minimum": 1,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Priority"
+                        }
+                    ]
+                },
+                "reference_id": {
+                    "description": "ReferenceID is the human-readable identifier for the epic\n@Description Human-readable reference identifier (auto-generated, format: EP-XXX)\n@Example \"EP-001\"",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Status represents the current workflow state of the epic\n@Description Current status of the epic in the workflow\n@Enum Backlog,Draft,In Progress,Done,Cancelled\n@Example \"Backlog\"",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.EpicStatus"
+                        }
+                    ]
+                },
+                "title": {
+                    "description": "Title is the name/summary of the epic\n@Description Title or name of the epic (required, max 500 characters)\n@MaxLength 500\n@Example \"User Authentication System\"",
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "user_stories": {
+                    "description": "UserStories contains all user stories that belong to this epic\n@Description List of user stories that belong to this epic (populated when requested with ?include=user_stories)",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                    }
+                }
+            }
+        },
+        "product-requirements-management_internal_models.EpicStatus": {
+            "description": "Status of an epic in the workflow lifecycle",
+            "type": "string",
+            "enum": [
+                "Backlog",
+                "Draft",
+                "In Progress",
+                "Done",
+                "Cancelled"
+            ],
+            "x-enum-comments": {
+                "EpicStatusBacklog": "Epic is in the backlog - not yet started, awaiting prioritization",
+                "EpicStatusCancelled": "Epic has been cancelled - will not be implemented",
+                "EpicStatusDone": "Epic is completed - all user stories finished",
+                "EpicStatusDraft": "Epic is in draft state - being defined and refined",
+                "EpicStatusInProgress": "Epic is being actively worked on"
+            },
+            "x-enum-descriptions": [
+                "Epic is in the backlog - not yet started, awaiting prioritization",
+                "Epic is in draft state - being defined and refined",
+                "Epic is being actively worked on",
+                "Epic is completed - all user stories finished",
+                "Epic has been cancelled - will not be implemented"
+            ],
+            "x-enum-varnames": [
+                "EpicStatusBacklog",
+                "EpicStatusDraft",
+                "EpicStatusInProgress",
+                "EpicStatusDone",
+                "EpicStatusCancelled"
+            ]
+        },
+        "product-requirements-management_internal_models.Priority": {
+            "description": "Priority level for entities (1=Critical, 2=High, 3=Medium, 4=Low)",
+            "type": "integer",
+            "enum": [
+                1,
+                2,
+                3,
+                4
+            ],
+            "x-enum-comments": {
+                "PriorityCritical": "Critical priority - highest urgency, immediate attention required",
+                "PriorityHigh": "High priority - important, should be addressed soon",
+                "PriorityLow": "Low priority - nice to have, can be deferred",
+                "PriorityMedium": "Medium priority - normal importance, standard timeline"
+            },
+            "x-enum-descriptions": [
+                "Critical priority - highest urgency, immediate attention required",
+                "High priority - important, should be addressed soon",
+                "Medium priority - normal importance, standard timeline",
+                "Low priority - nice to have, can be deferred"
+            ],
+            "x-enum-varnames": [
+                "PriorityCritical",
+                "PriorityHigh",
+                "PriorityMedium",
+                "PriorityLow"
+            ]
+        },
+        "product-requirements-management_internal_models.RelationshipType": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "requirement_relationships": {
+                    "description": "Relationships",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.RequirementRelationship"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "product-requirements-management_internal_models.Requirement": {
+            "description": "A detailed requirement that specifies what needs to be implemented within a user story",
+            "type": "object",
+            "required": [
+                "priority",
+                "status",
+                "title"
+            ],
+            "properties": {
+                "acceptance_criteria": {
+                    "description": "Optional linked acceptance criteria",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.AcceptanceCriteria"
+                        }
+                    ]
+                },
+                "acceptance_criteria_id": {
+                    "description": "Optional ID of linked acceptance criteria",
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174002"
+                },
+                "assignee": {
+                    "description": "User assigned to implement this requirement",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                        }
+                    ]
+                },
+                "assignee_id": {
+                    "description": "ID of the user assigned to implement the requirement",
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174004"
+                },
+                "comments": {
+                    "description": "Comments associated with this requirement",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.Comment"
+                    }
+                },
+                "created_at": {
+                    "description": "Timestamp when the requirement was created",
+                    "type": "string",
+                    "example": "2023-01-01T00:00:00Z"
+                },
+                "creator": {
+                    "description": "User who created this requirement",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                        }
+                    ]
+                },
+                "creator_id": {
+                    "description": "ID of the user who created the requirement",
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174003"
+                },
+                "description": {
+                    "description": "Detailed description of the requirement",
+                    "type": "string",
+                    "example": "The system shall support OAuth 2.0 authentication flow with support for Google, GitHub, and Microsoft providers. The implementation must handle token refresh and provide secure session management."
+                },
+                "id": {
+                    "description": "Unique identifier for the requirement",
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                },
+                "last_modified": {
+                    "description": "Timestamp when the requirement was last modified",
+                    "type": "string",
+                    "example": "2023-01-02T12:30:00Z"
+                },
+                "priority": {
+                    "description": "Priority level (1=Critical, 2=High, 3=Medium, 4=Low)",
+                    "maximum": 4,
+                    "minimum": 1,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Priority"
+                        }
+                    ],
+                    "example": 2
+                },
+                "reference_id": {
+                    "description": "Human-readable reference identifier",
+                    "type": "string",
+                    "example": "REQ-001"
+                },
+                "source_relationships": {
+                    "description": "Relationships where this requirement is the source",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.RequirementRelationship"
+                    }
+                },
+                "status": {
+                    "description": "Current status of the requirement",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.RequirementStatus"
+                        }
+                    ],
+                    "example": "Draft"
+                },
+                "target_relationships": {
+                    "description": "Relationships where this requirement is the target",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.RequirementRelationship"
+                    }
+                },
+                "title": {
+                    "description": "Brief title describing the requirement",
+                    "type": "string",
+                    "maxLength": 500,
+                    "example": "User authentication must support OAuth 2.0"
+                },
+                "type": {
+                    "description": "Type classification of this requirement",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.RequirementType"
+                        }
+                    ]
+                },
+                "type_id": {
+                    "description": "ID of the requirement type (Functional, Non-Functional, etc.)",
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174005"
+                },
+                "user_story": {
+                    "description": "Relationships",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                        }
+                    ]
+                },
+                "user_story_id": {
+                    "description": "ID of the parent user story",
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174001"
+                }
+            }
+        },
+        "product-requirements-management_internal_models.RequirementRelationship": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "creator": {
+                    "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "relationship_type": {
+                    "$ref": "#/definitions/product-requirements-management_internal_models.RelationshipType"
+                },
+                "relationship_type_id": {
+                    "type": "string"
+                },
+                "source_requirement": {
+                    "description": "Relationships",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                        }
+                    ]
+                },
+                "source_requirement_id": {
+                    "type": "string"
+                },
+                "target_requirement": {
+                    "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                },
+                "target_requirement_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "product-requirements-management_internal_models.RequirementStatus": {
+            "description": "Status of a requirement in the workflow lifecycle",
+            "type": "string",
+            "enum": [
+                "Draft",
+                "Active",
+                "Obsolete"
+            ],
+            "x-enum-comments": {
+                "RequirementStatusActive": "Active - requirement is approved and being implemented",
+                "RequirementStatusDraft": "Draft - requirement is being written and refined",
+                "RequirementStatusObsolete": "Obsolete - requirement is no longer needed or has been superseded"
+            },
+            "x-enum-descriptions": [
+                "Draft - requirement is being written and refined",
+                "Active - requirement is approved and being implemented",
+                "Obsolete - requirement is no longer needed or has been superseded"
+            ],
+            "x-enum-varnames": [
+                "RequirementStatusDraft",
+                "RequirementStatusActive",
+                "RequirementStatusObsolete"
+            ]
+        },
+        "product-requirements-management_internal_models.RequirementType": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "requirements": {
+                    "description": "Relationships",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "product-requirements-management_internal_models.User": {
+            "description": "A user account in the system with authentication and role-based permissions",
+            "type": "object",
+            "required": [
+                "email",
+                "role",
+                "username"
+            ],
+            "properties": {
+                "created_at": {
+                    "description": "Timestamp when the user account was created",
+                    "type": "string",
+                    "example": "2023-01-01T00:00:00Z"
+                },
+                "email": {
+                    "description": "Unique email address for login and notifications",
+                    "type": "string",
+                    "example": "john.doe@example.com"
+                },
+                "id": {
+                    "description": "Unique identifier for the user",
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                },
+                "role": {
+                    "description": "User role determining permissions",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.UserRole"
+                        }
+                    ],
+                    "example": "User"
+                },
+                "updated_at": {
+                    "description": "Timestamp when the user account was last updated",
+                    "type": "string",
+                    "example": "2023-01-02T12:30:00Z"
+                },
+                "username": {
+                    "description": "Unique username for login",
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 3,
+                    "example": "john_doe"
+                }
+            }
+        },
+        "product-requirements-management_internal_models.UserRole": {
+            "description": "Role that determines user permissions and access levels in the system",
+            "type": "string",
+            "enum": [
+                "Administrator",
+                "User",
+                "Commenter"
+            ],
+            "x-enum-comments": {
+                "RoleAdministrator": "Administrator - full system access including user and configuration management",
+                "RoleCommenter": "Commenter - can only add comments, limited editing capabilities",
+                "RoleUser": "User - can create, edit, and delete entities"
+            },
+            "x-enum-descriptions": [
+                "Administrator - full system access including user and configuration management",
+                "User - can create, edit, and delete entities",
+                "Commenter - can only add comments, limited editing capabilities"
+            ],
+            "x-enum-varnames": [
+                "RoleAdministrator",
+                "RoleUser",
+                "RoleCommenter"
+            ]
+        },
+        "product-requirements-management_internal_models.UserStory": {
+            "description": "User story is a short, simple description of a feature told from the perspective of the person who desires the new capability. It belongs to an epic and can have multiple acceptance criteria and requirements.",
+            "type": "object",
+            "required": [
+                "priority",
+                "status",
+                "title"
+            ],
+            "properties": {
+                "acceptance_criteria": {
+                    "description": "AcceptanceCriteria contains all acceptance criteria that belong to this user story\n@Description List of acceptance criteria that define when this user story is considered complete (populated when requested with ?include=acceptance_criteria)",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.AcceptanceCriteria"
+                    }
+                },
+                "assignee": {
+                    "description": "Assignee contains the user information of who is assigned to the user story\n@Description User currently assigned to this user story (populated when requested with ?include=assignee)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                        }
+                    ]
+                },
+                "assignee_id": {
+                    "description": "AssigneeID is the UUID of the user assigned to the user story\n@Description UUID of the user currently assigned to work on this user story\n@Example \"123e4567-e89b-12d3-a456-426614174003\"",
+                    "type": "string"
+                },
+                "comments": {
+                    "description": "Comments contains all comments associated with this user story\n@Description List of comments on this user story (populated when requested with ?include=comments)",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.Comment"
+                    }
+                },
+                "created_at": {
+                    "description": "CreatedAt is the timestamp when the user story was created\n@Description Timestamp when the user story was created (RFC3339 format)\n@Example \"2023-01-15T10:30:00Z\"",
+                    "type": "string"
+                },
+                "creator": {
+                    "description": "Creator contains the user information of who created the user story\n@Description User who created this user story (populated when requested with ?include=creator)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                        }
+                    ]
+                },
+                "creator_id": {
+                    "description": "CreatorID is the UUID of the user who created the user story\n@Description UUID of the user who created this user story\n@Example \"123e4567-e89b-12d3-a456-426614174002\"",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description provides detailed information about the user story\n@Description Detailed description of the user story, preferably in the format 'As [role], I want [function], so that [goal]' (optional, max 2000 characters)\n@MaxLength 2000\n@Example \"As a registered user, I want to log in with my email and password, so that I can access my personalized dashboard and account features.\"",
+                    "type": "string",
+                    "maxLength": 2000
+                },
+                "epic": {
+                    "description": "Relationships\nEpic contains the epic information this user story belongs to\n@Description Epic that contains this user story (populated when requested with ?include=epic)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Epic"
+                        }
+                    ]
+                },
+                "epic_id": {
+                    "description": "EpicID is the UUID of the epic this user story belongs to\n@Description UUID of the epic that contains this user story\n@Example \"123e4567-e89b-12d3-a456-426614174001\"",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID is the unique identifier for the user story\n@Description Unique UUID identifier for the user story\n@Example \"123e4567-e89b-12d3-a456-426614174000\"",
+                    "type": "string"
+                },
+                "last_modified": {
+                    "description": "LastModified is the timestamp when the user story was last updated\n@Description Timestamp when the user story was last modified (RFC3339 format)\n@Example \"2023-01-16T14:45:30Z\"",
+                    "type": "string"
+                },
+                "priority": {
+                    "description": "Priority indicates the importance level of the user story\n@Description Priority level of the user story (1=Critical, 2=High, 3=Medium, 4=Low)\n@Minimum 1\n@Maximum 4\n@Example 2",
+                    "maximum": 4,
+                    "minimum": 1,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Priority"
+                        }
+                    ]
+                },
+                "reference_id": {
+                    "description": "ReferenceID is the human-readable identifier for the user story\n@Description Human-readable reference identifier (auto-generated, format: US-XXX)\n@Example \"US-001\"",
+                    "type": "string"
+                },
+                "requirements": {
+                    "description": "Requirements contains all requirements that belong to this user story\n@Description List of detailed requirements that belong to this user story (populated when requested with ?include=requirements)",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                    }
+                },
+                "status": {
+                    "description": "Status represents the current workflow state of the user story\n@Description Current status of the user story in the workflow\n@Enum Backlog,Draft,In Progress,Done,Cancelled\n@Example \"Backlog\"",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStoryStatus"
+                        }
+                    ]
+                },
+                "title": {
+                    "description": "Title is the name/summary of the user story\n@Description Title or name of the user story (required, max 500 characters)\n@MaxLength 500\n@Example \"User Login with Email and Password\"",
+                    "type": "string",
+                    "maxLength": 500
+                }
+            }
+        },
+        "product-requirements-management_internal_models.UserStoryStatus": {
+            "description": "Status of a user story in the workflow lifecycle",
+            "type": "string",
+            "enum": [
+                "Backlog",
+                "Draft",
+                "In Progress",
+                "Done",
+                "Cancelled"
+            ],
+            "x-enum-comments": {
+                "UserStoryStatusBacklog": "User story is in the backlog - not yet started, awaiting prioritization",
+                "UserStoryStatusCancelled": "User story has been cancelled and will not be implemented",
+                "UserStoryStatusDone": "User story has been completed and meets acceptance criteria",
+                "UserStoryStatusDraft": "User story is being drafted - requirements are being defined",
+                "UserStoryStatusInProgress": "User story is actively being worked on"
+            },
+            "x-enum-descriptions": [
+                "User story is in the backlog - not yet started, awaiting prioritization",
+                "User story is being drafted - requirements are being defined",
+                "User story is actively being worked on",
+                "User story has been completed and meets acceptance criteria",
+                "User story has been cancelled and will not be implemented"
+            ],
+            "x-enum-varnames": [
+                "UserStoryStatusBacklog",
+                "UserStoryStatusDraft",
+                "UserStoryStatusInProgress",
+                "UserStoryStatusDone",
+                "UserStoryStatusCancelled"
+            ]
+        },
+        "product-requirements-management_internal_service.AssignEpicRequest": {
+            "description": "Request payload for assigning an epic to a user",
+            "type": "object",
+            "required": [
+                "assignee_id"
+            ],
+            "properties": {
+                "assignee_id": {
+                    "description": "AssigneeID is the UUID of the user to assign the epic to\n@Description UUID of the user to assign this epic to\n@Example \"123e4567-e89b-12d3-a456-426614174002\"",
+                    "type": "string"
+                }
+            }
+        },
         "product-requirements-management_internal_service.CascadeDeletePreview": {
             "type": "object",
             "properties": {
@@ -812,6 +2862,121 @@ const docTemplate = `{
                 },
                 "reference_id": {
                     "type": "string"
+                }
+            }
+        },
+        "product-requirements-management_internal_service.ChangeEpicStatusRequest": {
+            "description": "Request payload for changing an epic's status",
+            "type": "object",
+            "required": [
+                "status"
+            ],
+            "properties": {
+                "status": {
+                    "description": "Status is the new workflow state for the epic\n@Description New status for the epic\n@Enum Backlog,Draft,In Progress,Done,Cancelled\n@Example \"In Progress\"",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.EpicStatus"
+                        }
+                    ]
+                }
+            }
+        },
+        "product-requirements-management_internal_service.CreateAcceptanceCriteriaRequest": {
+            "type": "object",
+            "required": [
+                "author_id",
+                "description"
+            ],
+            "properties": {
+                "author_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "user_story_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "product-requirements-management_internal_service.CreateEpicRequest": {
+            "description": "Request payload for creating a new epic",
+            "type": "object",
+            "required": [
+                "creator_id",
+                "priority",
+                "title"
+            ],
+            "properties": {
+                "assignee_id": {
+                    "description": "AssigneeID is the UUID of the user to assign the epic to (optional, defaults to creator)\n@Description UUID of the user to assign this epic to (optional, defaults to creator if not provided)\n@Example \"123e4567-e89b-12d3-a456-426614174002\"",
+                    "type": "string"
+                },
+                "creator_id": {
+                    "description": "CreatorID is the UUID of the user creating the epic\n@Description UUID of the user who is creating this epic (required)\n@Example \"123e4567-e89b-12d3-a456-426614174001\"",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description provides detailed information about the epic\n@Description Detailed description of the epic's purpose and scope (optional, max 5000 characters)\n@MaxLength 5000\n@Example \"Implement a comprehensive user authentication and authorization system with JWT tokens, role-based access control, and secure password management.\"",
+                    "type": "string"
+                },
+                "priority": {
+                    "description": "Priority is the importance level of the epic\n@Description Priority level of the epic (1=Critical, 2=High, 3=Medium, 4=Low)\n@Minimum 1\n@Maximum 4\n@Example 1",
+                    "maximum": 4,
+                    "minimum": 1,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Priority"
+                        }
+                    ]
+                },
+                "title": {
+                    "description": "Title is the name/summary of the epic\n@Description Title or name of the epic (required, max 500 characters)\n@MaxLength 500\n@Example \"User Authentication System\"",
+                    "type": "string",
+                    "maxLength": 500
+                }
+            }
+        },
+        "product-requirements-management_internal_service.CreateUserStoryRequest": {
+            "description": "Request structure for creating a new user story",
+            "type": "object",
+            "required": [
+                "creator_id",
+                "priority",
+                "title"
+            ],
+            "properties": {
+                "assignee_id": {
+                    "description": "AssigneeID is the UUID of the user assigned to the user story\n@Description UUID of the user to assign this user story to (optional, defaults to creator)\n@Example \"123e4567-e89b-12d3-a456-426614174002\"",
+                    "type": "string"
+                },
+                "creator_id": {
+                    "description": "CreatorID is the UUID of the user creating the user story\n@Description UUID of the user who is creating this user story (required)\n@Example \"123e4567-e89b-12d3-a456-426614174001\"",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description provides detailed information about the user story\n@Description Detailed description following the template 'As [role], I want [function], so that [goal]' (optional, max 2000 characters)\n@MaxLength 2000\n@Example \"As a registered user, I want to log in with my email and password, so that I can access my personalized dashboard and account features.\"",
+                    "type": "string"
+                },
+                "epic_id": {
+                    "description": "EpicID is the UUID of the epic this user story belongs to\n@Description UUID of the epic that will contain this user story (required for direct creation)\n@Example \"123e4567-e89b-12d3-a456-426614174000\"",
+                    "type": "string"
+                },
+                "priority": {
+                    "description": "Priority indicates the importance level of the user story\n@Description Priority level of the user story (1=Critical, 2=High, 3=Medium, 4=Low)\n@Minimum 1\n@Maximum 4\n@Example 2",
+                    "maximum": 4,
+                    "minimum": 1,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Priority"
+                        }
+                    ]
+                },
+                "title": {
+                    "description": "Title is the name/summary of the user story\n@Description Title or name of the user story (required, max 500 characters)\n@MaxLength 500\n@Example \"User Login with Email and Password\"",
+                    "type": "string",
+                    "maxLength": 500
                 }
             }
         },
@@ -948,6 +3113,74 @@ const docTemplate = `{
                 },
                 "type": {
                     "description": "epic, user_story, acceptance_criteria, requirement",
+                    "type": "string"
+                }
+            }
+        },
+        "product-requirements-management_internal_service.UpdateEpicRequest": {
+            "description": "Request payload for updating an existing epic (all fields are optional)",
+            "type": "object",
+            "properties": {
+                "assignee_id": {
+                    "description": "AssigneeID is the UUID of the user to assign the epic to\n@Description UUID of the user to assign this epic to (optional)\n@Example \"123e4567-e89b-12d3-a456-426614174002\"",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description provides detailed information about the epic\n@Description Detailed description of the epic's purpose and scope (optional, max 5000 characters)\n@MaxLength 5000\n@Example \"Enhanced implementation with multi-factor authentication and advanced security features.\"",
+                    "type": "string"
+                },
+                "priority": {
+                    "description": "Priority is the importance level of the epic\n@Description Priority level of the epic (1=Critical, 2=High, 3=Medium, 4=Low) (optional)\n@Minimum 1\n@Maximum 4\n@Example 2",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Priority"
+                        }
+                    ]
+                },
+                "status": {
+                    "description": "Status is the workflow state of the epic\n@Description Current status of the epic in the workflow (optional)\n@Enum Backlog,Draft,In Progress,Done,Cancelled\n@Example \"In Progress\"",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.EpicStatus"
+                        }
+                    ]
+                },
+                "title": {
+                    "description": "Title is the name/summary of the epic\n@Description Title or name of the epic (optional, max 500 characters)\n@MaxLength 500\n@Example \"Enhanced User Authentication System\"",
+                    "type": "string"
+                }
+            }
+        },
+        "product-requirements-management_internal_service.UpdateUserStoryRequest": {
+            "description": "Request structure for updating an existing user story (all fields are optional)",
+            "type": "object",
+            "properties": {
+                "assignee_id": {
+                    "description": "AssigneeID is the UUID of the user to assign the user story to\n@Description UUID of the user to assign this user story to (optional)\n@Example \"123e4567-e89b-12d3-a456-426614174002\"",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description provides detailed information about the user story\n@Description Detailed description following the template 'As [role], I want [function], so that [goal]' (optional, max 2000 characters)\n@MaxLength 2000\n@Example \"As a security-conscious user, I want to enable two-factor authentication on my account, so that I can protect my personal information from unauthorized access.\"",
+                    "type": "string"
+                },
+                "priority": {
+                    "description": "Priority indicates the importance level of the user story\n@Description Priority level of the user story (1=Critical, 2=High, 3=Medium, 4=Low) (optional)\n@Minimum 1\n@Maximum 4\n@Example 3",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Priority"
+                        }
+                    ]
+                },
+                "status": {
+                    "description": "Status represents the current workflow state of the user story\n@Description Current status of the user story in the workflow (optional)\n@Enum Backlog,Draft,In Progress,Done,Cancelled\n@Example \"In Progress\"",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStoryStatus"
+                        }
+                    ]
+                },
+                "title": {
+                    "description": "Title is the name/summary of the user story\n@Description Title or name of the user story (optional, max 500 characters)\n@MaxLength 500\n@Example \"Enhanced User Login with Two-Factor Authentication\"",
                     "type": "string"
                 }
             }

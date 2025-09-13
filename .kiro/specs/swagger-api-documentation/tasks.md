@@ -63,14 +63,14 @@
     - Include assignment workflow examples
     - _Requirements: 1.2, 1.3, 2.1, 2.2_
 
-- [ ] 5. Implement UserStory endpoints documentation
-  - [ ] 5.1 Document UserStory CRUD operations
+- [x] 5. Implement UserStory endpoints documentation
+  - [x] 5.1 Document UserStory CRUD operations
     - Add Swagger annotations to all UserStory handler methods
     - Include nested creation within Epic context documentation
     - Document filtering, sorting, and pagination parameters
     - _Requirements: 1.2, 1.3, 2.1, 2.2, 7.2, 7.4_
 
-  - [ ] 5.2 Document UserStory relationship endpoints
+  - [x] 5.2 Document UserStory relationship endpoints
     - Add annotations to acceptance criteria and requirement relationship endpoints
     - Document hierarchical data retrieval patterns
     - Include examples of complex relationship queries

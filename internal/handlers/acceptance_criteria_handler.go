@@ -25,6 +25,17 @@ func NewAcceptanceCriteriaHandler(acceptanceCriteriaService service.AcceptanceCr
 }
 
 // CreateAcceptanceCriteria handles POST /api/v1/user-stories/:id/acceptance-criteria
+// @Summary Create acceptance criteria within a user story
+// @Description Create new acceptance criteria that belongs to the specified user story. This is a nested resource creation that establishes the parent-child relationship between user story and acceptance criteria. The user story ID from the URL path will be used as the parent.
+// @Tags user-stories
+// @Accept json
+// @Produce json
+// @Param id path string true "User story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param acceptance_criteria body service.CreateAcceptanceCriteriaRequest true "Acceptance criteria creation request (user_story_id will be set from path parameter)"
+// @Success 201 {object} models.AcceptanceCriteria "Successfully created acceptance criteria within user story"
+// @Failure 400 {object} map[string]interface{} "Invalid user story ID format, request body, user story not found, or author not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/user-stories/{id}/acceptance-criteria [post]
 func (h *AcceptanceCriteriaHandler) CreateAcceptanceCriteria(c *gin.Context) {
 	userStoryIDParam := c.Param("id")
 
@@ -233,6 +244,17 @@ func (h *AcceptanceCriteriaHandler) ListAcceptanceCriteria(c *gin.Context) {
 }
 
 // GetAcceptanceCriteriaByUserStory handles GET /api/v1/user-stories/:id/acceptance-criteria
+// @Summary Get acceptance criteria for a user story
+// @Description Retrieve all acceptance criteria that belong to a specific user story. This endpoint provides a list of testable conditions that define when the user story is considered complete.
+// @Tags user-stories
+// @Accept json
+// @Produce json
+// @Param id path string true "User story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Success 200 {object} map[string]interface{} "Successfully retrieved acceptance criteria list with count"
+// @Failure 400 {object} map[string]interface{} "Invalid user story ID format (UUID required)"
+// @Failure 404 {object} map[string]interface{} "User story not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/user-stories/{id}/acceptance-criteria [get]
 func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteriaByUserStory(c *gin.Context) {
 	userStoryIDParam := c.Param("id")
 
