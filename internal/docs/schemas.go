@@ -638,3 +638,123 @@ type RelationshipTypeUsageExample struct {
 		TargetTitle         string    `json:"target_title" example:"Database connection setup"`
 	} `json:"examples"`
 } // @name RelationshipTypeUsageExample
+
+// Authentication and Authorization Documentation Schemas
+
+// JWTTokenExample represents a JWT token structure for documentation
+// @Description JWT token structure and format used for authentication
+type JWTTokenExample struct {
+	Token     string    `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTIzZTQ1NjctZTg5Yi0xMmQzLWE0NTYtNDI2NjE0MTc0MDAwIiwidXNlcm5hbWUiOiJqb2huX2RvZSIsInJvbGUiOiJVc2VyIiwiZXhwIjoxNjQwOTk1MjAwLCJpYXQiOjE2NDA5OTE2MDAsIm5iZiI6MTY0MDk5MTYwMH0.signature"`
+	TokenType string    `json:"token_type" example:"Bearer"`
+	ExpiresIn int       `json:"expires_in" example:"3600"`
+	ExpiresAt time.Time `json:"expires_at" example:"2023-01-02T12:30:00Z"`
+} // @name JWTTokenExample
+
+// JWTClaimsExample represents JWT token claims structure
+// @Description JWT token claims containing user information and permissions
+type JWTClaimsExample struct {
+	UserID   string `json:"user_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Username string `json:"username" example:"john_doe"`
+	Role     string `json:"role" example:"User"`
+	Exp      int64  `json:"exp" example:"1640995200"`
+	Iat      int64  `json:"iat" example:"1640991600"`
+	Nbf      int64  `json:"nbf" example:"1640991600"`
+} // @name JWTClaimsExample
+
+// AuthenticationErrorResponse represents authentication-related errors
+// @Description Standard error responses for authentication failures
+type AuthenticationErrorResponse struct {
+	Error string `json:"error" example:"Authentication required"`
+	Code  string `json:"code" example:"AUTHENTICATION_REQUIRED"`
+} // @name AuthenticationErrorResponse
+
+// AuthorizationErrorResponse represents authorization-related errors
+// @Description Standard error responses for authorization failures
+type AuthorizationErrorResponse struct {
+	Error string `json:"error" example:"Insufficient permissions"`
+	Code  string `json:"code" example:"INSUFFICIENT_PERMISSIONS"`
+} // @name AuthorizationErrorResponse
+
+// TokenExpiredErrorResponse represents expired token errors
+// @Description Error response when JWT token has expired
+type TokenExpiredErrorResponse struct {
+	Error string `json:"error" example:"Token expired"`
+	Code  string `json:"code" example:"TOKEN_EXPIRED"`
+} // @name TokenExpiredErrorResponse
+
+// InvalidTokenErrorResponse represents invalid token errors
+// @Description Error response when JWT token is invalid or malformed
+type InvalidTokenErrorResponse struct {
+	Error string `json:"error" example:"Invalid token"`
+	Code  string `json:"code" example:"INVALID_TOKEN"`
+} // @name InvalidTokenErrorResponse
+
+// RoleBasedAccessExample represents role-based access control patterns
+// @Description Examples of role-based access control for different user roles
+type RoleBasedAccessExample struct {
+	Administrator struct {
+		Description string   `json:"description" example:"Full system access including user and configuration management"`
+		Permissions []string `json:"permissions" example:"[\"create_users\",\"manage_config\",\"delete_entities\",\"view_all\",\"edit_all\"]"`
+	} `json:"administrator"`
+	User struct {
+		Description string   `json:"description" example:"Can create, edit, and delete entities but cannot manage users or system configuration"`
+		Permissions []string `json:"permissions" example:"[\"create_entities\",\"edit_entities\",\"delete_entities\",\"view_all\",\"comment\"]"`
+	} `json:"user"`
+	Commenter struct {
+		Description string   `json:"description" example:"Can only add comments and view entities, limited editing capabilities"`
+		Permissions []string `json:"permissions" example:"[\"view_all\",\"comment\",\"limited_edit\"]"`
+	} `json:"commenter"`
+} // @name RoleBasedAccessExample
+
+// SecurityBestPracticesExample represents security best practices documentation
+// @Description Security best practices for API usage and token management
+type SecurityBestPracticesExample struct {
+	TokenManagement struct {
+		StorageRecommendation string `json:"storage_recommendation" example:"Store JWT tokens securely in httpOnly cookies or secure storage"`
+		ExpirationHandling    string `json:"expiration_handling" example:"Implement automatic token refresh before expiration"`
+		TransmissionSecurity  string `json:"transmission_security" example:"Always use HTTPS for token transmission"`
+	} `json:"token_management"`
+	AuthenticationFlow struct {
+		LoginProcess    string `json:"login_process" example:"POST /auth/login with username/password to receive JWT token"`
+		TokenUsage      string `json:"token_usage" example:"Include 'Authorization: Bearer <token>' header in all authenticated requests"`
+		LogoutProcess   string `json:"logout_process" example:"Client-side token removal (server-side blacklisting optional)"`
+		RefreshStrategy string `json:"refresh_strategy" example:"Implement token refresh mechanism before expiration"`
+	} `json:"authentication_flow"`
+	ErrorHandling struct {
+		UnauthorizedResponse string `json:"unauthorized_response" example:"Return 401 for missing or invalid authentication"`
+		ForbiddenResponse    string `json:"forbidden_response" example:"Return 403 for insufficient permissions"`
+		TokenExpiredResponse string `json:"token_expired_response" example:"Return 401 with specific error code for expired tokens"`
+	} `json:"error_handling"`
+} // @name SecurityBestPracticesExample
+
+// AuthenticationHeaderExample represents authentication header format
+// @Description Examples of proper authentication header formatting
+type AuthenticationHeaderExample struct {
+	HeaderName   string `json:"header_name" example:"Authorization"`
+	HeaderFormat string `json:"header_format" example:"Bearer <jwt_token>"`
+	Example      string `json:"example" example:"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
+	Description  string `json:"description" example:"Include the word 'Bearer' followed by a space and the JWT token"`
+} // @name AuthenticationHeaderExample
+
+// PermissionMatrixExample represents permission matrix for different operations
+// @Description Permission matrix showing which roles can perform which operations
+type PermissionMatrixExample struct {
+	Operations map[string]struct {
+		Administrator bool   `json:"administrator"`
+		User          bool   `json:"user"`
+		Commenter     bool   `json:"commenter"`
+		Description   string `json:"description"`
+	} `json:"operations"`
+} // @name PermissionMatrixExample
+
+// SecuritySchemeDocumentation represents the security scheme documentation
+// @Description Complete security scheme documentation for the API
+type SecuritySchemeDocumentation struct {
+	Type        string `json:"type" example:"apiKey"`
+	In          string `json:"in" example:"header"`
+	Name        string `json:"name" example:"Authorization"`
+	Description string `json:"description" example:"JWT token authentication. Format: 'Bearer {token}'"`
+	TokenFormat string `json:"token_format" example:"JWT"`
+	Algorithm   string `json:"algorithm" example:"HS256"`
+	ExpiresIn   string `json:"expires_in" example:"1 hour"`
+} // @name SecuritySchemeDocumentation

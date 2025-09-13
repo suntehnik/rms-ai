@@ -47,10 +47,11 @@ type SearchRequest struct {
 // Search handles search requests
 //
 //	@Summary		Search across all entities
-//	@Description	Performs full-text search and filtering across epics, user stories, acceptance criteria, and requirements. Supports PostgreSQL full-text search with ranking and comprehensive filtering options. Results are cached for performance.
+//	@Description	Performs full-text search and filtering across epics, user stories, acceptance criteria, and requirements. Supports PostgreSQL full-text search with ranking and comprehensive filtering options. Results are cached for performance. Requires authentication.
 //	@Tags			search
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			query					query		string	false	"Full-text search query. Searches across titles, descriptions, and reference IDs. Supports PostgreSQL text search syntax with automatic prefix matching."	example("user authentication")
 //	@Param			creator_id				query		string	false	"Filter by creator ID (UUID format)"																																		example("123e4567-e89b-12d3-a456-426614174000")
 //	@Param			assignee_id				query		string	false	"Filter by assignee ID (UUID format)"																																		example("123e4567-e89b-12d3-a456-426614174001")
@@ -69,8 +70,9 @@ type SearchRequest struct {
 //	@Param			offset					query		int		false	"Number of results to skip for pagination (0-based)"																													default(0)				example(0)
 //	@Success		200						{object}	service.SearchResponse	"Successful search with results, pagination metadata, and execution details"
 //	@Failure		400						{object}	ErrorResponse			"Invalid search parameters (invalid UUID format, out of range values, invalid sort fields)"
+//	@Failure		401						{object}	ErrorResponse			"Authentication required"
 //	@Failure		500						{object}	ErrorResponse			"Internal server error during search operation"
-//	@Router			/api/search [get]
+//	@Router			/api/v1/search [get]
 func (h *SearchHandler) Search(c *gin.Context) {
 	correlationID, _ := c.Get("correlation_id")
 	logger := h.logger.WithField("correlation_id", correlationID)

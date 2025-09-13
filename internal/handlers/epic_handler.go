@@ -26,13 +26,16 @@ func NewEpicHandler(epicService service.EpicService) *EpicHandler {
 
 // CreateEpic handles POST /api/v1/epics
 // @Summary Create a new epic
-// @Description Create a new epic with the provided details. The epic will be assigned a unique reference ID (EP-XXX format) and default status of "Backlog".
+// @Description Create a new epic with the provided details. The epic will be assigned a unique reference ID (EP-XXX format) and default status of "Backlog". Requires User or Administrator role.
 // @Tags epics
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param epic body service.CreateEpicRequest true "Epic creation request"
 // @Success 201 {object} models.Epic "Successfully created epic"
 // @Failure 400 {object} map[string]interface{} "Invalid request body, creator/assignee not found, or invalid priority"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
+// @Failure 403 {object} map[string]interface{} "User or Administrator role required"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/epics [post]
 func (h *EpicHandler) CreateEpic(c *gin.Context) {
@@ -69,12 +72,14 @@ func (h *EpicHandler) CreateEpic(c *gin.Context) {
 
 // GetEpic handles GET /api/v1/epics/:id
 // @Summary Get an epic by ID or reference ID
-// @Description Retrieve a single epic by its UUID or reference ID (e.g., EP-001). Supports both formats for flexible access.
+// @Description Retrieve a single epic by its UUID or reference ID (e.g., EP-001). Supports both formats for flexible access. Requires authentication.
 // @Tags epics
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Epic ID (UUID) or reference ID (EP-XXX)" example("123e4567-e89b-12d3-a456-426614174000")
 // @Success 200 {object} models.Epic "Epic found successfully"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Epic not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/epics/{id} [get]
@@ -109,14 +114,17 @@ func (h *EpicHandler) GetEpic(c *gin.Context) {
 
 // UpdateEpic handles PUT /api/v1/epics/:id
 // @Summary Update an existing epic
-// @Description Update an epic's properties. Only provided fields will be updated. Supports partial updates with validation for status transitions and priority values.
+// @Description Update an epic's properties. Only provided fields will be updated. Supports partial updates with validation for status transitions and priority values. Requires User or Administrator role.
 // @Tags epics
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Epic UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param epic body service.UpdateEpicRequest true "Epic update request"
 // @Success 200 {object} models.Epic "Epic updated successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid request body, epic ID format, assignee not found, invalid priority, invalid status, or invalid status transition"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
+// @Failure 403 {object} map[string]interface{} "User or Administrator role required"
 // @Failure 404 {object} map[string]interface{} "Epic not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/epics/{id} [put]
@@ -177,14 +185,17 @@ func (h *EpicHandler) UpdateEpic(c *gin.Context) {
 
 // DeleteEpic handles DELETE /api/v1/epics/:id
 // @Summary Delete an epic
-// @Description Delete an epic by UUID. By default, epics with associated user stories cannot be deleted unless force=true is specified.
+// @Description Delete an epic by UUID. By default, epics with associated user stories cannot be deleted unless force=true is specified. Requires User or Administrator role.
 // @Tags epics
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Epic UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param force query boolean false "Force delete even if epic has user stories" example(false)
 // @Success 204 "Epic deleted successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid epic ID format"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
+// @Failure 403 {object} map[string]interface{} "User or Administrator role required"
 // @Failure 404 {object} map[string]interface{} "Epic not found"
 // @Failure 409 {object} map[string]interface{} "Epic has associated user stories and cannot be deleted (use force=true to override)"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
@@ -229,10 +240,11 @@ func (h *EpicHandler) DeleteEpic(c *gin.Context) {
 
 // ListEpics handles GET /api/v1/epics
 // @Summary List epics with filtering and pagination
-// @Description Retrieve a list of epics with optional filtering by creator, assignee, status, and priority. Supports pagination and custom ordering.
+// @Description Retrieve a list of epics with optional filtering by creator, assignee, status, and priority. Supports pagination and custom ordering. Requires authentication.
 // @Tags epics
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param creator_id query string false "Filter by creator UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174001")
 // @Param assignee_id query string false "Filter by assignee UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174002")
 // @Param status query string false "Filter by epic status" Enums(Backlog,Draft,In Progress,Done,Cancelled) example("Backlog")
@@ -241,6 +253,7 @@ func (h *EpicHandler) DeleteEpic(c *gin.Context) {
 // @Param limit query integer false "Maximum number of results to return" minimum(1) maximum(100) default(50) example(20)
 // @Param offset query integer false "Number of results to skip for pagination" minimum(0) default(0) example(0)
 // @Success 200 {object} map[string]interface{} "List of epics with count"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/epics [get]
 func (h *EpicHandler) ListEpics(c *gin.Context) {

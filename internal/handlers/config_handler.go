@@ -29,13 +29,16 @@ func NewConfigHandler(configService service.ConfigService) *ConfigHandler {
 // CreateRequirementType handles POST /api/v1/config/requirement-types
 //
 //	@Summary		Create a new requirement type
-//	@Description	Creates a new requirement type for categorizing requirements. Requirement types help organize and classify different kinds of requirements (functional, non-functional, business rules, etc.).
+//	@Description	Creates a new requirement type for categorizing requirements. Requirement types help organize and classify different kinds of requirements (functional, non-functional, business rules, etc.). Requires Administrator role.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			requirement_type	body		service.CreateRequirementTypeRequest	true	"Requirement type creation request"
 //	@Success		201					{object}	models.RequirementType					"Successfully created requirement type"
 //	@Failure		400					{object}	ErrorResponse							"Invalid request body or validation error"
+//	@Failure		401					{object}	ErrorResponse							"Authentication required"
+//	@Failure		403					{object}	ErrorResponse							"Administrator role required"
 //	@Failure		409					{object}	ErrorResponse							"Requirement type name already exists"
 //	@Failure		500					{object}	ErrorResponse							"Internal server error"
 //	@Router			/api/v1/config/requirement-types [post]
