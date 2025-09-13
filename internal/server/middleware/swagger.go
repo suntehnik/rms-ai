@@ -68,8 +68,8 @@ func SetupSwaggerRoutes(router *gin.Engine, cfg *config.Config) {
 		c.Redirect(302, swaggerCfg.BasePath+"/index.html")
 	})
 
-	// Add interactive testing helper endpoints
-	setupInteractiveTestingEndpoints(router, swaggerCfg.BasePath)
+	// Interactive testing helper endpoints are handled by the Swagger UI itself
+	// No additional routes needed as they would conflict with the wildcard /*any route
 
 	// Safe logger call - check if logger is initialized
 	if logger.Logger != nil {
@@ -78,79 +78,9 @@ func SetupSwaggerRoutes(router *gin.Engine, cfg *config.Config) {
 	}
 }
 
-// setupInteractiveTestingEndpoints adds helper endpoints for interactive testing
-func setupInteractiveTestingEndpoints(router *gin.Engine, basePath string) {
-	// Add endpoint to validate authentication tokens
-	router.POST(basePath+"/validate-token", func(c *gin.Context) {
-		var request struct {
-			Token string `json:"token" binding:"required"`
-		}
-
-		if err := c.ShouldBindJSON(&request); err != nil {
-			c.JSON(400, gin.H{"error": "Invalid request", "details": err.Error()})
-			return
-		}
-
-		// Basic token format validation
-		if len(request.Token) < 10 {
-			c.JSON(400, gin.H{"error": "Token too short", "valid": false})
-			return
-		}
-
-		c.JSON(200, gin.H{
-			"message": "Token format appears valid",
-			"valid":   true,
-			"note":    "This is a format check only. Actual validation occurs during API calls.",
-		})
-	})
-
-	// Add endpoint to get example tokens for testing (development only)
-	if getEnvAsBool("SWAGGER_ENABLE_TEST_TOKENS", false) {
-		router.GET(basePath+"/example-tokens", func(c *gin.Context) {
-			c.JSON(200, gin.H{
-				"warning": "These are example tokens for development testing only",
-				"tokens": gin.H{
-					"administrator": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.admin.token",
-					"user":          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.user.token",
-					"commenter":     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.commenter.token",
-				},
-				"note": "Replace with actual tokens from your authentication system",
-			})
-		})
-	}
-
-	// Add endpoint to get API testing guide
-	router.GET(basePath+"/testing-guide", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"title": "Interactive API Testing Guide",
-			"authentication": gin.H{
-				"method": "JWT Bearer Token",
-				"header": "Authorization: Bearer <your-jwt-token>",
-				"roles":  []string{"administrator", "user", "commenter"},
-			},
-			"steps": []string{
-				"1. Obtain a JWT token from your authentication system",
-				"2. Click the 'Authorize' button in Swagger UI",
-				"3. Enter 'Bearer <your-token>' in the authorization field",
-				"4. Click 'Authorize' to save the token",
-				"5. Try out any endpoint using the 'Try it out' button",
-				"6. Fill in required parameters and request body",
-				"7. Click 'Execute' to send the request",
-				"8. Review the response in the Swagger UI",
-			},
-			"example_requests": gin.H{
-				"search":      "/api/v1/search?query=authentication&limit=10",
-				"list_epics":  "/api/v1/epics?limit=20&offset=0",
-				"create_epic": "POST /api/v1/epics with JSON body",
-			},
-			"troubleshooting": gin.H{
-				"401_unauthorized": "Check that your token is valid and properly formatted",
-				"403_forbidden":    "Verify your user role has permission for this endpoint",
-				"400_bad_request":  "Review the request parameters and body format",
-			},
-		})
-	})
-}
+// Note: Interactive testing helper endpoints would conflict with the Swagger UI wildcard route
+// The enhanced Swagger UI configuration provides the necessary interactive testing capabilities
+// through the persistent authorization and improved UI features.
 
 // Helper functions for environment variable parsing
 func getEnv(key, fallback string) string {

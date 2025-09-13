@@ -101,41 +101,6 @@ func setupTestEndpoints(router *gin.Engine) {
 		c.Redirect(http.StatusFound, "/swagger/index.html")
 	})
 
-	router.GET("/swagger/testing-guide", func(c *gin.Context) {
-		guide := map[string]interface{}{
-			"title": "Interactive API Testing Guide",
-			"authentication": map[string]interface{}{
-				"method": "JWT Bearer Token",
-				"header": "Authorization: Bearer <your-jwt-token>",
-			},
-			"steps": []string{
-				"1. Obtain a JWT token",
-				"2. Click 'Authorize' in Swagger UI",
-				"3. Enter 'Bearer <token>'",
-				"4. Try out endpoints",
-			},
-		}
-		c.JSON(http.StatusOK, guide)
-	})
-
-	router.POST("/swagger/validate-token", func(c *gin.Context) {
-		var request struct {
-			Token string `json:"token"`
-		}
-
-		if err := c.ShouldBindJSON(&request); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
-			return
-		}
-
-		if len(request.Token) < 10 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Token too short", "valid": false})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"valid": true, "message": "Token format valid"})
-	})
-
 	// API endpoints with authentication
 	api := router.Group("/api/v1")
 
@@ -282,7 +247,6 @@ func testSwaggerUIAccessibility(t *testing.T, router *gin.Engine) {
 		{"Swagger UI Index", "/swagger/index.html", http.StatusOK},
 		{"Swagger JSON Spec", "/swagger/doc.json", http.StatusOK},
 		{"Swagger Base Redirect", "/swagger/", http.StatusFound},
-		{"Testing Guide", "/swagger/testing-guide", http.StatusOK},
 	}
 
 	for _, tc := range testCases {
@@ -406,45 +370,34 @@ func testAuthenticationTokenInput(t *testing.T, router *gin.Engine) {
 
 // testExampleRequestsExecution tests that documented examples execute successfully
 func testExampleRequestsExecution(t *testing.T, router *gin.Engine) {
-	// Test token validation helper
-	t.Run("TokenValidation", func(t *testing.T) {
-		validTokenReq := map[string]string{
-			"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.token",
-		}
-
-		bodyBytes, err := json.Marshal(validTokenReq)
-		require.NoError(t, err, "Should marshal request body")
-
-		req := httptest.NewRequest("POST", "/swagger/validate-token", bytes.NewBuffer(bodyBytes))
-		req.Header.Set("Content-Type", "application/json")
+	// Test basic API functionality with authentication
+	t.Run("BasicAPIFunctionality", func(t *testing.T) {
+		// Test that the API endpoints are accessible and return proper responses
+		req := httptest.NewRequest("GET", "/api/v1/epics", nil)
+		req.Header.Set("Authorization", "Bearer valid-test-token")
 
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusOK, w.Code, "Valid token format should be accepted")
+		// Should not be 404 (endpoint exists) and should have proper content type
+		assert.NotEqual(t, http.StatusNotFound, w.Code, "API endpoint should exist")
 
-		var response map[string]interface{}
-		err = json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err, "Response should be valid JSON")
-		assert.True(t, response["valid"].(bool), "Token should be marked as valid")
+		if w.Code < 400 {
+			contentType := w.Header().Get("Content-Type")
+			assert.Contains(t, contentType, "application/json", "API should return JSON")
+		}
 	})
 
-	// Test invalid token validation
-	t.Run("InvalidTokenValidation", func(t *testing.T) {
-		invalidTokenReq := map[string]string{
-			"token": "short",
-		}
+	// Test example data generation
+	t.Run("ExampleDataValidation", func(t *testing.T) {
+		examples := GetExampleData()
+		assert.NotNil(t, examples, "Should generate example data")
 
-		bodyBytes, err := json.Marshal(invalidTokenReq)
-		require.NoError(t, err, "Should marshal request body")
+		requestBodies := GetExampleRequestBodies()
+		assert.NotNil(t, requestBodies, "Should generate example request bodies")
 
-		req := httptest.NewRequest("POST", "/swagger/validate-token", bytes.NewBuffer(bodyBytes))
-		req.Header.Set("Content-Type", "application/json")
-
-		w := httptest.NewRecorder()
-		router.ServeHTTP(w, req)
-
-		assert.Equal(t, http.StatusBadRequest, w.Code, "Invalid token should be rejected")
+		queryParams := GetExampleQueryParameters()
+		assert.NotNil(t, queryParams, "Should generate example query parameters")
 	})
 }
 
