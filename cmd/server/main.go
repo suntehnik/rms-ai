@@ -8,7 +8,7 @@ import (
 
 //	@title			Product Requirements Management API
 //	@version		1.0.0
-//	@description	API for managing product requirements through hierarchical structure of Epics, User Stories, and Requirements
+//	@description	API for managing product requirements through hierarchical structure of Epics, User Stories, and Requirements. This API uses JWT-based authentication with role-based access control. Three user roles are supported: Administrator (full access), User (entity management), and Commenter (view and comment only).
 //	@termsOfService	http://swagger.io/terms/
 
 //	@contact.name	API Support
@@ -24,7 +24,7 @@ import (
 //	@securityDefinitions.apikey	BearerAuth
 //	@in							header
 //	@name						Authorization
-//	@description				Type "Bearer" followed by a space and JWT token.
+//	@description				JWT token authentication. Include 'Bearer ' followed by your JWT token. Example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' Tokens expire after 1 hour and must be refreshed through re-authentication.
 
 func main() {
 	// Load configuration

@@ -115,14 +115,14 @@
     - Include administrative operation examples and security requirements
     - _Requirements: 1.2, 1.3, 2.1, 2.2, 8.1, 8.2_
 
-- [ ] 9. Implement authentication and security documentation
-  - [ ] 9.1 Add JWT authentication scheme documentation
+- [x] 9. Implement authentication and security documentation
+  - [x] 9.1 Add JWT authentication scheme documentation
     - Define security schemes in main application annotation
     - Document JWT token format and authentication headers
     - Add security requirements to protected endpoints
     - _Requirements: 1.4, 8.1, 8.2, 8.4_
 
-  - [ ] 9.2 Document authorization patterns and error responses
+  - [x] 9.2 Document authorization patterns and error responses
     - Add role-based access control documentation if applicable
     - Document authentication and authorization error responses
     - Include security best practices and token management

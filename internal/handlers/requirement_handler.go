@@ -26,13 +26,16 @@ func NewRequirementHandler(requirementService service.RequirementService) *Requi
 
 // CreateRequirement handles POST /api/v1/requirements
 // @Summary Create a new requirement
-// @Description Create a new detailed requirement with specified properties. Requires a valid user story ID, creator, and requirement type. The assignee defaults to the creator if not specified.
+// @Description Create a new detailed requirement with specified properties. Requires a valid user story ID, creator, and requirement type. The assignee defaults to the creator if not specified. Requires User or Administrator role.
 // @Tags requirements
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param requirement body service.CreateRequirementRequest true "Requirement creation request with all required fields"
 // @Success 201 {object} models.Requirement "Successfully created requirement"
 // @Failure 400 {object} map[string]interface{} "Invalid request body, creator/assignee not found, user story not found, requirement type not found, acceptance criteria not found, or invalid priority"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
+// @Failure 403 {object} map[string]interface{} "User or Administrator role required"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/requirements [post]
 func (h *RequirementHandler) CreateRequirement(c *gin.Context) {
