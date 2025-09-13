@@ -369,3 +369,118 @@ type DuplicateRelationshipExample struct {
 	Error string `json:"error" example:"Relationship already exists"`
 	Code  string `json:"code" example:"DUPLICATE_RELATIONSHIP"`
 } // @name DuplicateRelationshipExample
+// Comment System Documentation Schemas
+
+// CommentCreationRequest represents a request to create a comment
+// @Description Request structure for creating comments (both general and inline)
+type CommentCreationRequest struct {
+	AuthorID          uuid.UUID  `json:"author_id" binding:"required" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Content           string     `json:"content" binding:"required" example:"This requirement needs clarification on the authentication flow."`
+	ParentCommentID   *uuid.UUID `json:"parent_comment_id,omitempty" example:"456e7890-e89b-12d3-a456-426614174001"`
+	LinkedText        *string    `json:"linked_text,omitempty" example:"OAuth 2.0 authentication flow"`
+	TextPositionStart *int       `json:"text_position_start,omitempty" example:"45"`
+	TextPositionEnd   *int       `json:"text_position_end,omitempty" example:"73"`
+} // @name CommentCreationRequest
+
+// CommentUpdateRequest represents a request to update a comment
+// @Description Request structure for updating comment content
+type CommentUpdateRequest struct {
+	Content string `json:"content" binding:"required" example:"Updated comment content with additional clarification."`
+} // @name CommentUpdateRequest
+
+// CommentResponse represents a comment in API responses
+// @Description Complete comment information including author details and thread context
+type CommentResponse struct {
+	ID              uuid.UUID  `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	EntityType      string     `json:"entity_type" example:"epic"`
+	EntityID        uuid.UUID  `json:"entity_id" example:"456e7890-e89b-12d3-a456-426614174001"`
+	ParentCommentID *uuid.UUID `json:"parent_comment_id,omitempty" example:"789e0123-e89b-12d3-a456-426614174002"`
+	AuthorID        uuid.UUID  `json:"author_id" example:"abc1234d-e89b-12d3-a456-426614174003"`
+	Author          *struct {
+		ID       uuid.UUID `json:"id" example:"abc1234d-e89b-12d3-a456-426614174003"`
+		Username string    `json:"username" example:"john.doe"`
+		Email    string    `json:"email" example:"john.doe@example.com"`
+	} `json:"author,omitempty"`
+	CreatedAt         string            `json:"created_at" example:"2023-01-01T00:00:00Z"`
+	UpdatedAt         string            `json:"updated_at" example:"2023-01-02T12:30:00Z"`
+	Content           string            `json:"content" example:"This requirement needs clarification on the authentication flow."`
+	IsResolved        bool              `json:"is_resolved" example:"false"`
+	LinkedText        *string           `json:"linked_text,omitempty" example:"OAuth 2.0 authentication flow"`
+	TextPositionStart *int              `json:"text_position_start,omitempty" example:"45"`
+	TextPositionEnd   *int              `json:"text_position_end,omitempty" example:"73"`
+	Replies           []CommentResponse `json:"replies,omitempty"`
+	IsInline          bool              `json:"is_inline" example:"true"`
+	IsReply           bool              `json:"is_reply" example:"false"`
+	Depth             int               `json:"depth" example:"0"`
+} // @name CommentResponse
+
+// CommentListResponse represents a list of comments with metadata
+// @Description Response structure for comment list endpoints
+type CommentListResponse struct {
+	Comments []CommentResponse `json:"comments"`
+	Count    int               `json:"count" example:"5"`
+} // @name CommentListResponse
+
+// CommentsByStatusResponse represents comments filtered by status
+// @Description Response structure for comments filtered by resolution status
+type CommentsByStatusResponse struct {
+	Comments []CommentResponse `json:"comments"`
+	Count    int               `json:"count" example:"3"`
+	Status   string            `json:"status" example:"unresolved"`
+} // @name CommentsByStatusResponse
+
+// InlineCommentCreationExample represents an inline comment creation request
+// @Description Example request for creating an inline comment with text position data
+type InlineCommentCreationExample struct {
+	AuthorID          uuid.UUID `json:"author_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Content           string    `json:"content" example:"This authentication method needs to specify which OAuth 2.0 flow to use."`
+	LinkedText        string    `json:"linked_text" example:"OAuth 2.0 authentication flow"`
+	TextPositionStart int       `json:"text_position_start" example:"45"`
+	TextPositionEnd   int       `json:"text_position_end" example:"73"`
+} // @name InlineCommentCreationExample
+
+// ThreadedCommentExample represents a threaded comment structure
+// @Description Example of threaded comments showing parent-child relationships
+type ThreadedCommentExample struct {
+	ID      uuid.UUID `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Content string    `json:"content" example:"This requirement needs clarification."`
+	IsReply bool      `json:"is_reply" example:"false"`
+	Depth   int       `json:"depth" example:"0"`
+	Replies []struct {
+		ID      uuid.UUID `json:"id" example:"456e7890-e89b-12d3-a456-426614174001"`
+		Content string    `json:"content" example:"I agree, specifically about the authentication flow."`
+		IsReply bool      `json:"is_reply" example:"true"`
+		Depth   int       `json:"depth" example:"1"`
+		Replies []struct {
+			ID      uuid.UUID `json:"id" example:"789e0123-e89b-12d3-a456-426614174002"`
+			Content string    `json:"content" example:"Let me provide more details on this."`
+			IsReply bool      `json:"is_reply" example:"true"`
+			Depth   int       `json:"depth" example:"2"`
+		} `json:"replies"`
+	} `json:"replies"`
+} // @name ThreadedCommentExample
+
+// InlineCommentValidationRequest represents a request to validate inline comments
+// @Description Request structure for validating inline comments after text changes
+type InlineCommentValidationRequest struct {
+	NewDescription string `json:"new_description" binding:"required" example:"Updated entity description with modified text content that may affect inline comment positions."`
+} // @name InlineCommentValidationRequest
+
+// CommentResolutionWorkflowExample represents comment resolution workflow
+// @Description Example showing comment resolution and unresolve operations
+type CommentResolutionWorkflowExample struct {
+	ID         uuid.UUID `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Content    string    `json:"content" example:"This issue has been addressed in the latest revision."`
+	IsResolved bool      `json:"is_resolved" example:"true"`
+	UpdatedAt  string    `json:"updated_at" example:"2023-01-02T15:45:00Z"`
+} // @name CommentResolutionWorkflowExample
+
+// InlineCommentPositionExample represents inline comment text positioning
+// @Description Example showing how inline comments are positioned within text
+type InlineCommentPositionExample struct {
+	OriginalText      string `json:"original_text" example:"The system must implement OAuth 2.0 authentication flow for secure user login."`
+	LinkedText        string `json:"linked_text" example:"OAuth 2.0 authentication flow"`
+	TextPositionStart int    `json:"text_position_start" example:"32"`
+	TextPositionEnd   int    `json:"text_position_end" example:"60"`
+	CommentContent    string `json:"comment_content" example:"Which specific OAuth 2.0 flow should be implemented? Authorization Code, Implicit, or Client Credentials?"`
+} // @name InlineCommentPositionExample

@@ -777,6 +777,45 @@ definitions:
     required:
     - status
     type: object
+  product-requirements-management_internal_service.CommentResponse:
+    properties:
+      author:
+        $ref: '#/definitions/product-requirements-management_internal_models.User'
+      author_id:
+        type: string
+      content:
+        type: string
+      created_at:
+        type: string
+      depth:
+        type: integer
+      entity_id:
+        type: string
+      entity_type:
+        $ref: '#/definitions/product-requirements-management_internal_models.EntityType'
+      id:
+        type: string
+      is_inline:
+        type: boolean
+      is_reply:
+        type: boolean
+      is_resolved:
+        type: boolean
+      linked_text:
+        type: string
+      parent_comment_id:
+        type: string
+      replies:
+        items:
+          $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+        type: array
+      text_position_end:
+        type: integer
+      text_position_start:
+        type: integer
+      updated_at:
+        type: string
+    type: object
   product-requirements-management_internal_service.CreateAcceptanceCriteriaRequest:
     properties:
       author_id:
@@ -788,6 +827,27 @@ definitions:
     required:
     - author_id
     - description
+    type: object
+  product-requirements-management_internal_service.CreateCommentRequest:
+    properties:
+      author_id:
+        type: string
+      content:
+        type: string
+      entity_id:
+        type: string
+      entity_type:
+        $ref: '#/definitions/product-requirements-management_internal_models.EntityType'
+      linked_text:
+        type: string
+      parent_comment_id:
+        type: string
+      text_position_end:
+        type: integer
+      text_position_start:
+        type: integer
+    required:
+    - author_id
     type: object
   product-requirements-management_internal_service.CreateEpicRequest:
     description: Request payload for creating a new epic
@@ -1025,6 +1085,11 @@ definitions:
   product-requirements-management_internal_service.UpdateAcceptanceCriteriaRequest:
     properties:
       description:
+        type: string
+    type: object
+  product-requirements-management_internal_service.UpdateCommentRequest:
+    properties:
+      content:
         type: string
     type: object
   product-requirements-management_internal_service.UpdateEpicRequest:
@@ -1617,6 +1682,301 @@ paths:
       summary: Validate user story deletion
       tags:
       - deletion
+  /api/v1/{entityType}/{id}/comments:
+    get:
+      description: Retrieve all comments for a specific entity with optional filtering
+        by status and threading. Supports both flat and threaded comment structures.
+      parameters:
+      - description: Entity type
+        enum:
+        - epic
+        - user_story
+        - acceptance_criteria
+        - requirement
+        in: path
+        name: entityType
+        required: true
+        type: string
+      - description: Entity ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Return comments in threaded structure
+        in: query
+        name: threaded
+        type: boolean
+      - description: Return only inline comments
+        in: query
+        name: inline
+        type: boolean
+      - description: Filter by resolution status
+        enum:
+        - resolved
+        - unresolved
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Successfully retrieved comments" example({"comments": [{"id":
+            "123e4567-e89b-12d3-a456-426614174000", "content": "This needs clarification",
+            "is_resolved": false}], "count": 1})'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid entity type or malformed entity ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Entity not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all comments for an entity
+      tags:
+      - comments
+    post:
+      consumes:
+      - application/json
+      description: Create a new comment (general or inline) on any entity type (epic,
+        user_story, acceptance_criteria, requirement). Supports threaded discussions
+        through parent_comment_id.
+      parameters:
+      - description: Entity type
+        enum:
+        - epic
+        - user_story
+        - acceptance_criteria
+        - requirement
+        in: path
+        name: entityType
+        required: true
+        type: string
+      - description: Entity ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Comment creation request
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.CreateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created comment
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+        "400":
+          description: Invalid request - malformed entity ID, invalid entity type,
+            missing required fields, or invalid inline comment data
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Entity not found or parent comment not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new comment on an entity
+      tags:
+      - comments
+  /api/v1/{entityType}/{id}/comments/inline:
+    post:
+      consumes:
+      - application/json
+      description: Create an inline comment linked to specific text positions within
+        an entity's content. Requires linked_text, text_position_start, and text_position_end
+        fields.
+      parameters:
+      - description: Entity type
+        enum:
+        - epic
+        - user_story
+        - acceptance_criteria
+        - requirement
+        in: path
+        name: entityType
+        required: true
+        type: string
+      - description: Entity ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Inline comment creation request with text position data
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.CreateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created inline comment
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+        "400":
+          description: Invalid request - missing inline comment data, invalid text
+            positions, or empty linked text
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Entity not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create an inline comment on specific text
+      tags:
+      - comments
+      - inline-comments
+  /api/v1/{entityType}/{id}/comments/inline/validate:
+    post:
+      consumes:
+      - application/json
+      description: Validate and update inline comment positions after entity text
+        content has been modified. This ensures inline comments remain accurately
+        positioned.
+      parameters:
+      - description: Entity type
+        enum:
+        - epic
+        - user_story
+        - acceptance_criteria
+        - requirement
+        in: path
+        name: entityType
+        required: true
+        type: string
+      - description: Entity ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Text validation request
+        in: body
+        name: validation
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Successfully validated inline comments" example({"message":
+            "Inline comments validated successfully"})'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid entity ID format or missing new_description
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error during validation
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Validate inline comments after text changes
+      tags:
+      - comments
+      - inline-comments
+  /api/v1/{entityType}/{id}/comments/inline/visible:
+    get:
+      description: Retrieve all inline comments that are still valid (visible) for
+        an entity, excluding those that may have become invalid due to text changes.
+      parameters:
+      - description: Entity type
+        enum:
+        - epic
+        - user_story
+        - acceptance_criteria
+        - requirement
+        in: path
+        name: entityType
+        required: true
+        type: string
+      - description: Entity ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Successfully retrieved visible inline comments" example({"comments":
+            [{"id": "123e4567-e89b-12d3-a456-426614174000", "linked_text": "OAuth
+            2.0 authentication", "text_position_start": 45, "text_position_end": 67,
+            "content": "Need to clarify which OAuth flow to use"}], "count": 1})'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid entity type or malformed entity ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Entity not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get visible inline comments for an entity
+      tags:
+      - comments
+      - inline-comments
   /api/v1/acceptance-criteria:
     get:
       consumes:
@@ -1798,6 +2158,475 @@ paths:
       summary: Update existing acceptance criteria
       tags:
       - acceptance-criteria
+  /api/v1/acceptance-criteria/{id}/comments/inline:
+    post:
+      consumes:
+      - application/json
+      description: Create an inline comment linked to specific text positions within
+        acceptance criteria description or conditions.
+      parameters:
+      - description: Acceptance Criteria ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Inline comment creation request with text position data
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.CreateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created acceptance criteria inline comment
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+        "400":
+          description: Invalid request - missing inline comment data or invalid text
+            positions
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Acceptance criteria not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create an inline comment on acceptance criteria text
+      tags:
+      - acceptance-criteria
+      - comments
+      - inline-comments
+  /api/v1/acceptance-criteria/{id}/comments/inline/validate:
+    post:
+      consumes:
+      - application/json
+      description: Validate and update inline comment positions after acceptance criteria
+        text content has been modified.
+      parameters:
+      - description: Acceptance Criteria ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Text validation request
+        in: body
+        name: validation
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully validated acceptance criteria inline comments
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid acceptance criteria ID format or missing new_description
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error during validation
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Validate acceptance criteria inline comments after text changes
+      tags:
+      - acceptance-criteria
+      - comments
+      - inline-comments
+  /api/v1/acceptance-criteria/{id}/comments/inline/visible:
+    get:
+      description: Retrieve all visible inline comments for specific acceptance criteria,
+        excluding those invalidated by text changes.
+      parameters:
+      - description: Acceptance Criteria ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved acceptance criteria inline comments
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid acceptance criteria ID format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Acceptance criteria not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get visible inline comments for acceptance criteria
+      tags:
+      - acceptance-criteria
+      - comments
+      - inline-comments
+  /api/v1/comments/{id}:
+    delete:
+      description: Delete a comment by ID. Comments with replies cannot be deleted
+        to maintain thread integrity.
+      parameters:
+      - description: Comment ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: Successfully deleted comment
+        "400":
+          description: Invalid comment ID format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Comment not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Comment has replies and cannot be deleted
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a comment
+      tags:
+      - comments
+    get:
+      description: Retrieve a single comment by its unique identifier, including author
+        information and thread context.
+      parameters:
+      - description: Comment ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved comment
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+        "400":
+          description: Invalid comment ID format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Comment not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a specific comment by ID
+      tags:
+      - comments
+    put:
+      consumes:
+      - application/json
+      description: Update the content of an existing comment. Only the comment content
+        can be modified after creation.
+      parameters:
+      - description: Comment ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Comment update request
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.UpdateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated comment
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+        "400":
+          description: Invalid comment ID format, invalid request body, or empty content
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Comment not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update an existing comment
+      tags:
+      - comments
+  /api/v1/comments/{id}/replies:
+    get:
+      description: Retrieve all direct replies to a specific comment, supporting threaded
+        comment discussions.
+      parameters:
+      - description: Parent comment ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Successfully retrieved comment replies" example({"replies":
+            [{"id": "123e4567-e89b-12d3-a456-426614174001", "content": "I agree with
+            this point", "parent_comment_id": "123e4567-e89b-12d3-a456-426614174000"}],
+            "count": 1})'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid comment ID format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Comment not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get replies to a specific comment
+      tags:
+      - comments
+    post:
+      consumes:
+      - application/json
+      description: Create a new reply to an existing comment, automatically inheriting
+        the parent's entity context for threaded discussions.
+      parameters:
+      - description: Parent comment ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Reply creation request (entity_type and entity_id will be inherited
+          from parent)
+        in: body
+        name: reply
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.CreateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created reply
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+        "400":
+          description: Invalid parent comment ID format, invalid request body, or
+            empty content
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Parent comment not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a reply to a comment
+      tags:
+      - comments
+  /api/v1/comments/{id}/resolve:
+    post:
+      description: Mark a comment as resolved to indicate that the issue or question
+        has been addressed.
+      parameters:
+      - description: Comment ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully resolved comment
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+        "400":
+          description: Invalid comment ID format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Comment not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Mark a comment as resolved
+      tags:
+      - comments
+  /api/v1/comments/{id}/unresolve:
+    post:
+      description: Mark a previously resolved comment as unresolved to reopen the
+        discussion or issue.
+      parameters:
+      - description: Comment ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully unresolved comment
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+        "400":
+          description: Invalid comment ID format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Comment not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Mark a comment as unresolved
+      tags:
+      - comments
+  /api/v1/comments/status/{status}:
+    get:
+      description: Retrieve all comments filtered by their resolution status (resolved
+        or unresolved) across all entities.
+      parameters:
+      - description: Resolution status
+        enum:
+        - resolved
+        - unresolved
+        in: path
+        name: status
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Successfully retrieved comments by status" example({"comments":
+            [{"id": "123e4567-e89b-12d3-a456-426614174000", "content": "This needs
+            clarification", "is_resolved": false}], "count": 1, "status": "unresolved"})'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid status parameter
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get comments by resolution status
+      tags:
+      - comments
   /api/v1/epics:
     get:
       consumes:
@@ -2075,6 +2904,143 @@ paths:
       summary: Assign an epic to a user
       tags:
       - epics
+  /api/v1/epics/{id}/comments/inline:
+    post:
+      consumes:
+      - application/json
+      description: Create an inline comment linked to specific text positions within
+        an epic's description or title.
+      parameters:
+      - description: Epic ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Inline comment creation request with text position data
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.CreateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created epic inline comment
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+        "400":
+          description: Invalid request - missing inline comment data or invalid text
+            positions
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Epic not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create an inline comment on an epic's text
+      tags:
+      - epics
+      - comments
+      - inline-comments
+  /api/v1/epics/{id}/comments/inline/validate:
+    post:
+      consumes:
+      - application/json
+      description: Validate and update inline comment positions after an epic's text
+        content has been modified.
+      parameters:
+      - description: Epic ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Text validation request
+        in: body
+        name: validation
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully validated epic inline comments
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid epic ID format or missing new_description
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error during validation
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Validate epic inline comments after text changes
+      tags:
+      - epics
+      - comments
+      - inline-comments
+  /api/v1/epics/{id}/comments/inline/visible:
+    get:
+      description: Retrieve all visible inline comments for a specific epic, excluding
+        those invalidated by text changes.
+      parameters:
+      - description: Epic ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved epic inline comments
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid epic ID format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Epic not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get visible inline comments for an epic
+      tags:
+      - epics
+      - comments
+      - inline-comments
   /api/v1/epics/{id}/status:
     patch:
       consumes:
@@ -2536,6 +3502,143 @@ paths:
       summary: Assign requirement to a user
       tags:
       - requirements
+  /api/v1/requirements/{id}/comments/inline:
+    post:
+      consumes:
+      - application/json
+      description: Create an inline comment linked to specific text positions within
+        a requirement's description or specification.
+      parameters:
+      - description: Requirement ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Inline comment creation request with text position data
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.CreateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created requirement inline comment
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+        "400":
+          description: Invalid request - missing inline comment data or invalid text
+            positions
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Requirement not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create an inline comment on a requirement's text
+      tags:
+      - requirements
+      - comments
+      - inline-comments
+  /api/v1/requirements/{id}/comments/inline/validate:
+    post:
+      consumes:
+      - application/json
+      description: Validate and update inline comment positions after a requirement's
+        text content has been modified.
+      parameters:
+      - description: Requirement ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Text validation request
+        in: body
+        name: validation
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully validated requirement inline comments
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid requirement ID format or missing new_description
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error during validation
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Validate requirement inline comments after text changes
+      tags:
+      - requirements
+      - comments
+      - inline-comments
+  /api/v1/requirements/{id}/comments/inline/visible:
+    get:
+      description: Retrieve all visible inline comments for a specific requirement,
+        excluding those invalidated by text changes.
+      parameters:
+      - description: Requirement ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved requirement inline comments
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid requirement ID format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Requirement not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get visible inline comments for a requirement
+      tags:
+      - requirements
+      - comments
+      - inline-comments
   /api/v1/requirements/{id}/relationships:
     get:
       consumes:
@@ -3062,6 +4165,143 @@ paths:
       summary: Assign user story to a user
       tags:
       - user-stories
+  /api/v1/user-stories/{id}/comments/inline:
+    post:
+      consumes:
+      - application/json
+      description: Create an inline comment linked to specific text positions within
+        a user story's description or acceptance criteria.
+      parameters:
+      - description: User Story ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Inline comment creation request with text position data
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.CreateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created user story inline comment
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+        "400":
+          description: Invalid request - missing inline comment data or invalid text
+            positions
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User story not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create an inline comment on a user story's text
+      tags:
+      - user-stories
+      - comments
+      - inline-comments
+  /api/v1/user-stories/{id}/comments/inline/validate:
+    post:
+      consumes:
+      - application/json
+      description: Validate and update inline comment positions after a user story's
+        text content has been modified.
+      parameters:
+      - description: User Story ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Text validation request
+        in: body
+        name: validation
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully validated user story inline comments
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid user story ID format or missing new_description
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error during validation
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Validate user story inline comments after text changes
+      tags:
+      - user-stories
+      - comments
+      - inline-comments
+  /api/v1/user-stories/{id}/comments/inline/visible:
+    get:
+      description: Retrieve all visible inline comments for a specific user story,
+        excluding those invalidated by text changes.
+      parameters:
+      - description: User Story ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved user story inline comments
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid user story ID format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User story not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get visible inline comments for a user story
+      tags:
+      - user-stories
+      - comments
+      - inline-comments
   /api/v1/user-stories/{id}/requirements:
     get:
       consumes:

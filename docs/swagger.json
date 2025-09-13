@@ -971,6 +971,675 @@
                 }
             }
         },
+        "/api/v1/acceptance-criteria/{id}/comments/inline": {
+            "post": {
+                "description": "Create an inline comment linked to specific text positions within acceptance criteria description or conditions.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "acceptance-criteria",
+                    "comments",
+                    "inline-comments"
+                ],
+                "summary": "Create an inline comment on acceptance criteria text",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Acceptance Criteria ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Inline comment creation request with text position data",
+                        "name": "comment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateCommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created acceptance criteria inline comment",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request - missing inline comment data or invalid text positions",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Acceptance criteria not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/acceptance-criteria/{id}/comments/inline/validate": {
+            "post": {
+                "description": "Validate and update inline comment positions after acceptance criteria text content has been modified.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "acceptance-criteria",
+                    "comments",
+                    "inline-comments"
+                ],
+                "summary": "Validate acceptance criteria inline comments after text changes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Acceptance Criteria ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Text validation request",
+                        "name": "validation",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully validated acceptance criteria inline comments",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid acceptance criteria ID format or missing new_description",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during validation",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/acceptance-criteria/{id}/comments/inline/visible": {
+            "get": {
+                "description": "Retrieve all visible inline comments for specific acceptance criteria, excluding those invalidated by text changes.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "acceptance-criteria",
+                    "comments",
+                    "inline-comments"
+                ],
+                "summary": "Get visible inline comments for acceptance criteria",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Acceptance Criteria ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved acceptance criteria inline comments",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid acceptance criteria ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Acceptance criteria not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/comments/status/{status}": {
+            "get": {
+                "description": "Retrieve all comments filtered by their resolution status (resolved or unresolved) across all entities.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "Get comments by resolution status",
+                "parameters": [
+                    {
+                        "enum": [
+                            "resolved",
+                            "unresolved"
+                        ],
+                        "type": "string",
+                        "description": "Resolution status",
+                        "name": "status",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved comments by status\" example({\"comments\": [{\"id\": \"123e4567-e89b-12d3-a456-426614174000\", \"content\": \"This needs clarification\", \"is_resolved\": false}], \"count\": 1, \"status\": \"unresolved\"})",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid status parameter",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/comments/{id}": {
+            "get": {
+                "description": "Retrieve a single comment by its unique identifier, including author information and thread context.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "Get a specific comment by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Comment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved comment",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid comment ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Comment not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update the content of an existing comment. Only the comment content can be modified after creation.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "Update an existing comment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Comment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Comment update request",
+                        "name": "comment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateCommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated comment",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid comment ID format, invalid request body, or empty content",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Comment not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a comment by ID. Comments with replies cannot be deleted to maintain thread integrity.",
+                "tags": [
+                    "comments"
+                ],
+                "summary": "Delete a comment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Comment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted comment"
+                    },
+                    "400": {
+                        "description": "Invalid comment ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Comment not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Comment has replies and cannot be deleted",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/comments/{id}/replies": {
+            "get": {
+                "description": "Retrieve all direct replies to a specific comment, supporting threaded comment discussions.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "Get replies to a specific comment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Parent comment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved comment replies\" example({\"replies\": [{\"id\": \"123e4567-e89b-12d3-a456-426614174001\", \"content\": \"I agree with this point\", \"parent_comment_id\": \"123e4567-e89b-12d3-a456-426614174000\"}], \"count\": 1})",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid comment ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Comment not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new reply to an existing comment, automatically inheriting the parent's entity context for threaded discussions.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "Create a reply to a comment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Parent comment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Reply creation request (entity_type and entity_id will be inherited from parent)",
+                        "name": "reply",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateCommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created reply",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid parent comment ID format, invalid request body, or empty content",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Parent comment not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/comments/{id}/resolve": {
+            "post": {
+                "description": "Mark a comment as resolved to indicate that the issue or question has been addressed.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "Mark a comment as resolved",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Comment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully resolved comment",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid comment ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Comment not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/comments/{id}/unresolve": {
+            "post": {
+                "description": "Mark a previously resolved comment as unresolved to reopen the discussion or issue.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "Mark a comment as unresolved",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Comment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully unresolved comment",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid comment ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Comment not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/epics": {
             "get": {
                 "description": "Retrieve a list of epics with optional filtering by creator, assignee, status, and priority. Supports pagination and custom ordering.",
@@ -1347,6 +2016,202 @@
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/epics/{id}/comments/inline": {
+            "post": {
+                "description": "Create an inline comment linked to specific text positions within an epic's description or title.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "epics",
+                    "comments",
+                    "inline-comments"
+                ],
+                "summary": "Create an inline comment on an epic's text",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Epic ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Inline comment creation request with text position data",
+                        "name": "comment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateCommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created epic inline comment",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request - missing inline comment data or invalid text positions",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Epic not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/epics/{id}/comments/inline/validate": {
+            "post": {
+                "description": "Validate and update inline comment positions after an epic's text content has been modified.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "epics",
+                    "comments",
+                    "inline-comments"
+                ],
+                "summary": "Validate epic inline comments after text changes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Epic ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Text validation request",
+                        "name": "validation",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully validated epic inline comments",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid epic ID format or missing new_description",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during validation",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/epics/{id}/comments/inline/visible": {
+            "get": {
+                "description": "Retrieve all visible inline comments for a specific epic, excluding those invalidated by text changes.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "epics",
+                    "comments",
+                    "inline-comments"
+                ],
+                "summary": "Get visible inline comments for an epic",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Epic ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved epic inline comments",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid epic ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Epic not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -2077,6 +2942,202 @@
                 }
             }
         },
+        "/api/v1/requirements/{id}/comments/inline": {
+            "post": {
+                "description": "Create an inline comment linked to specific text positions within a requirement's description or specification.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requirements",
+                    "comments",
+                    "inline-comments"
+                ],
+                "summary": "Create an inline comment on a requirement's text",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Requirement ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Inline comment creation request with text position data",
+                        "name": "comment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateCommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created requirement inline comment",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request - missing inline comment data or invalid text positions",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Requirement not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/requirements/{id}/comments/inline/validate": {
+            "post": {
+                "description": "Validate and update inline comment positions after a requirement's text content has been modified.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requirements",
+                    "comments",
+                    "inline-comments"
+                ],
+                "summary": "Validate requirement inline comments after text changes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Requirement ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Text validation request",
+                        "name": "validation",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully validated requirement inline comments",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid requirement ID format or missing new_description",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during validation",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/requirements/{id}/comments/inline/visible": {
+            "get": {
+                "description": "Retrieve all visible inline comments for a specific requirement, excluding those invalidated by text changes.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requirements",
+                    "comments",
+                    "inline-comments"
+                ],
+                "summary": "Get visible inline comments for a requirement",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Requirement ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved requirement inline comments",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid requirement ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Requirement not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/requirements/{id}/relationships": {
             "get": {
                 "description": "Retrieve all incoming and outgoing relationships for a specific requirement by its UUID or reference ID. Returns both relationships where the requirement is the source and where it is the target.",
@@ -2680,6 +3741,202 @@
                 }
             }
         },
+        "/api/v1/user-stories/{id}/comments/inline": {
+            "post": {
+                "description": "Create an inline comment linked to specific text positions within a user story's description or acceptance criteria.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user-stories",
+                    "comments",
+                    "inline-comments"
+                ],
+                "summary": "Create an inline comment on a user story's text",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "User Story ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Inline comment creation request with text position data",
+                        "name": "comment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateCommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created user story inline comment",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request - missing inline comment data or invalid text positions",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User story not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user-stories/{id}/comments/inline/validate": {
+            "post": {
+                "description": "Validate and update inline comment positions after a user story's text content has been modified.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user-stories",
+                    "comments",
+                    "inline-comments"
+                ],
+                "summary": "Validate user story inline comments after text changes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "User Story ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Text validation request",
+                        "name": "validation",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully validated user story inline comments",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user story ID format or missing new_description",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during validation",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user-stories/{id}/comments/inline/visible": {
+            "get": {
+                "description": "Retrieve all visible inline comments for a specific user story, excluding those invalidated by text changes.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user-stories",
+                    "comments",
+                    "inline-comments"
+                ],
+                "summary": "Get visible inline comments for a user story",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "User Story ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved user story inline comments",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user story ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User story not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/user-stories/{id}/requirements": {
             "get": {
                 "description": "Retrieve a specific user story by its UUID or reference ID, including all associated detailed requirements. This endpoint provides hierarchical data showing the user story and its technical requirements.",
@@ -2897,6 +4154,411 @@
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/{entityType}/{id}/comments": {
+            "get": {
+                "description": "Retrieve all comments for a specific entity with optional filtering by status and threading. Supports both flat and threaded comment structures.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "Get all comments for an entity",
+                "parameters": [
+                    {
+                        "enum": [
+                            "epic",
+                            "user_story",
+                            "acceptance_criteria",
+                            "requirement"
+                        ],
+                        "type": "string",
+                        "description": "Entity type",
+                        "name": "entityType",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Entity ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Return comments in threaded structure",
+                        "name": "threaded",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Return only inline comments",
+                        "name": "inline",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "resolved",
+                            "unresolved"
+                        ],
+                        "type": "string",
+                        "description": "Filter by resolution status",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved comments\" example({\"comments\": [{\"id\": \"123e4567-e89b-12d3-a456-426614174000\", \"content\": \"This needs clarification\", \"is_resolved\": false}], \"count\": 1})",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid entity type or malformed entity ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Entity not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new comment (general or inline) on any entity type (epic, user_story, acceptance_criteria, requirement). Supports threaded discussions through parent_comment_id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "Create a new comment on an entity",
+                "parameters": [
+                    {
+                        "enum": [
+                            "epic",
+                            "user_story",
+                            "acceptance_criteria",
+                            "requirement"
+                        ],
+                        "type": "string",
+                        "description": "Entity type",
+                        "name": "entityType",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Entity ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Comment creation request",
+                        "name": "comment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateCommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created comment",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request - malformed entity ID, invalid entity type, missing required fields, or invalid inline comment data",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Entity not found or parent comment not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/{entityType}/{id}/comments/inline": {
+            "post": {
+                "description": "Create an inline comment linked to specific text positions within an entity's content. Requires linked_text, text_position_start, and text_position_end fields.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments",
+                    "inline-comments"
+                ],
+                "summary": "Create an inline comment on specific text",
+                "parameters": [
+                    {
+                        "enum": [
+                            "epic",
+                            "user_story",
+                            "acceptance_criteria",
+                            "requirement"
+                        ],
+                        "type": "string",
+                        "description": "Entity type",
+                        "name": "entityType",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Entity ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Inline comment creation request with text position data",
+                        "name": "comment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateCommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created inline comment",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request - missing inline comment data, invalid text positions, or empty linked text",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Entity not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/{entityType}/{id}/comments/inline/validate": {
+            "post": {
+                "description": "Validate and update inline comment positions after entity text content has been modified. This ensures inline comments remain accurately positioned.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments",
+                    "inline-comments"
+                ],
+                "summary": "Validate inline comments after text changes",
+                "parameters": [
+                    {
+                        "enum": [
+                            "epic",
+                            "user_story",
+                            "acceptance_criteria",
+                            "requirement"
+                        ],
+                        "type": "string",
+                        "description": "Entity type",
+                        "name": "entityType",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Entity ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Text validation request",
+                        "name": "validation",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully validated inline comments\" example({\"message\": \"Inline comments validated successfully\"})",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid entity ID format or missing new_description",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during validation",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/{entityType}/{id}/comments/inline/visible": {
+            "get": {
+                "description": "Retrieve all inline comments that are still valid (visible) for an entity, excluding those that may have become invalid due to text changes.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments",
+                    "inline-comments"
+                ],
+                "summary": "Get visible inline comments for an entity",
+                "parameters": [
+                    {
+                        "enum": [
+                            "epic",
+                            "user_story",
+                            "acceptance_criteria",
+                            "requirement"
+                        ],
+                        "type": "string",
+                        "description": "Entity type",
+                        "name": "entityType",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Entity ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved visible inline comments\" example({\"comments\": [{\"id\": \"123e4567-e89b-12d3-a456-426614174000\", \"linked_text\": \"OAuth 2.0 authentication\", \"text_position_start\": 45, \"text_position_end\": 67, \"content\": \"Need to clarify which OAuth flow to use\"}], \"count\": 1})",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid entity type or malformed entity ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Entity not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -3849,6 +5511,65 @@
                 }
             }
         },
+        "product-requirements-management_internal_service.CommentResponse": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                },
+                "author_id": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "depth": {
+                    "type": "integer"
+                },
+                "entity_id": {
+                    "type": "string"
+                },
+                "entity_type": {
+                    "$ref": "#/definitions/product-requirements-management_internal_models.EntityType"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_inline": {
+                    "type": "boolean"
+                },
+                "is_reply": {
+                    "type": "boolean"
+                },
+                "is_resolved": {
+                    "type": "boolean"
+                },
+                "linked_text": {
+                    "type": "string"
+                },
+                "parent_comment_id": {
+                    "type": "string"
+                },
+                "replies": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                    }
+                },
+                "text_position_end": {
+                    "type": "integer"
+                },
+                "text_position_start": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "product-requirements-management_internal_service.CreateAcceptanceCriteriaRequest": {
             "type": "object",
             "required": [
@@ -3864,6 +5585,38 @@
                 },
                 "user_story_id": {
                     "type": "string"
+                }
+            }
+        },
+        "product-requirements-management_internal_service.CreateCommentRequest": {
+            "type": "object",
+            "required": [
+                "author_id"
+            ],
+            "properties": {
+                "author_id": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "entity_id": {
+                    "type": "string"
+                },
+                "entity_type": {
+                    "$ref": "#/definitions/product-requirements-management_internal_models.EntityType"
+                },
+                "linked_text": {
+                    "type": "string"
+                },
+                "parent_comment_id": {
+                    "type": "string"
+                },
+                "text_position_end": {
+                    "type": "integer"
+                },
+                "text_position_start": {
+                    "type": "integer"
                 }
             }
         },
@@ -4154,6 +5907,14 @@
             "type": "object",
             "properties": {
                 "description": {
+                    "type": "string"
+                }
+            }
+        },
+        "product-requirements-management_internal_service.UpdateCommentRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
                     "type": "string"
                 }
             }
