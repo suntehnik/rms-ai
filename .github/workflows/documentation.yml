@@ -54,7 +54,7 @@ jobs:
       run: make docs-quality-check
     
     - name: Upload documentation metrics
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: documentation-metrics
@@ -62,7 +62,7 @@ jobs:
         retention-days: 30
     
     - name: Upload Swagger documentation
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: swagger-documentation
@@ -161,7 +161,7 @@ jobs:
         go run cmd/docs-metrics/main.go -format=text -verbose > reports/coverage-report.txt
         
     - name: Upload coverage report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: annotation-coverage-report
         path: reports/coverage-report.txt
