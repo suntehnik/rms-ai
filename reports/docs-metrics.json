@@ -1,0 +1,385 @@
+{
+  "generated_at": "2025-09-14T22:16:51.839712+02:00",
+  "annotation_coverage": {
+    "total_handlers": 118,
+    "annotated_handlers": 88,
+    "coverage_percentage": 74.57627118644068,
+    "missing_count": 30
+  },
+  "endpoint_coverage": {
+    "total_endpoints": 72,
+    "documented_endpoints": 72,
+    "coverage_percentage": 100,
+    "endpoints_by_method": {
+      "DELETE": 10,
+      "GET": 30,
+      "PATCH": 6,
+      "POST": 21,
+      "PUT": 5
+    },
+    "endpoints_by_tag": {
+      "acceptance-criteria": 7,
+      "comments": 25,
+      "deletion": 9,
+      "epics": 12,
+      "inline-comments": 15,
+      "requirements": 14,
+      "search": 2,
+      "user-stories": 14,
+      "users": 1
+    }
+  },
+  "example_coverage": {
+    "handlers_with_examples": 66,
+    "example_coverage_percent": 55.932203389830505,
+    "request_body_examples": 8,
+    "response_examples": 5,
+    "query_parameter_examples": 4
+  },
+  "quality_score": {
+    "overall_score": 81.01694915254237,
+    "component_scores": {
+      "annotation_coverage": 74.57627118644068,
+      "endpoint_coverage": 100,
+      "example_coverage": 55.932203389830505,
+      "tag_distribution": 100
+    },
+    "grade": "B",
+    "improvement_areas": [
+      "Add missing Swagger annotations to handlers",
+      "Add more examples to improve developer experience"
+    ]
+  },
+  "tag_distribution": {
+    "acceptance-criteria": 6,
+    "comments": 13,
+    "configuration": 26,
+    "deletion": 9,
+    "epics": 11,
+    "inline-comments": 10,
+    "requirements": 14,
+    "search": 2,
+    "user-stories": 14,
+    "users": 1
+  },
+  "missing_annotations": [
+    {
+      "file": "comment_handler.go",
+      "handler": "GetCommentsByEntity",
+      "missing_fields": [
+        "@Accept"
+      ],
+      "severity": "medium"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "GetComment",
+      "missing_fields": [
+        "@Accept"
+      ],
+      "severity": "medium"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "DeleteComment",
+      "missing_fields": [
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "medium"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "ResolveComment",
+      "missing_fields": [
+        "@Accept"
+      ],
+      "severity": "medium"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "UnresolveComment",
+      "missing_fields": [
+        "@Accept"
+      ],
+      "severity": "medium"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "GetCommentsByStatus",
+      "missing_fields": [
+        "@Accept"
+      ],
+      "severity": "medium"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "GetCommentReplies",
+      "missing_fields": [
+        "@Accept"
+      ],
+      "severity": "medium"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "createInlineCommentForEntity",
+      "missing_fields": [
+        "@Summary",
+        "@Description",
+        "@Tags",
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "high"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "GetVisibleInlineComments",
+      "missing_fields": [
+        "@Accept"
+      ],
+      "severity": "medium"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "GetEpicVisibleInlineComments",
+      "missing_fields": [
+        "@Accept"
+      ],
+      "severity": "medium"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "GetUserStoryVisibleInlineComments",
+      "missing_fields": [
+        "@Accept"
+      ],
+      "severity": "medium"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "GetAcceptanceCriteriaVisibleInlineComments",
+      "missing_fields": [
+        "@Accept"
+      ],
+      "severity": "medium"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "GetRequirementVisibleInlineComments",
+      "missing_fields": [
+        "@Accept"
+      ],
+      "severity": "medium"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "getVisibleInlineCommentsForEntity",
+      "missing_fields": [
+        "@Summary",
+        "@Description",
+        "@Tags",
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "high"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "validateInlineCommentsForEntity",
+      "missing_fields": [
+        "@Summary",
+        "@Description",
+        "@Tags",
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "high"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "CreateEpicComment",
+      "missing_fields": [
+        "@Summary",
+        "@Description",
+        "@Tags",
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "high"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "CreateUserStoryComment",
+      "missing_fields": [
+        "@Summary",
+        "@Description",
+        "@Tags",
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "high"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "CreateAcceptanceCriteriaComment",
+      "missing_fields": [
+        "@Summary",
+        "@Description",
+        "@Tags",
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "high"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "CreateRequirementComment",
+      "missing_fields": [
+        "@Summary",
+        "@Description",
+        "@Tags",
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "high"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "createCommentForEntity",
+      "missing_fields": [
+        "@Summary",
+        "@Description",
+        "@Tags",
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "high"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "GetEpicComments",
+      "missing_fields": [
+        "@Summary",
+        "@Description",
+        "@Tags",
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "high"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "GetUserStoryComments",
+      "missing_fields": [
+        "@Summary",
+        "@Description",
+        "@Tags",
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "high"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "GetAcceptanceCriteriaComments",
+      "missing_fields": [
+        "@Summary",
+        "@Description",
+        "@Tags",
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "high"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "GetRequirementComments",
+      "missing_fields": [
+        "@Summary",
+        "@Description",
+        "@Tags",
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "high"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "getCommentsForEntity",
+      "missing_fields": [
+        "@Summary",
+        "@Description",
+        "@Tags",
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "high"
+    },
+    {
+      "file": "navigation_handler.go",
+      "handler": "GetHierarchy",
+      "missing_fields": [
+        "@Summary",
+        "@Description",
+        "@Tags",
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "high"
+    },
+    {
+      "file": "navigation_handler.go",
+      "handler": "GetEpicHierarchy",
+      "missing_fields": [
+        "@Summary",
+        "@Description",
+        "@Tags",
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "high"
+    },
+    {
+      "file": "navigation_handler.go",
+      "handler": "GetUserStoryHierarchy",
+      "missing_fields": [
+        "@Summary",
+        "@Description",
+        "@Tags",
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "high"
+    },
+    {
+      "file": "navigation_handler.go",
+      "handler": "GetEntityPath",
+      "missing_fields": [
+        "@Summary",
+        "@Description",
+        "@Tags",
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "high"
+    },
+    {
+      "file": "search_handler.go",
+      "handler": "parseSearchOptions",
+      "missing_fields": [
+        "@Summary",
+        "@Description",
+        "@Tags",
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "high"
+    }
+  ],
+  "recommendations": [
+    "Improve annotation coverage from 74.6% to 90% by adding Swagger annotations to 30 handlers",
+    "Add more examples to handler documentation to improve developer experience",
+    "Address 18 high-priority missing annotations first"
+  ]
+}

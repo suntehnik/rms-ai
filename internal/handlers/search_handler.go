@@ -26,6 +26,13 @@ type SearchHandler struct {
 	logger        *logrus.Logger
 }
 
+// SearchSuggestionsResponse represents the response for search suggestions
+type SearchSuggestionsResponse struct {
+	Titles       []string `json:"titles"`
+	ReferenceIDs []string `json:"reference_ids"`
+	Statuses     []string `json:"statuses"`
+}
+
 // NewSearchHandler creates a new search handler
 func NewSearchHandler(searchService SearchServiceInterface, logger *logrus.Logger) *SearchHandler {
 	return &SearchHandler{
