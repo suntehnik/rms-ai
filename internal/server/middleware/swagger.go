@@ -49,20 +49,38 @@ func SetupSwaggerRoutes(router *gin.Engine, cfg *config.Config) {
 		logger.Infof("Setting up Swagger documentation at %s/*any", swaggerCfg.BasePath)
 	}
 
-	// Configure Swagger UI with custom configuration
+	// Configure Swagger UI with enhanced interactive testing capabilities
 	url := ginSwagger.URL("/swagger/doc.json") // The url pointing to API definition
-	router.GET(swaggerCfg.BasePath+"/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
+
+	// Enhanced Swagger UI configuration for better interactive testing
+	swaggerHandler := ginSwagger.WrapHandler(swaggerFiles.Handler,
+		url,
+		ginSwagger.DefaultModelsExpandDepth(1),
+		ginSwagger.DocExpansion("list"),
+		ginSwagger.DeepLinking(true),
+		ginSwagger.PersistAuthorization(true),
+	)
+
+	router.GET(swaggerCfg.BasePath+"/*any", swaggerHandler)
 
 	// Add a redirect from base path to Swagger UI
 	router.GET(swaggerCfg.BasePath, func(c *gin.Context) {
 		c.Redirect(302, swaggerCfg.BasePath+"/index.html")
 	})
 
+	// Interactive testing helper endpoints are handled by the Swagger UI itself
+	// No additional routes needed as they would conflict with the wildcard /*any route
+
 	// Safe logger call - check if logger is initialized
 	if logger.Logger != nil {
 		logger.Infof("Swagger UI available at: %s/index.html", swaggerCfg.BasePath)
+		logger.Infof("Interactive testing features enabled with authentication support")
 	}
 }
+
+// Note: Interactive testing helper endpoints would conflict with the Swagger UI wildcard route
+// The enhanced Swagger UI configuration provides the necessary interactive testing capabilities
+// through the persistent authorization and improved UI features.
 
 // Helper functions for environment variable parsing
 func getEnv(key, fallback string) string {

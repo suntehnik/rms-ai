@@ -22,24 +22,24 @@ import (
 
 type RequirementIntegrationTestSuite struct {
 	suite.Suite
-	db                              *gorm.DB
-	router                          *gin.Engine
-	requirementHandler              *handlers.RequirementHandler
-	requirementService              service.RequirementService
-	requirementRepo                 repository.RequirementRepository
-	requirementTypeRepo             repository.RequirementTypeRepository
-	relationshipTypeRepo            repository.RelationshipTypeRepository
-	requirementRelationshipRepo     repository.RequirementRelationshipRepository
-	userStoryRepo                   repository.UserStoryRepository
-	acceptanceCriteriaRepo          repository.AcceptanceCriteriaRepository
-	epicRepo                        repository.EpicRepository
-	userRepo                        repository.UserRepository
-	testUser                        *models.User
-	testEpic                        *models.Epic
-	testUserStory                   *models.UserStory
-	testAcceptanceCriteria          *models.AcceptanceCriteria
-	testRequirementType             *models.RequirementType
-	testRelationshipType            *models.RelationshipType
+	db                          *gorm.DB
+	router                      *gin.Engine
+	requirementHandler          *handlers.RequirementHandler
+	requirementService          service.RequirementService
+	requirementRepo             repository.RequirementRepository
+	requirementTypeRepo         repository.RequirementTypeRepository
+	relationshipTypeRepo        repository.RelationshipTypeRepository
+	requirementRelationshipRepo repository.RequirementRelationshipRepository
+	userStoryRepo               repository.UserStoryRepository
+	acceptanceCriteriaRepo      repository.AcceptanceCriteriaRepository
+	epicRepo                    repository.EpicRepository
+	userRepo                    repository.UserRepository
+	testUser                    *models.User
+	testEpic                    *models.Epic
+	testUserStory               *models.UserStory
+	testAcceptanceCriteria      *models.AcceptanceCriteria
+	testRequirementType         *models.RequirementType
+	testRelationshipType        *models.RelationshipType
 }
 
 func (suite *RequirementIntegrationTestSuite) SetupSuite() {
@@ -59,6 +59,10 @@ func (suite *RequirementIntegrationTestSuite) SetupSuite() {
 		&models.RequirementRelationship{},
 		&models.Comment{},
 	)
+	suite.Require().NoError(err)
+
+	// Seed default data
+	err = models.SeedDefaultData(db)
 	suite.Require().NoError(err)
 
 	suite.db = db
@@ -90,7 +94,7 @@ func (suite *RequirementIntegrationTestSuite) SetupSuite() {
 	// Setup Gin router
 	gin.SetMode(gin.TestMode)
 	suite.router = gin.New()
-	
+
 	// Setup routes
 	v1 := suite.router.Group("/api/v1")
 	{
@@ -311,7 +315,7 @@ func (suite *RequirementIntegrationTestSuite) TestUpdateRequirement() {
 	newTitle := "Updated Title"
 	newPriority := models.PriorityLow
 	newStatus := models.RequirementStatusActive
-	
+
 	updateReq := service.UpdateRequirementRequest{
 		Title:    &newTitle,
 		Priority: &newPriority,
@@ -556,4 +560,3 @@ func (suite *RequirementIntegrationTestSuite) TestChangeRequirementStatus() {
 func TestRequirementIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(RequirementIntegrationTestSuite))
 }
-
