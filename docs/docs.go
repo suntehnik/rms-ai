@@ -423,146 +423,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/search": {
-            "get": {
-                "description": "Performs full-text search and filtering across epics, user stories, acceptance criteria, and requirements",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "search"
-                ],
-                "summary": "Search across all entities",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Search query text",
-                        "name": "query",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by creator ID (UUID)",
-                        "name": "creator_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by assignee ID (UUID)",
-                        "name": "assignee_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Filter by priority (1-4)",
-                        "name": "priority",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by status",
-                        "name": "status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by creation date from (RFC3339 format)",
-                        "name": "created_from",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by creation date to (RFC3339 format)",
-                        "name": "created_to",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by epic ID (UUID)",
-                        "name": "epic_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by user story ID (UUID)",
-                        "name": "user_story_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by acceptance criteria ID (UUID)",
-                        "name": "acceptance_criteria_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by requirement type ID (UUID)",
-                        "name": "requirement_type_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by author ID (UUID)",
-                        "name": "author_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "default": "created_at",
-                        "description": "Sort by field (priority, created_at, last_modified, title)",
-                        "name": "sort_by",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "default": "desc",
-                        "description": "Sort order (asc, desc)",
-                        "name": "sort_order",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 50,
-                        "description": "Limit number of results (max 100)",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 0,
-                        "description": "Offset for pagination",
-                        "name": "offset",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.SearchResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/api/search/suggestions": {
             "get": {
-                "description": "Get search suggestions based on partial query",
+                "description": "Provides search suggestions based on partial query input. Returns matching titles, reference IDs, and available status values to help users construct effective search queries.",
                 "consumes": [
                     "application/json"
                 ],
@@ -576,7 +439,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Partial search query",
+                        "example": "\"auth\"",
+                        "description": "Partial search query for generating suggestions. Minimum 2 characters recommended.",
                         "name": "query",
                         "in": "query",
                         "required": true
@@ -584,32 +448,27 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "default": 10,
-                        "description": "Limit number of suggestions",
+                        "example": 5,
+                        "description": "Maximum number of suggestions per category (1-50)",
                         "name": "limit",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Search suggestions grouped by category",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                }
-                            }
+                            "$ref": "#/definitions/internal_handlers.SearchSuggestionsResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid parameters (missing query, invalid limit)",
                         "schema": {
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error during suggestion generation",
                         "schema": {
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
@@ -1646,9 +1505,1435 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/config/relationship-types": {
+            "get": {
+                "description": "Retrieves a paginated list of all relationship types with optional sorting. Supports ordering by name, created_at, or updated_at fields.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "List relationship types",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "name",
+                        "example": "\"name\"",
+                        "description": "Sort field (name, created_at, updated_at)",
+                        "name": "order_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 100,
+                        "example": 50,
+                        "description": "Maximum number of results (1-100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "description": "Number of results to skip",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved relationship types",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.RelationshipTypeListResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a new relationship type for defining how requirements relate to each other. Common types include depends_on, blocks, relates_to, conflicts_with, and derives_from.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Create a new relationship type",
+                "parameters": [
+                    {
+                        "description": "Relationship type creation request",
+                        "name": "relationship_type",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateRelationshipTypeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created relationship type",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.RelationshipType"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or validation error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Relationship type name already exists",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/config/relationship-types/{id}": {
+            "get": {
+                "description": "Retrieves a specific relationship type by its UUID. Returns complete relationship type information including name, description, and usage metadata.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Get relationship type by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Relationship type ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved relationship type",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.RelationshipType"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Relationship type not found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an existing relationship type. Only provided fields will be updated. Name must be unique across all relationship types.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Update relationship type",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Relationship type ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Relationship type update request",
+                        "name": "relationship_type",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateRelationshipTypeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated relationship type",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.RelationshipType"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Relationship type not found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Relationship type name already exists",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a relationship type. By default, deletion is prevented if there are requirement relationships using this type. Use force=true to override this protection (use with caution).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Delete relationship type",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Relationship type ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "default": false,
+                        "example": false,
+                        "description": "Force deletion even if relationships exist",
+                        "name": "force",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted relationship type (no content)"
+                    },
+                    "400": {
+                        "description": "Invalid UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Relationship type not found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Relationship type has associated relationships and cannot be deleted",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/config/requirement-types": {
+            "get": {
+                "description": "Retrieves a paginated list of all requirement types with optional sorting. Supports ordering by name, created_at, or updated_at fields.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "List requirement types",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "name",
+                        "example": "\"name\"",
+                        "description": "Sort field (name, created_at, updated_at)",
+                        "name": "order_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 100,
+                        "example": 50,
+                        "description": "Maximum number of results (1-100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "description": "Number of results to skip",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved requirement types",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.RequirementTypeListResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new requirement type for categorizing requirements. Requirement types help organize and classify different kinds of requirements (functional, non-functional, business rules, etc.). Requires Administrator role.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Create a new requirement type",
+                "parameters": [
+                    {
+                        "description": "Requirement type creation request",
+                        "name": "requirement_type",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateRequirementTypeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created requirement type",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.RequirementType"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or validation error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Requirement type name already exists",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/config/requirement-types/{id}": {
+            "get": {
+                "description": "Retrieves a specific requirement type by its UUID. Returns complete requirement type information including name, description, and metadata.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Get requirement type by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Requirement type ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved requirement type",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.RequirementType"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Requirement type not found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an existing requirement type. Only provided fields will be updated. Name must be unique across all requirement types.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Update requirement type",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Requirement type ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Requirement type update request",
+                        "name": "requirement_type",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateRequirementTypeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated requirement type",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.RequirementType"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Requirement type not found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Requirement type name already exists",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a requirement type. By default, deletion is prevented if there are requirements using this type. Use force=true to override this protection (use with caution).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Delete requirement type",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Requirement type ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "default": false,
+                        "example": false,
+                        "description": "Force deletion even if requirements exist",
+                        "name": "force",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted requirement type (no content)"
+                    },
+                    "400": {
+                        "description": "Invalid UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Requirement type not found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Requirement type has associated requirements and cannot be deleted",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/config/status-models": {
+            "get": {
+                "description": "Retrieves a paginated list of status models with optional filtering by entity type and sorting. Supports ordering by entity_type, name, created_at, or updated_at fields.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "List status models",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"epic\"",
+                        "description": "Filter by entity type (epic, user_story, requirement, acceptance_criteria)",
+                        "name": "entity_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "\"entity_type, name\"",
+                        "example": "\"entity_type\"",
+                        "description": "Sort field (entity_type, name, created_at, updated_at)",
+                        "name": "order_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 100,
+                        "example": 50,
+                        "description": "Maximum number of results (1-100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "description": "Number of results to skip",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved status models",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.StatusModelListResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a new status model for defining status workflows for different entity types (epic, user_story, requirement, acceptance_criteria). Each entity type can have multiple status models with one marked as default.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Create a new status model",
+                "parameters": [
+                    {
+                        "description": "Status model creation request",
+                        "name": "status_model",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateStatusModelRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created status model",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.StatusModel"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body, validation error, or invalid entity type",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Status model name already exists for this entity type",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/config/status-models/default/{entity_type}": {
+            "get": {
+                "description": "Retrieves the default status model for a specific entity type. The default status model is used when creating new entities of that type.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Get default status model for entity type",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"epic\"",
+                        "description": "Entity type (epic, user_story, requirement, acceptance_criteria)",
+                        "name": "entity_type",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved default status model",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.StatusModel"
+                        }
+                    },
+                    "404": {
+                        "description": "Default status model not found for entity type",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/config/status-models/{id}": {
+            "get": {
+                "description": "Retrieves a specific status model by its UUID. Returns complete status model information including entity type, name, description, and default flag.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Get status model by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Status model ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved status model",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.StatusModel"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Status model not found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an existing status model. Only provided fields will be updated. Name must be unique within the same entity type. Setting is_default=true will make other models for the same entity type non-default.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Update status model",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Status model ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Status model update request",
+                        "name": "status_model",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateStatusModelRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated status model",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.StatusModel"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Status model not found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Status model name already exists for this entity type",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a status model and all its associated statuses and transitions. Use with caution as this will affect entities using this status model. Consider setting a different default model before deletion.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Delete status model",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Status model ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "default": false,
+                        "example": false,
+                        "description": "Force deletion (reserved for future use)",
+                        "name": "force",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted status model (no content)"
+                    },
+                    "400": {
+                        "description": "Invalid UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Status model not found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/config/status-models/{id}/statuses": {
+            "get": {
+                "description": "Retrieves all statuses belonging to a specific status model, ordered by their display order. Includes initial and final status flags for workflow understanding.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "List statuses by status model",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Status model ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved statuses",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.StatusListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/config/status-models/{id}/transitions": {
+            "get": {
+                "description": "Retrieves all status transitions belonging to a specific status model. Shows the complete workflow rules including allowed status changes and transition metadata.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "List status transitions by status model",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Status model ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved status transitions",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.StatusTransitionListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/config/status-transitions": {
+            "post": {
+                "description": "Creates a new status transition rule within a status model. Transitions define which status changes are allowed. Both from_status and to_status must belong to the same status model.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Create a new status transition",
+                "parameters": [
+                    {
+                        "description": "Status transition creation request",
+                        "name": "transition",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateStatusTransitionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created status transition",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.StatusTransition"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body, validation error, status model not found, or invalid status transition",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Status transition already exists",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/config/status-transitions/{id}": {
+            "get": {
+                "description": "Retrieves a specific status transition by its UUID. Returns complete transition information including from/to statuses, name, and description.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Get status transition by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Status transition ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved status transition",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.StatusTransition"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Status transition not found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an existing status transition. Only provided fields will be updated. The from_status and to_status cannot be changed after creation.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Update status transition",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Status transition ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Status transition update request",
+                        "name": "transition",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateStatusTransitionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated status transition",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.StatusTransition"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Status transition not found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a status transition rule. This will prevent the corresponding status change from being allowed in the future. Existing entities will not be affected.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Delete status transition",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Status transition ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted status transition (no content)"
+                    },
+                    "400": {
+                        "description": "Invalid UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Status transition not found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/config/statuses": {
+            "post": {
+                "description": "Creates a new status within a status model. Statuses define the possible states for entities. Each status can be marked as initial (starting state) or final (ending state) and has an order for display purposes.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Create a new status",
+                "parameters": [
+                    {
+                        "description": "Status creation request",
+                        "name": "status",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created status",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Status"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body, validation error, or status model not found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Status name already exists in this model",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/config/statuses/{id}": {
+            "get": {
+                "description": "Retrieves a specific status by its UUID. Returns complete status information including name, description, color, flags, and order within the status model.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Get status by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Status ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved status",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Status"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Status not found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an existing status. Only provided fields will be updated. Name must be unique within the same status model. Changing initial/final flags may affect status transitions.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Update status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Status ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Status update request",
+                        "name": "status",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated status",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Status"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Status not found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Status name already exists in this model",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a status from a status model. This will also remove any status transitions involving this status. Use with caution as entities using this status may be affected.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "configuration"
+                ],
+                "summary": "Delete status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Status ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "default": false,
+                        "example": false,
+                        "description": "Force deletion (reserved for future use)",
+                        "name": "force",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted status (no content)"
+                    },
+                    "400": {
+                        "description": "Invalid UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Status not found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/epics": {
             "get": {
-                "description": "Retrieve a list of epics with optional filtering by creator, assignee, status, and priority. Supports pagination and custom ordering.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve a list of epics with optional filtering by creator, assignee, status, and priority. Supports pagination and custom ordering. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1734,6 +3019,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -1744,7 +3036,12 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new epic with the provided details. The epic will be assigned a unique reference ID (EP-XXX format) and default status of \"Backlog\".",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new epic with the provided details. The epic will be assigned a unique reference ID (EP-XXX format) and default status of \"Backlog\". Requires User or Administrator role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1780,6 +3077,20 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "User or Administrator role required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -1792,7 +3103,12 @@ const docTemplate = `{
         },
         "/api/v1/epics/{id}": {
             "get": {
-                "description": "Retrieve a single epic by its UUID or reference ID (e.g., EP-001). Supports both formats for flexible access.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve a single epic by its UUID or reference ID (e.g., EP-001). Supports both formats for flexible access. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1820,6 +3136,13 @@ const docTemplate = `{
                             "$ref": "#/definitions/product-requirements-management_internal_models.Epic"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "Epic not found",
                         "schema": {
@@ -1837,7 +3160,12 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Update an epic's properties. Only provided fields will be updated. Supports partial updates with validation for status transitions and priority values.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update an epic's properties. Only provided fields will be updated. Supports partial updates with validation for status transitions and priority values. Requires User or Administrator role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1882,6 +3210,20 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "User or Administrator role required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "Epic not found",
                         "schema": {
@@ -1899,7 +3241,12 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete an epic by UUID. By default, epics with associated user stories cannot be deleted unless force=true is specified.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete an epic by UUID. By default, epics with associated user stories cannot be deleted unless force=true is specified. Requires User or Administrator role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1934,6 +3281,20 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid epic ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "User or Administrator role required",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -2562,7 +3923,12 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new detailed requirement with specified properties. Requires a valid user story ID, creator, and requirement type. The assignee defaults to the creator if not specified.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new detailed requirement with specified properties. Requires a valid user story ID, creator, and requirement type. The assignee defaults to the creator if not specified. Requires User or Administrator role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2593,6 +3959,20 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid request body, creator/assignee not found, user story not found, requirement type not found, acceptance criteria not found, or invalid priority",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "User or Administrator role required",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -3251,6 +4631,170 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Performs full-text search and filtering across epics, user stories, acceptance criteria, and requirements. Supports PostgreSQL full-text search with ranking and comprehensive filtering options. Results are cached for performance. Requires authentication.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "search"
+                ],
+                "summary": "Search across all entities",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"user authentication\"",
+                        "description": "Full-text search query. Searches across titles, descriptions, and reference IDs. Supports PostgreSQL text search syntax with automatic prefix matching.",
+                        "name": "query",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+                        "description": "Filter by creator ID (UUID format)",
+                        "name": "creator_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174001\"",
+                        "description": "Filter by assignee ID (UUID format)",
+                        "name": "assignee_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "example": 1,
+                        "description": "Filter by priority level (1=Critical, 2=High, 3=Medium, 4=Low)",
+                        "name": "priority",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "\"in_progress\"",
+                        "description": "Filter by status (backlog, draft, in_progress, done, cancelled, active, obsolete)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "\"2023-01-01T00:00:00Z\"",
+                        "description": "Filter by creation date from (RFC3339 format: YYYY-MM-DDTHH:MM:SSZ)",
+                        "name": "created_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "\"2023-12-31T23:59:59Z\"",
+                        "description": "Filter by creation date to (RFC3339 format: YYYY-MM-DDTHH:MM:SSZ)",
+                        "name": "created_to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174002\"",
+                        "description": "Filter by parent epic ID (UUID format). Returns user stories, acceptance criteria, and requirements within the epic.",
+                        "name": "epic_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174003\"",
+                        "description": "Filter by parent user story ID (UUID format). Returns acceptance criteria and requirements within the user story.",
+                        "name": "user_story_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174004\"",
+                        "description": "Filter by parent acceptance criteria ID (UUID format). Returns requirements within the acceptance criteria.",
+                        "name": "acceptance_criteria_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174005\"",
+                        "description": "Filter by requirement type ID (UUID format). Only applies to requirement entities.",
+                        "name": "requirement_type_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174006\"",
+                        "description": "Filter by author ID (UUID format). Applies to comments and acceptance criteria.",
+                        "name": "author_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "created_at",
+                        "example": "\"priority\"",
+                        "description": "Sort by field: priority, created_at, last_modified, title, relevance (relevance only available with query)",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "desc",
+                        "example": "\"asc\"",
+                        "description": "Sort order: asc (ascending) or desc (descending)",
+                        "name": "sort_order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "example": 20,
+                        "description": "Maximum number of results to return (1-100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "description": "Number of results to skip for pagination (0-based)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful search with results, pagination metadata, and execution details",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.SearchResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid search parameters (invalid UUID format, out of range values, invalid sort fields)",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during search operation",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     }
                 }
@@ -4569,9 +6113,743 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/auth/change-password": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Change authenticated user's password",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "authentication"
+                ],
+                "summary": "Change password",
+                "parameters": [
+                    {
+                        "description": "Password change request",
+                        "name": "password",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.ChangePasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password changed successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid current password",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "description": "Authenticate user with username and password to receive JWT token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "authentication"
+                ],
+                "summary": "User login",
+                "parameters": [
+                    {
+                        "description": "Login credentials",
+                        "name": "login",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful authentication with JWT token",
+                        "schema": {
+                            "$ref": "#/definitions/auth.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get authenticated user's profile information",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "authentication"
+                ],
+                "summary": "Get current user profile",
+                "responses": {
+                    "200": {
+                        "description": "Current user profile",
+                        "schema": {
+                            "$ref": "#/definitions/auth.UserResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/users": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get list of all users (Administrator role required)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "authentication"
+                ],
+                "summary": "List all users",
+                "responses": {
+                    "200": {
+                        "description": "List of users",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/auth.UserResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new user account (Administrator role required)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "authentication"
+                ],
+                "summary": "Create new user",
+                "parameters": [
+                    {
+                        "description": "User creation request",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.CreateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created user",
+                        "schema": {
+                            "$ref": "#/definitions/auth.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request format or role",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Username or email already exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/users/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get specific user details (Administrator role required)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "authentication"
+                ],
+                "summary": "Get user by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User details",
+                        "schema": {
+                            "$ref": "#/definitions/auth.UserResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update user details (Administrator role required)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "authentication"
+                ],
+                "summary": "Update user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User update request",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated user details",
+                        "schema": {
+                            "$ref": "#/definitions/auth.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request format or role",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Username or email already exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete user account (Administrator role required)",
+                "tags": [
+                    "authentication"
+                ],
+                "summary": "Delete user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "User successfully deleted"
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Cannot delete user with associated entities",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "auth.ChangePasswordRequest": {
+            "description": "Request payload for changing user password (authentication required)",
+            "type": "object",
+            "required": [
+                "current_password",
+                "new_password"
+            ],
+            "properties": {
+                "current_password": {
+                    "description": "Current password for verification (required)",
+                    "type": "string",
+                    "example": "oldpassword123"
+                },
+                "new_password": {
+                    "description": "New password (minimum 8 characters, required)",
+                    "type": "string",
+                    "minLength": 8,
+                    "example": "newpassword456"
+                }
+            }
+        },
+        "auth.CreateUserRequest": {
+            "description": "Request payload for creating a new user account (Administrator role required)",
+            "type": "object",
+            "required": [
+                "email",
+                "password",
+                "role",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "description": "Valid email address (required)",
+                    "type": "string",
+                    "example": "jane@example.com"
+                },
+                "password": {
+                    "description": "Password (minimum 8 characters, required)",
+                    "type": "string",
+                    "minLength": 8,
+                    "example": "securepass123"
+                },
+                "role": {
+                    "description": "User role: Administrator, User, or Commenter (required)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.UserRole"
+                        }
+                    ],
+                    "example": "User"
+                },
+                "username": {
+                    "description": "Unique username (required)",
+                    "type": "string",
+                    "example": "jane_doe"
+                }
+            }
+        },
+        "auth.LoginRequest": {
+            "description": "Request payload for user authentication",
+            "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
+            "properties": {
+                "password": {
+                    "description": "Password for authentication",
+                    "type": "string",
+                    "example": "password123"
+                },
+                "username": {
+                    "description": "Username for authentication",
+                    "type": "string",
+                    "example": "john_doe"
+                }
+            }
+        },
+        "auth.LoginResponse": {
+            "description": "Response payload for successful authentication containing JWT token and user information",
+            "type": "object",
+            "properties": {
+                "expires_at": {
+                    "description": "Token expiration timestamp",
+                    "type": "string",
+                    "example": "2023-01-02T12:30:00Z"
+                },
+                "token": {
+                    "description": "JWT authentication token",
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                },
+                "user": {
+                    "description": "Authenticated user information",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/auth.UserResponse"
+                        }
+                    ]
+                }
+            }
+        },
+        "auth.UpdateUserRequest": {
+            "description": "Request payload for updating user information (Administrator role required)",
+            "type": "object",
+            "properties": {
+                "email": {
+                    "description": "New email address (optional, must be valid if provided)",
+                    "type": "string",
+                    "example": "jane.smith@example.com"
+                },
+                "role": {
+                    "description": "New user role (optional)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.UserRole"
+                        }
+                    ],
+                    "example": "Administrator"
+                },
+                "username": {
+                    "description": "New username (optional)",
+                    "type": "string",
+                    "example": "jane_smith"
+                }
+            }
+        },
+        "auth.UserResponse": {
+            "description": "User information returned in API responses (password hash excluded for security)",
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "Account creation timestamp",
+                    "type": "string",
+                    "example": "2023-01-01T00:00:00Z"
+                },
+                "email": {
+                    "description": "User email address",
+                    "type": "string",
+                    "example": "john.doe@example.com"
+                },
+                "id": {
+                    "description": "Unique user identifier",
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                },
+                "role": {
+                    "description": "User role determining permissions",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.UserRole"
+                        }
+                    ],
+                    "example": "User"
+                },
+                "updated_at": {
+                    "description": "Last account update timestamp",
+                    "type": "string",
+                    "example": "2023-01-02T12:30:00Z"
+                },
+                "username": {
+                    "description": "Unique username",
+                    "type": "string",
+                    "example": "john_doe"
+                }
+            }
+        },
         "internal_handlers.DeleteAcceptanceCriteriaRequest": {
             "type": "object",
             "properties": {
@@ -4620,6 +6898,99 @@ const docTemplate = `{
             "properties": {
                 "error": {
                     "$ref": "#/definitions/internal_handlers.ErrorDetail"
+                }
+            }
+        },
+        "internal_handlers.RelationshipTypeListResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "relationship_types": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.RelationshipType"
+                    }
+                }
+            }
+        },
+        "internal_handlers.RequirementTypeListResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "requirement_types": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.RequirementType"
+                    }
+                }
+            }
+        },
+        "internal_handlers.SearchSuggestionsResponse": {
+            "type": "object",
+            "properties": {
+                "reference_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "statuses": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "titles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "internal_handlers.StatusListResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "statuses": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.Status"
+                    }
+                }
+            }
+        },
+        "internal_handlers.StatusModelListResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "status_models": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.StatusModel"
+                    }
+                }
+            }
+        },
+        "internal_handlers.StatusTransitionListResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "transitions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.StatusTransition"
+                    }
                 }
             }
         },
@@ -5241,6 +7612,146 @@ const docTemplate = `{
                 }
             }
         },
+        "product-requirements-management_internal_models.Status": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "description": "Hex color code for UI display",
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "from_transitions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.StatusTransition"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_final": {
+                    "type": "boolean"
+                },
+                "is_initial": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "order": {
+                    "type": "integer"
+                },
+                "status_model": {
+                    "description": "Relationships",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.StatusModel"
+                        }
+                    ]
+                },
+                "status_model_id": {
+                    "type": "string"
+                },
+                "to_transitions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.StatusTransition"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "product-requirements-management_internal_models.StatusModel": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "entity_type": {
+                    "$ref": "#/definitions/product-requirements-management_internal_models.EntityType"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_default": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "statuses": {
+                    "description": "Relationships",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.Status"
+                    }
+                },
+                "transitions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/product-requirements-management_internal_models.StatusTransition"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "product-requirements-management_internal_models.StatusTransition": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Optional description",
+                    "type": "string"
+                },
+                "from_status": {
+                    "$ref": "#/definitions/product-requirements-management_internal_models.Status"
+                },
+                "from_status_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Optional name for the transition",
+                    "type": "string"
+                },
+                "status_model": {
+                    "description": "Relationships",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.StatusModel"
+                        }
+                    ]
+                },
+                "status_model_id": {
+                    "type": "string"
+                },
+                "to_status": {
+                    "$ref": "#/definitions/product-requirements-management_internal_models.Status"
+                },
+                "to_status_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "product-requirements-management_internal_models.User": {
             "description": "A user account in the system with authentication and role-based permissions",
             "type": "object",
@@ -5687,6 +8198,21 @@ const docTemplate = `{
                 }
             }
         },
+        "product-requirements-management_internal_service.CreateRelationshipTypeRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255
+                }
+            }
+        },
         "product-requirements-management_internal_service.CreateRequirementRequest": {
             "type": "object",
             "required": [
@@ -5726,6 +8252,99 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user_story_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "product-requirements-management_internal_service.CreateRequirementTypeRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255
+                }
+            }
+        },
+        "product-requirements-management_internal_service.CreateStatusModelRequest": {
+            "type": "object",
+            "required": [
+                "entity_type",
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "entity_type": {
+                    "$ref": "#/definitions/product-requirements-management_internal_models.EntityType"
+                },
+                "is_default": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255
+                }
+            }
+        },
+        "product-requirements-management_internal_service.CreateStatusRequest": {
+            "type": "object",
+            "required": [
+                "name",
+                "status_model_id"
+            ],
+            "properties": {
+                "color": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "is_final": {
+                    "type": "boolean"
+                },
+                "is_initial": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "order": {
+                    "type": "integer"
+                },
+                "status_model_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "product-requirements-management_internal_service.CreateStatusTransitionRequest": {
+            "type": "object",
+            "required": [
+                "from_status_id",
+                "status_model_id",
+                "to_status_id"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "from_status_id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "status_model_id": {
+                    "type": "string"
+                },
+                "to_status_id": {
                     "type": "string"
                 }
             }
@@ -5959,6 +8578,18 @@ const docTemplate = `{
                 }
             }
         },
+        "product-requirements-management_internal_service.UpdateRelationshipTypeRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255
+                }
+            }
+        },
         "product-requirements-management_internal_service.UpdateRequirementRequest": {
             "type": "object",
             "properties": {
@@ -5981,6 +8612,68 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "product-requirements-management_internal_service.UpdateRequirementTypeRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255
+                }
+            }
+        },
+        "product-requirements-management_internal_service.UpdateStatusModelRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "is_default": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255
+                }
+            }
+        },
+        "product-requirements-management_internal_service.UpdateStatusRequest": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "is_final": {
+                    "type": "boolean"
+                },
+                "is_initial": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "order": {
+                    "type": "integer"
+                }
+            }
+        },
+        "product-requirements-management_internal_service.UpdateStatusTransitionRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 }
             }
@@ -6022,7 +8715,7 @@ const docTemplate = `{
     },
     "securityDefinitions": {
         "BearerAuth": {
-            "description": "Type \"Bearer\" followed by a space and JWT token.",
+            "description": "JWT token authentication. Include 'Bearer ' followed by your JWT token. Example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' Tokens expire after 1 hour and must be refreshed through re-authentication.",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"
@@ -6037,7 +8730,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Product Requirements Management API",
-	Description:      "API for managing product requirements through hierarchical structure of Epics, User Stories, and Requirements",
+	Description:      "API for managing product requirements through hierarchical structure of Epics, User Stories, and Requirements. This API uses JWT-based authentication with role-based access control. Three user roles are supported: Administrator (full access), User (entity management), and Commenter (view and comment only).",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
