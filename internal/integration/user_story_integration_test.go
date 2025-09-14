@@ -23,15 +23,15 @@ import (
 
 type UserStoryIntegrationTestSuite struct {
 	suite.Suite
-	db                *gorm.DB
-	router            *gin.Engine
-	userStoryHandler  *handlers.UserStoryHandler
-	userStoryService  service.UserStoryService
-	userStoryRepo     repository.UserStoryRepository
-	epicRepo          repository.EpicRepository
-	userRepo          repository.UserRepository
-	testUser          *models.User
-	testEpic          *models.Epic
+	db               *gorm.DB
+	router           *gin.Engine
+	userStoryHandler *handlers.UserStoryHandler
+	userStoryService service.UserStoryService
+	userStoryRepo    repository.UserStoryRepository
+	epicRepo         repository.EpicRepository
+	userRepo         repository.UserRepository
+	testUser         *models.User
+	testEpic         *models.Epic
 }
 
 func (suite *UserStoryIntegrationTestSuite) SetupSuite() {
@@ -50,6 +50,10 @@ func (suite *UserStoryIntegrationTestSuite) SetupSuite() {
 	)
 	suite.Require().NoError(err)
 
+	// Seed default data
+	err = models.SeedDefaultData(db)
+	suite.Require().NoError(err)
+
 	suite.db = db
 
 	// Setup repositories
@@ -66,7 +70,7 @@ func (suite *UserStoryIntegrationTestSuite) SetupSuite() {
 	// Setup router
 	gin.SetMode(gin.TestMode)
 	suite.router = gin.New()
-	
+
 	v1 := suite.router.Group("/api/v1")
 	{
 		v1.POST("/user-stories", suite.userStoryHandler.CreateUserStory)
@@ -259,7 +263,7 @@ func (suite *UserStoryIntegrationTestSuite) TestUpdateUserStory() {
 	newTitle := "Update Profile Information"
 	newStatus := models.UserStoryStatusInProgress
 	newDescription := "As a user, I want to update my profile, so that I can keep my information current"
-	
+
 	reqBody := service.UpdateUserStoryRequest{
 		Title:       &newTitle,
 		Status:      &newStatus,
@@ -358,7 +362,7 @@ func (suite *UserStoryIntegrationTestSuite) TestListUserStories() {
 		"As a user, I want to logout, so that I can secure my session",
 		"As an admin, I want to manage users, so that I can control access",
 	}
-	
+
 	for i, desc := range descriptions {
 		userStory := &models.UserStory{
 			ID:          uuid.New(),
@@ -486,4 +490,3 @@ func (suite *UserStoryIntegrationTestSuite) TestAssignUserStory() {
 func TestUserStoryIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(UserStoryIntegrationTestSuite))
 }
-
