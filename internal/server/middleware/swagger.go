@@ -3,98 +3,62 @@ package middleware
 import (
 	"os"
 	"product-requirements-management/internal/config"
+	"product-requirements-management/internal/docs"
 	"product-requirements-management/internal/logger"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-// SwaggerConfig holds Swagger-specific configuration
-type SwaggerConfig struct {
-	Enabled     bool
-	BasePath    string
-	Title       string
-	Version     string
-	Description string
-}
-
-// NewSwaggerConfig creates a new SwaggerConfig from environment variables
-func NewSwaggerConfig() *SwaggerConfig {
-	return &SwaggerConfig{
-		Enabled:     getEnvAsBool("SWAGGER_ENABLED", true),
-		BasePath:    getEnv("SWAGGER_BASE_PATH", "/swagger"),
-		Title:       getEnv("SWAGGER_TITLE", "Product Requirements Management API"),
-		Version:     getEnv("SWAGGER_VERSION", "1.0.0"),
-		Description: getEnv("SWAGGER_DESCRIPTION", "API for managing product requirements through hierarchical structure"),
-	}
-}
-
-// SetupSwaggerRoutes configures Swagger UI routes based on configuration
+// SetupSwaggerRoutes configures Swagger UI routes based on comprehensive configuration
 func SetupSwaggerRoutes(router *gin.Engine, cfg *config.Config) {
-	swaggerCfg := NewSwaggerConfig()
+	// Apply environment-specific configuration
+	environment := os.Getenv("ENVIRONMENT")
+	if environment == "" {
+		environment = "development"
+	}
 
-	// Only serve Swagger documentation if enabled
-	if !swaggerCfg.Enabled {
-		// Safe logger call - check if logger is initialized
-		if logger.Logger != nil {
-			logger.Info("Swagger documentation is disabled")
+	// Apply environment configuration overrides
+	docs.ApplyEnvironmentConfig(environment)
+
+	// Get comprehensive Swagger configuration
+	swaggerCfg := docs.DefaultSwaggerConfig()
+
+	// Validate environment configuration and log warnings
+	warnings := docs.ValidateEnvironmentConfig(environment)
+	if len(warnings) > 0 && logger.Logger != nil {
+		for _, warning := range warnings {
+			logger.Logger.Warn("Swagger configuration warning: " + warning)
 		}
-		return
 	}
 
-	// Safe logger call - check if logger is initialized
+	// Log configuration status
 	if logger.Logger != nil {
-		logger.Infof("Setting up Swagger documentation at %s/*any", swaggerCfg.BasePath)
+		if swaggerCfg.Enabled {
+			logger.Logger.Infof("Setting up Swagger documentation for environment: %s", environment)
+			logger.Logger.Infof("Swagger UI will be available at: %s/index.html", swaggerCfg.BasePath)
+
+			// Log security settings
+			if swaggerCfg.SecurityConfig.RequireAuth {
+				logger.Logger.Info("Swagger authentication is enabled")
+			}
+			if swaggerCfg.SecurityConfig.HideInProduction && environment == "production" {
+				logger.Logger.Info("Swagger is configured to be hidden in production")
+			}
+		} else {
+			logger.Logger.Infof("Swagger documentation is disabled for environment: %s", environment)
+		}
 	}
 
-	// Configure Swagger UI with enhanced interactive testing capabilities
-	url := ginSwagger.URL("/swagger/doc.json") // The url pointing to API definition
+	// Register Swagger routes with comprehensive configuration
+	docs.RegisterSwaggerRoutes(router, swaggerCfg)
 
-	// Enhanced Swagger UI configuration for better interactive testing
-	swaggerHandler := ginSwagger.WrapHandler(swaggerFiles.Handler,
-		url,
-		ginSwagger.DefaultModelsExpandDepth(1),
-		ginSwagger.DocExpansion("list"),
-		ginSwagger.DeepLinking(true),
-		ginSwagger.PersistAuthorization(true),
-	)
-
-	router.GET(swaggerCfg.BasePath+"/*any", swaggerHandler)
-
-	// Add a redirect from base path to Swagger UI
-	router.GET(swaggerCfg.BasePath, func(c *gin.Context) {
-		c.Redirect(302, swaggerCfg.BasePath+"/index.html")
+	// Add environment status endpoint
+	router.GET("/api/v1/environment", func(c *gin.Context) {
+		c.JSON(200, docs.GetEnvironmentStatus())
 	})
 
-	// Interactive testing helper endpoints are handled by the Swagger UI itself
-	// No additional routes needed as they would conflict with the wildcard /*any route
-
-	// Safe logger call - check if logger is initialized
-	if logger.Logger != nil {
-		logger.Infof("Swagger UI available at: %s/index.html", swaggerCfg.BasePath)
-		logger.Infof("Interactive testing features enabled with authentication support")
-	}
-}
-
-// Note: Interactive testing helper endpoints would conflict with the Swagger UI wildcard route
-// The enhanced Swagger UI configuration provides the necessary interactive testing capabilities
-// through the persistent authorization and improved UI features.
-
-// Helper functions for environment variable parsing
-func getEnv(key, fallback string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return fallback
-}
-
-func getEnvAsBool(key string, fallback bool) bool {
-	if value := os.Getenv(key); value != "" {
-		if boolVal, err := strconv.ParseBool(value); err == nil {
-			return boolVal
-		}
-	}
-	return fallback
+	// Add deployment status endpoint
+	router.GET("/api/v1/deployment", func(c *gin.Context) {
+		c.JSON(200, docs.GetDeploymentStatus())
+	})
 }

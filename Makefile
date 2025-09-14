@@ -1,4 +1,4 @@
-.PHONY: build run test test-unit test-integration test-e2e test-fast test-coverage test-unit-coverage test-integration-coverage test-e2e-coverage test-bench test-bench-api test-bench-results test-bench-api-results test-parallel test-race test-run test-debug test-compile test-ci clean deps dev fmt lint migrate-up migrate-down migrate-version build-migrate docker-up docker-down docker-logs docker-clean dev-setup mocks swagger swagger-fmt swagger-validate swagger-clean help
+.PHONY: build run test test-unit test-integration test-e2e test-fast test-coverage test-unit-coverage test-integration-coverage test-e2e-coverage test-bench test-bench-api test-bench-results test-bench-api-results test-parallel test-race test-run test-debug test-compile test-ci clean deps dev fmt lint migrate-up migrate-down migrate-version build-migrate docker-up docker-down docker-logs docker-clean dev-setup mocks swagger swagger-fmt swagger-validate swagger-clean swagger-dev swagger-staging swagger-prod swagger-config swagger-env-dev swagger-env-staging swagger-env-prod swagger-deploy swagger-test swagger-serve help
 
 # Build the application
 build:
@@ -203,6 +203,130 @@ swagger-clean:
 	rm -rf docs/docs.go docs/swagger.json docs/swagger.yaml
 	@echo "✅ Swagger documentation cleaned"
 
+# Enhanced Swagger deployment and configuration commands
+swagger-dev:
+	@echo "🚀 Setting up Swagger for development environment..."
+	@export ENVIRONMENT=development && \
+	export SWAGGER_ENABLED=true && \
+	export SWAGGER_REQUIRE_AUTH=false && \
+	export LOG_LEVEL=debug && \
+	$(MAKE) swagger
+	@echo "✅ Swagger configured for development"
+
+swagger-staging:
+	@echo "🚀 Setting up Swagger for staging environment..."
+	@export ENVIRONMENT=staging && \
+	export SWAGGER_ENABLED=true && \
+	export SWAGGER_REQUIRE_AUTH=true && \
+	export LOG_LEVEL=info && \
+	$(MAKE) swagger
+	@echo "✅ Swagger configured for staging"
+
+swagger-prod:
+	@echo "🚀 Setting up Swagger for production environment..."
+	@export ENVIRONMENT=production && \
+	export SWAGGER_ENABLED=false && \
+	export SWAGGER_REQUIRE_AUTH=true && \
+	export LOG_LEVEL=warn && \
+	$(MAKE) swagger
+	@echo "⚠️  Swagger is disabled in production by default"
+	@echo "   To enable in production, set SWAGGER_ENABLED=true"
+
+swagger-config:
+	@echo "📋 Current Swagger configuration:"
+	@echo "  Environment: $${ENVIRONMENT:-development}"
+	@echo "  Swagger Enabled: $${SWAGGER_ENABLED:-true}"
+	@echo "  Require Auth: $${SWAGGER_REQUIRE_AUTH:-false}"
+	@echo "  Log Level: $${LOG_LEVEL:-info}"
+	@echo "  Base Path: $${SWAGGER_BASE_PATH:-/swagger}"
+	@echo "  Host: $${SWAGGER_HOST:-localhost:8080}"
+
+swagger-env-dev:
+	@echo "📝 Generating .env file for development..."
+	@echo "# Development Environment Configuration" > .env.development
+	@echo "ENVIRONMENT=development" >> .env.development
+	@echo "SWAGGER_ENABLED=true" >> .env.development
+	@echo "SWAGGER_REQUIRE_AUTH=false" >> .env.development
+	@echo "LOG_LEVEL=debug" >> .env.development
+	@echo "CORS_ENABLED=true" >> .env.development
+	@echo "RATE_LIMIT_ENABLED=false" >> .env.development
+	@echo "COMPRESSION_ENABLED=false" >> .env.development
+	@echo "CACHE_ENABLED=false" >> .env.development
+	@echo "DEBUG_MODE=true" >> .env.development
+	@echo "✅ Development environment file created: .env.development"
+
+swagger-env-staging:
+	@echo "📝 Generating .env file for staging..."
+	@echo "# Staging Environment Configuration" > .env.staging
+	@echo "ENVIRONMENT=staging" >> .env.staging
+	@echo "SWAGGER_ENABLED=true" >> .env.staging
+	@echo "SWAGGER_REQUIRE_AUTH=true" >> .env.staging
+	@echo "LOG_LEVEL=info" >> .env.staging
+	@echo "CORS_ENABLED=true" >> .env.staging
+	@echo "RATE_LIMIT_ENABLED=true" >> .env.staging
+	@echo "COMPRESSION_ENABLED=true" >> .env.staging
+	@echo "CACHE_ENABLED=true" >> .env.staging
+	@echo "DEBUG_MODE=false" >> .env.staging
+	@echo "✅ Staging environment file created: .env.staging"
+
+swagger-env-prod:
+	@echo "📝 Generating .env file for production..."
+	@echo "# Production Environment Configuration" > .env.production
+	@echo "ENVIRONMENT=production" >> .env.production
+	@echo "SWAGGER_ENABLED=false" >> .env.production
+	@echo "SWAGGER_REQUIRE_AUTH=true" >> .env.production
+	@echo "LOG_LEVEL=warn" >> .env.production
+	@echo "CORS_ENABLED=false" >> .env.production
+	@echo "RATE_LIMIT_ENABLED=true" >> .env.production
+	@echo "COMPRESSION_ENABLED=true" >> .env.production
+	@echo "CACHE_ENABLED=true" >> .env.production
+	@echo "DEBUG_MODE=false" >> .env.production
+	@echo "CSP_ENABLED=true" >> .env.production
+	@echo "SECURITY_HEADERS=true" >> .env.production
+	@echo "✅ Production environment file created: .env.production"
+
+swagger-deploy:
+	@echo "🚀 Deploying Swagger documentation..."
+	@if [ -z "$$ENVIRONMENT" ]; then \
+		echo "❌ ENVIRONMENT variable not set. Use: make swagger-dev, swagger-staging, or swagger-prod"; \
+		exit 1; \
+	fi
+	@echo "Deploying for environment: $$ENVIRONMENT"
+	@$(MAKE) swagger
+	@if [ "$$ENVIRONMENT" = "production" ] && [ "$$SWAGGER_ENABLED" != "true" ]; then \
+		echo "⚠️  Swagger is disabled in production"; \
+		echo "   Documentation will not be accessible"; \
+	else \
+		echo "✅ Swagger documentation deployed"; \
+		echo "   Access at: http://$${SWAGGER_HOST:-localhost:8080}$${SWAGGER_BASE_PATH:-/swagger}/index.html"; \
+	fi
+
+swagger-test:
+	@echo "🧪 Testing Swagger documentation..."
+	@$(MAKE) swagger
+	@if [ -f docs/swagger.json ]; then \
+		echo "✅ Swagger JSON generated successfully"; \
+		echo "📊 Checking documentation completeness..."; \
+		if command -v jq >/dev/null 2>&1; then \
+			PATHS=$$(jq '.paths | keys | length' docs/swagger.json); \
+			DEFINITIONS=$$(jq '.definitions | keys | length' docs/swagger.json); \
+			echo "   Endpoints documented: $$PATHS"; \
+			echo "   Models documented: $$DEFINITIONS"; \
+		else \
+			echo "   Install jq for detailed metrics"; \
+		fi; \
+	else \
+		echo "❌ Swagger generation failed"; \
+		exit 1; \
+	fi
+
+swagger-serve:
+	@echo "🌐 Starting server with Swagger documentation..."
+	@export SWAGGER_ENABLED=true && \
+	export ENVIRONMENT=development && \
+	$(MAKE) swagger && \
+	$(MAKE) run
+
 # Documentation quality metrics
 docs-metrics:
 	@echo "📊 Generating documentation quality metrics..."
@@ -269,6 +393,16 @@ help:
 	@echo "  swagger-fmt        - Format Swagger comments"
 	@echo "  swagger-validate   - Validate Swagger documentation"
 	@echo "  swagger-clean      - Clean generated Swagger files"
+	@echo "  swagger-dev        - Configure Swagger for development"
+	@echo "  swagger-staging    - Configure Swagger for staging"
+	@echo "  swagger-prod       - Configure Swagger for production"
+	@echo "  swagger-config     - Show current Swagger configuration"
+	@echo "  swagger-env-dev    - Generate development .env file"
+	@echo "  swagger-env-staging - Generate staging .env file"
+	@echo "  swagger-env-prod   - Generate production .env file"
+	@echo "  swagger-deploy     - Deploy Swagger for current environment"
+	@echo "  swagger-test       - Test Swagger documentation generation"
+	@echo "  swagger-serve      - Start server with Swagger enabled"
 	@echo "  docs-metrics       - Generate documentation quality metrics"
 	@echo "  docs-metrics-json  - Generate metrics in JSON format"
 	@echo "  docs-metrics-summary - Show documentation quality summary"

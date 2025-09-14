@@ -1,44 +1,228 @@
-basePath: /api/v1
+basePath: /
 definitions:
-  internal_handlers.DeleteAcceptanceCriteriaRequest:
+  auth.ChangePasswordRequest:
+    description: Request payload for changing user password (authentication required)
+    properties:
+      current_password:
+        description: Current password for verification (required)
+        example: oldpassword123
+        type: string
+      new_password:
+        description: New password (minimum 8 characters, required)
+        example: newpassword456
+        minLength: 8
+        type: string
+    required:
+    - current_password
+    - new_password
+    type: object
+  auth.CreateUserRequest:
+    description: Request payload for creating a new user account (Administrator role
+      required)
+    properties:
+      email:
+        description: Valid email address (required)
+        example: jane@example.com
+        type: string
+      password:
+        description: Password (minimum 8 characters, required)
+        example: securepass123
+        minLength: 8
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/models.UserRole'
+        description: 'User role: Administrator, User, or Commenter (required)'
+        example: User
+      username:
+        description: Unique username (required)
+        example: jane_doe
+        type: string
+    required:
+    - email
+    - password
+    - role
+    - username
+    type: object
+  auth.LoginRequest:
+    description: Request payload for user authentication
+    properties:
+      password:
+        description: Password for authentication
+        example: password123
+        type: string
+      username:
+        description: Username for authentication
+        example: john_doe
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  auth.LoginResponse:
+    description: Response payload for successful authentication containing JWT token
+      and user information
+    properties:
+      expires_at:
+        description: Token expiration timestamp
+        example: "2023-01-02T12:30:00Z"
+        type: string
+      token:
+        description: JWT authentication token
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      user:
+        allOf:
+        - $ref: '#/definitions/auth.UserResponse'
+        description: Authenticated user information
+    type: object
+  auth.UpdateUserRequest:
+    description: Request payload for updating user information (Administrator role
+      required)
+    properties:
+      email:
+        description: New email address (optional, must be valid if provided)
+        example: jane.smith@example.com
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/models.UserRole'
+        description: New user role (optional)
+        example: Administrator
+      username:
+        description: New username (optional)
+        example: jane_smith
+        type: string
+    type: object
+  auth.UserResponse:
+    description: User information returned in API responses (password hash excluded
+      for security)
+    properties:
+      created_at:
+        description: Account creation timestamp
+        example: "2023-01-01T00:00:00Z"
+        type: string
+      email:
+        description: User email address
+        example: john.doe@example.com
+        type: string
+      id:
+        description: Unique user identifier
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/models.UserRole'
+        description: User role determining permissions
+        example: User
+      updated_at:
+        description: Last account update timestamp
+        example: "2023-01-02T12:30:00Z"
+        type: string
+      username:
+        description: Unique username
+        example: john_doe
+        type: string
+    type: object
+  handlers.DeleteAcceptanceCriteriaRequest:
     properties:
       force:
         type: boolean
     type: object
-  internal_handlers.DeleteEpicRequest:
+  handlers.DeleteEpicRequest:
     properties:
       force:
         type: boolean
     type: object
-  internal_handlers.DeleteRequirementRequest:
+  handlers.DeleteRequirementRequest:
     properties:
       force:
         type: boolean
     type: object
-  internal_handlers.DeleteUserStoryRequest:
+  handlers.DeleteUserStoryRequest:
     properties:
       force:
         type: boolean
     type: object
-  internal_handlers.ErrorDetail:
+  handlers.ErrorDetail:
     properties:
       code:
         type: string
       message:
         type: string
     type: object
-  internal_handlers.ErrorResponse:
+  handlers.ErrorResponse:
     properties:
       error:
-        $ref: '#/definitions/internal_handlers.ErrorDetail'
+        $ref: '#/definitions/handlers.ErrorDetail'
     type: object
-  product-requirements-management_internal_models.AcceptanceCriteria:
+  handlers.RelationshipTypeListResponse:
+    properties:
+      count:
+        type: integer
+      relationship_types:
+        items:
+          $ref: '#/definitions/models.RelationshipType'
+        type: array
+    type: object
+  handlers.RequirementTypeListResponse:
+    properties:
+      count:
+        type: integer
+      requirement_types:
+        items:
+          $ref: '#/definitions/models.RequirementType'
+        type: array
+    type: object
+  handlers.SearchSuggestionsResponse:
+    properties:
+      reference_ids:
+        items:
+          type: string
+        type: array
+      statuses:
+        items:
+          type: string
+        type: array
+      titles:
+        items:
+          type: string
+        type: array
+    type: object
+  handlers.StatusListResponse:
+    properties:
+      count:
+        type: integer
+      statuses:
+        items:
+          $ref: '#/definitions/models.Status'
+        type: array
+    type: object
+  handlers.StatusModelListResponse:
+    properties:
+      count:
+        type: integer
+      status_models:
+        items:
+          $ref: '#/definitions/models.StatusModel'
+        type: array
+    type: object
+  handlers.StatusTransitionListResponse:
+    properties:
+      count:
+        type: integer
+      transitions:
+        items:
+          $ref: '#/definitions/models.StatusTransition'
+        type: array
+    type: object
+  models.AcceptanceCriteria:
     description: Testable conditions that define when a user story is considered complete
       and acceptable
     properties:
       author:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.User'
+        - $ref: '#/definitions/models.User'
         description: User who authored this acceptance criteria
       author_id:
         description: ID of the user who authored this acceptance criteria
@@ -47,7 +231,7 @@ definitions:
       comments:
         description: Comments associated with this acceptance criteria
         items:
-          $ref: '#/definitions/product-requirements-management_internal_models.Comment'
+          $ref: '#/definitions/models.Comment'
         type: array
       created_at:
         description: Timestamp when the acceptance criteria was created
@@ -73,11 +257,11 @@ definitions:
       requirements:
         description: Requirements linked to this acceptance criteria
         items:
-          $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
+          $ref: '#/definitions/models.Requirement'
         type: array
       user_story:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+        - $ref: '#/definitions/models.UserStory'
         description: Relationships
       user_story_id:
         description: ID of the parent user story
@@ -86,13 +270,13 @@ definitions:
     required:
     - description
     type: object
-  product-requirements-management_internal_models.Comment:
+  models.Comment:
     description: A comment that can be attached to any entity, supporting both general
       and inline comments with threading
     properties:
       author:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.User'
+        - $ref: '#/definitions/models.User'
         description: User who authored this comment
       author_id:
         description: ID of the user who authored this comment
@@ -112,7 +296,7 @@ definitions:
         type: string
       entity_type:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.EntityType'
+        - $ref: '#/definitions/models.EntityType'
         description: Type of entity this comment is attached to
         example: epic
       id:
@@ -129,7 +313,7 @@ definitions:
         type: string
       parent_comment:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.Comment'
+        - $ref: '#/definitions/models.Comment'
         description: Relationships
       parent_comment_id:
         description: Optional ID of parent comment for threaded discussions
@@ -138,7 +322,7 @@ definitions:
       replies:
         description: Replies to this comment
         items:
-          $ref: '#/definitions/product-requirements-management_internal_models.Comment'
+          $ref: '#/definitions/models.Comment'
         type: array
       text_position_end:
         description: End position of linked text for inline comments
@@ -156,7 +340,7 @@ definitions:
     - content
     - entity_type
     type: object
-  product-requirements-management_internal_models.EntityType:
+  models.EntityType:
     description: Type of entity that can receive comments in the system
     enum:
     - epic
@@ -180,14 +364,14 @@ definitions:
     - EntityTypeUserStory
     - EntityTypeAcceptanceCriteria
     - EntityTypeRequirement
-  product-requirements-management_internal_models.Epic:
+  models.Epic:
     description: Epic is a large body of work that can be broken down into smaller
       user stories. It represents a significant feature or initiative that delivers
       business value.
     properties:
       assignee:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.User'
+        - $ref: '#/definitions/models.User'
         description: |-
           Assignee contains the user information of who is assigned to the epic
           @Description User currently assigned to this epic (populated when requested with ?include=assignee)
@@ -202,7 +386,7 @@ definitions:
           Comments contains all comments associated with this epic
           @Description List of comments on this epic (populated when requested with ?include=comments)
         items:
-          $ref: '#/definitions/product-requirements-management_internal_models.Comment'
+          $ref: '#/definitions/models.Comment'
         type: array
       created_at:
         description: |-
@@ -212,7 +396,7 @@ definitions:
         type: string
       creator:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.User'
+        - $ref: '#/definitions/models.User'
         description: |-
           Creator contains the user information of who created the epic
           @Description User who created this epic (populated when requested with ?include=creator)
@@ -244,7 +428,7 @@ definitions:
         type: string
       priority:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.Priority'
+        - $ref: '#/definitions/models.Priority'
         description: |-
           Priority indicates the importance level of the epic
           @Description Priority level of the epic (1=Critical, 2=High, 3=Medium, 4=Low)
@@ -261,7 +445,7 @@ definitions:
         type: string
       status:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.EpicStatus'
+        - $ref: '#/definitions/models.EpicStatus'
         description: |-
           Status represents the current workflow state of the epic
           @Description Current status of the epic in the workflow
@@ -280,14 +464,14 @@ definitions:
           UserStories contains all user stories that belong to this epic
           @Description List of user stories that belong to this epic (populated when requested with ?include=user_stories)
         items:
-          $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+          $ref: '#/definitions/models.UserStory'
         type: array
     required:
     - priority
     - status
     - title
     type: object
-  product-requirements-management_internal_models.EpicStatus:
+  models.EpicStatus:
     description: Status of an epic in the workflow lifecycle
     enum:
     - Backlog
@@ -314,7 +498,7 @@ definitions:
     - EpicStatusInProgress
     - EpicStatusDone
     - EpicStatusCancelled
-  product-requirements-management_internal_models.Priority:
+  models.Priority:
     description: Priority level for entities (1=Critical, 2=High, 3=Medium, 4=Low)
     enum:
     - 1
@@ -337,7 +521,7 @@ definitions:
     - PriorityHigh
     - PriorityMedium
     - PriorityLow
-  product-requirements-management_internal_models.RelationshipType:
+  models.RelationshipType:
     properties:
       created_at:
         type: string
@@ -350,18 +534,18 @@ definitions:
       requirement_relationships:
         description: Relationships
         items:
-          $ref: '#/definitions/product-requirements-management_internal_models.RequirementRelationship'
+          $ref: '#/definitions/models.RequirementRelationship'
         type: array
       updated_at:
         type: string
     type: object
-  product-requirements-management_internal_models.Requirement:
+  models.Requirement:
     description: A detailed requirement that specifies what needs to be implemented
       within a user story
     properties:
       acceptance_criteria:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.AcceptanceCriteria'
+        - $ref: '#/definitions/models.AcceptanceCriteria'
         description: Optional linked acceptance criteria
       acceptance_criteria_id:
         description: Optional ID of linked acceptance criteria
@@ -369,7 +553,7 @@ definitions:
         type: string
       assignee:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.User'
+        - $ref: '#/definitions/models.User'
         description: User assigned to implement this requirement
       assignee_id:
         description: ID of the user assigned to implement the requirement
@@ -378,7 +562,7 @@ definitions:
       comments:
         description: Comments associated with this requirement
         items:
-          $ref: '#/definitions/product-requirements-management_internal_models.Comment'
+          $ref: '#/definitions/models.Comment'
         type: array
       created_at:
         description: Timestamp when the requirement was created
@@ -386,7 +570,7 @@ definitions:
         type: string
       creator:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.User'
+        - $ref: '#/definitions/models.User'
         description: User who created this requirement
       creator_id:
         description: ID of the user who created the requirement
@@ -408,7 +592,7 @@ definitions:
         type: string
       priority:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.Priority'
+        - $ref: '#/definitions/models.Priority'
         description: Priority level (1=Critical, 2=High, 3=Medium, 4=Low)
         example: 2
         maximum: 4
@@ -420,17 +604,17 @@ definitions:
       source_relationships:
         description: Relationships where this requirement is the source
         items:
-          $ref: '#/definitions/product-requirements-management_internal_models.RequirementRelationship'
+          $ref: '#/definitions/models.RequirementRelationship'
         type: array
       status:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.RequirementStatus'
+        - $ref: '#/definitions/models.RequirementStatus'
         description: Current status of the requirement
         example: Draft
       target_relationships:
         description: Relationships where this requirement is the target
         items:
-          $ref: '#/definitions/product-requirements-management_internal_models.RequirementRelationship'
+          $ref: '#/definitions/models.RequirementRelationship'
         type: array
       title:
         description: Brief title describing the requirement
@@ -439,7 +623,7 @@ definitions:
         type: string
       type:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.RequirementType'
+        - $ref: '#/definitions/models.RequirementType'
         description: Type classification of this requirement
       type_id:
         description: ID of the requirement type (Functional, Non-Functional, etc.)
@@ -447,7 +631,7 @@ definitions:
         type: string
       user_story:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+        - $ref: '#/definitions/models.UserStory'
         description: Relationships
       user_story_id:
         description: ID of the parent user story
@@ -458,32 +642,32 @@ definitions:
     - status
     - title
     type: object
-  product-requirements-management_internal_models.RequirementRelationship:
+  models.RequirementRelationship:
     properties:
       created_at:
         type: string
       created_by:
         type: string
       creator:
-        $ref: '#/definitions/product-requirements-management_internal_models.User'
+        $ref: '#/definitions/models.User'
       id:
         type: string
       relationship_type:
-        $ref: '#/definitions/product-requirements-management_internal_models.RelationshipType'
+        $ref: '#/definitions/models.RelationshipType'
       relationship_type_id:
         type: string
       source_requirement:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
+        - $ref: '#/definitions/models.Requirement'
         description: Relationships
       source_requirement_id:
         type: string
       target_requirement:
-        $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
+        $ref: '#/definitions/models.Requirement'
       target_requirement_id:
         type: string
     type: object
-  product-requirements-management_internal_models.RequirementStatus:
+  models.RequirementStatus:
     description: Status of a requirement in the workflow lifecycle
     enum:
     - Draft
@@ -503,7 +687,7 @@ definitions:
     - RequirementStatusDraft
     - RequirementStatusActive
     - RequirementStatusObsolete
-  product-requirements-management_internal_models.RequirementType:
+  models.RequirementType:
     properties:
       created_at:
         type: string
@@ -516,12 +700,103 @@ definitions:
       requirements:
         description: Relationships
         items:
-          $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
+          $ref: '#/definitions/models.Requirement'
         type: array
       updated_at:
         type: string
     type: object
-  product-requirements-management_internal_models.User:
+  models.Status:
+    properties:
+      color:
+        description: Hex color code for UI display
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      from_transitions:
+        items:
+          $ref: '#/definitions/models.StatusTransition'
+        type: array
+      id:
+        type: string
+      is_final:
+        type: boolean
+      is_initial:
+        type: boolean
+      name:
+        type: string
+      order:
+        type: integer
+      status_model:
+        allOf:
+        - $ref: '#/definitions/models.StatusModel'
+        description: Relationships
+      status_model_id:
+        type: string
+      to_transitions:
+        items:
+          $ref: '#/definitions/models.StatusTransition'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  models.StatusModel:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      entity_type:
+        $ref: '#/definitions/models.EntityType'
+      id:
+        type: string
+      is_default:
+        type: boolean
+      name:
+        type: string
+      statuses:
+        description: Relationships
+        items:
+          $ref: '#/definitions/models.Status'
+        type: array
+      transitions:
+        items:
+          $ref: '#/definitions/models.StatusTransition'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  models.StatusTransition:
+    properties:
+      created_at:
+        type: string
+      description:
+        description: Optional description
+        type: string
+      from_status:
+        $ref: '#/definitions/models.Status'
+      from_status_id:
+        type: string
+      id:
+        type: string
+      name:
+        description: Optional name for the transition
+        type: string
+      status_model:
+        allOf:
+        - $ref: '#/definitions/models.StatusModel'
+        description: Relationships
+      status_model_id:
+        type: string
+      to_status:
+        $ref: '#/definitions/models.Status'
+      to_status_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.User:
     description: A user account in the system with authentication and role-based permissions
     properties:
       created_at:
@@ -538,7 +813,7 @@ definitions:
         type: string
       role:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.UserRole'
+        - $ref: '#/definitions/models.UserRole'
         description: User role determining permissions
         example: User
       updated_at:
@@ -556,7 +831,7 @@ definitions:
     - role
     - username
     type: object
-  product-requirements-management_internal_models.UserRole:
+  models.UserRole:
     description: Role that determines user permissions and access levels in the system
     enum:
     - Administrator
@@ -576,7 +851,7 @@ definitions:
     - RoleAdministrator
     - RoleUser
     - RoleCommenter
-  product-requirements-management_internal_models.UserStory:
+  models.UserStory:
     description: User story is a short, simple description of a feature told from
       the perspective of the person who desires the new capability. It belongs to
       an epic and can have multiple acceptance criteria and requirements.
@@ -586,11 +861,11 @@ definitions:
           AcceptanceCriteria contains all acceptance criteria that belong to this user story
           @Description List of acceptance criteria that define when this user story is considered complete (populated when requested with ?include=acceptance_criteria)
         items:
-          $ref: '#/definitions/product-requirements-management_internal_models.AcceptanceCriteria'
+          $ref: '#/definitions/models.AcceptanceCriteria'
         type: array
       assignee:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.User'
+        - $ref: '#/definitions/models.User'
         description: |-
           Assignee contains the user information of who is assigned to the user story
           @Description User currently assigned to this user story (populated when requested with ?include=assignee)
@@ -605,7 +880,7 @@ definitions:
           Comments contains all comments associated with this user story
           @Description List of comments on this user story (populated when requested with ?include=comments)
         items:
-          $ref: '#/definitions/product-requirements-management_internal_models.Comment'
+          $ref: '#/definitions/models.Comment'
         type: array
       created_at:
         description: |-
@@ -615,7 +890,7 @@ definitions:
         type: string
       creator:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.User'
+        - $ref: '#/definitions/models.User'
         description: |-
           Creator contains the user information of who created the user story
           @Description User who created this user story (populated when requested with ?include=creator)
@@ -635,7 +910,7 @@ definitions:
         type: string
       epic:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.Epic'
+        - $ref: '#/definitions/models.Epic'
         description: |-
           Relationships
           Epic contains the epic information this user story belongs to
@@ -660,7 +935,7 @@ definitions:
         type: string
       priority:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.Priority'
+        - $ref: '#/definitions/models.Priority'
         description: |-
           Priority indicates the importance level of the user story
           @Description Priority level of the user story (1=Critical, 2=High, 3=Medium, 4=Low)
@@ -680,11 +955,11 @@ definitions:
           Requirements contains all requirements that belong to this user story
           @Description List of detailed requirements that belong to this user story (populated when requested with ?include=requirements)
         items:
-          $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
+          $ref: '#/definitions/models.Requirement'
         type: array
       status:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.UserStoryStatus'
+        - $ref: '#/definitions/models.UserStoryStatus'
         description: |-
           Status represents the current workflow state of the user story
           @Description Current status of the user story in the workflow
@@ -703,7 +978,7 @@ definitions:
     - status
     - title
     type: object
-  product-requirements-management_internal_models.UserStoryStatus:
+  models.UserStoryStatus:
     description: Status of a user story in the workflow lifecycle
     enum:
     - Backlog
@@ -731,7 +1006,7 @@ definitions:
     - UserStoryStatusInProgress
     - UserStoryStatusDone
     - UserStoryStatusCancelled
-  product-requirements-management_internal_service.AssignEpicRequest:
+  service.AssignEpicRequest:
     description: Request payload for assigning an epic to a user
     properties:
       assignee_id:
@@ -743,7 +1018,7 @@ definitions:
     required:
     - assignee_id
     type: object
-  product-requirements-management_internal_service.CascadeDeletePreview:
+  service.CascadeDeletePreview:
     properties:
       entity_id:
         type: string
@@ -754,7 +1029,7 @@ definitions:
       title:
         type: string
     type: object
-  product-requirements-management_internal_service.CascadeDeletedEntity:
+  service.CascadeDeletedEntity:
     properties:
       entity_id:
         type: string
@@ -763,12 +1038,12 @@ definitions:
       reference_id:
         type: string
     type: object
-  product-requirements-management_internal_service.ChangeEpicStatusRequest:
+  service.ChangeEpicStatusRequest:
     description: Request payload for changing an epic's status
     properties:
       status:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.EpicStatus'
+        - $ref: '#/definitions/models.EpicStatus'
         description: |-
           Status is the new workflow state for the epic
           @Description New status for the epic
@@ -777,10 +1052,10 @@ definitions:
     required:
     - status
     type: object
-  product-requirements-management_internal_service.CommentResponse:
+  service.CommentResponse:
     properties:
       author:
-        $ref: '#/definitions/product-requirements-management_internal_models.User'
+        $ref: '#/definitions/models.User'
       author_id:
         type: string
       content:
@@ -792,7 +1067,7 @@ definitions:
       entity_id:
         type: string
       entity_type:
-        $ref: '#/definitions/product-requirements-management_internal_models.EntityType'
+        $ref: '#/definitions/models.EntityType'
       id:
         type: string
       is_inline:
@@ -807,7 +1082,7 @@ definitions:
         type: string
       replies:
         items:
-          $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+          $ref: '#/definitions/service.CommentResponse'
         type: array
       text_position_end:
         type: integer
@@ -816,7 +1091,7 @@ definitions:
       updated_at:
         type: string
     type: object
-  product-requirements-management_internal_service.CreateAcceptanceCriteriaRequest:
+  service.CreateAcceptanceCriteriaRequest:
     properties:
       author_id:
         type: string
@@ -828,7 +1103,7 @@ definitions:
     - author_id
     - description
     type: object
-  product-requirements-management_internal_service.CreateCommentRequest:
+  service.CreateCommentRequest:
     properties:
       author_id:
         type: string
@@ -837,7 +1112,7 @@ definitions:
       entity_id:
         type: string
       entity_type:
-        $ref: '#/definitions/product-requirements-management_internal_models.EntityType'
+        $ref: '#/definitions/models.EntityType'
       linked_text:
         type: string
       parent_comment_id:
@@ -849,7 +1124,7 @@ definitions:
     required:
     - author_id
     type: object
-  product-requirements-management_internal_service.CreateEpicRequest:
+  service.CreateEpicRequest:
     description: Request payload for creating a new epic
     properties:
       assignee_id:
@@ -873,7 +1148,7 @@ definitions:
         type: string
       priority:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.Priority'
+        - $ref: '#/definitions/models.Priority'
         description: |-
           Priority is the importance level of the epic
           @Description Priority level of the epic (1=Critical, 2=High, 3=Medium, 4=Low)
@@ -895,7 +1170,7 @@ definitions:
     - priority
     - title
     type: object
-  product-requirements-management_internal_service.CreateRelationshipRequest:
+  service.CreateRelationshipRequest:
     properties:
       created_by:
         type: string
@@ -911,7 +1186,17 @@ definitions:
     - source_requirement_id
     - target_requirement_id
     type: object
-  product-requirements-management_internal_service.CreateRequirementRequest:
+  service.CreateRelationshipTypeRequest:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 255
+        type: string
+    required:
+    - name
+    type: object
+  service.CreateRequirementRequest:
     properties:
       acceptance_criteria_id:
         type: string
@@ -923,7 +1208,7 @@ definitions:
         type: string
       priority:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.Priority'
+        - $ref: '#/definitions/models.Priority'
         maximum: 4
         minimum: 1
       title:
@@ -940,7 +1225,70 @@ definitions:
     - type_id
     - user_story_id
     type: object
-  product-requirements-management_internal_service.CreateUserStoryRequest:
+  service.CreateRequirementTypeRequest:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 255
+        type: string
+    required:
+    - name
+    type: object
+  service.CreateStatusModelRequest:
+    properties:
+      description:
+        type: string
+      entity_type:
+        $ref: '#/definitions/models.EntityType'
+      is_default:
+        type: boolean
+      name:
+        maxLength: 255
+        type: string
+    required:
+    - entity_type
+    - name
+    type: object
+  service.CreateStatusRequest:
+    properties:
+      color:
+        type: string
+      description:
+        type: string
+      is_final:
+        type: boolean
+      is_initial:
+        type: boolean
+      name:
+        maxLength: 255
+        type: string
+      order:
+        type: integer
+      status_model_id:
+        type: string
+    required:
+    - name
+    - status_model_id
+    type: object
+  service.CreateStatusTransitionRequest:
+    properties:
+      description:
+        type: string
+      from_status_id:
+        type: string
+      name:
+        type: string
+      status_model_id:
+        type: string
+      to_status_id:
+        type: string
+    required:
+    - from_status_id
+    - status_model_id
+    - to_status_id
+    type: object
+  service.CreateUserStoryRequest:
     description: Request structure for creating a new user story
     properties:
       assignee_id:
@@ -970,7 +1318,7 @@ definitions:
         type: string
       priority:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.Priority'
+        - $ref: '#/definitions/models.Priority'
         description: |-
           Priority indicates the importance level of the user story
           @Description Priority level of the user story (1=Critical, 2=High, 3=Medium, 4=Low)
@@ -992,13 +1340,13 @@ definitions:
     - priority
     - title
     type: object
-  product-requirements-management_internal_service.DeletionResult:
+  service.DeletionResult:
     properties:
       audit_log_id:
         type: string
       cascade_deleted:
         items:
-          $ref: '#/definitions/product-requirements-management_internal_service.CascadeDeletedEntity'
+          $ref: '#/definitions/service.CascadeDeletedEntity'
         type: array
       deleted_at:
         type: string
@@ -1013,7 +1361,7 @@ definitions:
       transaction_id:
         type: string
     type: object
-  product-requirements-management_internal_service.DependencyDetail:
+  service.DependencyDetail:
     properties:
       entity_id:
         type: string
@@ -1026,7 +1374,7 @@ definitions:
       title:
         type: string
     type: object
-  product-requirements-management_internal_service.DependencyInfo:
+  service.DependencyInfo:
     properties:
       can_delete:
         type: boolean
@@ -1034,16 +1382,16 @@ definitions:
         type: integer
       cascade_delete_entities:
         items:
-          $ref: '#/definitions/product-requirements-management_internal_service.CascadeDeletePreview'
+          $ref: '#/definitions/service.CascadeDeletePreview'
         type: array
       dependencies:
         items:
-          $ref: '#/definitions/product-requirements-management_internal_service.DependencyDetail'
+          $ref: '#/definitions/service.DependencyDetail'
         type: array
       requires_confirmation:
         type: boolean
     type: object
-  product-requirements-management_internal_service.SearchResponse:
+  service.SearchResponse:
     properties:
       executed_at:
         type: string
@@ -1055,12 +1403,12 @@ definitions:
         type: string
       results:
         items:
-          $ref: '#/definitions/product-requirements-management_internal_service.SearchResult'
+          $ref: '#/definitions/service.SearchResult'
         type: array
       total:
         type: integer
     type: object
-  product-requirements-management_internal_service.SearchResult:
+  service.SearchResult:
     properties:
       created_at:
         type: string
@@ -1082,17 +1430,17 @@ definitions:
         description: epic, user_story, acceptance_criteria, requirement
         type: string
     type: object
-  product-requirements-management_internal_service.UpdateAcceptanceCriteriaRequest:
+  service.UpdateAcceptanceCriteriaRequest:
     properties:
       description:
         type: string
     type: object
-  product-requirements-management_internal_service.UpdateCommentRequest:
+  service.UpdateCommentRequest:
     properties:
       content:
         type: string
     type: object
-  product-requirements-management_internal_service.UpdateEpicRequest:
+  service.UpdateEpicRequest:
     description: Request payload for updating an existing epic (all fields are optional)
     properties:
       assignee_id:
@@ -1110,7 +1458,7 @@ definitions:
         type: string
       priority:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.Priority'
+        - $ref: '#/definitions/models.Priority'
         description: |-
           Priority is the importance level of the epic
           @Description Priority level of the epic (1=Critical, 2=High, 3=Medium, 4=Low) (optional)
@@ -1119,7 +1467,7 @@ definitions:
           @Example 2
       status:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.EpicStatus'
+        - $ref: '#/definitions/models.EpicStatus'
         description: |-
           Status is the workflow state of the epic
           @Description Current status of the epic in the workflow (optional)
@@ -1133,7 +1481,15 @@ definitions:
           @Example "Enhanced User Authentication System"
         type: string
     type: object
-  product-requirements-management_internal_service.UpdateRequirementRequest:
+  service.UpdateRelationshipTypeRequest:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 255
+        type: string
+    type: object
+  service.UpdateRequirementRequest:
     properties:
       acceptance_criteria_id:
         type: string
@@ -1142,15 +1498,56 @@ definitions:
       description:
         type: string
       priority:
-        $ref: '#/definitions/product-requirements-management_internal_models.Priority'
+        $ref: '#/definitions/models.Priority'
       status:
-        $ref: '#/definitions/product-requirements-management_internal_models.RequirementStatus'
+        $ref: '#/definitions/models.RequirementStatus'
       title:
         type: string
       type_id:
         type: string
     type: object
-  product-requirements-management_internal_service.UpdateUserStoryRequest:
+  service.UpdateRequirementTypeRequest:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 255
+        type: string
+    type: object
+  service.UpdateStatusModelRequest:
+    properties:
+      description:
+        type: string
+      is_default:
+        type: boolean
+      name:
+        maxLength: 255
+        type: string
+    type: object
+  service.UpdateStatusRequest:
+    properties:
+      color:
+        type: string
+      description:
+        type: string
+      is_final:
+        type: boolean
+      is_initial:
+        type: boolean
+      name:
+        maxLength: 255
+        type: string
+      order:
+        type: integer
+    type: object
+  service.UpdateStatusTransitionRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  service.UpdateUserStoryRequest:
     description: Request structure for updating an existing user story (all fields
       are optional)
     properties:
@@ -1169,7 +1566,7 @@ definitions:
         type: string
       priority:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.Priority'
+        - $ref: '#/definitions/models.Priority'
         description: |-
           Priority indicates the importance level of the user story
           @Description Priority level of the user story (1=Critical, 2=High, 3=Medium, 4=Low) (optional)
@@ -1178,7 +1575,7 @@ definitions:
           @Example 3
       status:
         allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.UserStoryStatus'
+        - $ref: '#/definitions/models.UserStoryStatus'
         description: |-
           Status represents the current workflow state of the user story
           @Description Current status of the user story in the workflow (optional)
@@ -1198,8 +1595,9 @@ info:
     email: support@swagger.io
     name: API Support
     url: http://www.swagger.io/support
-  description: API for managing product requirements through hierarchical structure
-    of Epics, User Stories, and Requirements
+  description: Comprehensive API for managing product requirements through hierarchical
+    structure of Epics → User Stories → Requirements. Features include full-text search,
+    comment system, relationship mapping, and configurable workflows.
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -1223,30 +1621,30 @@ paths:
         in: body
         name: request
         schema:
-          $ref: '#/definitions/internal_handlers.DeleteAcceptanceCriteriaRequest'
+          $ref: '#/definitions/handlers.DeleteAcceptanceCriteriaRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.DeletionResult'
+            $ref: '#/definitions/service.DeletionResult'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: Delete acceptance criteria
       tags:
       - deletion
@@ -1268,19 +1666,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.DependencyInfo'
+            $ref: '#/definitions/service.DependencyInfo'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: Validate acceptance criteria deletion
       tags:
       - deletion
@@ -1306,19 +1704,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.DependencyInfo'
+            $ref: '#/definitions/service.DependencyInfo'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: Get deletion confirmation
       tags:
       - deletion
@@ -1337,30 +1735,30 @@ paths:
         in: body
         name: request
         schema:
-          $ref: '#/definitions/internal_handlers.DeleteEpicRequest'
+          $ref: '#/definitions/handlers.DeleteEpicRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.DeletionResult'
+            $ref: '#/definitions/service.DeletionResult'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: Delete epic
       tags:
       - deletion
@@ -1381,19 +1779,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.DependencyInfo'
+            $ref: '#/definitions/service.DependencyInfo'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: Validate epic deletion
       tags:
       - deletion
@@ -1413,30 +1811,30 @@ paths:
         in: body
         name: request
         schema:
-          $ref: '#/definitions/internal_handlers.DeleteRequirementRequest'
+          $ref: '#/definitions/handlers.DeleteRequirementRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.DeletionResult'
+            $ref: '#/definitions/service.DeletionResult'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: Delete requirement
       tags:
       - deletion
@@ -1458,128 +1856,40 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.DependencyInfo'
+            $ref: '#/definitions/service.DependencyInfo'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: Validate requirement deletion
       tags:
       - deletion
-  /api/search:
-    get:
-      consumes:
-      - application/json
-      description: Performs full-text search and filtering across epics, user stories,
-        acceptance criteria, and requirements
-      parameters:
-      - description: Search query text
-        in: query
-        name: query
-        type: string
-      - description: Filter by creator ID (UUID)
-        in: query
-        name: creator_id
-        type: string
-      - description: Filter by assignee ID (UUID)
-        in: query
-        name: assignee_id
-        type: string
-      - description: Filter by priority (1-4)
-        in: query
-        name: priority
-        type: integer
-      - description: Filter by status
-        in: query
-        name: status
-        type: string
-      - description: Filter by creation date from (RFC3339 format)
-        in: query
-        name: created_from
-        type: string
-      - description: Filter by creation date to (RFC3339 format)
-        in: query
-        name: created_to
-        type: string
-      - description: Filter by epic ID (UUID)
-        in: query
-        name: epic_id
-        type: string
-      - description: Filter by user story ID (UUID)
-        in: query
-        name: user_story_id
-        type: string
-      - description: Filter by acceptance criteria ID (UUID)
-        in: query
-        name: acceptance_criteria_id
-        type: string
-      - description: Filter by requirement type ID (UUID)
-        in: query
-        name: requirement_type_id
-        type: string
-      - description: Filter by author ID (UUID)
-        in: query
-        name: author_id
-        type: string
-      - default: created_at
-        description: Sort by field (priority, created_at, last_modified, title)
-        in: query
-        name: sort_by
-        type: string
-      - default: desc
-        description: Sort order (asc, desc)
-        in: query
-        name: sort_order
-        type: string
-      - default: 50
-        description: Limit number of results (max 100)
-        in: query
-        name: limit
-        type: integer
-      - default: 0
-        description: Offset for pagination
-        in: query
-        name: offset
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.SearchResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
-      summary: Search across all entities
-      tags:
-      - search
   /api/search/suggestions:
     get:
       consumes:
       - application/json
-      description: Get search suggestions based on partial query
+      description: Provides search suggestions based on partial query input. Returns
+        matching titles, reference IDs, and available status values to help users
+        construct effective search queries.
       parameters:
-      - description: Partial search query
+      - description: Partial search query for generating suggestions. Minimum 2 characters
+          recommended.
+        example: '"auth"'
         in: query
         name: query
         required: true
         type: string
       - default: 10
-        description: Limit number of suggestions
+        description: Maximum number of suggestions per category (1-50)
+        example: 5
         in: query
         name: limit
         type: integer
@@ -1587,21 +1897,17 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Search suggestions grouped by category
           schema:
-            additionalProperties:
-              items:
-                type: string
-              type: array
-            type: object
+            $ref: '#/definitions/handlers.SearchSuggestionsResponse'
         "400":
-          description: Bad Request
+          description: Invalid parameters (missing query, invalid limit)
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
-          description: Internal Server Error
+          description: Internal server error during suggestion generation
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: Get search suggestions
       tags:
       - search
@@ -1621,30 +1927,30 @@ paths:
         in: body
         name: request
         schema:
-          $ref: '#/definitions/internal_handlers.DeleteUserStoryRequest'
+          $ref: '#/definitions/handlers.DeleteUserStoryRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.DeletionResult'
+            $ref: '#/definitions/service.DeletionResult'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: Delete user story
       tags:
       - deletion
@@ -1666,19 +1972,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.DependencyInfo'
+            $ref: '#/definitions/service.DependencyInfo'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: Validate user story deletion
       tags:
       - deletion
@@ -1777,14 +2083,14 @@ paths:
         name: comment
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.CreateCommentRequest'
+          $ref: '#/definitions/service.CreateCommentRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Successfully created comment
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+            $ref: '#/definitions/service.CommentResponse'
         "400":
           description: Invalid request - malformed entity ID, invalid entity type,
             missing required fields, or invalid inline comment data
@@ -1836,14 +2142,14 @@ paths:
         name: comment
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.CreateCommentRequest'
+          $ref: '#/definitions/service.CreateCommentRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Successfully created inline comment
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+            $ref: '#/definitions/service.CommentResponse'
         "400":
           description: Invalid request - missing inline comment data, invalid text
             positions, or empty linked text
@@ -2099,7 +2405,7 @@ paths:
         "200":
           description: Successfully retrieved acceptance criteria
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.AcceptanceCriteria'
+            $ref: '#/definitions/models.AcceptanceCriteria'
         "404":
           description: Acceptance criteria not found
           schema:
@@ -2132,14 +2438,14 @@ paths:
         name: acceptance_criteria
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.UpdateAcceptanceCriteriaRequest'
+          $ref: '#/definitions/service.UpdateAcceptanceCriteriaRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Successfully updated acceptance criteria
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.AcceptanceCriteria'
+            $ref: '#/definitions/models.AcceptanceCriteria'
         "400":
           description: Invalid acceptance criteria ID format or request body
           schema:
@@ -2176,14 +2482,14 @@ paths:
         name: comment
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.CreateCommentRequest'
+          $ref: '#/definitions/service.CreateCommentRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Successfully created acceptance criteria inline comment
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+            $ref: '#/definitions/service.CommentResponse'
         "400":
           description: Invalid request - missing inline comment data or invalid text
             positions
@@ -2352,7 +2658,7 @@ paths:
         "200":
           description: Successfully retrieved comment
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+            $ref: '#/definitions/service.CommentResponse'
         "400":
           description: Invalid comment ID format
           schema:
@@ -2391,14 +2697,14 @@ paths:
         name: comment
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.UpdateCommentRequest'
+          $ref: '#/definitions/service.UpdateCommentRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Successfully updated comment
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+            $ref: '#/definitions/service.CommentResponse'
         "400":
           description: Invalid comment ID format, invalid request body, or empty content
           schema:
@@ -2481,14 +2787,14 @@ paths:
         name: reply
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.CreateCommentRequest'
+          $ref: '#/definitions/service.CreateCommentRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Successfully created reply
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+            $ref: '#/definitions/service.CommentResponse'
         "400":
           description: Invalid parent comment ID format, invalid request body, or
             empty content
@@ -2528,7 +2834,7 @@ paths:
         "200":
           description: Successfully resolved comment
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+            $ref: '#/definitions/service.CommentResponse'
         "400":
           description: Invalid comment ID format
           schema:
@@ -2567,7 +2873,7 @@ paths:
         "200":
           description: Successfully unresolved comment
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+            $ref: '#/definitions/service.CommentResponse'
         "400":
           description: Invalid comment ID format
           schema:
@@ -2627,12 +2933,1013 @@ paths:
       summary: Get comments by resolution status
       tags:
       - comments
+  /api/v1/config/relationship-types:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a paginated list of all relationship types with optional
+        sorting. Supports ordering by name, created_at, or updated_at fields.
+      parameters:
+      - default: name
+        description: Sort field (name, created_at, updated_at)
+        example: '"name"'
+        in: query
+        name: order_by
+        type: string
+      - default: 100
+        description: Maximum number of results (1-100)
+        example: 50
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of results to skip
+        example: 0
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved relationship types
+          schema:
+            $ref: '#/definitions/handlers.RelationshipTypeListResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: List relationship types
+      tags:
+      - configuration
+    post:
+      consumes:
+      - application/json
+      description: Creates a new relationship type for defining how requirements relate
+        to each other. Common types include depends_on, blocks, relates_to, conflicts_with,
+        and derives_from.
+      parameters:
+      - description: Relationship type creation request
+        in: body
+        name: relationship_type
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateRelationshipTypeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created relationship type
+          schema:
+            $ref: '#/definitions/models.RelationshipType'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Relationship type name already exists
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create a new relationship type
+      tags:
+      - configuration
+  /api/v1/config/relationship-types/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a relationship type. By default, deletion is prevented
+        if there are requirement relationships using this type. Use force=true to
+        override this protection (use with caution).
+      parameters:
+      - description: Relationship type ID (UUID)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: false
+        description: Force deletion even if relationships exist
+        example: false
+        in: query
+        name: force
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Successfully deleted relationship type (no content)
+        "400":
+          description: Invalid UUID format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Relationship type not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Relationship type has associated relationships and cannot be
+            deleted
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Delete relationship type
+      tags:
+      - configuration
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a specific relationship type by its UUID. Returns complete
+        relationship type information including name, description, and usage metadata.
+      parameters:
+      - description: Relationship type ID (UUID)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved relationship type
+          schema:
+            $ref: '#/definitions/models.RelationshipType'
+        "400":
+          description: Invalid UUID format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Relationship type not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get relationship type by ID
+      tags:
+      - configuration
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing relationship type. Only provided fields will
+        be updated. Name must be unique across all relationship types.
+      parameters:
+      - description: Relationship type ID (UUID)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Relationship type update request
+        in: body
+        name: relationship_type
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateRelationshipTypeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated relationship type
+          schema:
+            $ref: '#/definitions/models.RelationshipType'
+        "400":
+          description: Invalid request body or UUID format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Relationship type not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Relationship type name already exists
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Update relationship type
+      tags:
+      - configuration
+  /api/v1/config/requirement-types:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a paginated list of all requirement types with optional
+        sorting. Supports ordering by name, created_at, or updated_at fields.
+      parameters:
+      - default: name
+        description: Sort field (name, created_at, updated_at)
+        example: '"name"'
+        in: query
+        name: order_by
+        type: string
+      - default: 100
+        description: Maximum number of results (1-100)
+        example: 50
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of results to skip
+        example: 0
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved requirement types
+          schema:
+            $ref: '#/definitions/handlers.RequirementTypeListResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: List requirement types
+      tags:
+      - configuration
+    post:
+      consumes:
+      - application/json
+      description: Creates a new requirement type for categorizing requirements. Requirement
+        types help organize and classify different kinds of requirements (functional,
+        non-functional, business rules, etc.). Requires Administrator role.
+      parameters:
+      - description: Requirement type creation request
+        in: body
+        name: requirement_type
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateRequirementTypeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created requirement type
+          schema:
+            $ref: '#/definitions/models.RequirementType'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Administrator role required
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Requirement type name already exists
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new requirement type
+      tags:
+      - configuration
+  /api/v1/config/requirement-types/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a requirement type. By default, deletion is prevented if
+        there are requirements using this type. Use force=true to override this protection
+        (use with caution).
+      parameters:
+      - description: Requirement type ID (UUID)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: false
+        description: Force deletion even if requirements exist
+        example: false
+        in: query
+        name: force
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Successfully deleted requirement type (no content)
+        "400":
+          description: Invalid UUID format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Requirement type not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Requirement type has associated requirements and cannot be
+            deleted
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Delete requirement type
+      tags:
+      - configuration
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a specific requirement type by its UUID. Returns complete
+        requirement type information including name, description, and metadata.
+      parameters:
+      - description: Requirement type ID (UUID)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved requirement type
+          schema:
+            $ref: '#/definitions/models.RequirementType'
+        "400":
+          description: Invalid UUID format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Requirement type not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get requirement type by ID
+      tags:
+      - configuration
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing requirement type. Only provided fields will
+        be updated. Name must be unique across all requirement types.
+      parameters:
+      - description: Requirement type ID (UUID)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Requirement type update request
+        in: body
+        name: requirement_type
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateRequirementTypeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated requirement type
+          schema:
+            $ref: '#/definitions/models.RequirementType'
+        "400":
+          description: Invalid request body or UUID format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Requirement type not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Requirement type name already exists
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Update requirement type
+      tags:
+      - configuration
+  /api/v1/config/status-models:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a paginated list of status models with optional filtering
+        by entity type and sorting. Supports ordering by entity_type, name, created_at,
+        or updated_at fields.
+      parameters:
+      - description: Filter by entity type (epic, user_story, requirement, acceptance_criteria)
+        example: '"epic"'
+        in: query
+        name: entity_type
+        type: string
+      - default: '"entity_type, name"'
+        description: Sort field (entity_type, name, created_at, updated_at)
+        example: '"entity_type"'
+        in: query
+        name: order_by
+        type: string
+      - default: 100
+        description: Maximum number of results (1-100)
+        example: 50
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of results to skip
+        example: 0
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved status models
+          schema:
+            $ref: '#/definitions/handlers.StatusModelListResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: List status models
+      tags:
+      - configuration
+    post:
+      consumes:
+      - application/json
+      description: Creates a new status model for defining status workflows for different
+        entity types (epic, user_story, requirement, acceptance_criteria). Each entity
+        type can have multiple status models with one marked as default.
+      parameters:
+      - description: Status model creation request
+        in: body
+        name: status_model
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateStatusModelRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created status model
+          schema:
+            $ref: '#/definitions/models.StatusModel'
+        "400":
+          description: Invalid request body, validation error, or invalid entity type
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Status model name already exists for this entity type
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create a new status model
+      tags:
+      - configuration
+  /api/v1/config/status-models/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a status model and all its associated statuses and transitions.
+        Use with caution as this will affect entities using this status model. Consider
+        setting a different default model before deletion.
+      parameters:
+      - description: Status model ID (UUID)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: false
+        description: Force deletion (reserved for future use)
+        example: false
+        in: query
+        name: force
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Successfully deleted status model (no content)
+        "400":
+          description: Invalid UUID format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Status model not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Delete status model
+      tags:
+      - configuration
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a specific status model by its UUID. Returns complete
+        status model information including entity type, name, description, and default
+        flag.
+      parameters:
+      - description: Status model ID (UUID)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved status model
+          schema:
+            $ref: '#/definitions/models.StatusModel'
+        "400":
+          description: Invalid UUID format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Status model not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get status model by ID
+      tags:
+      - configuration
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing status model. Only provided fields will be
+        updated. Name must be unique within the same entity type. Setting is_default=true
+        will make other models for the same entity type non-default.
+      parameters:
+      - description: Status model ID (UUID)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status model update request
+        in: body
+        name: status_model
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateStatusModelRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated status model
+          schema:
+            $ref: '#/definitions/models.StatusModel'
+        "400":
+          description: Invalid request body or UUID format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Status model not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Status model name already exists for this entity type
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Update status model
+      tags:
+      - configuration
+  /api/v1/config/status-models/{id}/statuses:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all statuses belonging to a specific status model, ordered
+        by their display order. Includes initial and final status flags for workflow
+        understanding.
+      parameters:
+      - description: Status model ID (UUID)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved statuses
+          schema:
+            $ref: '#/definitions/handlers.StatusListResponse'
+        "400":
+          description: Invalid UUID format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: List statuses by status model
+      tags:
+      - configuration
+  /api/v1/config/status-models/{id}/transitions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all status transitions belonging to a specific status
+        model. Shows the complete workflow rules including allowed status changes
+        and transition metadata.
+      parameters:
+      - description: Status model ID (UUID)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved status transitions
+          schema:
+            $ref: '#/definitions/handlers.StatusTransitionListResponse'
+        "400":
+          description: Invalid UUID format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: List status transitions by status model
+      tags:
+      - configuration
+  /api/v1/config/status-models/default/{entity_type}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the default status model for a specific entity type.
+        The default status model is used when creating new entities of that type.
+      parameters:
+      - description: Entity type (epic, user_story, requirement, acceptance_criteria)
+        example: '"epic"'
+        in: path
+        name: entity_type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved default status model
+          schema:
+            $ref: '#/definitions/models.StatusModel'
+        "404":
+          description: Default status model not found for entity type
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get default status model for entity type
+      tags:
+      - configuration
+  /api/v1/config/status-transitions:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new status transition rule within a status model. Transitions
+        define which status changes are allowed. Both from_status and to_status must
+        belong to the same status model.
+      parameters:
+      - description: Status transition creation request
+        in: body
+        name: transition
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateStatusTransitionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created status transition
+          schema:
+            $ref: '#/definitions/models.StatusTransition'
+        "400":
+          description: Invalid request body, validation error, status model not found,
+            or invalid status transition
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Status transition already exists
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create a new status transition
+      tags:
+      - configuration
+  /api/v1/config/status-transitions/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a status transition rule. This will prevent the corresponding
+        status change from being allowed in the future. Existing entities will not
+        be affected.
+      parameters:
+      - description: Status transition ID (UUID)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Successfully deleted status transition (no content)
+        "400":
+          description: Invalid UUID format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Status transition not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Delete status transition
+      tags:
+      - configuration
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a specific status transition by its UUID. Returns complete
+        transition information including from/to statuses, name, and description.
+      parameters:
+      - description: Status transition ID (UUID)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved status transition
+          schema:
+            $ref: '#/definitions/models.StatusTransition'
+        "400":
+          description: Invalid UUID format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Status transition not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get status transition by ID
+      tags:
+      - configuration
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing status transition. Only provided fields will
+        be updated. The from_status and to_status cannot be changed after creation.
+      parameters:
+      - description: Status transition ID (UUID)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status transition update request
+        in: body
+        name: transition
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateStatusTransitionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated status transition
+          schema:
+            $ref: '#/definitions/models.StatusTransition'
+        "400":
+          description: Invalid request body or UUID format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Status transition not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Update status transition
+      tags:
+      - configuration
+  /api/v1/config/statuses:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new status within a status model. Statuses define the
+        possible states for entities. Each status can be marked as initial (starting
+        state) or final (ending state) and has an order for display purposes.
+      parameters:
+      - description: Status creation request
+        in: body
+        name: status
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created status
+          schema:
+            $ref: '#/definitions/models.Status'
+        "400":
+          description: Invalid request body, validation error, or status model not
+            found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Status name already exists in this model
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create a new status
+      tags:
+      - configuration
+  /api/v1/config/statuses/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a status from a status model. This will also remove any
+        status transitions involving this status. Use with caution as entities using
+        this status may be affected.
+      parameters:
+      - description: Status ID (UUID)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: false
+        description: Force deletion (reserved for future use)
+        example: false
+        in: query
+        name: force
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Successfully deleted status (no content)
+        "400":
+          description: Invalid UUID format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Status not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Delete status
+      tags:
+      - configuration
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a specific status by its UUID. Returns complete status
+        information including name, description, color, flags, and order within the
+        status model.
+      parameters:
+      - description: Status ID (UUID)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved status
+          schema:
+            $ref: '#/definitions/models.Status'
+        "400":
+          description: Invalid UUID format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Status not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get status by ID
+      tags:
+      - configuration
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing status. Only provided fields will be updated.
+        Name must be unique within the same status model. Changing initial/final flags
+        may affect status transitions.
+      parameters:
+      - description: Status ID (UUID)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status update request
+        in: body
+        name: status
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated status
+          schema:
+            $ref: '#/definitions/models.Status'
+        "400":
+          description: Invalid request body or UUID format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Status not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Status name already exists in this model
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Update status
+      tags:
+      - configuration
   /api/v1/epics:
     get:
       consumes:
       - application/json
       description: Retrieve a list of epics with optional filtering by creator, assignee,
-        status, and priority. Supports pagination and custom ordering.
+        status, and priority. Supports pagination and custom ordering. Requires authentication.
       parameters:
       - description: Filter by creator UUID
         example: '"123e4567-e89b-12d3-a456-426614174001"'
@@ -2692,11 +3999,18 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal server error
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: List epics with filtering and pagination
       tags:
       - epics
@@ -2704,24 +4018,35 @@ paths:
       consumes:
       - application/json
       description: Create a new epic with the provided details. The epic will be assigned
-        a unique reference ID (EP-XXX format) and default status of "Backlog".
+        a unique reference ID (EP-XXX format) and default status of "Backlog". Requires
+        User or Administrator role.
       parameters:
       - description: Epic creation request
         in: body
         name: epic
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.CreateEpicRequest'
+          $ref: '#/definitions/service.CreateEpicRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Successfully created epic
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.Epic'
+            $ref: '#/definitions/models.Epic'
         "400":
           description: Invalid request body, creator/assignee not found, or invalid
             priority
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: User or Administrator role required
           schema:
             additionalProperties: true
             type: object
@@ -2730,6 +4055,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Create a new epic
       tags:
       - epics
@@ -2738,7 +4065,8 @@ paths:
       consumes:
       - application/json
       description: Delete an epic by UUID. By default, epics with associated user
-        stories cannot be deleted unless force=true is specified.
+        stories cannot be deleted unless force=true is specified. Requires User or
+        Administrator role.
       parameters:
       - description: Epic UUID
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -2762,6 +4090,16 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: User or Administrator role required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: Epic not found
           schema:
@@ -2778,6 +4116,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Delete an epic
       tags:
       - epics
@@ -2785,7 +4125,7 @@ paths:
       consumes:
       - application/json
       description: Retrieve a single epic by its UUID or reference ID (e.g., EP-001).
-        Supports both formats for flexible access.
+        Supports both formats for flexible access. Requires authentication.
       parameters:
       - description: Epic ID (UUID) or reference ID (EP-XXX)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -2799,7 +4139,12 @@ paths:
         "200":
           description: Epic found successfully
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.Epic'
+            $ref: '#/definitions/models.Epic'
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: Epic not found
           schema:
@@ -2810,6 +4155,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Get an epic by ID or reference ID
       tags:
       - epics
@@ -2818,7 +4165,7 @@ paths:
       - application/json
       description: Update an epic's properties. Only provided fields will be updated.
         Supports partial updates with validation for status transitions and priority
-        values.
+        values. Requires User or Administrator role.
       parameters:
       - description: Epic UUID
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -2832,17 +4179,27 @@ paths:
         name: epic
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.UpdateEpicRequest'
+          $ref: '#/definitions/service.UpdateEpicRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Epic updated successfully
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.Epic'
+            $ref: '#/definitions/models.Epic'
         "400":
           description: Invalid request body, epic ID format, assignee not found, invalid
             priority, invalid status, or invalid status transition
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: User or Administrator role required
           schema:
             additionalProperties: true
             type: object
@@ -2856,6 +4213,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Update an existing epic
       tags:
       - epics
@@ -2878,14 +4237,14 @@ paths:
         name: assignment
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.AssignEpicRequest'
+          $ref: '#/definitions/service.AssignEpicRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Epic assigned successfully
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.Epic'
+            $ref: '#/definitions/models.Epic'
         "400":
           description: Invalid epic ID format, request body, or assignee not found
           schema:
@@ -2922,14 +4281,14 @@ paths:
         name: comment
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.CreateCommentRequest'
+          $ref: '#/definitions/service.CreateCommentRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Successfully created epic inline comment
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+            $ref: '#/definitions/service.CommentResponse'
         "400":
           description: Invalid request - missing inline comment data or invalid text
             positions
@@ -3061,14 +4420,14 @@ paths:
         name: status
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.ChangeEpicStatusRequest'
+          $ref: '#/definitions/service.ChangeEpicStatusRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Epic status updated successfully
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.Epic'
+            $ref: '#/definitions/models.Epic'
         "400":
           description: Invalid epic ID format, request body, epic status, or status
             transition
@@ -3108,7 +4467,7 @@ paths:
         "200":
           description: Epic with user stories retrieved successfully
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.Epic'
+            $ref: '#/definitions/models.Epic'
         "404":
           description: Epic not found
           schema:
@@ -3143,14 +4502,14 @@ paths:
         name: user_story
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.CreateUserStoryRequest'
+          $ref: '#/definitions/service.CreateUserStoryRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Successfully created user story within epic
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+            $ref: '#/definitions/models.UserStory'
         "400":
           description: Invalid epic ID format, request body, creator/assignee not
             found, epic not found, invalid priority, or invalid user story template
@@ -3298,25 +4657,35 @@ paths:
       - application/json
       description: Create a new detailed requirement with specified properties. Requires
         a valid user story ID, creator, and requirement type. The assignee defaults
-        to the creator if not specified.
+        to the creator if not specified. Requires User or Administrator role.
       parameters:
       - description: Requirement creation request with all required fields
         in: body
         name: requirement
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.CreateRequirementRequest'
+          $ref: '#/definitions/service.CreateRequirementRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Successfully created requirement
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
+            $ref: '#/definitions/models.Requirement'
         "400":
           description: Invalid request body, creator/assignee not found, user story
             not found, requirement type not found, acceptance criteria not found,
             or invalid priority
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: User or Administrator role required
           schema:
             additionalProperties: true
             type: object
@@ -3325,6 +4694,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Create a new requirement
       tags:
       - requirements
@@ -3395,7 +4766,7 @@ paths:
         "200":
           description: Successfully retrieved requirement
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
+            $ref: '#/definitions/models.Requirement'
         "404":
           description: Requirement not found
           schema:
@@ -3428,14 +4799,14 @@ paths:
         name: requirement
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.UpdateRequirementRequest'
+          $ref: '#/definitions/service.UpdateRequirementRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Successfully updated requirement
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
+            $ref: '#/definitions/models.Requirement'
         "400":
           description: Invalid requirement ID format, request body, assignee not found,
             requirement type not found, acceptance criteria not found, invalid priority,
@@ -3482,7 +4853,7 @@ paths:
         "200":
           description: Successfully assigned requirement
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
+            $ref: '#/definitions/models.Requirement'
         "400":
           description: Invalid requirement ID format, request body, or assignee not
             found
@@ -3520,14 +4891,14 @@ paths:
         name: comment
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.CreateCommentRequest'
+          $ref: '#/definitions/service.CreateCommentRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Successfully created requirement inline comment
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+            $ref: '#/definitions/service.CommentResponse'
         "400":
           description: Invalid request - missing inline comment data or invalid text
             positions
@@ -3701,7 +5072,7 @@ paths:
         "200":
           description: Successfully changed requirement status
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
+            $ref: '#/definitions/models.Requirement'
         "400":
           description: Invalid requirement ID format, request body, invalid requirement
             status, or invalid status transition
@@ -3736,14 +5107,14 @@ paths:
         name: relationship
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.CreateRelationshipRequest'
+          $ref: '#/definitions/service.CreateRelationshipRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Successfully created requirement relationship
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.RequirementRelationship'
+            $ref: '#/definitions/models.RequirementRelationship'
         "400":
           description: Invalid request body, source/target requirement not found,
             relationship type not found, creator not found, or circular relationship
@@ -3799,6 +5170,134 @@ paths:
       summary: Search requirements by text
       tags:
       - requirements
+  /api/v1/search:
+    get:
+      consumes:
+      - application/json
+      description: Performs full-text search and filtering across epics, user stories,
+        acceptance criteria, and requirements. Supports PostgreSQL full-text search
+        with ranking and comprehensive filtering options. Results are cached for performance.
+        Requires authentication.
+      parameters:
+      - description: Full-text search query. Searches across titles, descriptions,
+          and reference IDs. Supports PostgreSQL text search syntax with automatic
+          prefix matching.
+        example: '"user authentication"'
+        in: query
+        name: query
+        type: string
+      - description: Filter by creator ID (UUID format)
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
+        in: query
+        name: creator_id
+        type: string
+      - description: Filter by assignee ID (UUID format)
+        example: '"123e4567-e89b-12d3-a456-426614174001"'
+        in: query
+        name: assignee_id
+        type: string
+      - description: Filter by priority level (1=Critical, 2=High, 3=Medium, 4=Low)
+        example: 1
+        in: query
+        name: priority
+        type: integer
+      - description: Filter by status (backlog, draft, in_progress, done, cancelled,
+          active, obsolete)
+        example: '"in_progress"'
+        in: query
+        name: status
+        type: string
+      - description: 'Filter by creation date from (RFC3339 format: YYYY-MM-DDTHH:MM:SSZ)'
+        example: '"2023-01-01T00:00:00Z"'
+        in: query
+        name: created_from
+        type: string
+      - description: 'Filter by creation date to (RFC3339 format: YYYY-MM-DDTHH:MM:SSZ)'
+        example: '"2023-12-31T23:59:59Z"'
+        in: query
+        name: created_to
+        type: string
+      - description: Filter by parent epic ID (UUID format). Returns user stories,
+          acceptance criteria, and requirements within the epic.
+        example: '"123e4567-e89b-12d3-a456-426614174002"'
+        in: query
+        name: epic_id
+        type: string
+      - description: Filter by parent user story ID (UUID format). Returns acceptance
+          criteria and requirements within the user story.
+        example: '"123e4567-e89b-12d3-a456-426614174003"'
+        in: query
+        name: user_story_id
+        type: string
+      - description: Filter by parent acceptance criteria ID (UUID format). Returns
+          requirements within the acceptance criteria.
+        example: '"123e4567-e89b-12d3-a456-426614174004"'
+        in: query
+        name: acceptance_criteria_id
+        type: string
+      - description: Filter by requirement type ID (UUID format). Only applies to
+          requirement entities.
+        example: '"123e4567-e89b-12d3-a456-426614174005"'
+        in: query
+        name: requirement_type_id
+        type: string
+      - description: Filter by author ID (UUID format). Applies to comments and acceptance
+          criteria.
+        example: '"123e4567-e89b-12d3-a456-426614174006"'
+        in: query
+        name: author_id
+        type: string
+      - default: created_at
+        description: 'Sort by field: priority, created_at, last_modified, title, relevance
+          (relevance only available with query)'
+        example: '"priority"'
+        in: query
+        name: sort_by
+        type: string
+      - default: desc
+        description: 'Sort order: asc (ascending) or desc (descending)'
+        example: '"asc"'
+        in: query
+        name: sort_order
+        type: string
+      - default: 50
+        description: Maximum number of results to return (1-100)
+        example: 20
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of results to skip for pagination (0-based)
+        example: 0
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful search with results, pagination metadata, and execution
+            details
+          schema:
+            $ref: '#/definitions/service.SearchResponse'
+        "400":
+          description: Invalid search parameters (invalid UUID format, out of range
+            values, invalid sort fields)
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error during search operation
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Search across all entities
+      tags:
+      - search
   /api/v1/user-stories:
     get:
       consumes:
@@ -3891,14 +5390,14 @@ paths:
         name: user_story
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.CreateUserStoryRequest'
+          $ref: '#/definitions/service.CreateUserStoryRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Successfully created user story
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+            $ref: '#/definitions/models.UserStory'
         "400":
           description: Invalid request body, epic_id required, creator/assignee not
             found, epic not found, invalid priority, or invalid user story template
@@ -3981,7 +5480,7 @@ paths:
         "200":
           description: Successfully retrieved user story
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+            $ref: '#/definitions/models.UserStory'
         "404":
           description: User story not found
           schema:
@@ -4014,14 +5513,14 @@ paths:
         name: user_story
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.UpdateUserStoryRequest'
+          $ref: '#/definitions/service.UpdateUserStoryRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Successfully updated user story
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+            $ref: '#/definitions/models.UserStory'
         "400":
           description: Invalid user story ID format, request body, assignee not found,
             invalid priority, invalid status, invalid status transition, or invalid
@@ -4062,7 +5561,7 @@ paths:
         "200":
           description: Successfully retrieved user story with acceptance criteria
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+            $ref: '#/definitions/models.UserStory'
         "404":
           description: User story not found
           schema:
@@ -4097,14 +5596,14 @@ paths:
         name: acceptance_criteria
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.CreateAcceptanceCriteriaRequest'
+          $ref: '#/definitions/service.CreateAcceptanceCriteriaRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Successfully created acceptance criteria within user story
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.AcceptanceCriteria'
+            $ref: '#/definitions/models.AcceptanceCriteria'
         "400":
           description: Invalid user story ID format, request body, user story not
             found, or author not found
@@ -4145,7 +5644,7 @@ paths:
         "200":
           description: Successfully assigned user story
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+            $ref: '#/definitions/models.UserStory'
         "400":
           description: Invalid user story ID format, request body, or assignee not
             found
@@ -4183,14 +5682,14 @@ paths:
         name: comment
         required: true
         schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.CreateCommentRequest'
+          $ref: '#/definitions/service.CreateCommentRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Successfully created user story inline comment
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+            $ref: '#/definitions/service.CommentResponse'
         "400":
           description: Invalid request - missing inline comment data or invalid text
             positions
@@ -4322,7 +5821,7 @@ paths:
         "200":
           description: Successfully retrieved user story with requirements
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+            $ref: '#/definitions/models.UserStory'
         "404":
           description: User story not found
           schema:
@@ -4364,7 +5863,7 @@ paths:
         "201":
           description: Successfully created requirement within user story
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
+            $ref: '#/definitions/models.Requirement'
         "400":
           description: Invalid user story ID format, request body, creator/assignee
             not found, user story not found, requirement type not found, acceptance
@@ -4407,7 +5906,7 @@ paths:
         "200":
           description: Successfully changed user story status
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+            $ref: '#/definitions/models.UserStory'
         "400":
           description: Invalid user story ID format, request body, invalid status,
             or invalid status transition
@@ -4468,10 +5967,413 @@ paths:
       summary: Get acceptance criteria by author
       tags:
       - users
+  /auth/change-password:
+    post:
+      consumes:
+      - application/json
+      description: Change authenticated user's password
+      parameters:
+      - description: Password change request
+        in: body
+        name: password
+        required: true
+        schema:
+          $ref: '#/definitions/auth.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password changed successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required or invalid current password
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Change password
+      tags:
+      - authentication
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user with username and password to receive JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful authentication with JWT token
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "400":
+          description: Invalid request format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Invalid credentials
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: User login
+      tags:
+      - authentication
+  /auth/profile:
+    get:
+      description: Get authenticated user's profile information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Current user profile
+          schema:
+            $ref: '#/definitions/auth.UserResponse'
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get current user profile
+      tags:
+      - authentication
+  /auth/users:
+    get:
+      description: Get list of all users (Administrator role required)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of users
+          schema:
+            items:
+              $ref: '#/definitions/auth.UserResponse'
+            type: array
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Administrator role required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List all users
+      tags:
+      - authentication
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account (Administrator role required)
+      parameters:
+      - description: User creation request
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/auth.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created user
+          schema:
+            $ref: '#/definitions/auth.UserResponse'
+        "400":
+          description: Invalid request format or role
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Administrator role required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Username or email already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create new user
+      tags:
+      - authentication
+  /auth/users/{id}:
+    delete:
+      description: Delete user account (Administrator role required)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: User successfully deleted
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Administrator role required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Cannot delete user with associated entities
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete user
+      tags:
+      - authentication
+    get:
+      description: Get specific user details (Administrator role required)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User details
+          schema:
+            $ref: '#/definitions/auth.UserResponse'
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Administrator role required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user by ID
+      tags:
+      - authentication
+    put:
+      consumes:
+      - application/json
+      description: Update user details (Administrator role required)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User update request
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/auth.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated user details
+          schema:
+            $ref: '#/definitions/auth.UserResponse'
+        "400":
+          description: Invalid request format or role
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Administrator role required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Username or email already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update user
+      tags:
+      - authentication
 securityDefinitions:
   BearerAuth:
-    description: Type "Bearer" followed by a space and JWT token.
+    description: 'JWT token authentication. Include ''Bearer '' followed by your JWT
+      token. Example: ''Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'' Tokens expire
+      after 1 hour and must be refreshed through re-authentication.'
     in: header
     name: Authorization
     type: apiKey
 swagger: "2.0"
+tags:
+- description: Epic management endpoints for high-level features and initiatives.
+    Epics serve as containers for user stories and provide project-level organization.
+  name: epics
+- description: User story management within epics. User stories represent feature
+    requirements from the user perspective and contain acceptance criteria and detailed
+    requirements.
+  name: user-stories
+- description: Acceptance criteria management for user stories. Define testable conditions
+    that must be met for user story completion using EARS format (Easy Approach to
+    Requirements Syntax).
+  name: acceptance-criteria
+- description: Detailed requirement management with relationship mapping. Requirements
+    provide technical specifications and can be linked with various relationship types
+    (depends_on, blocks, relates_to, conflicts_with, derives_from).
+  name: requirements
+- description: Comment system for collaboration and feedback. Supports both general
+    comments and inline comments with threading, resolution tracking, and entity associations.
+  name: comments
+- description: Full-text search capabilities across all entities. Provides advanced
+    filtering, sorting, and suggestion features for efficient content discovery.
+  name: search
+- description: Hierarchical navigation and entity relationship endpoints. Retrieve
+    entity hierarchies, paths, and relationship structures for navigation interfaces.
+  name: navigation
+- description: System configuration management for requirement types, relationship
+    types, and status models. Administrative endpoints for customizing system behavior
+    and workflows.
+  name: configuration
+- description: Comprehensive deletion management with dependency validation. Provides
+    safe deletion with cascade options and dependency impact analysis.
+  name: deletion
+- description: System health and monitoring endpoints for service status, database
+    connectivity, and operational metrics.
+  name: health
