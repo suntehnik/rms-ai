@@ -12,6 +12,38 @@ import (
 	"product-requirements-management/internal/service"
 )
 
+// Response types for Swagger documentation
+
+// RequirementTypeListResponse represents the response for listing requirement types
+type RequirementTypeListResponse struct {
+	RequirementTypes []models.RequirementType `json:"requirement_types"`
+	Count            int                      `json:"count"`
+}
+
+// RelationshipTypeListResponse represents the response for listing relationship types
+type RelationshipTypeListResponse struct {
+	RelationshipTypes []models.RelationshipType `json:"relationship_types"`
+	Count             int                       `json:"count"`
+}
+
+// StatusModelListResponse represents the response for listing status models
+type StatusModelListResponse struct {
+	StatusModels []models.StatusModel `json:"status_models"`
+	Count        int                  `json:"count"`
+}
+
+// StatusListResponse represents the response for listing statuses
+type StatusListResponse struct {
+	Statuses []models.Status `json:"statuses"`
+	Count    int             `json:"count"`
+}
+
+// StatusTransitionListResponse represents the response for listing status transitions
+type StatusTransitionListResponse struct {
+	Transitions []models.StatusTransition `json:"transitions"`
+	Count       int                       `json:"count"`
+}
+
 // ConfigHandler handles HTTP requests for configuration operations
 type ConfigHandler struct {
 	configService service.ConfigService
