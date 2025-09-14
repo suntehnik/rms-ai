@@ -50,7 +50,7 @@ const docTemplate = `{
                         "name": "request",
                         "in": "body",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.DeleteAcceptanceCriteriaRequest"
+                            "$ref": "#/definitions/handlers.DeleteAcceptanceCriteriaRequest"
                         }
                     }
                 ],
@@ -58,31 +58,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.DeletionResult"
+                            "$ref": "#/definitions/service.DeletionResult"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -114,25 +114,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.DependencyInfo"
+                            "$ref": "#/definitions/service.DependencyInfo"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -171,25 +171,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.DependencyInfo"
+                            "$ref": "#/definitions/service.DependencyInfo"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -221,7 +221,7 @@ const docTemplate = `{
                         "name": "request",
                         "in": "body",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.DeleteEpicRequest"
+                            "$ref": "#/definitions/handlers.DeleteEpicRequest"
                         }
                     }
                 ],
@@ -229,31 +229,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.DeletionResult"
+                            "$ref": "#/definitions/service.DeletionResult"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -285,25 +285,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.DependencyInfo"
+                            "$ref": "#/definitions/service.DependencyInfo"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -335,7 +335,7 @@ const docTemplate = `{
                         "name": "request",
                         "in": "body",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.DeleteRequirementRequest"
+                            "$ref": "#/definitions/handlers.DeleteRequirementRequest"
                         }
                     }
                 ],
@@ -343,31 +343,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.DeletionResult"
+                            "$ref": "#/definitions/service.DeletionResult"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -399,25 +399,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.DependencyInfo"
+                            "$ref": "#/definitions/service.DependencyInfo"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -458,19 +458,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Search suggestions grouped by category",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SearchSuggestionsResponse"
+                            "$ref": "#/definitions/handlers.SearchSuggestionsResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid parameters (missing query, invalid limit)",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error during suggestion generation",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -502,7 +502,7 @@ const docTemplate = `{
                         "name": "request",
                         "in": "body",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.DeleteUserStoryRequest"
+                            "$ref": "#/definitions/handlers.DeleteUserStoryRequest"
                         }
                     }
                 ],
@@ -510,31 +510,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.DeletionResult"
+                            "$ref": "#/definitions/service.DeletionResult"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -566,25 +566,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.DependencyInfo"
+                            "$ref": "#/definitions/service.DependencyInfo"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -690,7 +690,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved acceptance criteria",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.AcceptanceCriteria"
+                            "$ref": "#/definitions/models.AcceptanceCriteria"
                         }
                     },
                     "404": {
@@ -737,7 +737,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateAcceptanceCriteriaRequest"
+                            "$ref": "#/definitions/service.UpdateAcceptanceCriteriaRequest"
                         }
                     }
                 ],
@@ -745,7 +745,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully updated acceptance criteria",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.AcceptanceCriteria"
+                            "$ref": "#/definitions/models.AcceptanceCriteria"
                         }
                     },
                     "400": {
@@ -866,7 +866,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateCommentRequest"
+                            "$ref": "#/definitions/service.CreateCommentRequest"
                         }
                     }
                 ],
@@ -874,7 +874,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created acceptance criteria inline comment",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                            "$ref": "#/definitions/service.CommentResponse"
                         }
                     },
                     "400": {
@@ -1108,7 +1108,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved comment",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                            "$ref": "#/definitions/service.CommentResponse"
                         }
                     },
                     "400": {
@@ -1167,7 +1167,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateCommentRequest"
+                            "$ref": "#/definitions/service.UpdateCommentRequest"
                         }
                     }
                 ],
@@ -1175,7 +1175,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully updated comment",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                            "$ref": "#/definitions/service.CommentResponse"
                         }
                     },
                     "400": {
@@ -1350,7 +1350,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateCommentRequest"
+                            "$ref": "#/definitions/service.CreateCommentRequest"
                         }
                     }
                 ],
@@ -1358,7 +1358,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created reply",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                            "$ref": "#/definitions/service.CommentResponse"
                         }
                     },
                     "400": {
@@ -1415,7 +1415,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully resolved comment",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                            "$ref": "#/definitions/service.CommentResponse"
                         }
                     },
                     "400": {
@@ -1472,7 +1472,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully unresolved comment",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                            "$ref": "#/definitions/service.CommentResponse"
                         }
                     },
                     "400": {
@@ -1548,13 +1548,13 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved relationship types",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.RelationshipTypeListResponse"
+                            "$ref": "#/definitions/handlers.RelationshipTypeListResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -1578,7 +1578,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateRelationshipTypeRequest"
+                            "$ref": "#/definitions/service.CreateRelationshipTypeRequest"
                         }
                     }
                 ],
@@ -1586,25 +1586,25 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created relationship type",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.RelationshipType"
+                            "$ref": "#/definitions/models.RelationshipType"
                         }
                     },
                     "400": {
                         "description": "Invalid request body or validation error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Relationship type name already exists",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -1637,25 +1637,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved relationship type",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.RelationshipType"
+                            "$ref": "#/definitions/models.RelationshipType"
                         }
                     },
                     "400": {
                         "description": "Invalid UUID format",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Relationship type not found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -1687,7 +1687,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateRelationshipTypeRequest"
+                            "$ref": "#/definitions/service.UpdateRelationshipTypeRequest"
                         }
                     }
                 ],
@@ -1695,31 +1695,31 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully updated relationship type",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.RelationshipType"
+                            "$ref": "#/definitions/models.RelationshipType"
                         }
                     },
                     "400": {
                         "description": "Invalid request body or UUID format",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Relationship type not found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Relationship type name already exists",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -1761,25 +1761,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid UUID format",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Relationship type not found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Relationship type has associated relationships and cannot be deleted",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -1828,13 +1828,13 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved requirement types",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.RequirementTypeListResponse"
+                            "$ref": "#/definitions/handlers.RequirementTypeListResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -1863,7 +1863,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateRequirementTypeRequest"
+                            "$ref": "#/definitions/service.CreateRequirementTypeRequest"
                         }
                     }
                 ],
@@ -1871,37 +1871,37 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created requirement type",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.RequirementType"
+                            "$ref": "#/definitions/models.RequirementType"
                         }
                     },
                     "400": {
                         "description": "Invalid request body or validation error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Authentication required",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Administrator role required",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Requirement type name already exists",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -1934,25 +1934,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved requirement type",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.RequirementType"
+                            "$ref": "#/definitions/models.RequirementType"
                         }
                     },
                     "400": {
                         "description": "Invalid UUID format",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Requirement type not found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -1984,7 +1984,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateRequirementTypeRequest"
+                            "$ref": "#/definitions/service.UpdateRequirementTypeRequest"
                         }
                     }
                 ],
@@ -1992,31 +1992,31 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully updated requirement type",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.RequirementType"
+                            "$ref": "#/definitions/models.RequirementType"
                         }
                     },
                     "400": {
                         "description": "Invalid request body or UUID format",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Requirement type not found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Requirement type name already exists",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -2058,25 +2058,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid UUID format",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Requirement type not found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Requirement type has associated requirements and cannot be deleted",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -2132,13 +2132,13 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved status models",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.StatusModelListResponse"
+                            "$ref": "#/definitions/handlers.StatusModelListResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -2162,7 +2162,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateStatusModelRequest"
+                            "$ref": "#/definitions/service.CreateStatusModelRequest"
                         }
                     }
                 ],
@@ -2170,25 +2170,25 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created status model",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.StatusModel"
+                            "$ref": "#/definitions/models.StatusModel"
                         }
                     },
                     "400": {
                         "description": "Invalid request body, validation error, or invalid entity type",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Status model name already exists for this entity type",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -2221,19 +2221,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved default status model",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.StatusModel"
+                            "$ref": "#/definitions/models.StatusModel"
                         }
                     },
                     "404": {
                         "description": "Default status model not found for entity type",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -2266,25 +2266,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved status model",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.StatusModel"
+                            "$ref": "#/definitions/models.StatusModel"
                         }
                     },
                     "400": {
                         "description": "Invalid UUID format",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Status model not found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -2316,7 +2316,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateStatusModelRequest"
+                            "$ref": "#/definitions/service.UpdateStatusModelRequest"
                         }
                     }
                 ],
@@ -2324,31 +2324,31 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully updated status model",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.StatusModel"
+                            "$ref": "#/definitions/models.StatusModel"
                         }
                     },
                     "400": {
                         "description": "Invalid request body or UUID format",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Status model not found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Status model name already exists for this entity type",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -2390,19 +2390,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid UUID format",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Status model not found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -2435,19 +2435,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved statuses",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.StatusListResponse"
+                            "$ref": "#/definitions/handlers.StatusListResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid UUID format",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -2480,19 +2480,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved status transitions",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.StatusTransitionListResponse"
+                            "$ref": "#/definitions/handlers.StatusTransitionListResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid UUID format",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -2518,7 +2518,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateStatusTransitionRequest"
+                            "$ref": "#/definitions/service.CreateStatusTransitionRequest"
                         }
                     }
                 ],
@@ -2526,25 +2526,25 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created status transition",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.StatusTransition"
+                            "$ref": "#/definitions/models.StatusTransition"
                         }
                     },
                     "400": {
                         "description": "Invalid request body, validation error, status model not found, or invalid status transition",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Status transition already exists",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -2577,25 +2577,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved status transition",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.StatusTransition"
+                            "$ref": "#/definitions/models.StatusTransition"
                         }
                     },
                     "400": {
                         "description": "Invalid UUID format",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Status transition not found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -2627,7 +2627,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateStatusTransitionRequest"
+                            "$ref": "#/definitions/service.UpdateStatusTransitionRequest"
                         }
                     }
                 ],
@@ -2635,25 +2635,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully updated status transition",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.StatusTransition"
+                            "$ref": "#/definitions/models.StatusTransition"
                         }
                     },
                     "400": {
                         "description": "Invalid request body or UUID format",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Status transition not found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -2687,19 +2687,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid UUID format",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Status transition not found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -2725,7 +2725,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateStatusRequest"
+                            "$ref": "#/definitions/service.CreateStatusRequest"
                         }
                     }
                 ],
@@ -2733,25 +2733,25 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created status",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Status"
+                            "$ref": "#/definitions/models.Status"
                         }
                     },
                     "400": {
                         "description": "Invalid request body, validation error, or status model not found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Status name already exists in this model",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -2784,25 +2784,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved status",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Status"
+                            "$ref": "#/definitions/models.Status"
                         }
                     },
                     "400": {
                         "description": "Invalid UUID format",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Status not found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -2834,7 +2834,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateStatusRequest"
+                            "$ref": "#/definitions/service.UpdateStatusRequest"
                         }
                     }
                 ],
@@ -2842,31 +2842,31 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully updated status",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Status"
+                            "$ref": "#/definitions/models.Status"
                         }
                     },
                     "400": {
                         "description": "Invalid request body or UUID format",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Status not found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Status name already exists in this model",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -2908,19 +2908,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid UUID format",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Status not found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -3059,7 +3059,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateEpicRequest"
+                            "$ref": "#/definitions/service.CreateEpicRequest"
                         }
                     }
                 ],
@@ -3067,7 +3067,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created epic",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Epic"
+                            "$ref": "#/definitions/models.Epic"
                         }
                     },
                     "400": {
@@ -3133,7 +3133,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Epic found successfully",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Epic"
+                            "$ref": "#/definitions/models.Epic"
                         }
                     },
                     "401": {
@@ -3192,7 +3192,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateEpicRequest"
+                            "$ref": "#/definitions/service.UpdateEpicRequest"
                         }
                     }
                 ],
@@ -3200,7 +3200,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Epic updated successfully",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Epic"
+                            "$ref": "#/definitions/models.Epic"
                         }
                     },
                     "400": {
@@ -3353,7 +3353,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.AssignEpicRequest"
+                            "$ref": "#/definitions/service.AssignEpicRequest"
                         }
                     }
                 ],
@@ -3361,7 +3361,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Epic assigned successfully",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Epic"
+                            "$ref": "#/definitions/models.Epic"
                         }
                     },
                     "400": {
@@ -3418,7 +3418,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateCommentRequest"
+                            "$ref": "#/definitions/service.CreateCommentRequest"
                         }
                     }
                 ],
@@ -3426,7 +3426,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created epic inline comment",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                            "$ref": "#/definitions/service.CommentResponse"
                         }
                     },
                     "400": {
@@ -3613,7 +3613,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.ChangeEpicStatusRequest"
+                            "$ref": "#/definitions/service.ChangeEpicStatusRequest"
                         }
                     }
                 ],
@@ -3621,7 +3621,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Epic status updated successfully",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Epic"
+                            "$ref": "#/definitions/models.Epic"
                         }
                     },
                     "400": {
@@ -3675,7 +3675,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Epic with user stories retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Epic"
+                            "$ref": "#/definitions/models.Epic"
                         }
                     },
                     "404": {
@@ -3722,7 +3722,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateUserStoryRequest"
+                            "$ref": "#/definitions/service.CreateUserStoryRequest"
                         }
                     }
                 ],
@@ -3730,7 +3730,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created user story within epic",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                            "$ref": "#/definitions/models.UserStory"
                         }
                     },
                     "400": {
@@ -3946,7 +3946,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateRequirementRequest"
+                            "$ref": "#/definitions/service.CreateRequirementRequest"
                         }
                     }
                 ],
@@ -3954,7 +3954,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created requirement",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                            "$ref": "#/definitions/models.Requirement"
                         }
                     },
                     "400": {
@@ -4008,7 +4008,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateRelationshipRequest"
+                            "$ref": "#/definitions/service.CreateRelationshipRequest"
                         }
                     }
                 ],
@@ -4016,7 +4016,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created requirement relationship",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.RequirementRelationship"
+                            "$ref": "#/definitions/models.RequirementRelationship"
                         }
                     },
                     "400": {
@@ -4118,7 +4118,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved requirement",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                            "$ref": "#/definitions/models.Requirement"
                         }
                     },
                     "404": {
@@ -4165,7 +4165,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateRequirementRequest"
+                            "$ref": "#/definitions/service.UpdateRequirementRequest"
                         }
                     }
                 ],
@@ -4173,7 +4173,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully updated requirement",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                            "$ref": "#/definitions/models.Requirement"
                         }
                     },
                     "400": {
@@ -4301,7 +4301,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully assigned requirement",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                            "$ref": "#/definitions/models.Requirement"
                         }
                     },
                     "400": {
@@ -4358,7 +4358,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateCommentRequest"
+                            "$ref": "#/definitions/service.CreateCommentRequest"
                         }
                     }
                 ],
@@ -4366,7 +4366,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created requirement inline comment",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                            "$ref": "#/definitions/service.CommentResponse"
                         }
                     },
                     "400": {
@@ -4609,7 +4609,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully changed requirement status",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                            "$ref": "#/definitions/models.Requirement"
                         }
                     },
                     "400": {
@@ -4776,25 +4776,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Successful search with results, pagination metadata, and execution details",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.SearchResponse"
+                            "$ref": "#/definitions/service.SearchResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid search parameters (invalid UUID format, out of range values, invalid sort fields)",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Authentication required",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error during search operation",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -4924,7 +4924,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateUserStoryRequest"
+                            "$ref": "#/definitions/service.CreateUserStoryRequest"
                         }
                     }
                 ],
@@ -4932,7 +4932,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created user story",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                            "$ref": "#/definitions/models.UserStory"
                         }
                     },
                     "400": {
@@ -4979,7 +4979,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved user story",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                            "$ref": "#/definitions/models.UserStory"
                         }
                     },
                     "404": {
@@ -5026,7 +5026,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdateUserStoryRequest"
+                            "$ref": "#/definitions/service.UpdateUserStoryRequest"
                         }
                     }
                 ],
@@ -5034,7 +5034,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully updated user story",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                            "$ref": "#/definitions/models.UserStory"
                         }
                     },
                     "400": {
@@ -5152,7 +5152,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved user story with acceptance criteria",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                            "$ref": "#/definitions/models.UserStory"
                         }
                     },
                     "404": {
@@ -5199,7 +5199,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateAcceptanceCriteriaRequest"
+                            "$ref": "#/definitions/service.CreateAcceptanceCriteriaRequest"
                         }
                     }
                 ],
@@ -5207,7 +5207,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created acceptance criteria within user story",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.AcceptanceCriteria"
+                            "$ref": "#/definitions/models.AcceptanceCriteria"
                         }
                     },
                     "400": {
@@ -5264,7 +5264,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully assigned user story",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                            "$ref": "#/definitions/models.UserStory"
                         }
                     },
                     "400": {
@@ -5321,7 +5321,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateCommentRequest"
+                            "$ref": "#/definitions/service.CreateCommentRequest"
                         }
                     }
                 ],
@@ -5329,7 +5329,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created user story inline comment",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                            "$ref": "#/definitions/service.CommentResponse"
                         }
                     },
                     "400": {
@@ -5514,7 +5514,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved user story with requirements",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                            "$ref": "#/definitions/models.UserStory"
                         }
                     },
                     "404": {
@@ -5569,7 +5569,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created requirement within user story",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                            "$ref": "#/definitions/models.Requirement"
                         }
                     },
                     "400": {
@@ -5626,7 +5626,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully changed user story status",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                            "$ref": "#/definitions/models.UserStory"
                         }
                     },
                     "400": {
@@ -5841,7 +5841,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateCommentRequest"
+                            "$ref": "#/definitions/service.CreateCommentRequest"
                         }
                     }
                 ],
@@ -5849,7 +5849,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created comment",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                            "$ref": "#/definitions/service.CommentResponse"
                         }
                     },
                     "400": {
@@ -5924,7 +5924,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateCommentRequest"
+                            "$ref": "#/definitions/service.CreateCommentRequest"
                         }
                     }
                 ],
@@ -5932,7 +5932,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created inline comment",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                            "$ref": "#/definitions/service.CommentResponse"
                         }
                     },
                     "400": {
@@ -6729,7 +6729,7 @@ const docTemplate = `{
                     "description": "User role: Administrator, User, or Commenter (required)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.UserRole"
+                            "$ref": "#/definitions/models.UserRole"
                         }
                     ],
                     "example": "User"
@@ -6798,7 +6798,7 @@ const docTemplate = `{
                     "description": "New user role (optional)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.UserRole"
+                            "$ref": "#/definitions/models.UserRole"
                         }
                     ],
                     "example": "Administrator"
@@ -6833,7 +6833,7 @@ const docTemplate = `{
                     "description": "User role determining permissions",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.UserRole"
+                            "$ref": "#/definitions/models.UserRole"
                         }
                     ],
                     "example": "User"
@@ -6850,7 +6850,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handlers.DeleteAcceptanceCriteriaRequest": {
+        "handlers.DeleteAcceptanceCriteriaRequest": {
             "type": "object",
             "properties": {
                 "force": {
@@ -6858,7 +6858,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handlers.DeleteEpicRequest": {
+        "handlers.DeleteEpicRequest": {
             "type": "object",
             "properties": {
                 "force": {
@@ -6866,7 +6866,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handlers.DeleteRequirementRequest": {
+        "handlers.DeleteRequirementRequest": {
             "type": "object",
             "properties": {
                 "force": {
@@ -6874,7 +6874,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handlers.DeleteUserStoryRequest": {
+        "handlers.DeleteUserStoryRequest": {
             "type": "object",
             "properties": {
                 "force": {
@@ -6882,7 +6882,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handlers.ErrorDetail": {
+        "handlers.ErrorDetail": {
             "type": "object",
             "properties": {
                 "code": {
@@ -6893,15 +6893,15 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handlers.ErrorResponse": {
+        "handlers.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
-                    "$ref": "#/definitions/internal_handlers.ErrorDetail"
+                    "$ref": "#/definitions/handlers.ErrorDetail"
                 }
             }
         },
-        "internal_handlers.RelationshipTypeListResponse": {
+        "handlers.RelationshipTypeListResponse": {
             "type": "object",
             "properties": {
                 "count": {
@@ -6910,12 +6910,12 @@ const docTemplate = `{
                 "relationship_types": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.RelationshipType"
+                        "$ref": "#/definitions/models.RelationshipType"
                     }
                 }
             }
         },
-        "internal_handlers.RequirementTypeListResponse": {
+        "handlers.RequirementTypeListResponse": {
             "type": "object",
             "properties": {
                 "count": {
@@ -6924,12 +6924,12 @@ const docTemplate = `{
                 "requirement_types": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.RequirementType"
+                        "$ref": "#/definitions/models.RequirementType"
                     }
                 }
             }
         },
-        "internal_handlers.SearchSuggestionsResponse": {
+        "handlers.SearchSuggestionsResponse": {
             "type": "object",
             "properties": {
                 "reference_ids": {
@@ -6952,7 +6952,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handlers.StatusListResponse": {
+        "handlers.StatusListResponse": {
             "type": "object",
             "properties": {
                 "count": {
@@ -6961,12 +6961,12 @@ const docTemplate = `{
                 "statuses": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.Status"
+                        "$ref": "#/definitions/models.Status"
                     }
                 }
             }
         },
-        "internal_handlers.StatusModelListResponse": {
+        "handlers.StatusModelListResponse": {
             "type": "object",
             "properties": {
                 "count": {
@@ -6975,12 +6975,12 @@ const docTemplate = `{
                 "status_models": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.StatusModel"
+                        "$ref": "#/definitions/models.StatusModel"
                     }
                 }
             }
         },
-        "internal_handlers.StatusTransitionListResponse": {
+        "handlers.StatusTransitionListResponse": {
             "type": "object",
             "properties": {
                 "count": {
@@ -6989,12 +6989,12 @@ const docTemplate = `{
                 "transitions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.StatusTransition"
+                        "$ref": "#/definitions/models.StatusTransition"
                     }
                 }
             }
         },
-        "product-requirements-management_internal_models.AcceptanceCriteria": {
+        "models.AcceptanceCriteria": {
             "description": "Testable conditions that define when a user story is considered complete and acceptable",
             "type": "object",
             "required": [
@@ -7005,7 +7005,7 @@ const docTemplate = `{
                     "description": "User who authored this acceptance criteria",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                            "$ref": "#/definitions/models.User"
                         }
                     ]
                 },
@@ -7018,7 +7018,7 @@ const docTemplate = `{
                     "description": "Comments associated with this acceptance criteria",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.Comment"
+                        "$ref": "#/definitions/models.Comment"
                     }
                 },
                 "created_at": {
@@ -7050,14 +7050,14 @@ const docTemplate = `{
                     "description": "Requirements linked to this acceptance criteria",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                        "$ref": "#/definitions/models.Requirement"
                     }
                 },
                 "user_story": {
                     "description": "Relationships",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                            "$ref": "#/definitions/models.UserStory"
                         }
                     ]
                 },
@@ -7068,7 +7068,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_models.Comment": {
+        "models.Comment": {
             "description": "A comment that can be attached to any entity, supporting both general and inline comments with threading",
             "type": "object",
             "required": [
@@ -7080,7 +7080,7 @@ const docTemplate = `{
                     "description": "User who authored this comment",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                            "$ref": "#/definitions/models.User"
                         }
                     ]
                 },
@@ -7108,7 +7108,7 @@ const docTemplate = `{
                     "description": "Type of entity this comment is attached to",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.EntityType"
+                            "$ref": "#/definitions/models.EntityType"
                         }
                     ],
                     "example": "epic"
@@ -7132,7 +7132,7 @@ const docTemplate = `{
                     "description": "Relationships",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Comment"
+                            "$ref": "#/definitions/models.Comment"
                         }
                     ]
                 },
@@ -7145,7 +7145,7 @@ const docTemplate = `{
                     "description": "Replies to this comment",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.Comment"
+                        "$ref": "#/definitions/models.Comment"
                     }
                 },
                 "text_position_end": {
@@ -7165,7 +7165,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_models.EntityType": {
+        "models.EntityType": {
             "description": "Type of entity that can receive comments in the system",
             "type": "string",
             "enum": [
@@ -7193,7 +7193,7 @@ const docTemplate = `{
                 "EntityTypeRequirement"
             ]
         },
-        "product-requirements-management_internal_models.Epic": {
+        "models.Epic": {
             "description": "Epic is a large body of work that can be broken down into smaller user stories. It represents a significant feature or initiative that delivers business value.",
             "type": "object",
             "required": [
@@ -7206,7 +7206,7 @@ const docTemplate = `{
                     "description": "Assignee contains the user information of who is assigned to the epic\n@Description User currently assigned to this epic (populated when requested with ?include=assignee)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                            "$ref": "#/definitions/models.User"
                         }
                     ]
                 },
@@ -7218,7 +7218,7 @@ const docTemplate = `{
                     "description": "Comments contains all comments associated with this epic\n@Description List of comments on this epic (populated when requested with ?include=comments)",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.Comment"
+                        "$ref": "#/definitions/models.Comment"
                     }
                 },
                 "created_at": {
@@ -7229,7 +7229,7 @@ const docTemplate = `{
                     "description": "Creator contains the user information of who created the epic\n@Description User who created this epic (populated when requested with ?include=creator)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                            "$ref": "#/definitions/models.User"
                         }
                     ]
                 },
@@ -7256,7 +7256,7 @@ const docTemplate = `{
                     "minimum": 1,
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Priority"
+                            "$ref": "#/definitions/models.Priority"
                         }
                     ]
                 },
@@ -7268,7 +7268,7 @@ const docTemplate = `{
                     "description": "Status represents the current workflow state of the epic\n@Description Current status of the epic in the workflow\n@Enum Backlog,Draft,In Progress,Done,Cancelled\n@Example \"Backlog\"",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.EpicStatus"
+                            "$ref": "#/definitions/models.EpicStatus"
                         }
                     ]
                 },
@@ -7281,12 +7281,12 @@ const docTemplate = `{
                     "description": "UserStories contains all user stories that belong to this epic\n@Description List of user stories that belong to this epic (populated when requested with ?include=user_stories)",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                        "$ref": "#/definitions/models.UserStory"
                     }
                 }
             }
         },
-        "product-requirements-management_internal_models.EpicStatus": {
+        "models.EpicStatus": {
             "description": "Status of an epic in the workflow lifecycle",
             "type": "string",
             "enum": [
@@ -7318,7 +7318,7 @@ const docTemplate = `{
                 "EpicStatusCancelled"
             ]
         },
-        "product-requirements-management_internal_models.Priority": {
+        "models.Priority": {
             "description": "Priority level for entities (1=Critical, 2=High, 3=Medium, 4=Low)",
             "type": "integer",
             "enum": [
@@ -7346,7 +7346,7 @@ const docTemplate = `{
                 "PriorityLow"
             ]
         },
-        "product-requirements-management_internal_models.RelationshipType": {
+        "models.RelationshipType": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -7365,7 +7365,7 @@ const docTemplate = `{
                     "description": "Relationships",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.RequirementRelationship"
+                        "$ref": "#/definitions/models.RequirementRelationship"
                     }
                 },
                 "updated_at": {
@@ -7373,7 +7373,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_models.Requirement": {
+        "models.Requirement": {
             "description": "A detailed requirement that specifies what needs to be implemented within a user story",
             "type": "object",
             "required": [
@@ -7386,7 +7386,7 @@ const docTemplate = `{
                     "description": "Optional linked acceptance criteria",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.AcceptanceCriteria"
+                            "$ref": "#/definitions/models.AcceptanceCriteria"
                         }
                     ]
                 },
@@ -7399,7 +7399,7 @@ const docTemplate = `{
                     "description": "User assigned to implement this requirement",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                            "$ref": "#/definitions/models.User"
                         }
                     ]
                 },
@@ -7412,7 +7412,7 @@ const docTemplate = `{
                     "description": "Comments associated with this requirement",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.Comment"
+                        "$ref": "#/definitions/models.Comment"
                     }
                 },
                 "created_at": {
@@ -7424,7 +7424,7 @@ const docTemplate = `{
                     "description": "User who created this requirement",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                            "$ref": "#/definitions/models.User"
                         }
                     ]
                 },
@@ -7454,7 +7454,7 @@ const docTemplate = `{
                     "minimum": 1,
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Priority"
+                            "$ref": "#/definitions/models.Priority"
                         }
                     ],
                     "example": 2
@@ -7468,14 +7468,14 @@ const docTemplate = `{
                     "description": "Relationships where this requirement is the source",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.RequirementRelationship"
+                        "$ref": "#/definitions/models.RequirementRelationship"
                     }
                 },
                 "status": {
                     "description": "Current status of the requirement",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.RequirementStatus"
+                            "$ref": "#/definitions/models.RequirementStatus"
                         }
                     ],
                     "example": "Draft"
@@ -7484,7 +7484,7 @@ const docTemplate = `{
                     "description": "Relationships where this requirement is the target",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.RequirementRelationship"
+                        "$ref": "#/definitions/models.RequirementRelationship"
                     }
                 },
                 "title": {
@@ -7497,7 +7497,7 @@ const docTemplate = `{
                     "description": "Type classification of this requirement",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.RequirementType"
+                            "$ref": "#/definitions/models.RequirementType"
                         }
                     ]
                 },
@@ -7510,7 +7510,7 @@ const docTemplate = `{
                     "description": "Relationships",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
+                            "$ref": "#/definitions/models.UserStory"
                         }
                     ]
                 },
@@ -7521,7 +7521,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_models.RequirementRelationship": {
+        "models.RequirementRelationship": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -7531,13 +7531,13 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "creator": {
-                    "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                    "$ref": "#/definitions/models.User"
                 },
                 "id": {
                     "type": "string"
                 },
                 "relationship_type": {
-                    "$ref": "#/definitions/product-requirements-management_internal_models.RelationshipType"
+                    "$ref": "#/definitions/models.RelationshipType"
                 },
                 "relationship_type_id": {
                     "type": "string"
@@ -7546,7 +7546,7 @@ const docTemplate = `{
                     "description": "Relationships",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                            "$ref": "#/definitions/models.Requirement"
                         }
                     ]
                 },
@@ -7554,14 +7554,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "target_requirement": {
-                    "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                    "$ref": "#/definitions/models.Requirement"
                 },
                 "target_requirement_id": {
                     "type": "string"
                 }
             }
         },
-        "product-requirements-management_internal_models.RequirementStatus": {
+        "models.RequirementStatus": {
             "description": "Status of a requirement in the workflow lifecycle",
             "type": "string",
             "enum": [
@@ -7585,7 +7585,7 @@ const docTemplate = `{
                 "RequirementStatusObsolete"
             ]
         },
-        "product-requirements-management_internal_models.RequirementType": {
+        "models.RequirementType": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -7604,7 +7604,7 @@ const docTemplate = `{
                     "description": "Relationships",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                        "$ref": "#/definitions/models.Requirement"
                     }
                 },
                 "updated_at": {
@@ -7612,7 +7612,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_models.Status": {
+        "models.Status": {
             "type": "object",
             "properties": {
                 "color": {
@@ -7628,7 +7628,7 @@ const docTemplate = `{
                 "from_transitions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.StatusTransition"
+                        "$ref": "#/definitions/models.StatusTransition"
                     }
                 },
                 "id": {
@@ -7650,7 +7650,7 @@ const docTemplate = `{
                     "description": "Relationships",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.StatusModel"
+                            "$ref": "#/definitions/models.StatusModel"
                         }
                     ]
                 },
@@ -7660,7 +7660,7 @@ const docTemplate = `{
                 "to_transitions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.StatusTransition"
+                        "$ref": "#/definitions/models.StatusTransition"
                     }
                 },
                 "updated_at": {
@@ -7668,7 +7668,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_models.StatusModel": {
+        "models.StatusModel": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -7678,7 +7678,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "entity_type": {
-                    "$ref": "#/definitions/product-requirements-management_internal_models.EntityType"
+                    "$ref": "#/definitions/models.EntityType"
                 },
                 "id": {
                     "type": "string"
@@ -7693,13 +7693,13 @@ const docTemplate = `{
                     "description": "Relationships",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.Status"
+                        "$ref": "#/definitions/models.Status"
                     }
                 },
                 "transitions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.StatusTransition"
+                        "$ref": "#/definitions/models.StatusTransition"
                     }
                 },
                 "updated_at": {
@@ -7707,7 +7707,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_models.StatusTransition": {
+        "models.StatusTransition": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -7718,7 +7718,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "from_status": {
-                    "$ref": "#/definitions/product-requirements-management_internal_models.Status"
+                    "$ref": "#/definitions/models.Status"
                 },
                 "from_status_id": {
                     "type": "string"
@@ -7734,7 +7734,7 @@ const docTemplate = `{
                     "description": "Relationships",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.StatusModel"
+                            "$ref": "#/definitions/models.StatusModel"
                         }
                     ]
                 },
@@ -7742,7 +7742,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "to_status": {
-                    "$ref": "#/definitions/product-requirements-management_internal_models.Status"
+                    "$ref": "#/definitions/models.Status"
                 },
                 "to_status_id": {
                     "type": "string"
@@ -7752,7 +7752,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_models.User": {
+        "models.User": {
             "description": "A user account in the system with authentication and role-based permissions",
             "type": "object",
             "required": [
@@ -7780,7 +7780,7 @@ const docTemplate = `{
                     "description": "User role determining permissions",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.UserRole"
+                            "$ref": "#/definitions/models.UserRole"
                         }
                     ],
                     "example": "User"
@@ -7799,7 +7799,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_models.UserRole": {
+        "models.UserRole": {
             "description": "Role that determines user permissions and access levels in the system",
             "type": "string",
             "enum": [
@@ -7823,7 +7823,7 @@ const docTemplate = `{
                 "RoleCommenter"
             ]
         },
-        "product-requirements-management_internal_models.UserStory": {
+        "models.UserStory": {
             "description": "User story is a short, simple description of a feature told from the perspective of the person who desires the new capability. It belongs to an epic and can have multiple acceptance criteria and requirements.",
             "type": "object",
             "required": [
@@ -7836,14 +7836,14 @@ const docTemplate = `{
                     "description": "AcceptanceCriteria contains all acceptance criteria that belong to this user story\n@Description List of acceptance criteria that define when this user story is considered complete (populated when requested with ?include=acceptance_criteria)",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.AcceptanceCriteria"
+                        "$ref": "#/definitions/models.AcceptanceCriteria"
                     }
                 },
                 "assignee": {
                     "description": "Assignee contains the user information of who is assigned to the user story\n@Description User currently assigned to this user story (populated when requested with ?include=assignee)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                            "$ref": "#/definitions/models.User"
                         }
                     ]
                 },
@@ -7855,7 +7855,7 @@ const docTemplate = `{
                     "description": "Comments contains all comments associated with this user story\n@Description List of comments on this user story (populated when requested with ?include=comments)",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.Comment"
+                        "$ref": "#/definitions/models.Comment"
                     }
                 },
                 "created_at": {
@@ -7866,7 +7866,7 @@ const docTemplate = `{
                     "description": "Creator contains the user information of who created the user story\n@Description User who created this user story (populated when requested with ?include=creator)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                            "$ref": "#/definitions/models.User"
                         }
                     ]
                 },
@@ -7883,7 +7883,7 @@ const docTemplate = `{
                     "description": "Relationships\nEpic contains the epic information this user story belongs to\n@Description Epic that contains this user story (populated when requested with ?include=epic)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Epic"
+                            "$ref": "#/definitions/models.Epic"
                         }
                     ]
                 },
@@ -7905,7 +7905,7 @@ const docTemplate = `{
                     "minimum": 1,
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Priority"
+                            "$ref": "#/definitions/models.Priority"
                         }
                     ]
                 },
@@ -7917,14 +7917,14 @@ const docTemplate = `{
                     "description": "Requirements contains all requirements that belong to this user story\n@Description List of detailed requirements that belong to this user story (populated when requested with ?include=requirements)",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
+                        "$ref": "#/definitions/models.Requirement"
                     }
                 },
                 "status": {
                     "description": "Status represents the current workflow state of the user story\n@Description Current status of the user story in the workflow\n@Enum Backlog,Draft,In Progress,Done,Cancelled\n@Example \"Backlog\"",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStoryStatus"
+                            "$ref": "#/definitions/models.UserStoryStatus"
                         }
                     ]
                 },
@@ -7935,7 +7935,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_models.UserStoryStatus": {
+        "models.UserStoryStatus": {
             "description": "Status of a user story in the workflow lifecycle",
             "type": "string",
             "enum": [
@@ -7967,7 +7967,7 @@ const docTemplate = `{
                 "UserStoryStatusCancelled"
             ]
         },
-        "product-requirements-management_internal_service.AssignEpicRequest": {
+        "service.AssignEpicRequest": {
             "description": "Request payload for assigning an epic to a user",
             "type": "object",
             "required": [
@@ -7980,7 +7980,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.CascadeDeletePreview": {
+        "service.CascadeDeletePreview": {
             "type": "object",
             "properties": {
                 "entity_id": {
@@ -7997,7 +7997,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.CascadeDeletedEntity": {
+        "service.CascadeDeletedEntity": {
             "type": "object",
             "properties": {
                 "entity_id": {
@@ -8011,7 +8011,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.ChangeEpicStatusRequest": {
+        "service.ChangeEpicStatusRequest": {
             "description": "Request payload for changing an epic's status",
             "type": "object",
             "required": [
@@ -8022,17 +8022,17 @@ const docTemplate = `{
                     "description": "Status is the new workflow state for the epic\n@Description New status for the epic\n@Enum Backlog,Draft,In Progress,Done,Cancelled\n@Example \"In Progress\"",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.EpicStatus"
+                            "$ref": "#/definitions/models.EpicStatus"
                         }
                     ]
                 }
             }
         },
-        "product-requirements-management_internal_service.CommentResponse": {
+        "service.CommentResponse": {
             "type": "object",
             "properties": {
                 "author": {
-                    "$ref": "#/definitions/product-requirements-management_internal_models.User"
+                    "$ref": "#/definitions/models.User"
                 },
                 "author_id": {
                     "type": "string"
@@ -8050,7 +8050,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "entity_type": {
-                    "$ref": "#/definitions/product-requirements-management_internal_models.EntityType"
+                    "$ref": "#/definitions/models.EntityType"
                 },
                 "id": {
                     "type": "string"
@@ -8073,7 +8073,7 @@ const docTemplate = `{
                 "replies": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                        "$ref": "#/definitions/service.CommentResponse"
                     }
                 },
                 "text_position_end": {
@@ -8087,7 +8087,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.CreateAcceptanceCriteriaRequest": {
+        "service.CreateAcceptanceCriteriaRequest": {
             "type": "object",
             "required": [
                 "author_id",
@@ -8105,7 +8105,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.CreateCommentRequest": {
+        "service.CreateCommentRequest": {
             "type": "object",
             "required": [
                 "author_id"
@@ -8121,7 +8121,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "entity_type": {
-                    "$ref": "#/definitions/product-requirements-management_internal_models.EntityType"
+                    "$ref": "#/definitions/models.EntityType"
                 },
                 "linked_text": {
                     "type": "string"
@@ -8137,7 +8137,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.CreateEpicRequest": {
+        "service.CreateEpicRequest": {
             "description": "Request payload for creating a new epic",
             "type": "object",
             "required": [
@@ -8164,7 +8164,7 @@ const docTemplate = `{
                     "minimum": 1,
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Priority"
+                            "$ref": "#/definitions/models.Priority"
                         }
                     ]
                 },
@@ -8175,7 +8175,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.CreateRelationshipRequest": {
+        "service.CreateRelationshipRequest": {
             "type": "object",
             "required": [
                 "created_by",
@@ -8198,7 +8198,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.CreateRelationshipTypeRequest": {
+        "service.CreateRelationshipTypeRequest": {
             "type": "object",
             "required": [
                 "name"
@@ -8213,7 +8213,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.CreateRequirementRequest": {
+        "service.CreateRequirementRequest": {
             "type": "object",
             "required": [
                 "creator_id",
@@ -8240,7 +8240,7 @@ const docTemplate = `{
                     "minimum": 1,
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Priority"
+                            "$ref": "#/definitions/models.Priority"
                         }
                     ]
                 },
@@ -8256,7 +8256,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.CreateRequirementTypeRequest": {
+        "service.CreateRequirementTypeRequest": {
             "type": "object",
             "required": [
                 "name"
@@ -8271,7 +8271,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.CreateStatusModelRequest": {
+        "service.CreateStatusModelRequest": {
             "type": "object",
             "required": [
                 "entity_type",
@@ -8282,7 +8282,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "entity_type": {
-                    "$ref": "#/definitions/product-requirements-management_internal_models.EntityType"
+                    "$ref": "#/definitions/models.EntityType"
                 },
                 "is_default": {
                     "type": "boolean"
@@ -8293,7 +8293,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.CreateStatusRequest": {
+        "service.CreateStatusRequest": {
             "type": "object",
             "required": [
                 "name",
@@ -8324,7 +8324,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.CreateStatusTransitionRequest": {
+        "service.CreateStatusTransitionRequest": {
             "type": "object",
             "required": [
                 "from_status_id",
@@ -8349,7 +8349,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.CreateUserStoryRequest": {
+        "service.CreateUserStoryRequest": {
             "description": "Request structure for creating a new user story",
             "type": "object",
             "required": [
@@ -8380,7 +8380,7 @@ const docTemplate = `{
                     "minimum": 1,
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Priority"
+                            "$ref": "#/definitions/models.Priority"
                         }
                     ]
                 },
@@ -8391,7 +8391,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.DeletionResult": {
+        "service.DeletionResult": {
             "type": "object",
             "properties": {
                 "audit_log_id": {
@@ -8400,7 +8400,7 @@ const docTemplate = `{
                 "cascade_deleted": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_service.CascadeDeletedEntity"
+                        "$ref": "#/definitions/service.CascadeDeletedEntity"
                     }
                 },
                 "deleted_at": {
@@ -8423,7 +8423,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.DependencyDetail": {
+        "service.DependencyDetail": {
             "type": "object",
             "properties": {
                 "entity_id": {
@@ -8443,7 +8443,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.DependencyInfo": {
+        "service.DependencyInfo": {
             "type": "object",
             "properties": {
                 "can_delete": {
@@ -8455,13 +8455,13 @@ const docTemplate = `{
                 "cascade_delete_entities": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_service.CascadeDeletePreview"
+                        "$ref": "#/definitions/service.CascadeDeletePreview"
                     }
                 },
                 "dependencies": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_service.DependencyDetail"
+                        "$ref": "#/definitions/service.DependencyDetail"
                     }
                 },
                 "requires_confirmation": {
@@ -8469,7 +8469,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.SearchResponse": {
+        "service.SearchResponse": {
             "type": "object",
             "properties": {
                 "executed_at": {
@@ -8487,7 +8487,7 @@ const docTemplate = `{
                 "results": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_service.SearchResult"
+                        "$ref": "#/definitions/service.SearchResult"
                     }
                 },
                 "total": {
@@ -8495,7 +8495,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.SearchResult": {
+        "service.SearchResult": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -8528,7 +8528,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.UpdateAcceptanceCriteriaRequest": {
+        "service.UpdateAcceptanceCriteriaRequest": {
             "type": "object",
             "properties": {
                 "description": {
@@ -8536,7 +8536,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.UpdateCommentRequest": {
+        "service.UpdateCommentRequest": {
             "type": "object",
             "properties": {
                 "content": {
@@ -8544,7 +8544,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.UpdateEpicRequest": {
+        "service.UpdateEpicRequest": {
             "description": "Request payload for updating an existing epic (all fields are optional)",
             "type": "object",
             "properties": {
@@ -8560,7 +8560,7 @@ const docTemplate = `{
                     "description": "Priority is the importance level of the epic\n@Description Priority level of the epic (1=Critical, 2=High, 3=Medium, 4=Low) (optional)\n@Minimum 1\n@Maximum 4\n@Example 2",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Priority"
+                            "$ref": "#/definitions/models.Priority"
                         }
                     ]
                 },
@@ -8568,7 +8568,7 @@ const docTemplate = `{
                     "description": "Status is the workflow state of the epic\n@Description Current status of the epic in the workflow (optional)\n@Enum Backlog,Draft,In Progress,Done,Cancelled\n@Example \"In Progress\"",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.EpicStatus"
+                            "$ref": "#/definitions/models.EpicStatus"
                         }
                     ]
                 },
@@ -8578,7 +8578,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.UpdateRelationshipTypeRequest": {
+        "service.UpdateRelationshipTypeRequest": {
             "type": "object",
             "properties": {
                 "description": {
@@ -8590,7 +8590,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.UpdateRequirementRequest": {
+        "service.UpdateRequirementRequest": {
             "type": "object",
             "properties": {
                 "acceptance_criteria_id": {
@@ -8603,10 +8603,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "priority": {
-                    "$ref": "#/definitions/product-requirements-management_internal_models.Priority"
+                    "$ref": "#/definitions/models.Priority"
                 },
                 "status": {
-                    "$ref": "#/definitions/product-requirements-management_internal_models.RequirementStatus"
+                    "$ref": "#/definitions/models.RequirementStatus"
                 },
                 "title": {
                     "type": "string"
@@ -8616,7 +8616,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.UpdateRequirementTypeRequest": {
+        "service.UpdateRequirementTypeRequest": {
             "type": "object",
             "properties": {
                 "description": {
@@ -8628,7 +8628,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.UpdateStatusModelRequest": {
+        "service.UpdateStatusModelRequest": {
             "type": "object",
             "properties": {
                 "description": {
@@ -8643,7 +8643,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.UpdateStatusRequest": {
+        "service.UpdateStatusRequest": {
             "type": "object",
             "properties": {
                 "color": {
@@ -8667,7 +8667,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.UpdateStatusTransitionRequest": {
+        "service.UpdateStatusTransitionRequest": {
             "type": "object",
             "properties": {
                 "description": {
@@ -8678,7 +8678,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product-requirements-management_internal_service.UpdateUserStoryRequest": {
+        "service.UpdateUserStoryRequest": {
             "description": "Request structure for updating an existing user story (all fields are optional)",
             "type": "object",
             "properties": {
@@ -8694,7 +8694,7 @@ const docTemplate = `{
                     "description": "Priority indicates the importance level of the user story\n@Description Priority level of the user story (1=Critical, 2=High, 3=Medium, 4=Low) (optional)\n@Minimum 1\n@Maximum 4\n@Example 3",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Priority"
+                            "$ref": "#/definitions/models.Priority"
                         }
                     ]
                 },
@@ -8702,7 +8702,7 @@ const docTemplate = `{
                     "description": "Status represents the current workflow state of the user story\n@Description Current status of the user story in the workflow (optional)\n@Enum Backlog,Draft,In Progress,Done,Cancelled\n@Example \"In Progress\"",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStoryStatus"
+                            "$ref": "#/definitions/models.UserStoryStatus"
                         }
                     ]
                 },
@@ -8720,17 +8720,59 @@ const docTemplate = `{
             "name": "Authorization",
             "in": "header"
         }
-    }
+    },
+    "tags": [
+        {
+            "description": "Epic management endpoints for high-level features and initiatives. Epics serve as containers for user stories and provide project-level organization.",
+            "name": "epics"
+        },
+        {
+            "description": "User story management within epics. User stories represent feature requirements from the user perspective and contain acceptance criteria and detailed requirements.",
+            "name": "user-stories"
+        },
+        {
+            "description": "Acceptance criteria management for user stories. Define testable conditions that must be met for user story completion using EARS format (Easy Approach to Requirements Syntax).",
+            "name": "acceptance-criteria"
+        },
+        {
+            "description": "Detailed requirement management with relationship mapping. Requirements provide technical specifications and can be linked with various relationship types (depends_on, blocks, relates_to, conflicts_with, derives_from).",
+            "name": "requirements"
+        },
+        {
+            "description": "Comment system for collaboration and feedback. Supports both general comments and inline comments with threading, resolution tracking, and entity associations.",
+            "name": "comments"
+        },
+        {
+            "description": "Full-text search capabilities across all entities. Provides advanced filtering, sorting, and suggestion features for efficient content discovery.",
+            "name": "search"
+        },
+        {
+            "description": "Hierarchical navigation and entity relationship endpoints. Retrieve entity hierarchies, paths, and relationship structures for navigation interfaces.",
+            "name": "navigation"
+        },
+        {
+            "description": "System configuration management for requirement types, relationship types, and status models. Administrative endpoints for customizing system behavior and workflows.",
+            "name": "configuration"
+        },
+        {
+            "description": "Comprehensive deletion management with dependency validation. Provides safe deletion with cascade options and dependency impact analysis.",
+            "name": "deletion"
+        },
+        {
+            "description": "System health and monitoring endpoints for service status, database connectivity, and operational metrics.",
+            "name": "health"
+        }
+    ]
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0.0",
 	Host:             "localhost:8080",
-	BasePath:         "/api/v1",
+	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Product Requirements Management API",
-	Description:      "API for managing product requirements through hierarchical structure of Epics, User Stories, and Requirements. This API uses JWT-based authentication with role-based access control. Three user roles are supported: Administrator (full access), User (entity management), and Commenter (view and comment only).",
+	Description:      "Comprehensive API for managing product requirements through hierarchical structure of Epics → User Stories → Requirements. Features include full-text search, comment system, relationship mapping, and configurable workflows.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
