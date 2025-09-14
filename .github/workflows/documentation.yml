@@ -1,0 +1,168 @@
+name: Documentation Quality Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'internal/handlers/**'
+      - 'internal/docs/**'
+      - 'cmd/server/**'
+      - 'docs/**'
+      - '.github/workflows/documentation.yml'
+
+jobs:
+  documentation-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Install swag
+      run: go install github.com/swaggo/swag/cmd/swag@latest
+    
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    
+    - name: Install dependencies
+      run: go mod download
+    
+    - name: Generate Swagger documentation
+      run: make swagger
+    
+    - name: Validate Swagger documentation
+      run: make swagger-validate
+    
+    - name: Run documentation tests
+      run: go test -v ./internal/docs/... -run "Test.*Documentation|Test.*Swagger"
+    
+    - name: Generate documentation metrics
+      run: make docs-metrics-json
+    
+    - name: Check documentation quality
+      run: make docs-quality-check
+    
+    - name: Upload documentation metrics
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: documentation-metrics
+        path: reports/docs-metrics.json
+        retention-days: 30
+    
+    - name: Upload Swagger documentation
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: swagger-documentation
+        path: |
+          docs/swagger.json
+          docs/swagger.yaml
+        retention-days: 30
+    
+    - name: Comment PR with metrics
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          
+          try {
+            const metricsData = fs.readFileSync('reports/docs-metrics.json', 'utf8');
+            const metrics = JSON.parse(metricsData);
+            
+            const comment = `## 📚 Documentation Quality Report
+            
+            **Overall Quality Score:** ${metrics.quality_score.overall_score.toFixed(1)}% (Grade: ${metrics.quality_score.grade})
+            
+            ### Coverage Metrics
+            - **Annotation Coverage:** ${metrics.annotation_coverage.coverage_percentage.toFixed(1)}% (${metrics.annotation_coverage.annotated_handlers}/${metrics.annotation_coverage.total_handlers} handlers)
+            - **Endpoint Coverage:** ${metrics.endpoint_coverage.coverage_percentage.toFixed(1)}% (${metrics.endpoint_coverage.documented_endpoints}/${metrics.endpoint_coverage.total_endpoints} endpoints)
+            - **Example Coverage:** ${metrics.example_coverage.example_coverage_percent.toFixed(1)}% (${metrics.example_coverage.handlers_with_examples} handlers with examples)
+            
+            ### Recommendations
+            ${metrics.recommendations.length > 0 ? metrics.recommendations.map((rec, i) => `${i + 1}. ${rec}`).join('\n') : 'No recommendations - great job! 🎉'}
+            
+            ${metrics.annotation_coverage.missing_count > 0 ? `\n### Missing Annotations\n${metrics.annotation_coverage.missing_count} handlers need attention. See the full report for details.` : ''}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          } catch (error) {
+            console.log('Could not read metrics file or post comment:', error);
+          }
+
+  swagger-generation:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Install swag
+      run: go install github.com/swaggo/swag/cmd/swag@latest
+    
+    - name: Install dependencies
+      run: go mod download
+    
+    - name: Generate Swagger documentation
+      run: make swagger
+    
+    - name: Deploy to GitHub Pages (if configured)
+      # This step would deploy the Swagger UI to GitHub Pages
+      # Uncomment and configure if you want to serve documentation publicly
+      # uses: peaceiris/actions-gh-pages@v3
+      # with:
+      #   github_token: ${{ secrets.GITHUB_TOKEN }}
+      #   publish_dir: ./docs
+      run: echo "Swagger documentation generated successfully"
+
+  annotation-coverage:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Install dependencies
+      run: go mod download
+    
+    - name: Check annotation coverage
+      run: |
+        go test -v ./internal/docs/... -run TestSwaggerAnnotationCoverage
+        
+    - name: Generate coverage report
+      run: |
+        mkdir -p reports
+        go run cmd/docs-metrics/main.go -format=text -verbose > reports/coverage-report.txt
+        
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v3
+      with:
+        name: annotation-coverage-report
+        path: reports/coverage-report.txt
+        retention-days: 30

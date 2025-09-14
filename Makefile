@@ -203,6 +203,28 @@ swagger-clean:
 	rm -rf docs/docs.go docs/swagger.json docs/swagger.yaml
 	@echo "✅ Swagger documentation cleaned"
 
+# Documentation quality metrics
+docs-metrics:
+	@echo "📊 Generating documentation quality metrics..."
+	go run cmd/docs-metrics/main.go -format=text -verbose
+	@echo "✅ Documentation metrics generated"
+
+docs-metrics-json:
+	@echo "📊 Generating documentation metrics (JSON)..."
+	@mkdir -p reports
+	go run cmd/docs-metrics/main.go -output=reports/docs-metrics.json -format=json
+	@echo "✅ Documentation metrics saved to reports/docs-metrics.json"
+
+docs-metrics-summary:
+	@echo "📊 Documentation quality summary..."
+	go run cmd/docs-metrics/main.go -format=summary
+
+docs-quality-check:
+	@echo "🔍 Checking documentation quality..."
+	@go run cmd/docs-metrics/main.go -format=summary | grep -q "Documentation Quality: [89][0-9]" || \
+	(echo "❌ Documentation quality below 80%. Run 'make docs-metrics' for details." && exit 1)
+	@echo "✅ Documentation quality check passed"
+
 # Show help for all available targets
 help:
 	@echo "📋 Available Make targets:"
@@ -247,6 +269,10 @@ help:
 	@echo "  swagger-fmt        - Format Swagger comments"
 	@echo "  swagger-validate   - Validate Swagger documentation"
 	@echo "  swagger-clean      - Clean generated Swagger files"
+	@echo "  docs-metrics       - Generate documentation quality metrics"
+	@echo "  docs-metrics-json  - Generate metrics in JSON format"
+	@echo "  docs-metrics-summary - Show documentation quality summary"
+	@echo "  docs-quality-check - Check if documentation quality meets standards"
 	@echo ""
 	@echo "🐳 Docker:"
 	@echo "  docker-up          - Start development containers"
