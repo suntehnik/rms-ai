@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	"product-requirements-management/internal/handlers"
@@ -24,11 +23,11 @@ import (
 // setupTestServer creates a test server with in-memory database
 func setupTestServer(t *testing.T) (*gin.Engine, *gorm.DB, func()) {
 	// Create in-memory SQLite database
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	require.NoError(t, err)
+	testDatabase := SetupTestDatabase(t)
+	db := testDatabase.DB
 
 	// Auto-migrate models
-	err = models.AutoMigrate(db)
+	err := models.AutoMigrate(db)
 	require.NoError(t, err)
 
 	// Seed default data
@@ -72,8 +71,6 @@ func setupTestServer(t *testing.T) (*gin.Engine, *gorm.DB, func()) {
 
 	return router, db, cleanup
 }
-
-
 
 func TestEpicIntegration_CreateAndGetEpic(t *testing.T) {
 	router, db, cleanup := setupTestServer(t)

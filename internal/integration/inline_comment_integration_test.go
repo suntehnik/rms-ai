@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	"product-requirements-management/internal/handlers"
@@ -23,30 +22,30 @@ import (
 
 func setupInlineCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, func()) {
 	// Create in-memory SQLite database
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	require.NoError(t, err)
+	testDatabase := SetupTestDatabase(t)
+	db := testDatabase.DB
 
 	// Auto-migrate models
-	err = models.AutoMigrate(db)
+	err := models.AutoMigrate(db)
 	require.NoError(t, err)
 
 	// Seed default data
 	err = models.SeedDefaultData(db)
 	require.NoError(t, err)
-	
+
 	// Initialize repositories
 	repos := repository.NewRepositories(db)
-	
+
 	// Initialize services
 	commentService := service.NewCommentService(repos)
-	
+
 	// Initialize handlers
 	commentHandler := handlers.NewCommentHandler(commentService)
-	
+
 	// Setup Gin router
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	
+
 	// Setup routes for inline comments
 	v1 := router.Group("/api/v1")
 	{
@@ -58,21 +57,21 @@ func setupInlineCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, fun
 			epics.POST("/:id/comments/inline/validate", commentHandler.ValidateEpicInlineComments)
 			epics.GET("/:id/comments", commentHandler.GetEpicComments)
 		}
-		
+
 		userStories := v1.Group("/user-stories")
 		{
 			userStories.POST("/:id/comments/inline", commentHandler.CreateUserStoryInlineComment)
 			userStories.GET("/:id/comments/inline/visible", commentHandler.GetUserStoryVisibleInlineComments)
 			userStories.POST("/:id/comments/inline/validate", commentHandler.ValidateUserStoryInlineComments)
 		}
-		
+
 		acceptanceCriteria := v1.Group("/acceptance-criteria")
 		{
 			acceptanceCriteria.POST("/:id/comments/inline", commentHandler.CreateAcceptanceCriteriaInlineComment)
 			acceptanceCriteria.GET("/:id/comments/inline/visible", commentHandler.GetAcceptanceCriteriaVisibleInlineComments)
 			acceptanceCriteria.POST("/:id/comments/inline/validate", commentHandler.ValidateAcceptanceCriteriaInlineComments)
 		}
-		
+
 		requirements := v1.Group("/requirements")
 		{
 			requirements.POST("/:id/comments/inline", commentHandler.CreateRequirementInlineComment)
@@ -80,16 +79,14 @@ func setupInlineCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, fun
 			requirements.POST("/:id/comments/inline/validate", commentHandler.ValidateRequirementInlineComments)
 		}
 	}
-	
+
 	cleanup := func() {
 		sqlDB, _ := db.DB()
 		sqlDB.Close()
 	}
-	
+
 	return router, db, cleanup
 }
-
-
 
 func createInlineTestEpic(t *testing.T, db *gorm.DB, creator *models.User) *models.Epic {
 	description := "This is a test epic description for inline comments."
@@ -103,10 +100,10 @@ func createInlineTestEpic(t *testing.T, db *gorm.DB, creator *models.User) *mode
 		Title:       "Test Epic",
 		Description: &description,
 	}
-	
+
 	err := db.Create(epic).Error
 	require.NoError(t, err)
-	
+
 	return epic
 }
 
@@ -123,10 +120,10 @@ func createInlineTestUserStory(t *testing.T, db *gorm.DB, epicID, creatorID uuid
 		Title:       "Test User Story",
 		Description: &description,
 	}
-	
+
 	err := db.Create(userStory).Error
 	require.NoError(t, err)
-	
+
 	return userStory
 }
 
@@ -138,10 +135,10 @@ func createInlineTestAcceptanceCriteria(t *testing.T, db *gorm.DB, userStoryID, 
 		AuthorID:    authorID,
 		Description: "WHEN user creates inline comment THEN system SHALL save it properly",
 	}
-	
+
 	err := db.Create(acceptanceCriteria).Error
 	require.NoError(t, err)
-	
+
 	return acceptanceCriteria
 }
 
@@ -150,7 +147,7 @@ func createInlineTestRequirement(t *testing.T, db *gorm.DB, userStoryID uuid.UUI
 	var reqType models.RequirementType
 	err := db.First(&reqType).Error
 	require.NoError(t, err)
-	
+
 	description := "This requirement tests inline comment functionality."
 	requirement := &models.Requirement{
 		ID:          uuid.New(),
@@ -164,10 +161,10 @@ func createInlineTestRequirement(t *testing.T, db *gorm.DB, userStoryID uuid.UUI
 		Title:       "Test Requirement",
 		Description: &description,
 	}
-	
+
 	err = db.Create(requirement).Error
 	require.NoError(t, err)
-	
+
 	return requirement
 }
 
@@ -234,11 +231,11 @@ func TestInlineCommentIntegration(t *testing.T) {
 		router.ServeHTTP(w, httpReq)
 
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		
+
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		
+
 		assert.Contains(t, response["details"].(string), "text fragment validation failed")
 	})
 
@@ -365,7 +362,7 @@ func TestInlineCommentIntegration(t *testing.T) {
 
 	t.Run("InlineCommentFiltering", func(t *testing.T) {
 		// Create both inline and general comments
-		
+
 		// Create a general comment
 		generalReq := service.CreateCommentRequest{
 			AuthorID: user.ID,
@@ -585,4 +582,3 @@ func inlineStringPtr(s string) *string {
 func inlineIntPtr(i int) *int {
 	return &i
 }
-
