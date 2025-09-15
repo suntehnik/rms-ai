@@ -322,45 +322,6 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	}
 }
 
-// healthCheck provides basic health status
-func healthCheck(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"status":  "healthy",
-		"service": "product-requirements-management",
-	})
-}
-
-// deepHealthCheck provides detailed health status including dependencies
-func deepHealthCheck(db *database.DB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
-		defer cancel()
-
-		healthCheck := db.CheckHealth(ctx)
-
-		status := http.StatusOK
-		if healthCheck.Overall.Status != "healthy" {
-			status = http.StatusServiceUnavailable
-		}
-
-		c.JSON(status, gin.H{
-			"status":  healthCheck.Overall.Status,
-			"service": "product-requirements-management",
-			"message": healthCheck.Overall.Message,
-			"checks": gin.H{
-				"postgresql": gin.H{
-					"status":  healthCheck.PostgreSQL.Status,
-					"message": healthCheck.PostgreSQL.Message,
-				},
-				"redis": gin.H{
-					"status":  healthCheck.Redis.Status,
-					"message": healthCheck.Redis.Message,
-				},
-			},
-		})
-	}
-}
-
 // readinessCheck indicates if the service is ready to accept traffic
 func readinessCheck(db *database.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
