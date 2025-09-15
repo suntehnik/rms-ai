@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 	"net/http"
+	"product-requirements-management/internal/auth"
 	"product-requirements-management/internal/config"
 	"product-requirements-management/internal/database"
 	"product-requirements-management/internal/handlers"
@@ -105,6 +106,10 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 		repos.User,
 	)
 
+	// Initialize auth service and handlers
+	authService := auth.NewService(cfg.JWT.Secret, 24*time.Hour) // 24 hours token duration
+	authHandler := auth.NewHandlers(authService, db.Postgres)
+
 	// Initialize handlers
 	epicHandler := handlers.NewEpicHandler(epicService)
 	userStoryHandler := handlers.NewUserStoryHandler(userStoryService)
@@ -115,6 +120,21 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	commentHandler := handlers.NewCommentHandler(commentService)
 	searchHandler := handlers.NewSearchHandler(searchService, logger.Logger)
 	navigationHandler := handlers.NewNavigationHandler(navigationService)
+
+	// Authentication routes (no /api/v1 prefix for auth)
+	authGroup := router.Group("/auth")
+	{
+		authGroup.POST("/login", authHandler.Login)
+		authGroup.GET("/profile", authService.Middleware(), authHandler.GetProfile)
+		authGroup.POST("/change-password", authService.Middleware(), authHandler.ChangePassword)
+
+		// Admin-only user management routes
+		authGroup.POST("/users", authService.Middleware(), authService.RequireAdministrator(), authHandler.CreateUser)
+		authGroup.GET("/users", authService.Middleware(), authService.RequireAdministrator(), authHandler.GetUsers)
+		authGroup.GET("/users/:id", authService.Middleware(), authService.RequireAdministrator(), authHandler.GetUser)
+		authGroup.PUT("/users/:id", authService.Middleware(), authService.RequireAdministrator(), authHandler.UpdateUser)
+		authGroup.DELETE("/users/:id", authService.Middleware(), authService.RequireAdministrator(), authHandler.DeleteUser)
+	}
 
 	// API v1 routes
 	v1 := router.Group("/api/v1")
