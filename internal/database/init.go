@@ -26,7 +26,14 @@ func Initialize(cfg *config.Config) (*DB, error) {
 	}
 
 	// Run migrations
-	migrationManager := NewMigrationManager(db.Postgres, "migrations")
+	// for migrations need to create a separate instance of the DB,
+	// because migrations close DB after performing a migration task
+	migrationDb, err := NewPostgresDB(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create database connection for migration: %w", err)
+	}
+
+	migrationManager := NewMigrationManager(migrationDb, "migrations")
 	if err := migrationManager.RunMigrations(); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("failed to run migrations: %w", err)

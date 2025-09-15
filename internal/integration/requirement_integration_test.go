@@ -11,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	"product-requirements-management/internal/handlers"
@@ -43,12 +42,12 @@ type RequirementIntegrationTestSuite struct {
 }
 
 func (suite *RequirementIntegrationTestSuite) SetupSuite() {
-	// Setup in-memory SQLite database
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	suite.Require().NoError(err)
+	// Setup Postgres Test Container
+	testDatabase := SetupTestDatabase(suite.T())
+	db := testDatabase.DB
 
 	// Auto-migrate the schema
-	err = db.AutoMigrate(
+	err := db.AutoMigrate(
 		&models.User{},
 		&models.Epic{},
 		&models.UserStory{},
@@ -500,7 +499,7 @@ func (suite *RequirementIntegrationTestSuite) TestSearchRequirements() {
 	suite.Require().NoError(err)
 
 	// Search for "login"
-	req, err := http.NewRequest("GET", "/api/v1/requirements/search?q=login", nil)
+	req, err := http.NewRequest("GET", "/api/v1/requirements/search?q=Login", nil)
 	suite.Require().NoError(err)
 
 	w := httptest.NewRecorder()
@@ -512,7 +511,7 @@ func (suite *RequirementIntegrationTestSuite) TestSearchRequirements() {
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	suite.Require().NoError(err)
 
-	suite.Equal("login", response["query"])
+	suite.Equal("Login", response["query"])
 	requirements := response["requirements"].([]interface{})
 	suite.Len(requirements, 1)
 }

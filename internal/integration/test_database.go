@@ -28,8 +28,8 @@ func SetupTestDatabase(t *testing.T) *TestDatabase {
 	ctx := context.Background()
 
 	// Создаем PostgreSQL контейнер
-	container, err := postgresContainer.RunContainer(ctx,
-		testcontainers.WithImage("postgres:15-alpine"),
+	container, err := postgresContainer.Run(ctx,
+		"postgres:15-alpine",
 		postgresContainer.WithDatabase("testdb"),
 		postgresContainer.WithUsername("testuser"),
 		postgresContainer.WithPassword("testpass"),

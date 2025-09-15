@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	"product-requirements-management/internal/handlers"
@@ -23,37 +22,37 @@ import (
 
 func setupCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, func()) {
 	// Create in-memory SQLite database
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	require.NoError(t, err)
+	testDatabase := SetupTestDatabase(t)
+	db := testDatabase.DB
 
 	// Auto-migrate models
-	err = models.AutoMigrate(db)
+	err := models.AutoMigrate(db)
 	require.NoError(t, err)
 
 	// Seed default data
 	err = models.SeedDefaultData(db)
 	require.NoError(t, err)
-	
+
 	// Initialize repositories
 	repos := repository.NewRepositories(db)
-	
+
 	// Initialize services
 	commentService := service.NewCommentService(repos)
-	
+
 	// Initialize handlers
 	commentHandler := handlers.NewCommentHandler(commentService)
-	
+
 	// Setup Gin router
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	
+
 	// Setup routes
 	v1 := router.Group("/api/v1")
 	{
 		// Entity comment routes
 		v1.POST("/:entityType/:id/comments", commentHandler.CreateComment)
 		v1.GET("/:entityType/:id/comments", commentHandler.GetCommentsByEntity)
-		
+
 		// Direct comment routes
 		v1.GET("/comments/:id", commentHandler.GetComment)
 		v1.PUT("/comments/:id", commentHandler.UpdateComment)
@@ -64,7 +63,7 @@ func setupCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, func()) {
 		v1.GET("/comments/:id/replies", commentHandler.GetCommentReplies)
 		v1.POST("/comments/:id/replies", commentHandler.CreateCommentReply)
 	}
-	
+
 	cleanup := func() {
 		// Close database connection
 		sqlDB, _ := db.DB()
@@ -72,7 +71,7 @@ func setupCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, func()) {
 			sqlDB.Close()
 		}
 	}
-	
+
 	return router, db, cleanup
 }
 
@@ -83,10 +82,10 @@ func createTestUserForComment(t *testing.T, db *gorm.DB) *models.User {
 		Email:    fmt.Sprintf("test_%s@example.com", uuid.New().String()[:8]),
 		Role:     models.RoleUser,
 	}
-	
+
 	err := db.Create(user).Error
 	require.NoError(t, err)
-	
+
 	return user
 }
 
@@ -102,10 +101,10 @@ func createTestEpicForComment(t *testing.T, db *gorm.DB, creator *models.User) *
 		Title:       "Test Epic",
 		Description: &description,
 	}
-	
+
 	err := db.Create(epic).Error
 	require.NoError(t, err)
-	
+
 	return epic
 }
 
@@ -198,8 +197,8 @@ func TestCommentIntegration_CreateComment(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create request
 			body, _ := json.Marshal(tt.requestBody)
-			req := httptest.NewRequest(http.MethodPost, 
-				fmt.Sprintf("/api/v1/%s/%s/comments", tt.entityType, tt.entityID), 
+			req := httptest.NewRequest(http.MethodPost,
+				fmt.Sprintf("/api/v1/%s/%s/comments", tt.entityType, tt.entityID),
 				bytes.NewBuffer(body))
 			req.Header.Set("Content-Type", "application/json")
 
@@ -225,7 +224,7 @@ func TestCommentIntegration_CreateComment(t *testing.T) {
 				assert.Equal(t, models.EntityType(tt.entityType), response.EntityType)
 				assert.Equal(t, tt.requestBody["content"], response.Content)
 				assert.False(t, response.IsResolved)
-				
+
 				// Check if it's an inline comment
 				if linkedText, ok := tt.requestBody["linked_text"]; ok {
 					assert.True(t, response.IsInline)
@@ -255,7 +254,7 @@ func TestCommentIntegration_GetCommentsByEntity(t *testing.T) {
 		Content:    "General comment",
 		IsResolved: false,
 	}
-	
+
 	linkedText := "selected text"
 	start := 10
 	end := 23
@@ -273,7 +272,7 @@ func TestCommentIntegration_GetCommentsByEntity(t *testing.T) {
 
 	err := db.Create(generalComment).Error
 	require.NoError(t, err)
-	
+
 	err = db.Create(inlineComment).Error
 	require.NoError(t, err)
 
@@ -357,7 +356,7 @@ func TestCommentIntegration_GetCommentsByEntity(t *testing.T) {
 				var response map[string]interface{}
 				err := json.Unmarshal(w.Body.Bytes(), &response)
 				assert.NoError(t, err)
-				
+
 				comments := response["comments"].([]interface{})
 				assert.Equal(t, tt.expectedCount, len(comments))
 				assert.Equal(t, float64(tt.expectedCount), response["count"])
@@ -426,8 +425,8 @@ func TestCommentIntegration_UpdateComment(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create request
 			body, _ := json.Marshal(tt.requestBody)
-			req := httptest.NewRequest(http.MethodPut, 
-				fmt.Sprintf("/api/v1/comments/%s", tt.commentID), 
+			req := httptest.NewRequest(http.MethodPut,
+				fmt.Sprintf("/api/v1/comments/%s", tt.commentID),
 				bytes.NewBuffer(body))
 			req.Header.Set("Content-Type", "application/json")
 
@@ -477,7 +476,7 @@ func TestCommentIntegration_ResolveComment(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test resolve comment
-	req := httptest.NewRequest(http.MethodPost, 
+	req := httptest.NewRequest(http.MethodPost,
 		fmt.Sprintf("/api/v1/comments/%s/resolve", comment.ID.String()), nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -490,7 +489,7 @@ func TestCommentIntegration_ResolveComment(t *testing.T) {
 	assert.True(t, response.IsResolved)
 
 	// Test unresolve comment
-	req = httptest.NewRequest(http.MethodPost, 
+	req = httptest.NewRequest(http.MethodPost,
 		fmt.Sprintf("/api/v1/comments/%s/unresolve", comment.ID.String()), nil)
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -524,7 +523,7 @@ func TestCommentIntegration_DeleteComment(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test delete comment
-	req := httptest.NewRequest(http.MethodDelete, 
+	req := httptest.NewRequest(http.MethodDelete,
 		fmt.Sprintf("/api/v1/comments/%s", comment.ID.String()), nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -568,7 +567,7 @@ func TestCommentIntegration_GetCommentsByStatus(t *testing.T) {
 
 	err := db.Create(resolvedComment).Error
 	require.NoError(t, err)
-	
+
 	err = db.Create(unresolvedComment).Error
 	require.NoError(t, err)
 
@@ -600,7 +599,7 @@ func TestCommentIntegration_GetCommentsByStatus(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create request
-			req := httptest.NewRequest(http.MethodGet, 
+			req := httptest.NewRequest(http.MethodGet,
 				fmt.Sprintf("/api/v1/comments/status/%s", tt.status), nil)
 
 			// Create response recorder
@@ -616,7 +615,7 @@ func TestCommentIntegration_GetCommentsByStatus(t *testing.T) {
 				var response map[string]interface{}
 				err := json.Unmarshal(w.Body.Bytes(), &response)
 				assert.NoError(t, err)
-				
+
 				comments := response["comments"].([]interface{})
 				assert.Equal(t, tt.expectedCount, len(comments))
 				assert.Equal(t, float64(tt.expectedCount), response["count"])
@@ -654,8 +653,8 @@ func TestCommentIntegration_CommentThreading(t *testing.T) {
 	}
 
 	body, _ := json.Marshal(replyBody)
-	req := httptest.NewRequest(http.MethodPost, 
-		fmt.Sprintf("/api/v1/comments/%s/replies", parentComment.ID.String()), 
+	req := httptest.NewRequest(http.MethodPost,
+		fmt.Sprintf("/api/v1/comments/%s/replies", parentComment.ID.String()),
 		bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 

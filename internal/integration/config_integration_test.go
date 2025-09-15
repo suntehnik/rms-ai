@@ -11,7 +11,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	"product-requirements-management/internal/handlers"
@@ -22,11 +21,11 @@ import (
 
 func setupConfigIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, service.ConfigService) {
 	// Setup in-memory SQLite database
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	require.NoError(t, err)
+	testDatabase := SetupTestDatabase(t)
+	db := testDatabase.DB
 
-	// Auto-migrate all models
-	err = models.AutoMigrate(db)
+	// Auto-migrate models
+	err := models.AutoMigrate(db)
 	require.NoError(t, err)
 
 	// Seed default data
@@ -156,7 +155,7 @@ func TestConfigIntegration_RequirementTypeLifecycle(t *testing.T) {
 		var listResponse map[string]interface{}
 		err = json.Unmarshal(w.Body.Bytes(), &listResponse)
 		require.NoError(t, err)
-		
+
 		count := listResponse["count"].(float64)
 		assert.True(t, count >= 6) // 5 default + 1 created
 
@@ -216,13 +215,13 @@ func TestConfigIntegration_RequirementTypeLifecycle(t *testing.T) {
 
 		// Create an epic
 		epic := &models.Epic{
-			ID:           uuid.New(),
-			CreatorID:    user.ID,
-			AssigneeID:   user.ID,
-			Priority:     models.PriorityMedium,
-			Status:       models.EpicStatusDraft,
-			Title:        "Test Epic",
-			Description:  stringPtrIntegration("Test epic description"),
+			ID:          uuid.New(),
+			CreatorID:   user.ID,
+			AssigneeID:  user.ID,
+			Priority:    models.PriorityMedium,
+			Status:      models.EpicStatusDraft,
+			Title:       "Test Epic",
+			Description: stringPtrIntegration("Test epic description"),
 		}
 		err = db.Create(epic).Error
 		require.NoError(t, err)
@@ -343,7 +342,7 @@ func TestConfigIntegration_RelationshipTypeLifecycle(t *testing.T) {
 		var listResponse map[string]interface{}
 		err = json.Unmarshal(w.Body.Bytes(), &listResponse)
 		require.NoError(t, err)
-		
+
 		count := listResponse["count"].(float64)
 		assert.True(t, count >= 6) // 5 default + 1 created
 
@@ -439,7 +438,7 @@ func TestConfigIntegration_FilteringAndPagination(t *testing.T) {
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		
+
 		types := response["requirement_types"].([]interface{})
 		assert.True(t, len(types) <= 2)
 
@@ -453,7 +452,7 @@ func TestConfigIntegration_FilteringAndPagination(t *testing.T) {
 
 		err = json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		
+
 		types = response["requirement_types"].([]interface{})
 		assert.True(t, len(types) >= 5) // Should have at least the default types
 	})
@@ -470,7 +469,7 @@ func TestConfigIntegration_FilteringAndPagination(t *testing.T) {
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		
+
 		types := response["relationship_types"].([]interface{})
 		assert.True(t, len(types) <= 3)
 	})

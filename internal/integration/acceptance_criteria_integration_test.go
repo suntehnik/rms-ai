@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	"product-requirements-management/internal/handlers"
@@ -24,11 +23,11 @@ import (
 // setupAcceptanceCriteriaTestServer creates a test server with in-memory database
 func setupAcceptanceCriteriaTestServer(t *testing.T) (*gin.Engine, *gorm.DB, func()) {
 	// Create in-memory SQLite database
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	require.NoError(t, err)
+	testDatabase := SetupTestDatabase(t)
+	db := testDatabase.DB
 
 	// Auto-migrate models
-	err = models.AutoMigrate(db)
+	err := models.AutoMigrate(db)
 	require.NoError(t, err)
 
 	// Seed default data
@@ -146,8 +145,6 @@ func createAcceptanceCriteriaTestUserStory(t *testing.T, db *gorm.DB, epicID, cr
 	return userStory
 }
 
-
-
 func TestAcceptanceCriteriaIntegration(t *testing.T) {
 	// Setup test environment
 	router, db, cleanup := setupAcceptanceCriteriaTestServer(t)
@@ -263,7 +260,7 @@ func TestAcceptanceCriteriaIntegration(t *testing.T) {
 
 		// Should have 2 acceptance criteria (one from Create test, one from createTestAcceptanceCriteria)
 		assert.Equal(t, float64(2), response["count"])
-		
+
 		criteria := response["acceptance_criteria"].([]interface{})
 		assert.Len(t, criteria, 2)
 	})
@@ -281,7 +278,7 @@ func TestAcceptanceCriteriaIntegration(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, float64(2), response["count"])
-		
+
 		criteria := response["acceptance_criteria"].([]interface{})
 		assert.Len(t, criteria, 2)
 	})
@@ -299,7 +296,7 @@ func TestAcceptanceCriteriaIntegration(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, float64(2), response["count"])
-		
+
 		criteria := response["acceptance_criteria"].([]interface{})
 		assert.Len(t, criteria, 2)
 	})

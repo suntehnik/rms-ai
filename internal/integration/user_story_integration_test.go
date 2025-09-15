@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	"product-requirements-management/internal/handlers"
@@ -35,12 +34,12 @@ type UserStoryIntegrationTestSuite struct {
 }
 
 func (suite *UserStoryIntegrationTestSuite) SetupSuite() {
-	// Setup in-memory SQLite database
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	suite.Require().NoError(err)
+	// Setup test database
+	testDatabase := SetupTestDatabase(suite.T())
+	db := testDatabase.DB
 
 	// Auto-migrate the schema
-	err = db.AutoMigrate(
+	err := db.AutoMigrate(
 		&models.User{},
 		&models.Epic{},
 		&models.UserStory{},

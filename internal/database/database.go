@@ -47,6 +47,14 @@ func New(cfg *config.Config) (*DB, error) {
 	return db, nil
 }
 
+func NewPostgresDB(cfg *config.Config) (*gorm.DB, error) {
+	pg, err := initPostgreSQL(cfg.Database)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize PostgreSQL: %w", err)
+	}
+	return pg, err
+}
+
 // initPostgreSQL initializes PostgreSQL connection with GORM
 func initPostgreSQL(cfg config.DatabaseConfig) (*gorm.DB, error) {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=UTC",
