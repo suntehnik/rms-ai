@@ -6,7 +6,7 @@
   - Add proper exit codes and error handling for different failure scenarios
   - _Requirements: 1.1, 1.3, 1.4_
 
-- [ ] 2. Implement database safety checker
+- [-] 2. Implement database safety checker
   - Create `internal/init/safety.go` with database emptiness validation
   - Implement functions to check for existing users, epics, user stories, and requirements
   - Add detailed reporting of found data with table names and counts

@@ -9,6 +9,6 @@
 - WHEN you finished commit and push you SHOULD create a github pull request
 - WHEN you created a github pull request you SHOULD watch all checks in this pull request
 - WHEN you see error messages in gihub PR checks you SHOULD analyse the reason and fix
-- WHEN creating a PR you SHOULD always escape special characters
+- WHEN creating a PR you SHOULD always escape special characters, quotes, back quotes and other non-literal or non-numeric characters
 - YOU SHOULD MARK TASK COMPLETE IF AND ONLY IF ALL POINTS ABOVE ARE SATISFIED
 
