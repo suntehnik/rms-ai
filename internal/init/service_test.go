@@ -1,6 +1,7 @@
 package init
 
 import (
+	"context"
 	"os"
 	"testing"
 	"time"
@@ -175,7 +176,8 @@ func TestInitService_validateEnvironment(t *testing.T) {
 				startTime: time.Now(),
 			}
 
-			err := service.validateEnvironment()
+			ctx := context.Background()
+			err := service.validateEnvironment(ctx)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -238,7 +240,8 @@ func TestInitService_performSafetyCheck(t *testing.T) {
 				safetyChecker: NewSafetyChecker(db),
 			}
 
-			err := service.performSafetyCheck()
+			ctx := context.Background()
+			err := service.performSafetyCheck(ctx)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -285,7 +288,8 @@ func TestInitService_checkDatabaseHealth(t *testing.T) {
 				db: db,
 			}
 
-			err := service.checkDatabaseHealth()
+			ctx := context.Background()
+			err := service.checkDatabaseHealth(ctx)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -365,7 +369,8 @@ func TestInitService_createAdminUser(t *testing.T) {
 			// Initialize adminCreator since we're bypassing connectDatabase
 			service.adminCreator = NewAdminCreator(service.db, service.auth)
 
-			err = service.createAdminUser()
+			ctx := context.Background()
+			_, err = service.createAdminUser(ctx)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -538,13 +543,27 @@ func BenchmarkNewInitService(b *testing.B) {
 
 // Test helper functions
 func TestInitService_logSuccessAndNextSteps(t *testing.T) {
+	cfg := &config.Config{
+		Database: config.DatabaseConfig{
+			Host:   "localhost",
+			DBName: "test",
+		},
+	}
+
+	correlationID := "test-correlation-id"
+	ctx := context.WithValue(context.Background(), logger.CorrelationIDKey{}, correlationID)
+
 	service := &InitService{
-		startTime: time.Now().Add(-5 * time.Second), // Simulate 5 seconds of execution
+		startTime:     time.Now().Add(-5 * time.Second), // Simulate 5 seconds of execution
+		correlationID: correlationID,
+		ctx:           ctx,
+		cfg:           cfg,
 	}
 
 	// This test just ensures the method doesn't panic
 	// In a real scenario, you might want to capture log output
 	assert.NotPanics(t, func() {
-		service.logSuccessAndNextSteps()
+		stepSummaries := []StepSummary{}
+		service.logSuccessAndNextSteps(stepSummaries, "admin", 0)
 	})
 }

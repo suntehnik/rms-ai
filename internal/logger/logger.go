@@ -1,13 +1,21 @@
 package logger
 
 import (
+	"context"
 	"os"
 	"product-requirements-management/internal/config"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
 var Logger *logrus.Logger
+
+// CorrelationIDKey is the context key for correlation IDs
+type CorrelationIDKey struct{}
+
+// InitializationStepKey is the context key for initialization steps
+type InitializationStepKey struct{}
 
 // Init initializes the logger with the given configuration
 func Init(cfg *config.LogConfig) {
@@ -85,4 +93,56 @@ func Fatal(args ...interface{}) {
 // Fatalf logs a formatted fatal message and exits
 func Fatalf(format string, args ...interface{}) {
 	Logger.Fatalf(format, args...)
+}
+
+// NewCorrelationID generates a new correlation ID for tracking operations
+func NewCorrelationID() string {
+	return uuid.New().String()
+}
+
+// WithCorrelationID creates a context with a correlation ID
+func WithCorrelationID(ctx context.Context, correlationID string) context.Context {
+	return context.WithValue(ctx, CorrelationIDKey{}, correlationID)
+}
+
+// GetCorrelationID retrieves the correlation ID from context
+func GetCorrelationID(ctx context.Context) string {
+	if id, ok := ctx.Value(CorrelationIDKey{}).(string); ok {
+		return id
+	}
+	return ""
+}
+
+// WithInitializationStep creates a context with an initialization step
+func WithInitializationStep(ctx context.Context, step string) context.Context {
+	return context.WithValue(ctx, InitializationStepKey{}, step)
+}
+
+// GetInitializationStep retrieves the initialization step from context
+func GetInitializationStep(ctx context.Context) string {
+	if step, ok := ctx.Value(InitializationStepKey{}).(string); ok {
+		return step
+	}
+	return ""
+}
+
+// WithContext creates a logger entry with context information (correlation ID, step)
+func WithContext(ctx context.Context) *logrus.Entry {
+	entry := Logger.WithFields(logrus.Fields{})
+
+	if correlationID := GetCorrelationID(ctx); correlationID != "" {
+		entry = entry.WithField("correlation_id", correlationID)
+	}
+
+	if step := GetInitializationStep(ctx); step != "" {
+		entry = entry.WithField("step", step)
+	}
+
+	return entry
+}
+
+// WithContextAndFields creates a logger entry with context and additional fields
+func WithContextAndFields(ctx context.Context, fields logrus.Fields) *logrus.Entry {
+	entry := WithContext(ctx)
+	return entry.WithFields(fields)
 }

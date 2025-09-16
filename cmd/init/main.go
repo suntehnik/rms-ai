@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -50,21 +51,40 @@ func main() {
 	// Initialize logger
 	logger.Init(&cfg.Log)
 
+	// Create correlation ID for this initialization run
+	correlationID := logger.NewCorrelationID()
+	ctx := logger.WithCorrelationID(context.Background(), correlationID)
+
 	// Log initialization start
-	logger.WithField("component", "init").Info("Starting production initialization service")
+	logger.WithContextAndFields(ctx, map[string]interface{}{
+		"component": "init_main",
+		"action":    "start_initialization",
+		"version":   "1.0.0", // TODO: Get from build info
+	}).Info("Starting production initialization service")
 
 	// Validate environment before proceeding
-	if err := validateEnvironment(cfg); err != nil {
-		logger.WithField("component", "init").WithField("error", err).Error("Environment validation failed")
+	if err := validateEnvironment(cfg, ctx); err != nil {
+		logger.WithContextAndFields(ctx, map[string]interface{}{
+			"component": "init_main",
+			"action":    "validation_failed",
+			"error":     err.Error(),
+		}).Error("Environment validation failed")
 		fmt.Fprintf(os.Stderr, "Environment validation failed: %v\n", err)
 		os.Exit(ExitConfigError)
 	}
 
-	logger.WithField("component", "init").Info("Environment validation completed successfully")
+	logger.WithContextAndFields(ctx, map[string]interface{}{
+		"component": "init_main",
+		"action":    "validation_completed",
+	}).Info("Environment validation completed successfully")
 
 	// Run initialization process
-	if err := runInitialization(cfg, flags); err != nil {
-		logger.WithField("component", "init").WithField("error", err).Error("Initialization failed")
+	if err := runInitialization(cfg, flags, ctx); err != nil {
+		logger.WithContextAndFields(ctx, map[string]interface{}{
+			"component": "init_main",
+			"action":    "initialization_failed",
+			"error":     err.Error(),
+		}).Error("Initialization failed")
 		fmt.Fprintf(os.Stderr, "Initialization failed: %v\n", err)
 
 		// Determine appropriate exit code based on error type
@@ -73,7 +93,10 @@ func main() {
 	}
 
 	// Log successful completion
-	logger.WithField("component", "init").Info("Production initialization completed successfully")
+	logger.WithContextAndFields(ctx, map[string]interface{}{
+		"component": "init_main",
+		"action":    "initialization_completed",
+	}).Info("Production initialization completed successfully")
 	fmt.Println("✓ Production initialization completed successfully")
 	fmt.Println()
 	fmt.Println("Next steps:")
@@ -109,7 +132,7 @@ func loadConfiguration() (*config.Config, error) {
 }
 
 // validateEnvironment validates required environment variables and configuration
-func validateEnvironment(cfg *config.Config) error {
+func validateEnvironment(cfg *config.Config, ctx context.Context) error {
 	var missingVars []string
 
 	// Check required database configuration
@@ -148,31 +171,59 @@ func validateEnvironment(cfg *config.Config) error {
 }
 
 // runInitialization orchestrates the initialization process
-func runInitialization(cfg *config.Config, flags *InitFlags) error {
-	logger.WithField("component", "init").WithField("dry_run", flags.DryRun).Info("Starting initialization process")
+func runInitialization(cfg *config.Config, flags *InitFlags, ctx context.Context) error {
+	logger.WithContextAndFields(ctx, map[string]interface{}{
+		"component": "init_main",
+		"action":    "start_orchestration",
+		"dry_run":   flags.DryRun,
+	}).Info("Starting initialization process")
 
 	if flags.DryRun {
-		logger.WithField("component", "init").Info("Dry run mode: validation only, no changes will be made")
+		logger.WithContextAndFields(ctx, map[string]interface{}{
+			"component": "init_main",
+			"action":    "dry_run_mode",
+		}).Info("Dry run mode: validation only, no changes will be made")
 		fmt.Println("🔍 Dry run mode: performing validation checks only")
-	}
 
-	// TODO: Implement actual initialization steps in subsequent tasks
-	// This will include:
-	// 1. Database safety checks
-	// 2. Database connection establishment
-	// 3. Migration execution
-	// 4. Admin user creation
-	// 5. Status reporting
+		// In dry run mode, just validate that we can create the service
+		service, err := initService.NewInitService(cfg)
+		if err != nil {
+			return fmt.Errorf("failed to create initialization service: %w", err)
+		}
+		defer service.Close()
 
-	// For now, just log that we would proceed
-	logger.WithField("component", "init").Info("Initialization orchestration ready - implementation pending")
-
-	if flags.DryRun {
 		fmt.Println("✓ Dry run validation completed - no issues found")
 		return nil
 	}
 
-	return fmt.Errorf("initialization implementation pending - this is task 1 placeholder")
+	// Create and run the initialization service
+	logger.WithContextAndFields(ctx, map[string]interface{}{
+		"component": "init_main",
+		"action":    "create_service",
+	}).Debug("Creating initialization service")
+
+	service, err := initService.NewInitService(cfg)
+	if err != nil {
+		logger.WithContextAndFields(ctx, map[string]interface{}{
+			"component": "init_main",
+			"action":    "service_creation_failed",
+			"error":     err.Error(),
+		}).Error("Failed to create initialization service")
+		return fmt.Errorf("failed to create initialization service: %w", err)
+	}
+	defer service.Close()
+
+	// Run the initialization
+	logger.WithContextAndFields(ctx, map[string]interface{}{
+		"component": "init_main",
+		"action":    "execute_initialization",
+	}).Info("Executing initialization process")
+
+	if err := service.Initialize(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // determineExitCode determines the appropriate exit code based on error type
