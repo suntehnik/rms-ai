@@ -15,32 +15,7 @@ import (
 	"product-requirements-management/internal/models"
 )
 
-// InitError represents different types of initialization errors
-type InitError struct {
-	Type    ErrorType              `json:"type"`
-	Message string                 `json:"message"`
-	Cause   error                  `json:"cause,omitempty"`
-	Context map[string]interface{} `json:"context,omitempty"`
-}
-
-func (e *InitError) Error() string {
-	if e.Cause != nil {
-		return fmt.Sprintf("%s: %s (caused by: %v)", e.Type, e.Message, e.Cause)
-	}
-	return fmt.Sprintf("%s: %s", e.Type, e.Message)
-}
-
-// ErrorType represents the category of initialization error
-type ErrorType string
-
-const (
-	ErrorTypeConfig    ErrorType = "configuration"
-	ErrorTypeDatabase  ErrorType = "database"
-	ErrorTypeSafety    ErrorType = "safety"
-	ErrorTypeMigration ErrorType = "migration"
-	ErrorTypeCreation  ErrorType = "creation"
-	ErrorTypeSystem    ErrorType = "system"
-)
+// Note: Error types and InitError are now defined in errors.go
 
 // InitService coordinates the initialization process
 type InitService struct {
@@ -53,6 +28,7 @@ type InitService struct {
 	startTime     time.Time
 	correlationID string
 	ctx           context.Context
+	errorReporter *ErrorReporter
 }
 
 // InitializationSummary contains information about the completed initialization
@@ -98,6 +74,7 @@ func NewInitService(cfg *config.Config) (*InitService, error) {
 		startTime:     time.Now(),
 		correlationID: correlationID,
 		ctx:           ctx,
+		errorReporter: NewErrorReporter(correlationID),
 	}
 
 	logger.WithContextAndFields(ctx, map[string]interface{}{
@@ -123,15 +100,12 @@ func (s *InitService) Initialize() error {
 	stepStart := time.Now()
 	if err := s.validateEnvironment(stepCtx); err != nil {
 		s.logStepFailure("environment_validation", stepStart, err)
-		return &InitError{
-			Type:    ErrorTypeConfig,
-			Message: "Environment validation failed",
-			Cause:   err,
-			Context: map[string]interface{}{
-				"correlation_id": s.correlationID,
-				"step":           "environment_validation",
-			},
-		}
+		initErr := NewConfigError("Environment validation failed", err).
+			WithStep("environment_validation").
+			WithCorrelationID(s.correlationID).
+			WithContext("duration", time.Since(stepStart).String())
+		s.errorReporter.ReportError(initErr)
+		return initErr
 	}
 	stepSummaries = append(stepSummaries, s.createStepSummary("environment_validation", stepStart, time.Now(), "success", nil))
 
@@ -140,15 +114,14 @@ func (s *InitService) Initialize() error {
 	stepStart = time.Now()
 	if err := s.connectDatabase(stepCtx); err != nil {
 		s.logStepFailure("database_connection", stepStart, err)
-		return &InitError{
-			Type:    ErrorTypeDatabase,
-			Message: "Database connection failed",
-			Cause:   err,
-			Context: map[string]interface{}{
-				"correlation_id": s.correlationID,
-				"step":           "database_connection",
-			},
-		}
+		initErr := NewDatabaseError("Database connection failed", err).
+			WithStep("database_connection").
+			WithCorrelationID(s.correlationID).
+			WithContext("duration", time.Since(stepStart).String()).
+			WithContext("host", s.cfg.Database.Host).
+			WithContext("database", s.cfg.Database.DBName)
+		s.errorReporter.ReportError(initErr)
+		return initErr
 	}
 	stepSummaries = append(stepSummaries, s.createStepSummary("database_connection", stepStart, time.Now(), "success", map[string]interface{}{
 		"host":     s.cfg.Database.Host,
@@ -160,15 +133,12 @@ func (s *InitService) Initialize() error {
 	stepStart = time.Now()
 	if err := s.checkDatabaseHealth(stepCtx); err != nil {
 		s.logStepFailure("database_health_check", stepStart, err)
-		return &InitError{
-			Type:    ErrorTypeDatabase,
-			Message: "Database health check failed",
-			Cause:   err,
-			Context: map[string]interface{}{
-				"correlation_id": s.correlationID,
-				"step":           "database_health_check",
-			},
-		}
+		initErr := NewDatabaseError("Database health check failed", err).
+			WithStep("database_health_check").
+			WithCorrelationID(s.correlationID).
+			WithContext("duration", time.Since(stepStart).String())
+		s.errorReporter.ReportError(initErr)
+		return initErr
 	}
 	stepSummaries = append(stepSummaries, s.createStepSummary("database_health_check", stepStart, time.Now(), "success", nil))
 
@@ -177,15 +147,21 @@ func (s *InitService) Initialize() error {
 	stepStart = time.Now()
 	if err := s.performSafetyCheck(stepCtx); err != nil {
 		s.logStepFailure("safety_check", stepStart, err)
-		return &InitError{
-			Type:    ErrorTypeSafety,
-			Message: "Database safety check failed",
-			Cause:   err,
-			Context: map[string]interface{}{
-				"correlation_id": s.correlationID,
-				"step":           "safety_check",
-			},
+		// Get additional context for safety errors
+		summary, _ := s.safetyChecker.GetDataSummary()
+		initErr := NewSafetyError("Database safety check failed", err).
+			WithStep("safety_check").
+			WithCorrelationID(s.correlationID).
+			WithContext("duration", time.Since(stepStart).String())
+		if summary != nil {
+			initErr.WithContext("user_count", summary.UserCount).
+				WithContext("epic_count", summary.EpicCount).
+				WithContext("user_story_count", summary.UserStoryCount).
+				WithContext("requirement_count", summary.RequirementCount).
+				WithContext("non_empty_tables", summary.NonEmptyTables)
 		}
+		s.errorReporter.ReportError(initErr)
+		return initErr
 	}
 	stepSummaries = append(stepSummaries, s.createStepSummary("safety_check", stepStart, time.Now(), "success", nil))
 
@@ -195,15 +171,13 @@ func (s *InitService) Initialize() error {
 	migrationsApplied, err := s.runMigrations(stepCtx)
 	if err != nil {
 		s.logStepFailure("migration_execution", stepStart, err)
-		return &InitError{
-			Type:    ErrorTypeMigration,
-			Message: "Migration execution failed",
-			Cause:   err,
-			Context: map[string]interface{}{
-				"correlation_id": s.correlationID,
-				"step":           "migration_execution",
-			},
-		}
+		initErr := NewMigrationError("Migration execution failed", err).
+			WithStep("migration_execution").
+			WithCorrelationID(s.correlationID).
+			WithContext("duration", time.Since(stepStart).String()).
+			WithContext("migrations_path", "migrations")
+		s.errorReporter.ReportError(initErr)
+		return initErr
 	}
 	stepSummaries = append(stepSummaries, s.createStepSummary("migration_execution", stepStart, time.Now(), "success", map[string]interface{}{
 		"migrations_applied": migrationsApplied,
@@ -215,15 +189,13 @@ func (s *InitService) Initialize() error {
 	adminUser, err := s.createAdminUser(stepCtx)
 	if err != nil {
 		s.logStepFailure("admin_user_creation", stepStart, err)
-		return &InitError{
-			Type:    ErrorTypeCreation,
-			Message: "Admin user creation failed",
-			Cause:   err,
-			Context: map[string]interface{}{
-				"correlation_id": s.correlationID,
-				"step":           "admin_user_creation",
-			},
-		}
+		initErr := NewCreationError("Admin user creation failed", err).
+			WithStep("admin_user_creation").
+			WithCorrelationID(s.correlationID).
+			WithContext("duration", time.Since(stepStart).String()).
+			WithContext("username", "admin")
+		s.errorReporter.ReportError(initErr)
+		return initErr
 	}
 	stepSummaries = append(stepSummaries, s.createStepSummary("admin_user_creation", stepStart, time.Now(), "success", map[string]interface{}{
 		"username": adminUser.Username,

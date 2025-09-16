@@ -10,16 +10,7 @@ import (
 	"product-requirements-management/internal/logger"
 )
 
-// Exit codes for different failure scenarios
-const (
-	ExitSuccess           = 0
-	ExitConfigError       = 1
-	ExitDatabaseError     = 2
-	ExitSafetyError       = 3
-	ExitMigrationError    = 4
-	ExitUserCreationError = 5
-	ExitSystemError       = 10
-)
+// Note: Exit codes are now defined in internal/init/errors.go
 
 // InitFlags holds command-line flags for initialization
 type InitFlags struct {
@@ -33,20 +24,20 @@ func main() {
 	flags, err := parseFlags()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error parsing flags: %v\n", err)
-		os.Exit(ExitConfigError)
+		os.Exit(initService.ExitConfigError)
 	}
 
 	// Show help if requested
 	if flags.Help {
 		showUsage()
-		os.Exit(ExitSuccess)
+		os.Exit(initService.ExitSuccess)
 	}
 
 	// Load configuration
 	cfg, err := loadConfiguration()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Configuration error: %v\n", err)
-		os.Exit(ExitConfigError)
+		os.Exit(initService.ExitConfigError)
 	}
 
 	// Initialize logger
@@ -71,7 +62,7 @@ func main() {
 			"error":     err.Error(),
 		}).Error("Environment validation failed")
 		fmt.Fprintf(os.Stderr, "Environment validation failed: %v\n", err)
-		os.Exit(ExitConfigError)
+		os.Exit(initService.ExitConfigError)
 	}
 
 	logger.WithContextAndFields(ctx, map[string]interface{}{
@@ -81,15 +72,53 @@ func main() {
 
 	// Run initialization process
 	if err := runInitialization(cfg, flags, ctx); err != nil {
-		logger.WithContextAndFields(ctx, map[string]interface{}{
+		// Enhanced error logging with structured information
+		errorFields := map[string]interface{}{
 			"component": "init_main",
 			"action":    "initialization_failed",
 			"error":     err.Error(),
-		}).Error("Initialization failed")
-		fmt.Fprintf(os.Stderr, "Initialization failed: %v\n", err)
+		}
+
+		// Add additional context if it's an InitError
+		if initErr, ok := err.(*initService.InitError); ok {
+			errorFields["error_type"] = initErr.Type
+			errorFields["error_severity"] = initErr.Severity
+			errorFields["error_step"] = initErr.Step
+			errorFields["error_recoverable"] = initErr.Recoverable
+			errorFields["error_context"] = initErr.Context
+			errorFields["error_json"] = initErr.JSON()
+		}
+
+		logger.WithContextAndFields(ctx, errorFields).Error("Initialization failed")
+
+		// Provide user-friendly error message
+		fmt.Fprintf(os.Stderr, "❌ Initialization failed: %v\n", err)
+
+		// If it's a recoverable error, provide guidance
+		if initErr, ok := err.(*initService.InitError); ok && initErr.IsRecoverable() {
+			fmt.Fprintf(os.Stderr, "\n💡 This error may be recoverable. Please:\n")
+			switch initErr.Type {
+			case initService.ErrorTypeConfig:
+				fmt.Fprintf(os.Stderr, "   - Check your environment variables\n")
+				fmt.Fprintf(os.Stderr, "   - Verify configuration values\n")
+				fmt.Fprintf(os.Stderr, "   - Run with -dry-run to validate configuration\n")
+			case initService.ErrorTypeDatabase:
+				fmt.Fprintf(os.Stderr, "   - Verify database server is running\n")
+				fmt.Fprintf(os.Stderr, "   - Check database connection parameters\n")
+				fmt.Fprintf(os.Stderr, "   - Ensure database user has required permissions\n")
+			case initService.ErrorTypeMigration:
+				fmt.Fprintf(os.Stderr, "   - Check migration files are present\n")
+				fmt.Fprintf(os.Stderr, "   - Verify database schema permissions\n")
+				fmt.Fprintf(os.Stderr, "   - Review migration logs for specific errors\n")
+			case initService.ErrorTypeCreation:
+				fmt.Fprintf(os.Stderr, "   - Verify DEFAULT_ADMIN_PASSWORD is set correctly\n")
+				fmt.Fprintf(os.Stderr, "   - Check password meets security requirements\n")
+				fmt.Fprintf(os.Stderr, "   - Ensure no conflicting admin user exists\n")
+			}
+		}
 
 		// Determine appropriate exit code based on error type
-		exitCode := determineExitCode(err)
+		exitCode := initService.DetermineExitCode(err)
 		os.Exit(exitCode)
 	}
 
@@ -105,7 +134,7 @@ func main() {
 	fmt.Println("2. Login with username 'admin' and the configured password")
 	fmt.Println("3. Configure additional users and system settings as needed")
 
-	os.Exit(ExitSuccess)
+	os.Exit(initService.ExitSuccess)
 }
 
 // parseFlags parses and validates command-line flags
@@ -227,55 +256,7 @@ func runInitialization(cfg *config.Config, flags *InitFlags, ctx context.Context
 	return nil
 }
 
-// determineExitCode determines the appropriate exit code based on error type
-func determineExitCode(err error) int {
-	// This is a basic implementation - will be enhanced as error types are defined
-	// in subsequent tasks
-
-	errStr := err.Error()
-
-	// Configuration-related errors
-	if contains(errStr, "configuration", "environment", "missing") {
-		return ExitConfigError
-	}
-
-	// Database-related errors
-	if contains(errStr, "database", "connection", "postgres") {
-		return ExitDatabaseError
-	}
-
-	// Safety-related errors
-	if contains(errStr, "safety", "not empty", "existing data") {
-		return ExitSafetyError
-	}
-
-	// Migration-related errors
-	if contains(errStr, "migration", "schema") {
-		return ExitMigrationError
-	}
-
-	// User creation errors
-	if contains(errStr, "user", "admin", "password") {
-		return ExitUserCreationError
-	}
-
-	// Default to system error
-	return ExitSystemError
-}
-
-// contains checks if any of the substrings are present in the main string
-func contains(str string, substrings ...string) bool {
-	for _, substr := range substrings {
-		if len(str) >= len(substr) {
-			for i := 0; i <= len(str)-len(substr); i++ {
-				if str[i:i+len(substr)] == substr {
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
+// Note: determineExitCode and contains functions are now in internal/init/errors.go
 
 // showUsage displays usage information
 func showUsage() {
@@ -312,13 +293,13 @@ func showUsage() {
 	fmt.Println("    LOG_FORMAT              Log format: json|text (default: json)")
 	fmt.Println()
 	fmt.Println("EXIT CODES:")
-	fmt.Println("    0   Success")
-	fmt.Println("    1   Configuration error")
-	fmt.Println("    2   Database connection error")
-	fmt.Println("    3   Safety check failed (database not empty)")
-	fmt.Println("    4   Migration error")
-	fmt.Println("    5   User creation error")
-	fmt.Println("    10  System error")
+	fmt.Printf("    %d   Success\n", initService.ExitSuccess)
+	fmt.Printf("    %d   Configuration error\n", initService.ExitConfigError)
+	fmt.Printf("    %d   Database connection error\n", initService.ExitDatabaseError)
+	fmt.Printf("    %d   Safety check failed (database not empty)\n", initService.ExitSafetyError)
+	fmt.Printf("    %d   Migration error\n", initService.ExitMigrationError)
+	fmt.Printf("    %d   User creation error\n", initService.ExitUserCreationError)
+	fmt.Printf("    %d  System error\n", initService.ExitSystemError)
 	fmt.Println()
 	fmt.Println("EXAMPLES:")
 	fmt.Println("    # Validate configuration and environment")
