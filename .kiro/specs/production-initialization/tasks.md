@@ -44,14 +44,14 @@
   - Write tests for logging output and format validation
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7_
 
-- [-] 7. Integrate with build system and create Makefile targets
+- [x] 7. Integrate with build system and create Makefile targets
   - Add `build-init` target to Makefile for building initialization binary
   - Add `init` target to Makefile for running initialization service
   - Update existing build documentation with initialization service usage
   - Test build integration and binary creation in development environment
   - _Requirements: 1.1, 1.2_
 
-- [ ] 8. Create comprehensive integration tests
+- [x] 8. Create comprehensive integration tests
   - Write integration tests for complete initialization flow on empty database
   - Create tests for safety prevention on databases with existing data
   - Implement tests for partial failure scenarios and error handling
