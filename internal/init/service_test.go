@@ -362,6 +362,8 @@ func TestInitService_createAdminUser(t *testing.T) {
 			service, err := NewInitService(cfg)
 			require.NoError(t, err)
 			service.db = db
+			// Initialize adminCreator since we're bypassing connectDatabase
+			service.adminCreator = NewAdminCreator(service.db, service.auth)
 
 			err = service.createAdminUser()
 
