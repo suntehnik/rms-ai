@@ -12,7 +12,6 @@ import (
 	"product-requirements-management/internal/config"
 	"product-requirements-management/internal/database"
 	"product-requirements-management/internal/logger"
-	"product-requirements-management/internal/models"
 )
 
 // InitError represents different types of initialization errors
@@ -34,11 +33,12 @@ func (e *InitError) Error() string {
 type ErrorType string
 
 const (
-	ErrorTypeConfig   ErrorType = "configuration"
-	ErrorTypeDatabase ErrorType = "database"
-	ErrorTypeSafety   ErrorType = "safety"
-	ErrorTypeCreation ErrorType = "creation"
-	ErrorTypeSystem   ErrorType = "system"
+	ErrorTypeConfig    ErrorType = "configuration"
+	ErrorTypeDatabase  ErrorType = "database"
+	ErrorTypeSafety    ErrorType = "safety"
+	ErrorTypeMigration ErrorType = "migration"
+	ErrorTypeCreation  ErrorType = "creation"
+	ErrorTypeSystem    ErrorType = "system"
 )
 
 // InitService coordinates the initialization process
@@ -48,6 +48,7 @@ type InitService struct {
 	auth          *auth.Service
 	safetyChecker *SafetyChecker
 	migrator      *database.MigrationManager
+	adminCreator  *AdminCreator
 	startTime     time.Time
 }
 
@@ -110,7 +111,7 @@ func (s *InitService) Initialize() error {
 	// Step 5: Run migrations
 	if err := s.runMigrations(); err != nil {
 		return &InitError{
-			Type:    ErrorTypeDatabase,
+			Type:    ErrorTypeMigration,
 			Message: "Migration execution failed",
 			Cause:   err,
 		}
@@ -204,6 +205,9 @@ func (s *InitService) connectDatabase() error {
 
 	// Initialize migration manager
 	s.migrator = database.NewMigrationManager(s.db, "migrations")
+
+	// Initialize admin creator
+	s.adminCreator = NewAdminCreator(s.db, s.auth)
 
 	duration := time.Since(stepStart)
 	logger.WithFields(map[string]interface{}{
@@ -327,44 +331,15 @@ func (s *InitService) runMigrations() error {
 	return nil
 }
 
-// createAdminUser creates the default admin user
+// createAdminUser creates the default admin user using AdminCreator
 func (s *InitService) createAdminUser() error {
 	stepStart := time.Now()
 	logger.WithField("step", "admin_user_creation").Info("Creating default admin user")
 
-	// Get admin password from environment
-	adminPassword := os.Getenv("DEFAULT_ADMIN_PASSWORD")
-	if adminPassword == "" {
-		return fmt.Errorf("DEFAULT_ADMIN_PASSWORD environment variable is required")
-	}
-
-	// Hash the password
-	hashedPassword, err := s.auth.HashPassword(adminPassword)
+	// Create admin user using AdminCreator
+	adminUser, err := s.adminCreator.CreateAdminUserFromEnv()
 	if err != nil {
-		return fmt.Errorf("failed to hash admin password: %w", err)
-	}
-
-	// Create admin user
-	adminUser := &models.User{
-		Username:     "admin",
-		Email:        "admin@localhost",
-		PasswordHash: hashedPassword,
-		Role:         models.RoleAdministrator,
-	}
-
-	// Use transaction for user creation
-	tx := s.db.Begin()
-	if tx.Error != nil {
-		return fmt.Errorf("failed to begin transaction: %w", tx.Error)
-	}
-
-	if err := tx.Create(adminUser).Error; err != nil {
-		tx.Rollback()
 		return fmt.Errorf("failed to create admin user: %w", err)
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		return fmt.Errorf("failed to commit admin user creation: %w", err)
 	}
 
 	duration := time.Since(stepStart)
