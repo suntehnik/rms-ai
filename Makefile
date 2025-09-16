@@ -1,12 +1,20 @@
-.PHONY: build run test test-unit test-integration test-e2e test-fast test-coverage test-unit-coverage test-integration-coverage test-e2e-coverage test-bench test-bench-api test-bench-results test-bench-api-results test-parallel test-race test-run test-debug test-compile test-ci clean deps dev fmt lint migrate-up migrate-down migrate-version build-migrate docker-up docker-down docker-logs docker-clean dev-setup mocks swagger swagger-fmt swagger-validate swagger-clean swagger-dev swagger-staging swagger-prod swagger-config swagger-env-dev swagger-env-staging swagger-env-prod swagger-deploy swagger-test swagger-serve help
+.PHONY: build build-init run init test test-unit test-integration test-e2e test-fast test-coverage test-unit-coverage test-integration-coverage test-e2e-coverage test-bench test-bench-api test-bench-results test-bench-api-results test-parallel test-race test-run test-debug test-compile test-ci clean deps dev fmt lint migrate-up migrate-down migrate-version build-migrate docker-up docker-down docker-logs docker-clean dev-setup mocks swagger swagger-fmt swagger-validate swagger-clean swagger-dev swagger-staging swagger-prod swagger-config swagger-env-dev swagger-env-staging swagger-env-prod swagger-deploy swagger-test swagger-serve help
 
 # Build the application
 build:
 	go build -o bin/server cmd/server/main.go
 
+# Build initialization binary
+build-init:
+	go build -o bin/init cmd/init/main.go
+
 # Run the application
 run:
 	go run cmd/server/main.go
+
+# Run initialization service
+init: build-init
+	./bin/init
 
 # Run all tests in sequence: unit → integration → e2e
 test: test-unit test-integration test-e2e
@@ -355,7 +363,9 @@ help:
 	@echo ""
 	@echo "🏗️  Build & Run:"
 	@echo "  build              - Build the application binary"
+	@echo "  build-init         - Build initialization binary"
 	@echo "  run                - Run the application directly"
+	@echo "  init               - Run initialization service"
 	@echo "  dev                - Run with development settings"
 	@echo ""
 	@echo "🧪 Testing:"

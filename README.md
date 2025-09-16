@@ -52,6 +52,31 @@ Edit `.env` with your configuration values, especially:
 - `JWT_SECRET`: Set a secure secret key for JWT tokens
 - Database and Redis connection details
 
+### Production Initialization
+
+For fresh installations, use the initialization service to set up the database and create an admin user:
+
+```bash
+# Build the initialization binary
+make build-init
+
+# Set required environment variables
+export DB_HOST=localhost
+export DB_USER=postgres
+export DB_PASSWORD=your-password
+export DB_NAME=requirements_db
+export JWT_SECRET=your-secret-key
+export DEFAULT_ADMIN_PASSWORD=secure-admin-password
+
+# Run initialization (only works on empty databases)
+make init
+
+# Or run directly
+./bin/init
+```
+
+**Safety Note**: The initialization service will only run on completely empty databases to prevent accidental data corruption.
+
 ### Running the Application
 
 #### Development Mode
@@ -69,7 +94,9 @@ JWT_SECRET=your-secret ./bin/server
 ```bash
 make deps           # Install dependencies
 make build          # Build the application
+make build-init     # Build initialization binary
 make run            # Run the application
+make init           # Run initialization service
 make test           # Run tests
 make clean          # Clean build artifacts
 make fmt            # Format code
@@ -109,6 +136,7 @@ The application uses environment variables for configuration:
 | `DB_NAME` | `requirements_db` | Database name |
 | `REDIS_HOST` | `localhost` | Redis host |
 | `REDIS_PORT` | `6379` | Redis port |
+| `DEFAULT_ADMIN_PASSWORD` | - | Admin password for initialization |
 
 ## Logging
 

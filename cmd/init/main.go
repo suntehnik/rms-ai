@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"product-requirements-management/internal/config"
+	initService "product-requirements-management/internal/init"
 	"product-requirements-management/internal/logger"
 )
 
