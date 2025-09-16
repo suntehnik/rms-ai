@@ -390,38 +390,7 @@ func TestInitService_createAdminUser(t *testing.T) {
 	}
 }
 
-func TestInitError_Error(t *testing.T) {
-	tests := []struct {
-		name     string
-		initErr  *InitError
-		expected string
-	}{
-		{
-			name: "error with cause",
-			initErr: &InitError{
-				Type:    ErrorTypeConfig,
-				Message: "Configuration failed",
-				Cause:   assert.AnError,
-			},
-			expected: "configuration: Configuration failed (caused by: assert.AnError general error for testing)",
-		},
-		{
-			name: "error without cause",
-			initErr: &InitError{
-				Type:    ErrorTypeDatabase,
-				Message: "Database connection failed",
-			},
-			expected: "database: Database connection failed",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := tt.initErr.Error()
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
+// TestInitError_Error removed - now in errors_test.go
 
 func TestInitService_Close(t *testing.T) {
 	tests := []struct {
