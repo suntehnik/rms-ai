@@ -471,14 +471,14 @@ func (s *InitService) performSafetyCheck(ctx context.Context) error {
 	return nil
 }
 
-// runMigrations executes all pending database migrations
+// runMigrations executes all pending database migrations using centralized connection management
 func (s *InitService) runMigrations(ctx context.Context) (int, error) {
 	stepStart := time.Now()
 	logger.WithContextAndFields(ctx, map[string]interface{}{
 		"action": "start_migrations",
 	}).Info("Running database migrations")
 
-	// Check current migration version
+	// Check current migration version using the existing migrator
 	logger.WithContextAndFields(ctx, map[string]interface{}{
 		"action": "check_current_version",
 	}).Debug("Checking current migration version")
@@ -497,12 +497,12 @@ func (s *InitService) runMigrations(ctx context.Context) (int, error) {
 		}).Info("Current migration status")
 	}
 
-	// Run migrations
+	// Run migrations using the centralized connection management approach
 	logger.WithContextAndFields(ctx, map[string]interface{}{
 		"action": "execute_migrations",
 	}).Info("Executing database migrations")
 
-	if err := s.migrator.RunMigrations(); err != nil {
+	if err := database.RunMigrations(s.db, s.cfg); err != nil {
 		logger.WithContextAndFields(ctx, map[string]interface{}{
 			"action": "migration_failed",
 			"error":  err.Error(),
