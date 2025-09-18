@@ -70,7 +70,7 @@ func TestSearchIntegration_PostgreSQL(t *testing.T) {
 			require.NoError(t, err)
 			assert.NotNil(t, response)
 			assert.Equal(t, "authentication", response.Query)
-			
+
 			// Should find entities with "authentication" in title or description
 			found := false
 			for _, result := range response.Results {
@@ -94,7 +94,7 @@ func TestSearchIntegration_PostgreSQL(t *testing.T) {
 			response, err := searchService.Search(context.Background(), options)
 			require.NoError(t, err)
 			assert.NotNil(t, response)
-			
+
 			// PostgreSQL should handle phrase searches better than LIKE
 			assert.True(t, len(response.Results) > 0, "Should find results for phrase search")
 		})
@@ -112,7 +112,7 @@ func TestSearchIntegration_PostgreSQL(t *testing.T) {
 			response, err := searchService.Search(context.Background(), options)
 			require.NoError(t, err)
 			assert.NotNil(t, response)
-			
+
 			// Should find results due to stemming
 			assert.True(t, len(response.Results) > 0, "Should find results using stemming")
 		})
@@ -152,10 +152,10 @@ func TestSearchIntegration_PostgreSQL(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.NotNil(t, response)
-			
+
 			// Performance assertion - should complete within reasonable time
 			assert.Less(t, duration, 5*time.Second, "Search should complete within 5 seconds")
-			
+
 			t.Logf("Search completed in %v with %d results", duration, response.Total)
 		})
 
@@ -173,7 +173,7 @@ func TestSearchIntegration_PostgreSQL(t *testing.T) {
 
 			require.NoError(t, err)
 			t.Logf("Query plan: %s", queryPlan)
-			
+
 			// The query plan should indicate index usage for optimal performance
 			// This is informational for now, but could be made into assertions
 		})
@@ -218,7 +218,7 @@ func TestSearchIntegration_PostgreSQL(t *testing.T) {
 		t.Run("date_range_filtering", func(t *testing.T) {
 			now := time.Now()
 			yesterday := now.Add(-24 * time.Hour)
-			
+
 			options := service.SearchOptions{
 				Query: "",
 				Filters: service.SearchFilters{
@@ -246,31 +246,31 @@ func TestSearchIntegration_PostgreSQL(t *testing.T) {
 	// Note: Search suggestions functionality not yet implemented
 	// This test section is commented out until the GetSearchSuggestions method is added to SearchService
 	/*
-	t.Run("search_suggestions", func(t *testing.T) {
-		t.Run("autocomplete_suggestions", func(t *testing.T) {
-			suggestions, err := searchService.GetSearchSuggestions(context.Background(), "auth", 10)
-			require.NoError(t, err)
-			assert.NotNil(t, suggestions)
-			
-			// Should provide relevant suggestions
-			found := false
-			for _, suggestion := range suggestions {
-				if contains(suggestion, "authentication") {
-					found = true
-					break
-				}
-			}
-			assert.True(t, found, "Should provide authentication as suggestion for 'auth'")
-		})
+		t.Run("search_suggestions", func(t *testing.T) {
+			t.Run("autocomplete_suggestions", func(t *testing.T) {
+				suggestions, err := searchService.GetSearchSuggestions(context.Background(), "auth", 10)
+				require.NoError(t, err)
+				assert.NotNil(t, suggestions)
 
-		t.Run("popular_searches", func(t *testing.T) {
-			// Test that popular search terms are suggested
-			suggestions, err := searchService.GetSearchSuggestions(context.Background(), "", 5)
-			require.NoError(t, err)
-			assert.NotNil(t, suggestions)
-			assert.True(t, len(suggestions) <= 5, "Should respect limit")
+				// Should provide relevant suggestions
+				found := false
+				for _, suggestion := range suggestions {
+					if contains(suggestion, "authentication") {
+						found = true
+						break
+					}
+				}
+				assert.True(t, found, "Should provide authentication as suggestion for 'auth'")
+			})
+
+			t.Run("popular_searches", func(t *testing.T) {
+				// Test that popular search terms are suggested
+				suggestions, err := searchService.GetSearchSuggestions(context.Background(), "", 5)
+				require.NoError(t, err)
+				assert.NotNil(t, suggestions)
+				assert.True(t, len(suggestions) <= 5, "Should respect limit")
+			})
 		})
-	})
 	*/
 }
 
@@ -307,14 +307,14 @@ func setupPostgreSQLContainer(t *testing.T) *gorm.DB {
 
 	// Create database connection
 	dsn := fmt.Sprintf("host=%s port=%s user=testuser password=password dbname=testdb sslmode=disable", host, port.Port())
-	
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	require.NoError(t, err)
 
 	// Verify connection
 	sqlDB, err := db.DB()
 	require.NoError(t, err)
-	
+
 	err = sqlDB.Ping()
 	require.NoError(t, err)
 
@@ -327,12 +327,22 @@ func setupPostgreSQLContainer(t *testing.T) *gorm.DB {
 }
 
 func cleanupDatabase(t *testing.T, db *gorm.DB) {
+	if db == nil {
+		t.Log("Database connection is nil, skipping cleanup")
+		return
+	}
+
 	sqlDB, err := db.DB()
 	if err != nil {
 		t.Logf("Failed to get SQL DB for cleanup: %v", err)
 		return
 	}
-	sqlDB.Close()
+
+	if err := sqlDB.Close(); err != nil {
+		t.Logf("Failed to close database connection: %v", err)
+	} else {
+		t.Log("Database connection closed successfully")
+	}
 }
 
 func createComprehensiveTestData(t *testing.T, db *gorm.DB, user *models.User) map[string]interface{} {
@@ -458,12 +468,12 @@ func stringPtr(s string) *string {
 }
 
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && 
-		   (s == substr || 
-		    (len(s) > len(substr) && 
-		     (s[:len(substr)] == substr || 
-		      s[len(s)-len(substr):] == substr ||
-		      containsInMiddle(s, substr))))
+	return len(s) >= len(substr) &&
+		(s == substr ||
+			(len(s) > len(substr) &&
+				(s[:len(substr)] == substr ||
+					s[len(s)-len(substr):] == substr ||
+					containsInMiddle(s, substr))))
 }
 
 func containsInMiddle(s, substr string) bool {
