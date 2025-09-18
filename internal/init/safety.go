@@ -1,8 +1,11 @@
 package init
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 )
 
@@ -47,52 +50,31 @@ func (sc *SafetyChecker) GetDataSummary() (*DataSummary, error) {
 		NonEmptyTables: make([]string, 0),
 	}
 
-	// Check users table
-	if err := sc.db.Table("users").Count(&summary.UserCount).Error; err != nil {
-		return nil, fmt.Errorf("failed to count users: %w", err)
-	}
-	if summary.UserCount > 0 {
-		summary.NonEmptyTables = append(summary.NonEmptyTables, "users")
-	}
-
-	// Check epics table
-	if err := sc.db.Table("epics").Count(&summary.EpicCount).Error; err != nil {
-		return nil, fmt.Errorf("failed to count epics: %w", err)
-	}
-	if summary.EpicCount > 0 {
-		summary.NonEmptyTables = append(summary.NonEmptyTables, "epics")
+	// Define tables to check with their corresponding count fields
+	tablesToCheck := []struct {
+		name     string
+		countPtr *int64
+		label    string
+	}{
+		{"users", &summary.UserCount, "users"},
+		{"epics", &summary.EpicCount, "epics"},
+		{"user_stories", &summary.UserStoryCount, "user_stories"},
+		{"requirements", &summary.RequirementCount, "requirements"},
+		{"acceptance_criteria", &summary.AcceptanceCriteriaCount, "acceptance_criteria"},
+		{"comments", &summary.CommentCount, "comments"},
 	}
 
-	// Check user_stories table
-	if err := sc.db.Table("user_stories").Count(&summary.UserStoryCount).Error; err != nil {
-		return nil, fmt.Errorf("failed to count user stories: %w", err)
-	}
-	if summary.UserStoryCount > 0 {
-		summary.NonEmptyTables = append(summary.NonEmptyTables, "user_stories")
-	}
+	// Check each table with enhanced error handling
+	for _, table := range tablesToCheck {
+		count, err := sc.countTableRecords(table.name)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check table %s: %w", table.name, err)
+		}
 
-	// Check requirements table
-	if err := sc.db.Table("requirements").Count(&summary.RequirementCount).Error; err != nil {
-		return nil, fmt.Errorf("failed to count requirements: %w", err)
-	}
-	if summary.RequirementCount > 0 {
-		summary.NonEmptyTables = append(summary.NonEmptyTables, "requirements")
-	}
-
-	// Check acceptance_criteria table
-	if err := sc.db.Table("acceptance_criteria").Count(&summary.AcceptanceCriteriaCount).Error; err != nil {
-		return nil, fmt.Errorf("failed to count acceptance criteria: %w", err)
-	}
-	if summary.AcceptanceCriteriaCount > 0 {
-		summary.NonEmptyTables = append(summary.NonEmptyTables, "acceptance_criteria")
-	}
-
-	// Check comments table
-	if err := sc.db.Table("comments").Count(&summary.CommentCount).Error; err != nil {
-		return nil, fmt.Errorf("failed to count comments: %w", err)
-	}
-	if summary.CommentCount > 0 {
-		summary.NonEmptyTables = append(summary.NonEmptyTables, "comments")
+		*table.countPtr = count
+		if count > 0 {
+			summary.NonEmptyTables = append(summary.NonEmptyTables, table.label)
+		}
 	}
 
 	// Database is empty if all critical tables are empty
@@ -154,4 +136,43 @@ func (sc *SafetyChecker) ValidateEmptyDatabase() error {
 	}
 
 	return nil
+}
+
+// countTableRecords safely counts records in a table, handling missing tables gracefully
+// Returns zero count for missing tables and propagates other database errors
+func (sc *SafetyChecker) countTableRecords(tableName string) (int64, error) {
+	var count int64
+	err := sc.db.Table(tableName).Count(&count).Error
+
+	if err != nil {
+		if isTableNotFoundError(err) {
+			// Table doesn't exist - treat as empty (0 records)
+			return 0, nil
+		}
+		// Other database errors should be propagated
+		return 0, err
+	}
+
+	return count, nil
+}
+
+// isTableNotFoundError checks if the given error indicates that a table was not found
+// It handles PostgreSQL SQLSTATE 42P01 ("undefined_table") errors and provides
+// fallback string matching for generic "table does not exist" messages
+func isTableNotFoundError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	// Check for PostgreSQL "undefined_table" error (SQLSTATE 42P01)
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr.Code == "42P01"
+	}
+
+	// Fallback: check error message for common patterns
+	errMsg := strings.ToLower(err.Error())
+	return strings.Contains(errMsg, "does not exist") ||
+		strings.Contains(errMsg, "no such table") ||
+		strings.Contains(errMsg, "undefined_table")
 }
