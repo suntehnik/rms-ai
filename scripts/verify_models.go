@@ -19,6 +19,15 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
+	// Ensure database connection is properly closed
+	defer func() {
+		if sqlDB, err := db.DB(); err == nil {
+			if closeErr := sqlDB.Close(); closeErr != nil {
+				log.Printf("Warning: Failed to close database connection: %v", closeErr)
+			}
+		}
+	}()
+
 	// Auto-migrate all models
 	fmt.Println("Running auto-migration...")
 	err = models.AutoMigrate(db)

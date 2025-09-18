@@ -18,6 +18,15 @@ func ExampleUsage() {
 		log.Fatal("Failed to connect to database:", err)
 	}
 
+	// Ensure database connection is properly closed
+	defer func() {
+		if sqlDB, err := db.DB(); err == nil {
+			if closeErr := sqlDB.Close(); closeErr != nil {
+				log.Printf("Warning: Failed to close database connection: %v", closeErr)
+			}
+		}
+	}()
+
 	// Auto-migrate models
 	if err := models.AutoMigrate(db); err != nil {
 		log.Fatal("Failed to migrate database:", err)
