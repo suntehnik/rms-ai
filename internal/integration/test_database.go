@@ -79,6 +79,16 @@ func SetupTestDatabase(t *testing.T) *TestDatabase {
 
 // Cleanup останавливает и удаляет PostgreSQL контейнер
 func (td *TestDatabase) Cleanup(t *testing.T) {
+	// Close database connection first
+	if td.DB != nil {
+		if sqlDB, err := td.DB.DB(); err == nil {
+			if err := sqlDB.Close(); err != nil {
+				t.Logf("Failed to close database connection: %v", err)
+			}
+		}
+	}
+
+	// Terminate container
 	if td.Container != nil {
 		ctx := context.Background()
 		if err := td.Container.Terminate(ctx); err != nil {

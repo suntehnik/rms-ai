@@ -47,18 +47,18 @@ func TestSearchE2E(t *testing.T) {
 			// Test search through HTTP API
 			w := httptest.NewRecorder()
 			req, _ := http.NewRequest("GET", "/api/v1/search?query=authentication&limit=10&offset=0", nil)
-			
+
 			env.Router.ServeHTTP(w, req)
-			
+
 			assert.Equal(t, http.StatusOK, w.Code)
-			
+
 			var response service.SearchResponse
 			err := json.Unmarshal(w.Body.Bytes(), &response)
 			require.NoError(t, err)
-			
+
 			assert.Equal(t, "authentication", response.Query)
 			assert.True(t, len(response.Results) > 0, "Should find results for authentication")
-			
+
 			// Verify response structure
 			for _, result := range response.Results {
 				assert.NotEmpty(t, result.ID)
@@ -72,15 +72,15 @@ func TestSearchE2E(t *testing.T) {
 			// Test search with filters through HTTP API
 			w := httptest.NewRecorder()
 			req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/search?query=user&priority=2&creator_id=%s", testData.User.ID), nil)
-			
+
 			env.Router.ServeHTTP(w, req)
-			
+
 			assert.Equal(t, http.StatusOK, w.Code)
-			
+
 			var response service.SearchResponse
 			err := json.Unmarshal(w.Body.Bytes(), &response)
 			require.NoError(t, err)
-			
+
 			// Verify filters are applied
 			for _, result := range response.Results {
 				if result.Priority != nil {
@@ -93,15 +93,15 @@ func TestSearchE2E(t *testing.T) {
 			// Test search with empty query (should return all results)
 			w := httptest.NewRecorder()
 			req, _ := http.NewRequest("GET", "/api/v1/search?limit=5", nil)
-			
+
 			env.Router.ServeHTTP(w, req)
-			
+
 			assert.Equal(t, http.StatusOK, w.Code)
-			
+
 			var response service.SearchResponse
 			err := json.Unmarshal(w.Body.Bytes(), &response)
 			require.NoError(t, err)
-			
+
 			assert.True(t, len(response.Results) <= 5, "Should respect limit")
 		})
 	})
@@ -111,30 +111,30 @@ func TestSearchE2E(t *testing.T) {
 			// Test concurrent search requests
 			concurrency := 10
 			results := make(chan error, concurrency)
-			
+
 			for i := 0; i < concurrency; i++ {
 				go func(index int) {
 					w := httptest.NewRecorder()
 					req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/search?query=test%d", index), nil)
-					
+
 					start := time.Now()
 					env.Router.ServeHTTP(w, req)
 					duration := time.Since(start)
-					
+
 					if w.Code != http.StatusOK {
 						results <- fmt.Errorf("request %d failed with status %d", index, w.Code)
 						return
 					}
-					
+
 					if duration > 5*time.Second {
 						results <- fmt.Errorf("request %d took too long: %v", index, duration)
 						return
 					}
-					
+
 					results <- nil
 				}(i)
 			}
-			
+
 			// Wait for all requests to complete
 			for i := 0; i < concurrency; i++ {
 				err := <-results
@@ -145,38 +145,38 @@ func TestSearchE2E(t *testing.T) {
 		t.Run("large_result_set_pagination", func(t *testing.T) {
 			// Create more test data
 			createLargeDatasetViaAPI(t, env, testData.User, 50)
-			
+
 			// Test pagination with large result set
 			w := httptest.NewRecorder()
 			req, _ := http.NewRequest("GET", "/api/v1/search?query=&limit=20&offset=0", nil)
-			
+
 			env.Router.ServeHTTP(w, req)
-			
+
 			assert.Equal(t, http.StatusOK, w.Code)
-			
+
 			var response service.SearchResponse
 			err := json.Unmarshal(w.Body.Bytes(), &response)
 			require.NoError(t, err)
-			
+
 			assert.Equal(t, 20, response.Limit)
 			assert.Equal(t, 0, response.Offset)
 			assert.True(t, response.Total > 20, "Should have more results than limit")
-			
+
 			// Test second page
 			w2 := httptest.NewRecorder()
 			req2, _ := http.NewRequest("GET", "/api/v1/search?query=&limit=20&offset=20", nil)
-			
+
 			env.Router.ServeHTTP(w2, req2)
-			
+
 			assert.Equal(t, http.StatusOK, w2.Code)
-			
+
 			var response2 service.SearchResponse
 			err = json.Unmarshal(w2.Body.Bytes(), &response2)
 			require.NoError(t, err)
-			
+
 			assert.Equal(t, 20, response2.Limit)
 			assert.Equal(t, 20, response2.Offset)
-			
+
 			// Results should be different
 			if len(response.Results) > 0 && len(response2.Results) > 0 {
 				assert.NotEqual(t, response.Results[0].ID, response2.Results[0].ID)
@@ -202,9 +202,9 @@ func TestSearchE2E(t *testing.T) {
 				t.Run(tc.name, func(t *testing.T) {
 					w := httptest.NewRecorder()
 					req, _ := http.NewRequest("GET", tc.url, nil)
-					
+
 					env.Router.ServeHTTP(w, req)
-					
+
 					assert.Equal(t, tc.expectedStatus, w.Code)
 				})
 			}
@@ -226,26 +226,26 @@ func TestSearchE2E(t *testing.T) {
 			// First request (cache miss)
 			w1 := httptest.NewRecorder()
 			req1, _ := http.NewRequest("GET", "/api/v1/search?query=authentication", nil)
-			
+
 			start1 := time.Now()
 			env.Router.ServeHTTP(w1, req1)
 			duration1 := time.Since(start1)
-			
+
 			assert.Equal(t, http.StatusOK, w1.Code)
-			
+
 			// Second request (cache hit)
 			w2 := httptest.NewRecorder()
 			req2, _ := http.NewRequest("GET", "/api/v1/search?query=authentication", nil)
-			
+
 			start2 := time.Now()
 			env.Router.ServeHTTP(w2, req2)
 			duration2 := time.Since(start2)
-			
+
 			assert.Equal(t, http.StatusOK, w2.Code)
-			
+
 			// Cache hit should be faster
 			assert.Less(t, duration2, duration1, "Cached request should be faster")
-			
+
 			// Results should be identical
 			assert.Equal(t, w1.Body.String(), w2.Body.String())
 		})
@@ -255,16 +255,16 @@ func TestSearchE2E(t *testing.T) {
 			var initialEpics []models.Epic
 			env.DB.Find(&initialEpics)
 			initialCount := len(initialEpics)
-			
+
 			// Test multiple Epic creation scenarios to ensure no duplicate key constraint violations
 			epicTitles := []string{
 				"New Epic for Cache Test 1",
-				"New Epic for Cache Test 2", 
+				"New Epic for Cache Test 2",
 				"New Epic for Cache Test 3",
 			}
-			
+
 			createdEpics := make([]*models.Epic, 0, len(epicTitles))
-			
+
 			for i, title := range epicTitles {
 				epicData := map[string]interface{}{
 					"creator_id":  testData.User.ID,
@@ -280,35 +280,35 @@ func TestSearchE2E(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 
 				env.Router.ServeHTTP(w, req)
-				
+
 				// Verify Epic creation succeeded without constraint violations
 				require.Equal(t, http.StatusCreated, w.Code, "Epic creation should succeed without constraint violations")
-				
+
 				var epic models.Epic
 				err := json.Unmarshal(w.Body.Bytes(), &epic)
 				require.NoError(t, err)
 				require.NotEmpty(t, epic.ReferenceID, "Epic should have a reference ID")
 				require.Equal(t, title, epic.Title, "Epic title should match")
-				
+
 				createdEpics = append(createdEpics, &epic)
 				t.Logf("Epic %d created successfully with reference ID: %s", i+1, epic.ReferenceID)
 			}
-			
+
 			// Verify all epics were created in database without constraint violations
 			var finalEpics []models.Epic
 			env.DB.Find(&finalEpics)
 			finalCount := len(finalEpics)
-			
+
 			t.Logf("Initial epic count: %d, Final epic count: %d", initialCount, finalCount)
 			assert.Equal(t, initialCount+len(epicTitles), finalCount, "All epics should be created successfully")
-			
+
 			// Verify each created epic has unique reference ID
 			referenceIDs := make(map[string]bool)
 			for _, epic := range createdEpics {
 				assert.False(t, referenceIDs[epic.ReferenceID], "Reference ID should be unique: %s", epic.ReferenceID)
 				referenceIDs[epic.ReferenceID] = true
 			}
-			
+
 			t.Logf("Successfully created %d epics without duplicate key constraint violations", len(createdEpics))
 		})
 	})
@@ -316,19 +316,42 @@ func TestSearchE2E(t *testing.T) {
 
 // E2EEnvironment holds the complete testing environment
 type E2EEnvironment struct {
-	DB          *gorm.DB
-	RedisClient *database.RedisClient
-	Router      *gin.Engine
-	Container   testcontainers.Container
+	DB             *gorm.DB
+	RedisClient    *database.RedisClient
+	Router         *gin.Engine
+	Container      testcontainers.Container
 	RedisContainer testcontainers.Container
 }
 
 func (e *E2EEnvironment) Cleanup() {
+	ctx := context.Background()
+
+	// Close database connections first
+	if e.DB != nil {
+		if sqlDB, err := e.DB.DB(); err == nil {
+			if err := sqlDB.Close(); err != nil {
+				fmt.Printf("Failed to close database connection: %v\n", err)
+			}
+		}
+	}
+
+	// Close Redis connections
+	if e.RedisClient != nil {
+		if err := e.RedisClient.Close(); err != nil {
+			fmt.Printf("Failed to close Redis connection: %v\n", err)
+		}
+	}
+
+	// Terminate containers
 	if e.Container != nil {
-		e.Container.Terminate(context.Background())
+		if err := e.Container.Terminate(ctx); err != nil {
+			fmt.Printf("Failed to terminate PostgreSQL container: %v\n", err)
+		}
 	}
 	if e.RedisContainer != nil {
-		e.RedisContainer.Terminate(context.Background())
+		if err := e.RedisContainer.Terminate(ctx); err != nil {
+			fmt.Printf("Failed to terminate Redis container: %v\n", err)
+		}
 	}
 }
 
@@ -445,7 +468,7 @@ func setupE2EEnvironment(t *testing.T) *E2EEnvironment {
 	// Setup router
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	
+
 	// Setup routes manually for testing
 	v1 := router.Group("/api/v1")
 	{
