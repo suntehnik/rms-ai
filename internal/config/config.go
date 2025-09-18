@@ -100,7 +100,7 @@ func Load() (*Config, error) {
 	}
 
 	// Validate required configuration
-	if cfg.JWT.Secret == "your-secret-key" {
+	if cfg.JWT.Secret == "" || cfg.JWT.Secret == "your-secret-key" {
 		return nil, fmt.Errorf("JWT_SECRET must be set in production")
 	}
 

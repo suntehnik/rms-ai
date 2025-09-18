@@ -36,8 +36,8 @@ func New(cfg *config.Config) (*Server, error) {
 	// Initialize logger
 	logger.Init(&cfg.Log)
 
-	// Initialize database connections
-	db, err := database.Initialize(cfg)
+	// Initialize database connections for production (no auto-migrations)
+	db, err := database.InitializeForProduction(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}
