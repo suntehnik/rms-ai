@@ -61,7 +61,6 @@ func RunMigrationsWithConnection(db *gorm.DB, migrationsDir string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create migrator: %w", err)
 	}
-	defer migrator.Close()
 
 	// Run migrations
 	if err := migrator.Up(); err != nil && err != migrate.ErrNoChange {
@@ -131,7 +130,6 @@ func (m *MigrationManager) GetMigrationVersion() (uint, bool, error) {
 	if err != nil {
 		return 0, false, fmt.Errorf("failed to create migrator: %w", err)
 	}
-	defer migrator.Close()
 
 	version, dirty, err := migrator.Version()
 	if err != nil {
