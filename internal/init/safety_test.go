@@ -1,8 +1,10 @@
 package init
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
@@ -488,6 +490,240 @@ func TestSafetyChecker_MultipleRecordsInTables(t *testing.T) {
 	assert.Contains(t, report, "epics: 2 records")
 }
 
+// Tests for new helper methods and enhanced error handling
+
+func TestIsTableNotFoundError(t *testing.T) {
+	tests := []struct {
+		name     string
+		err      error
+		expected bool
+	}{
+		{
+			name:     "nil error",
+			err:      nil,
+			expected: false,
+		},
+		{
+			name:     "PostgreSQL undefined_table error",
+			err:      &pgconn.PgError{Code: "42P01", Message: "relation \"nonexistent_table\" does not exist"},
+			expected: true,
+		},
+		{
+			name:     "PostgreSQL other error",
+			err:      &pgconn.PgError{Code: "23505", Message: "duplicate key value violates unique constraint"},
+			expected: false,
+		},
+		{
+			name:     "generic does not exist error",
+			err:      fmt.Errorf("table \"users\" does not exist"),
+			expected: true,
+		},
+		{
+			name:     "SQLite no such table error",
+			err:      fmt.Errorf("no such table: users"),
+			expected: true,
+		},
+		{
+			name:     "undefined_table in message",
+			err:      fmt.Errorf("database error: undefined_table"),
+			expected: true,
+		},
+		{
+			name:     "case insensitive matching",
+			err:      fmt.Errorf("Table DOES NOT EXIST"),
+			expected: true,
+		},
+		{
+			name:     "unrelated error",
+			err:      fmt.Errorf("connection refused"),
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isTableNotFoundError(tt.err)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestSafetyChecker_countTableRecords_MissingTable(t *testing.T) {
+	// Create a database without creating all tables
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	require.NoError(t, err)
+
+	// Only create users table, leave others missing
+	err = db.Exec(`
+		CREATE TABLE users (
+			id TEXT PRIMARY KEY,
+			username TEXT UNIQUE NOT NULL,
+			email TEXT UNIQUE NOT NULL,
+			password_hash TEXT NOT NULL,
+			role TEXT NOT NULL,
+			created_at DATETIME,
+			updated_at DATETIME
+		)
+	`).Error
+	require.NoError(t, err)
+
+	checker := NewSafetyChecker(db)
+
+	// Test counting records in existing table
+	count, err := checker.countTableRecords("users")
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), count)
+
+	// Test counting records in missing table - should return 0, not error
+	count, err = checker.countTableRecords("nonexistent_table")
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), count)
+}
+
+func TestSafetyChecker_countTableRecords_WithData(t *testing.T) {
+	db := setupTestDB(t)
+	checker := NewSafetyChecker(db)
+
+	// Insert test data
+	err := db.Exec(`
+		INSERT INTO users (id, username, email, password_hash, role, created_at, updated_at)
+		VALUES 
+		('user-1', 'testuser1', 'test1@example.com', 'hashedpassword', 'User', datetime('now'), datetime('now')),
+		('user-2', 'testuser2', 'test2@example.com', 'hashedpassword', 'Admin', datetime('now'), datetime('now'))
+	`).Error
+	require.NoError(t, err)
+
+	count, err := checker.countTableRecords("users")
+	assert.NoError(t, err)
+	assert.Equal(t, int64(2), count)
+}
+
+func TestSafetyChecker_GetDataSummary_MixedScenario(t *testing.T) {
+	// Create a database with only some tables
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	require.NoError(t, err)
+
+	// Create only users and epics tables, leave others missing
+	err = db.Exec(`
+		CREATE TABLE users (
+			id TEXT PRIMARY KEY,
+			username TEXT UNIQUE NOT NULL,
+			email TEXT UNIQUE NOT NULL,
+			password_hash TEXT NOT NULL,
+			role TEXT NOT NULL,
+			created_at DATETIME,
+			updated_at DATETIME
+		)
+	`).Error
+	require.NoError(t, err)
+
+	err = db.Exec(`
+		CREATE TABLE epics (
+			id TEXT PRIMARY KEY,
+			reference_id TEXT UNIQUE NOT NULL,
+			creator_id TEXT NOT NULL,
+			assignee_id TEXT NOT NULL,
+			created_at DATETIME,
+			last_modified DATETIME,
+			priority INTEGER NOT NULL,
+			status TEXT NOT NULL,
+			title TEXT NOT NULL,
+			description TEXT
+		)
+	`).Error
+	require.NoError(t, err)
+
+	// Insert data only in users table
+	err = db.Exec(`
+		INSERT INTO users (id, username, email, password_hash, role, created_at, updated_at)
+		VALUES ('user-1', 'testuser', 'test@example.com', 'hashedpassword', 'User', datetime('now'), datetime('now'))
+	`).Error
+	require.NoError(t, err)
+
+	checker := NewSafetyChecker(db)
+	summary, err := checker.GetDataSummary()
+
+	assert.NoError(t, err)
+	assert.NotNil(t, summary)
+
+	// Should count existing tables correctly
+	assert.Equal(t, int64(1), summary.UserCount)
+	assert.Equal(t, int64(0), summary.EpicCount)
+
+	// Should treat missing tables as empty (0 count)
+	assert.Equal(t, int64(0), summary.UserStoryCount)
+	assert.Equal(t, int64(0), summary.RequirementCount)
+	assert.Equal(t, int64(0), summary.AcceptanceCriteriaCount)
+	assert.Equal(t, int64(0), summary.CommentCount)
+
+	// Database is not empty because users table has data
+	assert.False(t, summary.IsEmpty)
+	assert.Contains(t, summary.NonEmptyTables, "users")
+	assert.Len(t, summary.NonEmptyTables, 1)
+}
+
+func TestSafetyChecker_GetDataSummary_AllTablesMissing(t *testing.T) {
+	// Create a completely empty database (no tables at all)
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	require.NoError(t, err)
+
+	checker := NewSafetyChecker(db)
+	summary, err := checker.GetDataSummary()
+
+	assert.NoError(t, err)
+	assert.NotNil(t, summary)
+
+	// All counts should be zero
+	assert.Equal(t, int64(0), summary.UserCount)
+	assert.Equal(t, int64(0), summary.EpicCount)
+	assert.Equal(t, int64(0), summary.UserStoryCount)
+	assert.Equal(t, int64(0), summary.RequirementCount)
+	assert.Equal(t, int64(0), summary.AcceptanceCriteriaCount)
+	assert.Equal(t, int64(0), summary.CommentCount)
+
+	// Database should be considered empty
+	assert.True(t, summary.IsEmpty)
+	assert.Empty(t, summary.NonEmptyTables)
+}
+
+func TestSafetyChecker_countTableRecords_DatabaseError(t *testing.T) {
+	// Create a database connection that will fail
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	require.NoError(t, err)
+
+	// Close the database to simulate connection error
+	sqlDB, err := db.DB()
+	require.NoError(t, err)
+	sqlDB.Close()
+
+	checker := NewSafetyChecker(db)
+
+	// Should propagate database errors (not table not found errors)
+	count, err := checker.countTableRecords("users")
+	assert.Error(t, err)
+	assert.Equal(t, int64(0), count)
+	assert.NotContains(t, err.Error(), "does not exist") // Should not be treated as table not found
+}
+
+func TestSafetyChecker_GetDataSummary_PropagatesNonTableErrors(t *testing.T) {
+	// Create a database connection that will fail
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	require.NoError(t, err)
+
+	// Close the database to simulate connection error
+	sqlDB, err := db.DB()
+	require.NoError(t, err)
+	sqlDB.Close()
+
+	checker := NewSafetyChecker(db)
+
+	// Should propagate database connection errors
+	summary, err := checker.GetDataSummary()
+	assert.Error(t, err)
+	assert.Nil(t, summary)
+	assert.Contains(t, err.Error(), "failed to check table")
+}
+
 // Benchmark tests for performance validation
 func BenchmarkSafetyChecker_IsDatabaseEmpty(b *testing.B) {
 	db := setupTestDB(&testing.T{})
@@ -506,5 +742,15 @@ func BenchmarkSafetyChecker_GetDataSummary(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = checker.GetDataSummary()
+	}
+}
+
+func BenchmarkSafetyChecker_countTableRecords(b *testing.B) {
+	db := setupTestDB(&testing.T{})
+	checker := NewSafetyChecker(db)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = checker.countTableRecords("users")
 	}
 }
