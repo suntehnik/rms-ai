@@ -55,6 +55,11 @@ func NewPostgresDB(cfg *config.Config) (*gorm.DB, error) {
 	return pg, err
 }
 
+// NewPostgresDBWithoutMigrations creates a PostgreSQL connection without running auto-migrations
+func NewPostgresDBWithoutMigrations(cfg *config.Config) (*gorm.DB, error) {
+	return initPostgreSQL(cfg.Database)
+}
+
 // initPostgreSQL initializes PostgreSQL connection with GORM
 func initPostgreSQL(cfg config.DatabaseConfig) (*gorm.DB, error) {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=UTC",

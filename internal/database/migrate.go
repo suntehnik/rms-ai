@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"product-requirements-management/internal/config"
 
@@ -25,8 +26,9 @@ func NewMigrationManager(db *gorm.DB, migrationsDir string) *MigrationManager {
 	}
 }
 
-// RunMigrations runs all pending migrations using the existing database connection
+// RunMigrations runs all pending migrations and ensures migration state is recorded
 func (m *MigrationManager) RunMigrations() error {
+	// Use the existing RunMigrationsWithConnection function which properly handles migration state
 	return RunMigrationsWithConnection(m.db, m.migrationsDir)
 }
 
@@ -37,37 +39,54 @@ func RunMigrations(db *gorm.DB, cfg *config.Config) error {
 
 // RunMigrationsWithConnection runs migrations using the provided database connection
 func RunMigrationsWithConnection(db *gorm.DB, migrationsDir string) error {
-	sqlDB, err := db.DB()
-	if err != nil {
-		return fmt.Errorf("failed to get underlying sql.DB: %w", err)
-	}
-
-	driver, err := postgres.WithInstance(sqlDB, &postgres.Config{})
-	if err != nil {
-		return fmt.Errorf("failed to create postgres driver: %w", err)
-	}
-
 	// Get absolute path for migrations directory
 	absPath, err := filepath.Abs(migrationsDir)
 	if err != nil {
 		return fmt.Errorf("failed to get absolute path for migrations: %w", err)
 	}
 
-	migrator, err := migrate.NewWithDatabaseInstance(
+	// Create migrator using database URL to avoid connection ownership issues
+	// We'll construct the database URL from environment variables
+	// This ensures the migrator has its own connection that can be safely closed
+
+	// Get database configuration from environment (same as used by GORM)
+	host := getEnvOrDefault("DB_HOST", "localhost")
+	port := getEnvOrDefault("DB_PORT", "5432")
+	user := getEnvOrDefault("DB_USER", "postgres")
+	password := getEnvOrDefault("DB_PASSWORD", "")
+	dbname := getEnvOrDefault("DB_NAME", "requirements_db")
+	sslmode := getEnvOrDefault("DB_SSLMODE", "disable")
+
+	databaseURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
+		user, password, host, port, dbname, sslmode)
+
+	migrator, err := migrate.New(
 		fmt.Sprintf("file://%s", absPath),
-		"postgres",
-		driver,
+		databaseURL,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create migrator: %w", err)
 	}
+	defer migrator.Close()
 
 	// Run migrations
 	if err := migrator.Up(); err != nil && err != migrate.ErrNoChange {
+		// Check if this is a first-time migration issue
+		if err.Error() == "no migration" {
+			return fmt.Errorf("no migration files found in %s", absPath)
+		}
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	return nil
+}
+
+// getEnvOrDefault gets an environment variable or returns a default value
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
 
 // RollbackMigration rolls back the last migration
@@ -130,11 +149,13 @@ func (m *MigrationManager) GetMigrationVersion() (uint, bool, error) {
 	if err != nil {
 		return 0, false, fmt.Errorf("failed to create migrator: %w", err)
 	}
+	defer migrator.Close()
 
 	version, dirty, err := migrator.Version()
 	if err != nil {
 		if err == migrate.ErrNilVersion {
-			return 0, false, nil
+			// This is a first-time migration scenario - no schema_migrations table exists
+			return 0, false, fmt.Errorf("no migration")
 		}
 		return 0, false, fmt.Errorf("failed to get migration version: %w", err)
 	}
