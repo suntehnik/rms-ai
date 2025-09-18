@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 	"path/filepath"
+	"product-requirements-management/internal/config"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -24,9 +25,19 @@ func NewMigrationManager(db *gorm.DB, migrationsDir string) *MigrationManager {
 	}
 }
 
-// RunMigrations runs all pending migrations
+// RunMigrations runs all pending migrations using the existing database connection
 func (m *MigrationManager) RunMigrations() error {
-	sqlDB, err := m.db.DB()
+	return RunMigrationsWithConnection(m.db, m.migrationsDir)
+}
+
+// RunMigrations runs migrations using the provided database connection and configuration
+func RunMigrations(db *gorm.DB, cfg *config.Config) error {
+	return RunMigrationsWithConnection(db, "migrations")
+}
+
+// RunMigrationsWithConnection runs migrations using the provided database connection
+func RunMigrationsWithConnection(db *gorm.DB, migrationsDir string) error {
+	sqlDB, err := db.DB()
 	if err != nil {
 		return fmt.Errorf("failed to get underlying sql.DB: %w", err)
 	}
@@ -37,7 +48,7 @@ func (m *MigrationManager) RunMigrations() error {
 	}
 
 	// Get absolute path for migrations directory
-	absPath, err := filepath.Abs(m.migrationsDir)
+	absPath, err := filepath.Abs(migrationsDir)
 	if err != nil {
 		return fmt.Errorf("failed to get absolute path for migrations: %w", err)
 	}

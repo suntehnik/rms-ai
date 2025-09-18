@@ -25,16 +25,9 @@ func Initialize(cfg *config.Config) (*DB, error) {
 		return nil, fmt.Errorf("database health check failed")
 	}
 
-	// Run migrations
-	// for migrations need to create a separate instance of the DB,
-	// because migrations close DB after performing a migration task
-	migrationDb, err := NewPostgresDB(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create database connection for migration: %w", err)
-	}
-
-	migrationManager := NewMigrationManager(migrationDb, "migrations")
-	if err := migrationManager.RunMigrations(); err != nil {
+	// Run migrations using centralized connection management
+	// Use the existing database connection instead of creating a separate one
+	if err := RunMigrations(db.Postgres, cfg); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
