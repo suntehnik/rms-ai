@@ -8,6 +8,10 @@ build:
 build-init:
 	go build -o bin/init cmd/init/main.go
 
+# Build mock data generator
+build-gen-mock-data:
+	go build -o bin/gen-mock-data cmd/gen-mock-data/main.go
+
 # Run the application
 run:
 	go run cmd/server/main.go
@@ -15,6 +19,12 @@ run:
 # Run initialization service
 init: build-init
 	./bin/init
+
+# Generate mock data
+gen-mock-data: build-gen-mock-data
+	@echo "🎭 Generating mock data for development..."
+	@export $(shell cat .env.mock-data 2>/dev/null | xargs) && ./bin/gen-mock-data
+	@echo "✅ Mock data generation completed!"
 
 # Run all tests in sequence: unit → integration → e2e
 test: test-unit test-integration test-e2e
@@ -364,8 +374,10 @@ help:
 	@echo "🏗️  Build & Run:"
 	@echo "  build              - Build the application binary"
 	@echo "  build-init         - Build initialization binary"
+	@echo "  build-gen-mock-data - Build mock data generator"
 	@echo "  run                - Run the application directly"
 	@echo "  init               - Run initialization service"
+	@echo "  gen-mock-data      - Generate mock data for development"
 	@echo "  dev                - Run with development settings"
 	@echo ""
 	@echo "🧪 Testing:"
