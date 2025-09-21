@@ -25,10 +25,10 @@ type EpicService interface {
 	GetEpicByReferenceID(referenceID string) (*models.Epic, error)
 	UpdateEpic(id uuid.UUID, req UpdateEpicRequest) (*models.Epic, error)
 	DeleteEpic(id uuid.UUID, force bool) error
-	ListEpics(filters EpicFilters) ([]models.Epic, error)
+	ListEpics(filters EpicFilters) ([]models.Epic, int64, error)
 	GetEpicWithUserStories(id uuid.UUID) (*models.Epic, error)
 	ChangeEpicStatus(id uuid.UUID, newStatus models.EpicStatus) (*models.Epic, error)
-	AssignEpic(id uuid.UUID, assigneeID uuid.UUID) (*models.Epic, error)
+	AssignEpic(id uuid.UUID, assigneeID *uuid.UUID) (*models.Epic, error)
 }
 
 // CreateEpicRequest represents the request to create an epic
@@ -156,10 +156,10 @@ type ChangeEpicStatusRequest struct {
 // AssignEpicRequest represents the request to assign an epic to a user
 // @Description Request payload for assigning an epic to a user
 type AssignEpicRequest struct {
-	// AssigneeID is the UUID of the user to assign the epic to
-	// @Description UUID of the user to assign this epic to
+	// AssigneeID is the UUID of the user to assign the epic to (nullable for unassignment)
+	// @Description UUID of the user to assign this epic to (null to unassign)
 	// @Example "123e4567-e89b-12d3-a456-426614174002"
-	AssigneeID uuid.UUID `json:"assignee_id" binding:"required"`
+	AssigneeID *uuid.UUID `json:"assignee_id"`
 }
 
 // epicService implements EpicService interface
@@ -327,7 +327,7 @@ func (s *epicService) DeleteEpic(id uuid.UUID, force bool) error {
 }
 
 // ListEpics retrieves epics with optional filtering
-func (s *epicService) ListEpics(filters EpicFilters) ([]models.Epic, error) {
+func (s *epicService) ListEpics(filters EpicFilters) ([]models.Epic, int64, error) {
 	// Build filter map
 	filterMap := make(map[string]interface{})
 
@@ -358,10 +358,16 @@ func (s *epicService) ListEpics(filters EpicFilters) ([]models.Epic, error) {
 
 	epics, err := s.epicRepo.List(filterMap, orderBy, limit, filters.Offset)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list epics: %w", err)
+		return nil, 0, fmt.Errorf("failed to list epics: %w", err)
 	}
 
-	return epics, nil
+	// Get total count for pagination
+	totalCount, err := s.epicRepo.Count(filterMap)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count epics: %w", err)
+	}
+
+	return epics, totalCount, nil
 }
 
 // GetEpicWithUserStories retrieves an epic with its user stories
@@ -402,13 +408,15 @@ func (s *epicService) ChangeEpicStatus(id uuid.UUID, newStatus models.EpicStatus
 	return epic, nil
 }
 
-// AssignEpic assigns an epic to a user
-func (s *epicService) AssignEpic(id uuid.UUID, assigneeID uuid.UUID) (*models.Epic, error) {
-	// Validate assignee exists
-	if exists, err := s.userRepo.Exists(assigneeID); err != nil {
-		return nil, fmt.Errorf("failed to check assignee existence: %w", err)
-	} else if !exists {
-		return nil, ErrUserNotFound
+// AssignEpic assigns an epic to a user or unassigns it
+func (s *epicService) AssignEpic(id uuid.UUID, assigneeID *uuid.UUID) (*models.Epic, error) {
+	// Validate assignee exists if provided
+	if assigneeID != nil {
+		if exists, err := s.userRepo.Exists(*assigneeID); err != nil {
+			return nil, fmt.Errorf("failed to check assignee existence: %w", err)
+		} else if !exists {
+			return nil, ErrUserNotFound
+		}
 	}
 
 	epic, err := s.epicRepo.GetByID(id)
@@ -419,7 +427,14 @@ func (s *epicService) AssignEpic(id uuid.UUID, assigneeID uuid.UUID) (*models.Ep
 		return nil, fmt.Errorf("failed to get epic: %w", err)
 	}
 
-	epic.AssigneeID = assigneeID
+	// Assign or unassign based on whether assigneeID is provided
+	if assigneeID != nil {
+		epic.AssigneeID = *assigneeID
+	} else {
+		// Unassign by setting to creator (default behavior)
+		epic.AssigneeID = epic.CreatorID
+	}
+
 	if err := s.epicRepo.Update(epic); err != nil {
 		return nil, fmt.Errorf("failed to assign epic: %w", err)
 	}

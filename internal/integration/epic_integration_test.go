@@ -244,14 +244,16 @@ func TestEpicIntegration_ListEpics(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response struct {
-		Epics []models.Epic `json:"epics"`
-		Count int           `json:"count"`
+		Data       []models.Epic `json:"data"`
+		TotalCount int64         `json:"total_count"`
+		Limit      int           `json:"limit"`
+		Offset     int           `json:"offset"`
 	}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
-	assert.Equal(t, 2, response.Count)
-	assert.Len(t, response.Epics, 2)
+	assert.Equal(t, int64(2), response.TotalCount)
+	assert.Len(t, response.Data, 2)
 
 	// List epics with status filter
 	req, _ = http.NewRequest("GET", "/api/v1/epics?status=Backlog", nil)
@@ -263,8 +265,8 @@ func TestEpicIntegration_ListEpics(t *testing.T) {
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
-	assert.Equal(t, 1, response.Count)
-	assert.Equal(t, models.EpicStatusBacklog, response.Epics[0].Status)
+	assert.Equal(t, int64(1), response.TotalCount)
+	assert.Equal(t, models.EpicStatusBacklog, response.Data[0].Status)
 }
 
 func TestEpicIntegration_ChangeEpicStatus(t *testing.T) {
