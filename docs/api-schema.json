@@ -1,0 +1,567 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Product Requirements Management API Schema",
+  "description": "JSON Schema definitions for the Product Requirements Management API",
+  "definitions": {
+    "User": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "username": { "type": "string", "minLength": 3, "maxLength": 50 },
+        "email": { "type": "string", "format": "email" },
+        "role": { "$ref": "#/definitions/UserRole" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "username", "email", "role", "created_at", "updated_at"],
+      "additionalProperties": false
+    },
+    "UserRole": {
+      "type": "string",
+      "enum": ["Administrator", "User", "Commenter"]
+    },
+    "EntityType": {
+      "type": "string",
+      "enum": ["epic", "user_story", "acceptance_criteria", "requirement"]
+    },
+    "Priority": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4,
+      "description": "1=Critical, 2=High, 3=Medium, 4=Low"
+    },
+    "EpicStatus": {
+      "type": "string",
+      "enum": ["Backlog", "Draft", "In Progress", "Done", "Cancelled"]
+    },
+    "UserStoryStatus": {
+      "type": "string",
+      "enum": ["Backlog", "Draft", "In Progress", "Done", "Cancelled"]
+    },
+    "RequirementStatus": {
+      "type": "string",
+      "enum": ["Draft", "Active", "Obsolete"]
+    },
+    "Epic": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "reference_id": { "type": "string", "pattern": "^EP-\\d+$" },
+        "title": { "type": "string", "maxLength": 500 },
+        "description": { "type": "string", "maxLength": 5000 },
+        "status": { "$ref": "#/definitions/EpicStatus" },
+        "priority": { "$ref": "#/definitions/Priority" },
+        "creator_id": { "type": "string", "format": "uuid" },
+        "assignee_id": { "type": "string", "format": "uuid" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "last_modified": { "type": "string", "format": "date-time" },
+        "creator": { "$ref": "#/definitions/User" },
+        "assignee": { "$ref": "#/definitions/User" },
+        "user_stories": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/UserStory" }
+        },
+        "comments": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Comment" }
+        }
+      },
+      "required": ["id", "reference_id", "title", "status", "priority", "creator_id", "created_at", "last_modified"],
+      "additionalProperties": false
+    },
+    "UserStory": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "reference_id": { "type": "string", "pattern": "^US-\\d+$" },
+        "title": { "type": "string", "maxLength": 500 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "status": { "$ref": "#/definitions/UserStoryStatus" },
+        "priority": { "$ref": "#/definitions/Priority" },
+        "epic_id": { "type": "string", "format": "uuid" },
+        "creator_id": { "type": "string", "format": "uuid" },
+        "assignee_id": { "type": "string", "format": "uuid" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "last_modified": { "type": "string", "format": "date-time" },
+        "epic": { "$ref": "#/definitions/Epic" },
+        "creator": { "$ref": "#/definitions/User" },
+        "assignee": { "$ref": "#/definitions/User" },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/AcceptanceCriteria" }
+        },
+        "requirements": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Requirement" }
+        },
+        "comments": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Comment" }
+        }
+      },
+      "required": ["id", "reference_id", "title", "status", "priority", "epic_id", "creator_id", "created_at", "last_modified"],
+      "additionalProperties": false
+    },
+    "AcceptanceCriteria": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "reference_id": { "type": "string", "pattern": "^AC-\\d+$" },
+        "description": { "type": "string" },
+        "user_story_id": { "type": "string", "format": "uuid" },
+        "author_id": { "type": "string", "format": "uuid" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "last_modified": { "type": "string", "format": "date-time" },
+        "user_story": { "$ref": "#/definitions/UserStory" },
+        "author": { "$ref": "#/definitions/User" },
+        "requirements": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Requirement" }
+        },
+        "comments": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Comment" }
+        }
+      },
+      "required": ["id", "reference_id", "description", "user_story_id", "author_id", "created_at", "last_modified"],
+      "additionalProperties": false
+    },
+    "Requirement": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "reference_id": { "type": "string", "pattern": "^REQ-\\d+$" },
+        "title": { "type": "string", "maxLength": 500 },
+        "description": { "type": "string" },
+        "status": { "$ref": "#/definitions/RequirementStatus" },
+        "priority": { "$ref": "#/definitions/Priority" },
+        "user_story_id": { "type": "string", "format": "uuid" },
+        "acceptance_criteria_id": { "type": "string", "format": "uuid" },
+        "type_id": { "type": "string", "format": "uuid" },
+        "creator_id": { "type": "string", "format": "uuid" },
+        "assignee_id": { "type": "string", "format": "uuid" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "last_modified": { "type": "string", "format": "date-time" },
+        "user_story": { "$ref": "#/definitions/UserStory" },
+        "acceptance_criteria": { "$ref": "#/definitions/AcceptanceCriteria" },
+        "type": { "$ref": "#/definitions/RequirementType" },
+        "creator": { "$ref": "#/definitions/User" },
+        "assignee": { "$ref": "#/definitions/User" },
+        "source_relationships": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/RequirementRelationship" }
+        },
+        "target_relationships": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/RequirementRelationship" }
+        },
+        "comments": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Comment" }
+        }
+      },
+      "required": ["id", "reference_id", "title", "status", "priority", "user_story_id", "type_id", "creator_id", "created_at", "last_modified"],
+      "additionalProperties": false
+    },
+    "Comment": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "content": { "type": "string" },
+        "entity_type": { "$ref": "#/definitions/EntityType" },
+        "entity_id": { "type": "string", "format": "uuid" },
+        "author_id": { "type": "string", "format": "uuid" },
+        "parent_comment_id": { "type": "string", "format": "uuid" },
+        "is_resolved": { "type": "boolean" },
+        "linked_text": { "type": "string" },
+        "text_position_start": { "type": "integer", "minimum": 0 },
+        "text_position_end": { "type": "integer", "minimum": 0 },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" },
+        "author": { "$ref": "#/definitions/User" },
+        "parent_comment": { "$ref": "#/definitions/Comment" },
+        "replies": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Comment" }
+        }
+      },
+      "required": ["id", "content", "entity_type", "entity_id", "author_id", "is_resolved", "created_at", "updated_at"],
+      "additionalProperties": false
+    },
+    "RequirementType": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "created_at", "updated_at"],
+      "additionalProperties": false
+    },
+    "RelationshipType": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "created_at", "updated_at"],
+      "additionalProperties": false
+    },
+    "RequirementRelationship": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "source_requirement_id": { "type": "string", "format": "uuid" },
+        "target_requirement_id": { "type": "string", "format": "uuid" },
+        "relationship_type_id": { "type": "string", "format": "uuid" },
+        "created_by": { "type": "string", "format": "uuid" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "source_requirement": { "$ref": "#/definitions/Requirement" },
+        "target_requirement": { "$ref": "#/definitions/Requirement" },
+        "relationship_type": { "$ref": "#/definitions/RelationshipType" },
+        "creator": { "$ref": "#/definitions/User" }
+      },
+      "required": ["id", "source_requirement_id", "target_requirement_id", "relationship_type_id", "created_by", "created_at"],
+      "additionalProperties": false
+    },
+    "StatusModel": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "entity_type": { "$ref": "#/definitions/EntityType" },
+        "is_default": { "type": "boolean" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" },
+        "statuses": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Status" }
+        },
+        "transitions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/StatusTransition" }
+        }
+      },
+      "required": ["id", "name", "entity_type", "is_default", "created_at", "updated_at"],
+      "additionalProperties": false
+    },
+    "Status": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "order": { "type": "integer", "minimum": 0 },
+        "is_initial": { "type": "boolean" },
+        "is_final": { "type": "boolean" },
+        "status_model_id": { "type": "string", "format": "uuid" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "order", "is_initial", "is_final", "status_model_id", "created_at", "updated_at"],
+      "additionalProperties": false
+    },
+    "StatusTransition": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "from_status_id": { "type": "string", "format": "uuid" },
+        "to_status_id": { "type": "string", "format": "uuid" },
+        "status_model_id": { "type": "string", "format": "uuid" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "from_status_id", "to_status_id", "status_model_id", "created_at", "updated_at"],
+      "additionalProperties": false
+    },
+    "LoginRequest": {
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "password": { "type": "string" }
+      },
+      "required": ["username", "password"],
+      "additionalProperties": false
+    },
+    "LoginResponse": {
+      "type": "object",
+      "properties": {
+        "token": { "type": "string" },
+        "expires_at": { "type": "string", "format": "date-time" },
+        "user": { "$ref": "#/definitions/User" }
+      },
+      "required": ["token", "expires_at", "user"],
+      "additionalProperties": false
+    },
+    "CreateEpicRequest": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 500 },
+        "description": { "type": "string", "maxLength": 5000 },
+        "priority": { "$ref": "#/definitions/Priority" },
+        "assignee_id": { "type": "string", "format": "uuid" }
+      },
+      "required": ["title", "priority"],
+      "additionalProperties": false
+    },
+    "UpdateEpicRequest": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 500 },
+        "description": { "type": "string", "maxLength": 5000 },
+        "priority": { "$ref": "#/definitions/Priority" },
+        "assignee_id": { "type": "string", "format": "uuid" }
+      },
+      "additionalProperties": false
+    },
+    "CreateUserStoryRequest": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 500 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "priority": { "$ref": "#/definitions/Priority" },
+        "epic_id": { "type": "string", "format": "uuid" },
+        "assignee_id": { "type": "string", "format": "uuid" }
+      },
+      "required": ["title", "priority", "epic_id"],
+      "additionalProperties": false
+    },
+    "UpdateUserStoryRequest": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 500 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "priority": { "$ref": "#/definitions/Priority" },
+        "assignee_id": { "type": "string", "format": "uuid" }
+      },
+      "additionalProperties": false
+    },
+    "CreateAcceptanceCriteriaRequest": {
+      "type": "object",
+      "properties": {
+        "description": { "type": "string" },
+        "user_story_id": { "type": "string", "format": "uuid" }
+      },
+      "required": ["description", "user_story_id"],
+      "additionalProperties": false
+    },
+    "UpdateAcceptanceCriteriaRequest": {
+      "type": "object",
+      "properties": {
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "CreateRequirementRequest": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 500 },
+        "description": { "type": "string" },
+        "priority": { "$ref": "#/definitions/Priority" },
+        "user_story_id": { "type": "string", "format": "uuid" },
+        "acceptance_criteria_id": { "type": "string", "format": "uuid" },
+        "type_id": { "type": "string", "format": "uuid" },
+        "assignee_id": { "type": "string", "format": "uuid" }
+      },
+      "required": ["title", "priority", "user_story_id", "type_id"],
+      "additionalProperties": false
+    },
+    "UpdateRequirementRequest": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 500 },
+        "description": { "type": "string" },
+        "priority": { "$ref": "#/definitions/Priority" },
+        "assignee_id": { "type": "string", "format": "uuid" }
+      },
+      "additionalProperties": false
+    },
+    "CreateCommentRequest": {
+      "type": "object",
+      "properties": {
+        "content": { "type": "string" },
+        "parent_comment_id": { "type": "string", "format": "uuid" }
+      },
+      "required": ["content"],
+      "additionalProperties": false
+    },
+    "CreateInlineCommentRequest": {
+      "type": "object",
+      "properties": {
+        "content": { "type": "string" },
+        "linked_text": { "type": "string" },
+        "text_position_start": { "type": "integer", "minimum": 0 },
+        "text_position_end": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["content", "linked_text", "text_position_start", "text_position_end"],
+      "additionalProperties": false
+    },
+    "SearchResult": {
+      "type": "object",
+      "properties": {
+        "entity_type": { "$ref": "#/definitions/EntityType" },
+        "entity_id": { "type": "string", "format": "uuid" },
+        "reference_id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "highlight": { "type": "string" },
+        "rank": { "type": "number" }
+      },
+      "required": ["entity_type", "entity_id", "reference_id", "title", "rank"],
+      "additionalProperties": false
+    },
+    "SearchResponse": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/SearchResult" }
+        },
+        "total_count": { "type": "integer", "minimum": 0 },
+        "query": { "type": "string" },
+        "entity_types": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "limit": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "offset": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["results", "total_count", "query", "entity_types", "limit", "offset"],
+      "additionalProperties": false
+    },
+    "SearchSuggestionsResponse": {
+      "type": "object",
+      "properties": {
+        "titles": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "reference_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "statuses": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["titles", "reference_ids", "statuses"],
+      "additionalProperties": false
+    },
+    "HierarchyNode": {
+      "type": "object",
+      "properties": {
+        "entity_type": { "$ref": "#/definitions/EntityType" },
+        "entity_id": { "type": "string", "format": "uuid" },
+        "reference_id": { "type": "string" },
+        "title": { "type": "string" },
+        "status": { "type": "string" },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/HierarchyNode" }
+        }
+      },
+      "required": ["entity_type", "entity_id", "reference_id", "title", "status"],
+      "additionalProperties": false
+    },
+    "EntityPath": {
+      "type": "object",
+      "properties": {
+        "entity_type": { "$ref": "#/definitions/EntityType" },
+        "entity_id": { "type": "string", "format": "uuid" },
+        "reference_id": { "type": "string" },
+        "title": { "type": "string" }
+      },
+      "required": ["entity_type", "entity_id", "reference_id", "title"],
+      "additionalProperties": false
+    },
+    "DependencyInfo": {
+      "type": "object",
+      "properties": {
+        "can_delete": { "type": "boolean" },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "entity_type": { "type": "string" },
+              "entity_id": { "type": "string", "format": "uuid" },
+              "reference_id": { "type": "string" },
+              "title": { "type": "string" },
+              "dependency_type": { "type": "string" }
+            },
+            "required": ["entity_type", "entity_id", "reference_id", "title", "dependency_type"],
+            "additionalProperties": false
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["can_delete", "dependencies", "warnings"],
+      "additionalProperties": false
+    },
+    "DeletionResult": {
+      "type": "object",
+      "properties": {
+        "success": { "type": "boolean" },
+        "deleted_entities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "entity_type": { "type": "string" },
+              "entity_id": { "type": "string", "format": "uuid" },
+              "reference_id": { "type": "string" }
+            },
+            "required": ["entity_type", "entity_id", "reference_id"],
+            "additionalProperties": false
+          }
+        },
+        "message": { "type": "string" }
+      },
+      "required": ["success", "deleted_entities", "message"],
+      "additionalProperties": false
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": { "type": "string" },
+            "message": { "type": "string" }
+          },
+          "required": ["code", "message"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["error"],
+      "additionalProperties": false
+    },
+    "ListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {}
+        },
+        "total_count": { "type": "integer", "minimum": 0 },
+        "limit": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "offset": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["data", "total_count", "limit", "offset"],
+      "additionalProperties": false
+    }
+  }
+}
