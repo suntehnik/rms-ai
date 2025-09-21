@@ -242,6 +242,138 @@ paths:
               schema:
                 $ref: '#/components/schemas/Epic'
 
+  /api/v1/epics/{id}/validate-deletion:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [Epics]
+      summary: Validate epic deletion
+      description: Check if epic can be deleted and get dependency information
+      responses:
+        '200':
+          description: Deletion validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DependencyInfo'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/epics/{id}/delete:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    delete:
+      tags: [Epics]
+      summary: Comprehensive epic deletion
+      description: Delete epic with all dependencies and cascade operations
+      responses:
+        '200':
+          description: Deletion completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletionResult'
+        '409':
+          description: Cannot delete due to dependencies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/epics/{id}/comments:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [Epics, Comments]
+      summary: Get epic comments
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/OffsetParam'
+      responses:
+        '200':
+          description: List of epic comments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentListResponse'
+    post:
+      tags: [Epics, Comments]
+      summary: Create epic comment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommentRequest'
+      responses:
+        '201':
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /api/v1/epics/{id}/comments/inline:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    post:
+      tags: [Epics, Comments]
+      summary: Create epic inline comment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInlineCommentRequest'
+      responses:
+        '201':
+          description: Inline comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /api/v1/epics/{id}/comments/inline/visible:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [Epics, Comments]
+      summary: Get visible epic inline comments
+      responses:
+        '200':
+          description: List of visible inline comments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentListResponse'
+
+  /api/v1/epics/{id}/comments/inline/validate:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    post:
+      tags: [Epics, Comments]
+      summary: Validate epic inline comments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InlineCommentValidationRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string
+
   # User Story endpoints
   /api/v1/user-stories:
     get:
@@ -327,6 +459,238 @@ paths:
         '204':
           description: User story deleted
 
+  /api/v1/user-stories/{id}/acceptance-criteria:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [User Stories]
+      summary: Get user story acceptance criteria
+      responses:
+        '200':
+          description: List of acceptance criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptanceCriteriaListResponse'
+    post:
+      tags: [User Stories]
+      summary: Create acceptance criteria in user story
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAcceptanceCriteriaRequest'
+      responses:
+        '201':
+          description: Acceptance criteria created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptanceCriteria'
+
+  /api/v1/user-stories/{id}/requirements:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [User Stories]
+      summary: Get user story requirements
+      responses:
+        '200':
+          description: User story with requirements
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserStory'
+    post:
+      tags: [User Stories]
+      summary: Create requirement in user story
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRequirementRequest'
+      responses:
+        '201':
+          description: Requirement created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Requirement'
+
+  /api/v1/user-stories/{id}/status:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    patch:
+      tags: [User Stories]
+      summary: Change user story status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusChangeRequest'
+      responses:
+        '200':
+          description: Status changed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserStory'
+
+  /api/v1/user-stories/{id}/assign:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    patch:
+      tags: [User Stories]
+      summary: Assign user story to user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignmentRequest'
+      responses:
+        '200':
+          description: User story assigned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserStory'
+
+  /api/v1/user-stories/{id}/validate-deletion:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [User Stories]
+      summary: Validate user story deletion
+      description: Check if user story can be deleted and get dependency information
+      responses:
+        '200':
+          description: Deletion validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DependencyInfo'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/user-stories/{id}/delete:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    delete:
+      tags: [User Stories]
+      summary: Comprehensive user story deletion
+      description: Delete user story with all dependencies and cascade operations
+      responses:
+        '200':
+          description: Deletion completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletionResult'
+        '409':
+          description: Cannot delete due to dependencies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/user-stories/{id}/comments:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [User Stories, Comments]
+      summary: Get user story comments
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/OffsetParam'
+      responses:
+        '200':
+          description: List of user story comments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentListResponse'
+    post:
+      tags: [User Stories, Comments]
+      summary: Create user story comment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommentRequest'
+      responses:
+        '201':
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /api/v1/user-stories/{id}/comments/inline:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    post:
+      tags: [User Stories, Comments]
+      summary: Create user story inline comment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInlineCommentRequest'
+      responses:
+        '201':
+          description: Inline comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /api/v1/user-stories/{id}/comments/inline/visible:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [User Stories, Comments]
+      summary: Get visible user story inline comments
+      responses:
+        '200':
+          description: List of visible inline comments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentListResponse'
+
+  /api/v1/user-stories/{id}/comments/inline/validate:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    post:
+      tags: [User Stories, Comments]
+      summary: Validate user story inline comments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InlineCommentValidationRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string
+
   # Acceptance Criteria endpoints
   /api/v1/acceptance-criteria:
     get:
@@ -391,6 +755,138 @@ paths:
       responses:
         '204':
           description: Acceptance criteria deleted
+
+  /api/v1/acceptance-criteria/{id}/validate-deletion:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [Acceptance Criteria]
+      summary: Validate acceptance criteria deletion
+      description: Check if acceptance criteria can be deleted and get dependency information
+      responses:
+        '200':
+          description: Deletion validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DependencyInfo'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/acceptance-criteria/{id}/delete:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    delete:
+      tags: [Acceptance Criteria]
+      summary: Comprehensive acceptance criteria deletion
+      description: Delete acceptance criteria with all dependencies and cascade operations
+      responses:
+        '200':
+          description: Deletion completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletionResult'
+        '409':
+          description: Cannot delete due to dependencies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/acceptance-criteria/{id}/comments:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [Acceptance Criteria, Comments]
+      summary: Get acceptance criteria comments
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/OffsetParam'
+      responses:
+        '200':
+          description: List of acceptance criteria comments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentListResponse'
+    post:
+      tags: [Acceptance Criteria, Comments]
+      summary: Create acceptance criteria comment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommentRequest'
+      responses:
+        '201':
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /api/v1/acceptance-criteria/{id}/comments/inline:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    post:
+      tags: [Acceptance Criteria, Comments]
+      summary: Create acceptance criteria inline comment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInlineCommentRequest'
+      responses:
+        '201':
+          description: Inline comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /api/v1/acceptance-criteria/{id}/comments/inline/visible:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [Acceptance Criteria, Comments]
+      summary: Get visible acceptance criteria inline comments
+      responses:
+        '200':
+          description: List of visible inline comments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentListResponse'
+
+  /api/v1/acceptance-criteria/{id}/comments/inline/validate:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    post:
+      tags: [Acceptance Criteria, Comments]
+      summary: Validate acceptance criteria inline comments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InlineCommentValidationRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string
 
   # Requirements endpoints
   /api/v1/requirements:
@@ -486,6 +982,231 @@ paths:
       responses:
         '204':
           description: Requirement deleted
+
+  /api/v1/requirements/search:
+    get:
+      tags: [Requirements]
+      summary: Search requirements
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Search query
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/OffsetParam'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+
+  /api/v1/requirements/{id}/relationships:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [Requirements]
+      summary: Get requirement with relationships
+      responses:
+        '200':
+          description: Requirement with relationships
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Requirement'
+
+  /api/v1/requirements/{id}/status:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    patch:
+      tags: [Requirements]
+      summary: Change requirement status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusChangeRequest'
+      responses:
+        '200':
+          description: Status changed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Requirement'
+
+  /api/v1/requirements/{id}/assign:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    patch:
+      tags: [Requirements]
+      summary: Assign requirement to user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignmentRequest'
+      responses:
+        '200':
+          description: Requirement assigned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Requirement'
+
+  /api/v1/requirements/relationships:
+    post:
+      tags: [Requirements]
+      summary: Create requirement relationship
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRelationshipRequest'
+      responses:
+        '201':
+          description: Relationship created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequirementRelationship'
+
+  /api/v1/requirements/{id}/validate-deletion:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [Requirements]
+      summary: Validate requirement deletion
+      description: Check if requirement can be deleted and get dependency information
+      responses:
+        '200':
+          description: Deletion validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DependencyInfo'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/requirements/{id}/delete:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    delete:
+      tags: [Requirements]
+      summary: Comprehensive requirement deletion
+      description: Delete requirement with all dependencies and cascade operations
+      responses:
+        '200':
+          description: Deletion completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletionResult'
+        '409':
+          description: Cannot delete due to dependencies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/requirements/{id}/comments:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [Requirements, Comments]
+      summary: Get requirement comments
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/OffsetParam'
+      responses:
+        '200':
+          description: List of requirement comments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentListResponse'
+    post:
+      tags: [Requirements, Comments]
+      summary: Create requirement comment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommentRequest'
+      responses:
+        '201':
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /api/v1/requirements/{id}/comments/inline:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    post:
+      tags: [Requirements, Comments]
+      summary: Create requirement inline comment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInlineCommentRequest'
+      responses:
+        '201':
+          description: Inline comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /api/v1/requirements/{id}/comments/inline/visible:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [Requirements, Comments]
+      summary: Get visible requirement inline comments
+      responses:
+        '200':
+          description: List of visible inline comments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentListResponse'
+
+  /api/v1/requirements/{id}/comments/inline/validate:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    post:
+      tags: [Requirements, Comments]
+      summary: Validate requirement inline comments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InlineCommentValidationRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string
 
   # Search endpoints
   /api/v1/search:
@@ -587,6 +1308,658 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/EntityPath'
+
+  /api/v1/hierarchy/epics/{id}:
+    get:
+      tags: [Navigation]
+      summary: Get epic hierarchy
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Epic ID (UUID or reference ID)
+      responses:
+        '200':
+          description: Epic hierarchy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HierarchyNode'
+
+  /api/v1/hierarchy/user-stories/{id}:
+    get:
+      tags: [Navigation]
+      summary: Get user story hierarchy
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: User story ID (UUID or reference ID)
+      responses:
+        '200':
+          description: User story hierarchy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HierarchyNode'
+
+  # Requirement Relationships
+  /api/v1/requirement-relationships/{id}:
+    delete:
+      tags: [Requirements]
+      summary: Delete requirement relationship
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Relationship deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # General deletion confirmation
+  /api/v1/deletion/confirm:
+    get:
+      tags: [Deletion]
+      summary: Get deletion confirmation
+      description: Get general deletion confirmation information
+      responses:
+        '200':
+          description: Deletion confirmation information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  # General Comment endpoints
+  /api/v1/comments/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Comments]
+      summary: Get comment by ID
+      responses:
+        '200':
+          description: Comment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Comments]
+      summary: Update comment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCommentRequest'
+      responses:
+        '200':
+          description: Comment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+    delete:
+      tags: [Comments]
+      summary: Delete comment
+      responses:
+        '204':
+          description: Comment deleted
+
+  /api/v1/comments/{id}/resolve:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Comments]
+      summary: Resolve comment
+      responses:
+        '200':
+          description: Comment resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /api/v1/comments/{id}/unresolve:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Comments]
+      summary: Unresolve comment
+      responses:
+        '200':
+          description: Comment unresolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /api/v1/comments/status/{status}:
+    get:
+      tags: [Comments]
+      summary: Get comments by status
+      parameters:
+        - name: status
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [resolved, unresolved]
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/OffsetParam'
+      responses:
+        '200':
+          description: List of comments by status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentListResponse'
+
+  /api/v1/comments/{id}/replies:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Comments]
+      summary: Get comment replies
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/OffsetParam'
+      responses:
+        '200':
+          description: List of comment replies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentListResponse'
+    post:
+      tags: [Comments]
+      summary: Create comment reply
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommentRequest'
+      responses:
+        '201':
+          description: Reply created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  # Configuration Management endpoints
+  /api/v1/config/requirement-types:
+    get:
+      tags: [Configuration]
+      summary: List requirement types
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      responses:
+        '200':
+          description: List of requirement types
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequirementTypeListResponse'
+    post:
+      tags: [Configuration]
+      summary: Create requirement type
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRequirementTypeRequest'
+      responses:
+        '201':
+          description: Requirement type created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequirementType'
+
+  /api/v1/config/requirement-types/{id}:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [Configuration]
+      summary: Get requirement type by ID
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      responses:
+        '200':
+          description: Requirement type details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequirementType'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Configuration]
+      summary: Update requirement type
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRequirementTypeRequest'
+      responses:
+        '200':
+          description: Requirement type updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequirementType'
+    delete:
+      tags: [Configuration]
+      summary: Delete requirement type
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      responses:
+        '204':
+          description: Requirement type deleted
+
+  /api/v1/config/relationship-types:
+    get:
+      tags: [Configuration]
+      summary: List relationship types
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      responses:
+        '200':
+          description: List of relationship types
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipTypeListResponse'
+    post:
+      tags: [Configuration]
+      summary: Create relationship type
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRelationshipTypeRequest'
+      responses:
+        '201':
+          description: Relationship type created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipType'
+
+  /api/v1/config/relationship-types/{id}:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [Configuration]
+      summary: Get relationship type by ID
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      responses:
+        '200':
+          description: Relationship type details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipType'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Configuration]
+      summary: Update relationship type
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRelationshipTypeRequest'
+      responses:
+        '200':
+          description: Relationship type updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipType'
+    delete:
+      tags: [Configuration]
+      summary: Delete relationship type
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      responses:
+        '204':
+          description: Relationship type deleted
+
+  /api/v1/config/status-models:
+    get:
+      tags: [Configuration]
+      summary: List status models
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      responses:
+        '200':
+          description: List of status models
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusModelListResponse'
+    post:
+      tags: [Configuration]
+      summary: Create status model
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStatusModelRequest'
+      responses:
+        '201':
+          description: Status model created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusModel'
+
+  /api/v1/config/status-models/{id}:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [Configuration]
+      summary: Get status model by ID
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      responses:
+        '200':
+          description: Status model details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusModel'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Configuration]
+      summary: Update status model
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStatusModelRequest'
+      responses:
+        '200':
+          description: Status model updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusModel'
+    delete:
+      tags: [Configuration]
+      summary: Delete status model
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      responses:
+        '204':
+          description: Status model deleted
+
+  /api/v1/config/status-models/default/{entity_type}:
+    get:
+      tags: [Configuration]
+      summary: Get default status model for entity type
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      parameters:
+        - name: entity_type
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/EntityType'
+      responses:
+        '200':
+          description: Default status model
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusModel'
+
+  /api/v1/config/status-models/{id}/statuses:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [Configuration]
+      summary: List statuses by model
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      responses:
+        '200':
+          description: List of statuses
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusListResponse'
+
+  /api/v1/config/status-models/{id}/transitions:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [Configuration]
+      summary: List status transitions by model
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      responses:
+        '200':
+          description: List of status transitions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusTransitionListResponse'
+
+  /api/v1/config/statuses:
+    post:
+      tags: [Configuration]
+      summary: Create status
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStatusRequest'
+      responses:
+        '201':
+          description: Status created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+
+  /api/v1/config/statuses/{id}:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [Configuration]
+      summary: Get status by ID
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      responses:
+        '200':
+          description: Status details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Configuration]
+      summary: Update status
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStatusRequest'
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+    delete:
+      tags: [Configuration]
+      summary: Delete status
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      responses:
+        '204':
+          description: Status deleted
+
+  /api/v1/config/status-transitions:
+    post:
+      tags: [Configuration]
+      summary: Create status transition
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStatusTransitionRequest'
+      responses:
+        '201':
+          description: Status transition created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusTransition'
+
+  /api/v1/config/status-transitions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [Configuration]
+      summary: Get status transition by ID
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      responses:
+        '200':
+          description: Status transition details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusTransition'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Configuration]
+      summary: Update status transition
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStatusTransitionRequest'
+      responses:
+        '200':
+          description: Status transition updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusTransition'
+    delete:
+      tags: [Configuration]
+      summary: Delete status transition
+      security:
+        - BearerAuth: []
+      x-required-role: Administrator
+      responses:
+        '204':
+          description: Status transition deleted
 
 components:
   securitySchemes:
@@ -1417,6 +2790,454 @@ components:
         title:
           type: string
 
+    # Deletion System Schemas
+    DependencyInfo:
+      type: object
+      required: [can_delete, dependencies, warnings]
+      properties:
+        can_delete:
+          type: boolean
+          description: Whether the entity can be safely deleted
+        dependencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/DependencyItem'
+          description: List of entities that depend on this entity
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Warning messages about the deletion
+
+    DependencyItem:
+      type: object
+      required: [entity_type, entity_id, reference_id, title, dependency_type]
+      properties:
+        entity_type:
+          type: string
+          description: Type of the dependent entity
+        entity_id:
+          type: string
+          format: uuid
+          description: UUID of the dependent entity
+        reference_id:
+          type: string
+          description: Human-readable reference ID of the dependent entity
+        title:
+          type: string
+          description: Title of the dependent entity
+        dependency_type:
+          type: string
+          description: Type of dependency (e.g., 'child', 'reference', 'relationship')
+
+    DeletionResult:
+      type: object
+      required: [success, deleted_entities, message]
+      properties:
+        success:
+          type: boolean
+          description: Whether the deletion operation was successful
+        deleted_entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeletedEntity'
+          description: List of entities that were deleted
+        message:
+          type: string
+          description: Human-readable message about the deletion result
+
+    DeletedEntity:
+      type: object
+      required: [entity_type, entity_id, reference_id]
+      properties:
+        entity_type:
+          type: string
+          description: Type of the deleted entity
+        entity_id:
+          type: string
+          format: uuid
+          description: UUID of the deleted entity
+        reference_id:
+          type: string
+          description: Human-readable reference ID of the deleted entity
+
+    # Comment System Schemas
+    CommentListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ListResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Comment'
+
+    UpdateCommentRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          description: Updated comment content
+
+    InlineCommentValidationRequest:
+      type: object
+      required: [comments]
+      properties:
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/InlineCommentPosition'
+          description: List of inline comment positions to validate
+
+    InlineCommentPosition:
+      type: object
+      required: [comment_id, text_position_start, text_position_end]
+      properties:
+        comment_id:
+          type: string
+          format: uuid
+          description: UUID of the comment
+        text_position_start:
+          type: integer
+          minimum: 0
+          description: Start position of the comment in the text
+        text_position_end:
+          type: integer
+          minimum: 0
+          description: End position of the comment in the text
+
+    # Relationship Management Schemas
+    CreateRelationshipRequest:
+      type: object
+      required: [source_requirement_id, target_requirement_id, relationship_type_id]
+      properties:
+        source_requirement_id:
+          type: string
+          format: uuid
+          description: UUID of the source requirement
+        target_requirement_id:
+          type: string
+          format: uuid
+          description: UUID of the target requirement
+        relationship_type_id:
+          type: string
+          format: uuid
+          description: UUID of the relationship type
+
+    # Configuration Management Schemas
+    CreateRequirementTypeRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+
+    UpdateRequirementTypeRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+
+    CreateRelationshipTypeRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+
+    UpdateRelationshipTypeRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+
+    StatusModel:
+      type: object
+      required: [id, name, entity_type, is_default, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        entity_type:
+          $ref: '#/components/schemas/EntityType'
+        is_default:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        # Optional populated fields
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Status'
+        transitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusTransition'
+
+    Status:
+      type: object
+      required: [id, name, order, is_initial, is_final, status_model_id, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        color:
+          type: string
+        order:
+          type: integer
+        is_initial:
+          type: boolean
+        is_final:
+          type: boolean
+        status_model_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        # Optional populated fields
+        status_model:
+          $ref: '#/components/schemas/StatusModel'
+        from_transitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusTransition'
+        to_transitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusTransition'
+
+    StatusTransition:
+      type: object
+      required: [id, from_status_id, to_status_id, status_model_id, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        from_status_id:
+          type: string
+          format: uuid
+        to_status_id:
+          type: string
+          format: uuid
+        status_model_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        # Optional populated fields
+        from_status:
+          $ref: '#/components/schemas/Status'
+        to_status:
+          $ref: '#/components/schemas/Status'
+        status_model:
+          $ref: '#/components/schemas/StatusModel'
+
+    CreateStatusModelRequest:
+      type: object
+      required: [name, entity_type]
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        entity_type:
+          $ref: '#/components/schemas/EntityType'
+        is_default:
+          type: boolean
+          default: false
+
+    UpdateStatusModelRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        is_default:
+          type: boolean
+
+    CreateStatusRequest:
+      type: object
+      required: [name, order, status_model_id]
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 200
+        color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+        order:
+          type: integer
+          minimum: 0
+        is_initial:
+          type: boolean
+          default: false
+        is_final:
+          type: boolean
+          default: false
+        status_model_id:
+          type: string
+          format: uuid
+
+    UpdateStatusRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 200
+        color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+        order:
+          type: integer
+          minimum: 0
+        is_initial:
+          type: boolean
+        is_final:
+          type: boolean
+
+    CreateStatusTransitionRequest:
+      type: object
+      required: [from_status_id, to_status_id, status_model_id]
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 200
+        from_status_id:
+          type: string
+          format: uuid
+        to_status_id:
+          type: string
+          format: uuid
+        status_model_id:
+          type: string
+          format: uuid
+
+    UpdateStatusTransitionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 200
+
+    # Configuration List Response Schemas
+    RequirementTypeListResponse:
+      type: object
+      required: [requirement_types, count]
+      properties:
+        requirement_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequirementType'
+        count:
+          type: integer
+          minimum: 0
+
+    RelationshipTypeListResponse:
+      type: object
+      required: [relationship_types, count]
+      properties:
+        relationship_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelationshipType'
+        count:
+          type: integer
+          minimum: 0
+
+    StatusModelListResponse:
+      type: object
+      required: [status_models, count]
+      properties:
+        status_models:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusModel'
+        count:
+          type: integer
+          minimum: 0
+
+    StatusListResponse:
+      type: object
+      required: [statuses, count]
+      properties:
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Status'
+        count:
+          type: integer
+          minimum: 0
+
+    StatusTransitionListResponse:
+      type: object
+      required: [transitions, count]
+      properties:
+        transitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusTransition'
+        count:
+          type: integer
+          minimum: 0
+
 tags:
   - name: Authentication
     description: User authentication and authorization
@@ -1434,5 +3255,7 @@ tags:
     description: Hierarchy and navigation operations
   - name: Comments
     description: Comment system operations
+  - name: Deletion
+    description: Entity deletion and dependency management
   - name: Configuration
     description: System configuration management
