@@ -683,11 +683,30 @@ interface RequirementListResponse extends ListResponse<Requirement> {}
 interface CommentListResponse extends ListResponse<Comment> {}
 
 // Configuration list responses
-interface RequirementTypeListResponse extends ListResponse<RequirementType> {}
-interface RelationshipTypeListResponse extends ListResponse<RelationshipType> {}
-interface StatusModelListResponse extends ListResponse<StatusModel> {}
-interface StatusListResponse extends ListResponse<Status> {}
-interface StatusTransitionListResponse extends ListResponse<StatusTransition> {}
+interface RequirementTypeListResponse {
+  requirement_types: RequirementType[];
+  count: number;
+}
+
+interface RelationshipTypeListResponse {
+  relationship_types: RelationshipType[];
+  count: number;
+}
+
+interface StatusModelListResponse {
+  status_models: StatusModel[];
+  count: number;
+}
+
+interface StatusListResponse {
+  statuses: Status[];
+  count: number;
+}
+
+interface StatusTransitionListResponse {
+  transitions: StatusTransition[];
+  count: number;
+}
 ```
 
 ---

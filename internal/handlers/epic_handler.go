@@ -42,8 +42,10 @@ func (h *EpicHandler) CreateEpic(c *gin.Context) {
 	var req service.CreateEpicRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request body",
-			"details": err.Error(),
+			"error": gin.H{
+				"code":    "VALIDATION_ERROR",
+				"message": "Invalid request body: " + err.Error(),
+			},
 		})
 		return
 	}
@@ -53,15 +55,24 @@ func (h *EpicHandler) CreateEpic(c *gin.Context) {
 		switch {
 		case errors.Is(err, service.ErrUserNotFound):
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Creator or assignee not found",
+				"error": gin.H{
+					"code":    "ENTITY_NOT_FOUND",
+					"message": "Creator or assignee not found",
+				},
 			})
 		case errors.Is(err, service.ErrInvalidPriority):
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Invalid priority value",
+				"error": gin.H{
+					"code":    "VALIDATION_ERROR",
+					"message": "Invalid priority value",
+				},
 			})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to create epic",
+				"error": gin.H{
+					"code":    "INTERNAL_ERROR",
+					"message": "Failed to create epic",
+				},
 			})
 		}
 		return
@@ -99,11 +110,17 @@ func (h *EpicHandler) GetEpic(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, service.ErrEpicNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Epic not found",
+				"error": gin.H{
+					"code":    "ENTITY_NOT_FOUND",
+					"message": "Epic not found",
+				},
 			})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to get epic",
+				"error": gin.H{
+					"code":    "INTERNAL_ERROR",
+					"message": "Failed to get epic",
+				},
 			})
 		}
 		return
@@ -135,7 +152,10 @@ func (h *EpicHandler) UpdateEpic(c *gin.Context) {
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid epic ID format",
+			"error": gin.H{
+				"code":    "VALIDATION_ERROR",
+				"message": "Invalid epic ID format",
+			},
 		})
 		return
 	}
@@ -143,8 +163,10 @@ func (h *EpicHandler) UpdateEpic(c *gin.Context) {
 	var req service.UpdateEpicRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request body",
-			"details": err.Error(),
+			"error": gin.H{
+				"code":    "VALIDATION_ERROR",
+				"message": "Invalid request body: " + err.Error(),
+			},
 		})
 		return
 	}
@@ -154,27 +176,45 @@ func (h *EpicHandler) UpdateEpic(c *gin.Context) {
 		switch {
 		case errors.Is(err, service.ErrEpicNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Epic not found",
+				"error": gin.H{
+					"code":    "ENTITY_NOT_FOUND",
+					"message": "Epic not found",
+				},
 			})
 		case errors.Is(err, service.ErrUserNotFound):
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Assignee not found",
+				"error": gin.H{
+					"code":    "ENTITY_NOT_FOUND",
+					"message": "Assignee not found",
+				},
 			})
 		case errors.Is(err, service.ErrInvalidPriority):
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Invalid priority value",
+				"error": gin.H{
+					"code":    "VALIDATION_ERROR",
+					"message": "Invalid priority value",
+				},
 			})
 		case errors.Is(err, service.ErrInvalidEpicStatus):
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Invalid epic status",
+				"error": gin.H{
+					"code":    "VALIDATION_ERROR",
+					"message": "Invalid epic status",
+				},
 			})
 		case errors.Is(err, service.ErrInvalidStatusTransition):
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Invalid status transition",
+				"error": gin.H{
+					"code":    "VALIDATION_ERROR",
+					"message": "Invalid status transition",
+				},
 			})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to update epic",
+				"error": gin.H{
+					"code":    "INTERNAL_ERROR",
+					"message": "Failed to update epic",
+				},
 			})
 		}
 		return
@@ -207,7 +247,10 @@ func (h *EpicHandler) DeleteEpic(c *gin.Context) {
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid epic ID format",
+			"error": gin.H{
+				"code":    "VALIDATION_ERROR",
+				"message": "Invalid epic ID format",
+			},
 		})
 		return
 	}
@@ -220,22 +263,30 @@ func (h *EpicHandler) DeleteEpic(c *gin.Context) {
 		switch {
 		case errors.Is(err, service.ErrEpicNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Epic not found",
+				"error": gin.H{
+					"code":    "ENTITY_NOT_FOUND",
+					"message": "Epic not found",
+				},
 			})
 		case errors.Is(err, service.ErrEpicHasUserStories):
 			c.JSON(http.StatusConflict, gin.H{
-				"error": "Epic has associated user stories and cannot be deleted",
-				"hint":  "Use force=true to delete with dependencies",
+				"error": gin.H{
+					"code":    "DELETION_CONFLICT",
+					"message": "Epic has associated user stories and cannot be deleted. Use force=true to delete with dependencies",
+				},
 			})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to delete epic",
+				"error": gin.H{
+					"code":    "INTERNAL_ERROR",
+					"message": "Failed to delete epic",
+				},
 			})
 		}
 		return
 	}
 
-	c.JSON(http.StatusNoContent, nil)
+	c.Status(http.StatusNoContent)
 }
 
 // ListEpics handles GET /api/v1/epics
@@ -300,17 +351,28 @@ func (h *EpicHandler) ListEpics(c *gin.Context) {
 		}
 	}
 
-	epics, err := h.epicService.ListEpics(filters)
+	epics, totalCount, err := h.epicService.ListEpics(filters)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to list epics",
+			"error": gin.H{
+				"code":    "INTERNAL_ERROR",
+				"message": "Failed to list epics",
+			},
 		})
 		return
 	}
 
+	// Set default limit if not specified
+	limit := 50
+	if filters.Limit > 0 {
+		limit = filters.Limit
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"epics": epics,
-		"count": len(epics),
+		"data":        epics,
+		"total_count": totalCount,
+		"limit":       limit,
+		"offset":      filters.Offset,
 	})
 }
 
@@ -346,11 +408,17 @@ func (h *EpicHandler) GetEpicWithUserStories(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, service.ErrEpicNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Epic not found",
+				"error": gin.H{
+					"code":    "ENTITY_NOT_FOUND",
+					"message": "Epic not found",
+				},
 			})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to get epic with user stories",
+				"error": gin.H{
+					"code":    "INTERNAL_ERROR",
+					"message": "Failed to get epic with user stories",
+				},
 			})
 		}
 		return
@@ -379,7 +447,10 @@ func (h *EpicHandler) ChangeEpicStatus(c *gin.Context) {
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid epic ID format",
+			"error": gin.H{
+				"code":    "VALIDATION_ERROR",
+				"message": "Invalid epic ID format",
+			},
 		})
 		return
 	}
@@ -388,8 +459,10 @@ func (h *EpicHandler) ChangeEpicStatus(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request body",
-			"details": err.Error(),
+			"error": gin.H{
+				"code":    "VALIDATION_ERROR",
+				"message": "Invalid request body: " + err.Error(),
+			},
 		})
 		return
 	}
@@ -399,19 +472,31 @@ func (h *EpicHandler) ChangeEpicStatus(c *gin.Context) {
 		switch {
 		case errors.Is(err, service.ErrEpicNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Epic not found",
+				"error": gin.H{
+					"code":    "ENTITY_NOT_FOUND",
+					"message": "Epic not found",
+				},
 			})
 		case errors.Is(err, service.ErrInvalidEpicStatus):
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Invalid epic status",
+				"error": gin.H{
+					"code":    "VALIDATION_ERROR",
+					"message": "Invalid epic status",
+				},
 			})
 		case errors.Is(err, service.ErrInvalidStatusTransition):
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Invalid status transition",
+				"error": gin.H{
+					"code":    "VALIDATION_ERROR",
+					"message": "Invalid status transition",
+				},
 			})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to change epic status",
+				"error": gin.H{
+					"code":    "INTERNAL_ERROR",
+					"message": "Failed to change epic status",
+				},
 			})
 		}
 		return
@@ -440,7 +525,10 @@ func (h *EpicHandler) AssignEpic(c *gin.Context) {
 	id, err := uuid.Parse(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid epic ID format",
+			"error": gin.H{
+				"code":    "VALIDATION_ERROR",
+				"message": "Invalid epic ID format",
+			},
 		})
 		return
 	}
@@ -449,8 +537,10 @@ func (h *EpicHandler) AssignEpic(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request body",
-			"details": err.Error(),
+			"error": gin.H{
+				"code":    "VALIDATION_ERROR",
+				"message": "Invalid request body: " + err.Error(),
+			},
 		})
 		return
 	}
@@ -460,15 +550,24 @@ func (h *EpicHandler) AssignEpic(c *gin.Context) {
 		switch {
 		case errors.Is(err, service.ErrEpicNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Epic not found",
+				"error": gin.H{
+					"code":    "ENTITY_NOT_FOUND",
+					"message": "Epic not found",
+				},
 			})
 		case errors.Is(err, service.ErrUserNotFound):
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Assignee not found",
+				"error": gin.H{
+					"code":    "ENTITY_NOT_FOUND",
+					"message": "Assignee not found",
+				},
 			})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to assign epic",
+				"error": gin.H{
+					"code":    "INTERNAL_ERROR",
+					"message": "Failed to assign epic",
+				},
 			})
 		}
 		return

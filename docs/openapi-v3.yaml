@@ -365,14 +365,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  valid:
-                    type: boolean
-                  errors:
-                    type: array
-                    items:
-                      type: string
+                $ref: '#/components/schemas/ValidationResponse'
 
   # User Story endpoints
   /api/v1/user-stories:
@@ -682,14 +675,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  valid:
-                    type: boolean
-                  errors:
-                    type: array
-                    items:
-                      type: string
+                $ref: '#/components/schemas/ValidationResponse'
 
   # Acceptance Criteria endpoints
   /api/v1/acceptance-criteria:
@@ -879,14 +865,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  valid:
-                    type: boolean
-                  errors:
-                    type: array
-                    items:
-                      type: string
+                $ref: '#/components/schemas/ValidationResponse'
 
   # Requirements endpoints
   /api/v1/requirements:
@@ -1199,14 +1178,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  valid:
-                    type: boolean
-                  errors:
-                    type: array
-                    items:
-                      type: string
+                $ref: '#/components/schemas/ValidationResponse'
 
   # Search endpoints
   /api/v1/search:
@@ -2465,7 +2437,7 @@ components:
 
     CreateEpicRequest:
       type: object
-      required: [title, priority]
+      required: [title, priority, creator_id]
       properties:
         title:
           type: string
@@ -2475,6 +2447,9 @@ components:
           maxLength: 5000
         priority:
           $ref: '#/components/schemas/Priority'
+        creator_id:
+          type: string
+          format: uuid
         assignee_id:
           type: string
           format: uuid
@@ -3177,66 +3152,70 @@ components:
           type: string
           maxLength: 200
 
+    # Validation Response Schema
+    ValidationResponse:
+      type: object
+      required: [valid, errors]
+      properties:
+        valid:
+          type: boolean
+          description: Whether the validation passed
+        errors:
+          type: array
+          items:
+            type: string
+          description: List of validation error messages
+
     # Configuration List Response Schemas
     RequirementTypeListResponse:
-      type: object
-      required: [requirement_types, count]
-      properties:
-        requirement_types:
-          type: array
-          items:
-            $ref: '#/components/schemas/RequirementType'
-        count:
-          type: integer
-          minimum: 0
+      allOf:
+        - $ref: '#/components/schemas/ListResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/RequirementType'
 
     RelationshipTypeListResponse:
-      type: object
-      required: [relationship_types, count]
-      properties:
-        relationship_types:
-          type: array
-          items:
-            $ref: '#/components/schemas/RelationshipType'
-        count:
-          type: integer
-          minimum: 0
+      allOf:
+        - $ref: '#/components/schemas/ListResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/RelationshipType'
 
     StatusModelListResponse:
-      type: object
-      required: [status_models, count]
-      properties:
-        status_models:
-          type: array
-          items:
-            $ref: '#/components/schemas/StatusModel'
-        count:
-          type: integer
-          minimum: 0
+      allOf:
+        - $ref: '#/components/schemas/ListResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/StatusModel'
 
     StatusListResponse:
-      type: object
-      required: [statuses, count]
-      properties:
-        statuses:
-          type: array
-          items:
-            $ref: '#/components/schemas/Status'
-        count:
-          type: integer
-          minimum: 0
+      allOf:
+        - $ref: '#/components/schemas/ListResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Status'
 
     StatusTransitionListResponse:
-      type: object
-      required: [transitions, count]
-      properties:
-        transitions:
-          type: array
-          items:
-            $ref: '#/components/schemas/StatusTransition'
-        count:
-          type: integer
-          minimum: 0
+      allOf:
+        - $ref: '#/components/schemas/ListResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/StatusTransition'
 
 tags:
   - name: Authentication
