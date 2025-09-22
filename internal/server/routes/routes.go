@@ -140,11 +140,12 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	v1 := router.Group("/api/v1")
 	{
 		// Search routes
-		v1.GET("/search", searchHandler.Search)
-		v1.GET("/search/suggestions", searchHandler.SearchSuggestions)
+		v1.GET("/search", authService.Middleware(), searchHandler.Search)
+		v1.GET("/search/suggestions", authService.Middleware(), searchHandler.SearchSuggestions)
 
 		// Hierarchy and navigation routes
 		hierarchy := v1.Group("/hierarchy")
+		hierarchy.Use(authService.Middleware()) // Add authentication middleware
 		{
 			hierarchy.GET("", navigationHandler.GetHierarchy)
 			hierarchy.GET("/epics/:id", navigationHandler.GetEpicHierarchy)
@@ -153,6 +154,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 		}
 		// Epic routes
 		epics := v1.Group("/epics")
+		epics.Use(authService.Middleware()) // Add authentication middleware
 		{
 			epics.POST("", epicHandler.CreateEpic)
 			epics.GET("", epicHandler.ListEpics)
@@ -170,6 +172,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 
 		// User Story routes
 		userStories := v1.Group("/user-stories")
+		userStories.Use(authService.Middleware()) // Add authentication middleware
 		{
 			userStories.POST("", userStoryHandler.CreateUserStory)
 			userStories.GET("", userStoryHandler.ListUserStories)
@@ -189,6 +192,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 
 		// Acceptance Criteria routes
 		acceptanceCriteria := v1.Group("/acceptance-criteria")
+		acceptanceCriteria.Use(authService.Middleware()) // Add authentication middleware
 		{
 			acceptanceCriteria.GET("", acceptanceCriteriaHandler.ListAcceptanceCriteria)
 			acceptanceCriteria.GET("/:id", acceptanceCriteriaHandler.GetAcceptanceCriteria)
@@ -201,6 +205,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 
 		// Requirement routes
 		requirements := v1.Group("/requirements")
+		requirements.Use(authService.Middleware()) // Add authentication middleware
 		{
 			requirements.POST("", requirementHandler.CreateRequirement)
 			requirements.GET("", requirementHandler.ListRequirements)
@@ -222,6 +227,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 
 		// Configuration routes (admin only)
 		config := v1.Group("/config")
+		config.Use(authService.Middleware(), authService.RequireAdministrator()) // Add authentication and admin middleware
 		{
 			// Requirement Type routes
 			requirementTypes := config.Group("/requirement-types")
@@ -276,10 +282,11 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 		}
 
 		// General deletion confirmation route
-		v1.GET("/deletion/confirm", deletionHandler.GetDeletionConfirmation)
+		v1.GET("/deletion/confirm", authService.Middleware(), deletionHandler.GetDeletionConfirmation)
 
 		// Comment routes
 		comments := v1.Group("/comments")
+		comments.Use(authService.Middleware()) // Add authentication middleware
 		{
 			comments.GET("/:id", commentHandler.GetComment)
 			comments.PUT("/:id", commentHandler.UpdateComment)
