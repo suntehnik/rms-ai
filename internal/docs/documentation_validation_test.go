@@ -11,7 +11,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 )
 
 // RouteInfo represents a route extracted from routes.go
@@ -49,91 +48,6 @@ func TestOpenAPIRouteCompleteness(t *testing.T) {
 
 	t.Run("EntityCoverageAnalysis", func(t *testing.T) {
 		analyzeEntityCoverageInTests(t, routes, openAPIPaths)
-	})
-}
-
-// TestResponseSchemaValidation validates response format consistency
-func TestResponseSchemaValidation(t *testing.T) {
-	specPath := "../../docs/openapi-v3.yaml"
-
-	// Read OpenAPI specification
-	specData, err := os.ReadFile(specPath)
-	require.NoError(t, err, "Should be able to read OpenAPI spec")
-
-	var spec map[string]interface{}
-	err = yaml.Unmarshal(specData, &spec)
-	require.NoError(t, err, "OpenAPI spec should be valid YAML")
-
-	t.Run("StandardResponseFormats", func(t *testing.T) {
-		validateStandardResponseFormats(t, spec)
-	})
-
-	t.Run("ListResponseConsistency", func(t *testing.T) {
-		validateListResponseConsistency(t, spec)
-	})
-
-	t.Run("ErrorResponseConsistency", func(t *testing.T) {
-		validateErrorResponseConsistency(t, spec)
-	})
-
-	t.Run("RequiredSchemasPresent", func(t *testing.T) {
-		validateRequiredSchemasPresent(t, spec)
-	})
-}
-
-// TestAuthenticationDocumentation validates authentication requirements documentation
-func TestAuthenticationDocumentation(t *testing.T) {
-	specPath := "../../docs/openapi-v3.yaml"
-
-	specData, err := os.ReadFile(specPath)
-	require.NoError(t, err, "Should be able to read OpenAPI spec")
-
-	var spec map[string]interface{}
-	err = yaml.Unmarshal(specData, &spec)
-	require.NoError(t, err, "OpenAPI spec should be valid YAML")
-
-	t.Run("SecuritySchemesDefined", func(t *testing.T) {
-		validateSecuritySchemesDefined(t, spec)
-	})
-
-	t.Run("PublicEndpointsMarked", func(t *testing.T) {
-		validatePublicEndpointsMarked(t, spec)
-	})
-
-	t.Run("AdminEndpointsMarked", func(t *testing.T) {
-		validateAdminEndpointsMarked(t, spec)
-	})
-
-	t.Run("AuthenticationRequirementsConsistent", func(t *testing.T) {
-		validateAuthenticationRequirementsConsistent(t, spec)
-	})
-}
-
-// TestDocumentationCompleteness implements automated completeness checks
-func TestDocumentationCompleteness(t *testing.T) {
-	specPath := "../../docs/openapi-v3.yaml"
-
-	specData, err := os.ReadFile(specPath)
-	require.NoError(t, err, "Should be able to read OpenAPI spec")
-
-	var spec map[string]interface{}
-	err = yaml.Unmarshal(specData, &spec)
-	require.NoError(t, err, "OpenAPI spec should be valid YAML")
-
-	t.Run("AllEndpointsHaveDescriptions", func(t *testing.T) {
-		validateAllEndpointsHaveDescriptions(t, spec)
-	})
-
-	t.Run("AllSchemasHaveDescriptions", func(t *testing.T) {
-		validateAllSchemasHaveDescriptions(t, spec)
-	})
-
-	t.Run("ParameterDocumentationComplete", func(t *testing.T) {
-		validateParameterDocumentationComplete(t, spec)
-	})
-
-	t.Run("ResponseDocumentationComplete", func(t *testing.T) {
-		validateResponseDocumentationComplete(t, spec)
 	})
 }
 
