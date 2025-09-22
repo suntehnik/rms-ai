@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Requirements Management API - Interactive Documentation</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui.css" />
+    <style>
+        html {
+            box-sizing: border-box;
+            overflow: -moz-scrollbars-vertical;
+            overflow-y: scroll;
+        }
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+        body {
+            margin:0;
+            background: #fafafa;
+        }
+        .swagger-ui .topbar {
+            background-color: #2c3e50;
+        }
+        .swagger-ui .topbar .download-url-wrapper .select-label {
+            color: #fff;
+        }
+        .swagger-ui .topbar .download-url-wrapper input[type=text] {
+            border: 2px solid #34495e;
+        }
+        .swagger-ui .info .title {
+            color: #2c3e50;
+        }
+        .custom-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .custom-header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .custom-header p {
+            margin: 10px 0 0 0;
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        .version-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        .quick-links {
+            background: white;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .quick-links h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .quick-links ul {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .quick-links li {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+        .quick-links a {
+            text-decoration: none;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        .quick-links a:hover {
+            color: #3498db;
+        }
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+        }
+        .footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="custom-header">
+        <h1>Product Requirements Management API</h1>
+        <p>Interactive API Documentation with Request/Response Examples</p>
+        <div class="version-badge">Version 1.0.0</div>
+    </div>
+
+    <div class="quick-links">
+        <h3>📚 Documentation Resources</h3>
+        <ul>
+            <li><a href="api-documentation.html">📄 Complete HTML Documentation</a></li>
+            <li><a href="api-documentation.md">📝 Markdown Documentation</a></li>
+            <li><a href="api-types.ts">⚡ TypeScript Interfaces</a></li>
+            <li><a href="api-documentation.json">🔧 JSON Schema</a></li>
+            <li><a href="../openapi-v3.yaml">📋 OpenAPI Specification</a></li>
+            <li><a href="../swagger.json">🔗 Swagger JSON</a></li>
+        </ul>
+    </div>
+
+    <div id="swagger-ui"></div>
+
+    <div class="footer">
+        <p>Generated from OpenAPI 3.0.3 specification | 
+        <a href="https://github.com/swagger-api/swagger-ui">Powered by Swagger UI</a></p>
+    </div>
+
+    <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {
+            // Determine the OpenAPI spec URL
+            const specUrl = window.location.origin + window.location.pathname.replace('/swagger-ui.html', '/openapi-v3.yaml');
+            
+            // Initialize Swagger UI
+            const ui = SwaggerUIBundle({
+                url: '../openapi-v3.yaml',
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                defaultModelsExpandDepth: 2,
+                defaultModelExpandDepth: 2,
+                docExpansion: "list",
+                filter: true,
+                showExtensions: true,
+                showCommonExtensions: true,
+                tryItOutEnabled: true,
+                requestInterceptor: function(request) {
+                    // Add any default headers or authentication
+                    if (localStorage.getItem('api_token')) {
+                        request.headers['Authorization'] = 'Bearer ' + localStorage.getItem('api_token');
+                    }
+                    return request;
+                },
+                responseInterceptor: function(response) {
+                    // Handle responses, could log or process them
+                    return response;
+                },
+                onComplete: function() {
+                    console.log('Swagger UI loaded successfully');
+                    
+                    // Add custom functionality
+                    addAuthenticationHelper();
+                    addQuickNavigation();
+                },
+                validatorUrl: null, // Disable validator badge
+                supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+                oauth2RedirectUrl: window.location.origin + '/oauth2-redirect.html'
+            });
+
+            // Add authentication helper
+            function addAuthenticationHelper() {
+                const authButton = document.createElement('button');
+                authButton.innerHTML = '🔐 Set API Token';
+                authButton.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #3498db;
+                    color: white;
+                    border: none;
+                    padding: 10px 15px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    z-index: 1000;
+                    font-size: 14px;
+                `;
+                
+                authButton.onclick = function() {
+                    const token = prompt('Enter your JWT token:');
+                    if (token) {
+                        localStorage.setItem('api_token', token);
+                        alert('Token saved! It will be included in API requests.');
+                    }
+                };
+                
+                document.body.appendChild(authButton);
+            }
+
+            // Add quick navigation
+            function addQuickNavigation() {
+                setTimeout(() => {
+                    const operations = document.querySelectorAll('.opblock-summary');
+                    const nav = document.createElement('div');
+                    nav.style.cssText = `
+                        position: fixed;
+                        left: 20px;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        background: white;
+                        border: 1px solid #ddd;
+                        border-radius: 5px;
+                        padding: 10px;
+                        max-height: 400px;
+                        overflow-y: auto;
+                        z-index: 999;
+                        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        width: 200px;
+                        font-size: 12px;
+                    `;
+                    
+                    nav.innerHTML = '<h4 style="margin-top:0;">Quick Navigation</h4>';
+                    
+                    operations.forEach((op, index) => {
+                        const method = op.querySelector('.opblock-summary-method');
+                        const path = op.querySelector('.opblock-summary-path');
+                        if (method && path) {
+                            const link = document.createElement('div');
+                            link.style.cssText = `
+                                padding: 5px;
+                                cursor: pointer;
+                                border-radius: 3px;
+                                margin: 2px 0;
+                                background: #f8f9fa;
+                            `;
+                            link.innerHTML = `<strong>${method.textContent}</strong> ${path.textContent}`;
+                            link.onclick = () => op.scrollIntoView({ behavior: 'smooth' });
+                            nav.appendChild(link);
+                        }
+                    });
+                    
+                    document.body.appendChild(nav);
+                }, 2000);
+            }
+        };
+    </script>
+</body>
+</html>

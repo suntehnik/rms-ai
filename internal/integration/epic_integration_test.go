@@ -266,7 +266,11 @@ func TestEpicIntegration_ListEpics(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, int64(1), response.TotalCount)
-	assert.Equal(t, models.EpicStatusBacklog, response.Data[0].Status)
+	if len(response.Data) > 0 {
+		assert.Equal(t, models.EpicStatusBacklog, response.Data[0].Status)
+	} else {
+		t.Errorf("Expected at least 1 epic with Backlog status, but got 0")
+	}
 }
 
 func TestEpicIntegration_ChangeEpicStatus(t *testing.T) {
@@ -310,9 +314,4 @@ func TestEpicIntegration_ChangeEpicStatus(t *testing.T) {
 
 	assert.Equal(t, epic.ID, updatedEpic.ID)
 	assert.Equal(t, models.EpicStatusInProgress, updatedEpic.Status)
-}
-
-// Helper function to create string pointers
-func stringPtr(s string) *string {
-	return &s
 }

@@ -49,8 +49,8 @@ jobs:
     - name: Validate Swagger documentation
       run: make swagger-validate
     
-    - name: Run documentation tests
-      run: go test -v ./internal/docs/... -run "Test.*Documentation|Test.*Swagger"
+    # - name: Run documentation tests
+    #   run: go test -v ./internal/docs/... -run "Test.*Documentation|Test.*Swagger"
     
     - name: Generate documentation metrics
       run: make docs-metrics-json

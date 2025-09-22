@@ -17,7 +17,9 @@ This document provides a comprehensive API reference for implementing a web UI c
 5. [Error Handling](#error-handling)
 6. [Search & Navigation](#search--navigation)
 7. [Comments System](#comments-system)
-8. [Configuration Management](#configuration-management)
+8. [Deletion Workflows](#deletion-workflows)
+9. [Configuration Management](#configuration-management)
+10. [Implementation Notes](#implementation-notes)
 
 ---
 
@@ -58,10 +60,14 @@ interface ChangePasswordRequest {
 
 #### User Management (Admin Only)
 - `POST /auth/users` - Create user
-- `GET /auth/users` - List users
-- `GET /auth/users/:id` - Get user
+- `GET /auth/users` - List users with pagination
+- `GET /auth/users/:id` - Get user by ID
 - `PUT /auth/users/:id` - Update user
 - `DELETE /auth/users/:id` - Delete user
+
+### Health Check Endpoints (Public)
+- `GET /ready` - Readiness check (no authentication required)
+- `GET /live` - Liveness check (no authentication required)
 
 ---
 
@@ -115,6 +121,11 @@ Epic (EP-001)
 | PATCH | `/:id/assign` | Assign epic to user |
 | GET | `/:id/validate-deletion` | Validate deletion |
 | DELETE | `/:id/delete` | Comprehensive deletion |
+| GET | `/:id/comments` | Get epic comments |
+| POST | `/:id/comments` | Create epic comment |
+| POST | `/:id/comments/inline` | Create epic inline comment |
+| GET | `/:id/comments/inline/visible` | Get visible epic inline comments |
+| POST | `/:id/comments/inline/validate` | Validate epic inline comments |
 
 **Query Parameters for List:**
 - `creator_id` (UUID) - Filter by creator
@@ -143,6 +154,11 @@ Epic (EP-001)
 | PATCH | `/:id/assign` | Assign to user |
 | GET | `/:id/validate-deletion` | Validate deletion |
 | DELETE | `/:id/delete` | Comprehensive deletion |
+| GET | `/:id/comments` | Get user story comments |
+| POST | `/:id/comments` | Create user story comment |
+| POST | `/:id/comments/inline` | Create user story inline comment |
+| GET | `/:id/comments/inline/visible` | Get visible user story inline comments |
+| POST | `/:id/comments/inline/validate` | Validate user story inline comments |
 
 **Query Parameters for List:**
 - `epic_id` (UUID) - Filter by epic
@@ -165,6 +181,18 @@ Epic (EP-001)
 | DELETE | `/:id` | Delete acceptance criteria |
 | GET | `/:id/validate-deletion` | Validate deletion |
 | DELETE | `/:id/delete` | Comprehensive deletion |
+| GET | `/:id/comments` | Get acceptance criteria comments |
+| POST | `/:id/comments` | Create acceptance criteria comment |
+| POST | `/:id/comments/inline` | Create acceptance criteria inline comment |
+| GET | `/:id/comments/inline/visible` | Get visible acceptance criteria inline comments |
+| POST | `/:id/comments/inline/validate` | Validate acceptance criteria inline comments |
+
+**Query Parameters for List:**
+- `user_story_id` (UUID) - Filter by user story
+- `author_id` (UUID) - Filter by author
+- `order_by` (string) - Sort order
+- `limit` (1-100) - Page size
+- `offset` (number) - Pagination offset
 
 ### Requirements (`/api/v1/requirements`)
 
@@ -182,6 +210,24 @@ Epic (EP-001)
 | POST | `/relationships` | Create relationship |
 | GET | `/:id/validate-deletion` | Validate deletion |
 | DELETE | `/:id/delete` | Comprehensive deletion |
+| GET | `/:id/comments` | Get requirement comments |
+| POST | `/:id/comments` | Create requirement comment |
+| POST | `/:id/comments/inline` | Create requirement inline comment |
+| GET | `/:id/comments/inline/visible` | Get visible requirement inline comments |
+| POST | `/:id/comments/inline/validate` | Validate requirement inline comments |
+
+**Query Parameters for List:**
+- `user_story_id` (UUID) - Filter by user story
+- `acceptance_criteria_id` (UUID) - Filter by acceptance criteria
+- `type_id` (UUID) - Filter by requirement type
+- `creator_id` (UUID) - Filter by creator
+- `assignee_id` (UUID) - Filter by assignee
+- `status` (RequirementStatus) - Filter by status
+- `priority` (1-4) - Filter by priority
+- `order_by` (string) - Sort order
+- `limit` (1-100) - Page size
+- `offset` (number) - Pagination offset
+- `include` (string) - Include related data: `user_story,acceptance_criteria,type,creator,assignee,source_relationships,target_relationships,comments`
 
 ### Requirement Relationships (`/api/v1/requirement-relationships`)
 
@@ -236,26 +282,72 @@ interface SearchSuggestionsResponse {
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/:id` | Get comment |
-| PUT | `/:id` | Update comment |
-| DELETE | `/:id` | Delete comment |
-| POST | `/:id/resolve` | Resolve comment |
-| POST | `/:id/unresolve` | Unresolve comment |
-| GET | `/status/:status` | Get comments by status |
-| GET | `/:id/replies` | Get comment replies |
-| POST | `/:id/replies` | Create reply |
+| GET | `/:id` | Get comment by ID |
+| PUT | `/:id` | Update comment content |
+| DELETE | `/:id` | Delete comment (cascade deletes replies) |
+| POST | `/:id/resolve` | Mark comment as resolved |
+| POST | `/:id/unresolve` | Mark comment as unresolved |
+| GET | `/status/:status` | Get comments by status (resolved/unresolved) |
+| GET | `/:id/replies` | Get comment replies with pagination |
+| POST | `/:id/replies` | Create reply to comment |
 
 ### Entity Comments
-Each entity supports comments:
+Each entity (Epic, User Story, Acceptance Criteria, Requirement) supports comments:
 
 **General Comments:**
-- `GET /:entity_type/:id/comments` - Get entity comments
-- `POST /:entity_type/:id/comments` - Create comment
+- `GET /:entity_type/:id/comments` - Get entity comments with pagination
+- `POST /:entity_type/:id/comments` - Create general comment on entity
 
 **Inline Comments:**
-- `POST /:entity_type/:id/comments/inline` - Create inline comment
+- `POST /:entity_type/:id/comments/inline` - Create inline comment linked to specific text
 - `GET /:entity_type/:id/comments/inline/visible` - Get visible inline comments
-- `POST /:entity_type/:id/comments/inline/validate` - Validate inline comments
+- `POST /:entity_type/:id/comments/inline/validate` - Validate inline comment positions
+
+### Comment Threading
+Comments support parent-child relationships for threaded discussions:
+- Use `parent_comment_id` when creating replies
+- Replies are automatically linked to parent comments
+- Deleting a parent comment cascades to all replies
+
+---
+
+## Deletion Workflows
+
+The API provides comprehensive deletion workflows with dependency validation to ensure safe entity removal.
+
+### Deletion Validation Endpoints
+
+Each entity type supports deletion validation:
+- `GET /api/v1/epics/:id/validate-deletion`
+- `GET /api/v1/user-stories/:id/validate-deletion`
+- `GET /api/v1/acceptance-criteria/:id/validate-deletion`
+- `GET /api/v1/requirements/:id/validate-deletion`
+
+### Comprehensive Deletion Endpoints
+
+Each entity type supports comprehensive deletion with cascade operations:
+- `DELETE /api/v1/epics/:id/delete`
+- `DELETE /api/v1/user-stories/:id/delete`
+- `DELETE /api/v1/acceptance-criteria/:id/delete`
+- `DELETE /api/v1/requirements/:id/delete`
+
+### General Deletion Confirmation
+
+For flexible deletion validation across entity types:
+- `GET /api/v1/deletion/confirm?entity_type=epic&id=uuid`
+
+### Deletion Workflow Process
+
+1. **Validate Deletion**: Call validate-deletion endpoint to check dependencies
+2. **Review Dependencies**: Present dependency information to user
+3. **Confirm Deletion**: If acceptable, call comprehensive deletion endpoint
+4. **Handle Results**: Process deletion results and update UI accordingly
+
+### Dependency Types
+
+- `child` - Direct child entities (e.g., User Stories under Epic)
+- `reference` - Entities that reference this entity
+- `relationship` - Requirement relationships that would be broken
 
 ---
 
@@ -296,6 +388,8 @@ Each entity supports comments:
 - `GET /:id` - Get status transition
 - `PUT /:id` - Update status transition
 - `DELETE /:id` - Delete status transition
+
+**Note**: All configuration endpoints require Administrator role and proper authentication.
 
 ---
 
@@ -514,6 +608,11 @@ interface InlineCommentPosition {
   text_position_end: number;
 }
 
+interface ValidationResponse {
+  valid: boolean;
+  errors: string[];
+}
+
 // Enhanced Comment System Types
 interface CommentThread {
   parent_comment: Comment;
@@ -590,6 +689,52 @@ interface CreateRelationshipTypeRequest {
 }
 
 interface UpdateRelationshipTypeRequest {
+  name?: string;
+  description?: string;
+}
+
+// Status Management Request Types
+interface CreateStatusModelRequest {
+  name: string;
+  description?: string;
+  entity_type: 'epic' | 'user_story' | 'acceptance_criteria' | 'requirement';
+  is_default?: boolean;
+}
+
+interface UpdateStatusModelRequest {
+  name?: string;
+  description?: string;
+  is_default?: boolean;
+}
+
+interface CreateStatusRequest {
+  name: string;
+  description?: string;
+  color?: string; // Hex color code (e.g., '#FF5733')
+  order: number;
+  is_initial?: boolean;
+  is_final?: boolean;
+  status_model_id: string;
+}
+
+interface UpdateStatusRequest {
+  name?: string;
+  description?: string;
+  color?: string; // Hex color code (e.g., '#FF5733')
+  order?: number;
+  is_initial?: boolean;
+  is_final?: boolean;
+}
+
+interface CreateStatusTransitionRequest {
+  name?: string;
+  description?: string;
+  from_status_id: string;
+  to_status_id: string;
+  status_model_id: string;
+}
+
+interface UpdateStatusTransitionRequest {
   name?: string;
   description?: string;
 }
@@ -707,6 +852,37 @@ interface DeletedEntity {
   reference_id: string;
 }
 
+// Enhanced Deletion Workflow Types
+interface DeletionValidation {
+  entity_type: string;
+  entity_id: string;
+  can_delete: boolean;
+  blocking_dependencies: DependencyItem[];
+  cascade_dependencies: DependencyItem[];
+  warnings: string[];
+}
+
+interface DeletionPlan {
+  primary_entity: EntityReference;
+  cascade_deletions: EntityReference[];
+  dependency_updates: DependencyUpdate[];
+  estimated_impact: number;
+}
+
+interface EntityReference {
+  entity_type: string;
+  entity_id: string;
+  reference_id: string;
+  title: string;
+}
+
+interface DependencyUpdate {
+  entity_type: string;
+  entity_id: string;
+  field: string;
+  action: 'nullify' | 'cascade' | 'restrict';
+}
+
 // List Response Types
 interface ListResponse<T> {
   data: T[];
@@ -726,7 +902,7 @@ interface AssignmentRequest {
 
 // Health Check Types
 interface HealthCheckResponse {
-  status: string;
+  status: 'ok' | 'error';
   reason?: string;
 }
 ```
@@ -814,6 +990,13 @@ interface DeletionConflictResponse extends ErrorResponse {
     dependencies: DependencyItem[];
   };
 }
+
+interface AuthenticationErrorResponse extends ErrorResponse {
+  error: {
+    code: 'AUTHENTICATION_REQUIRED' | 'INSUFFICIENT_PERMISSIONS';
+    message: string;
+  };
+}
 ```
 
 ---
@@ -854,4 +1037,125 @@ Consider implementing WebSocket connections for real-time updates to comments an
 - Cache user information
 - Implement cache invalidation for entity updates
 
-This documentation provides a complete foundation for implementing a web UI client for the Product Requirements Management API.
+### Deletion Workflow Implementation
+1. **Pre-deletion Validation**:
+   ```typescript
+   const validation = await api.get(`/api/v1/epics/${id}/validate-deletion`);
+   if (!validation.can_delete) {
+     // Show dependencies and warnings to user
+     showDeletionConflicts(validation.dependencies, validation.warnings);
+     return;
+   }
+   ```
+
+2. **Comprehensive Deletion**:
+   ```typescript
+   const result = await api.delete(`/api/v1/epics/${id}/delete`);
+   if (result.success) {
+     // Update UI to reflect deleted entities
+     updateUIAfterDeletion(result.deleted_entities);
+   }
+   ```
+
+### Comment System Implementation
+1. **Inline Comments**:
+   ```typescript
+   // Create inline comment
+   const inlineComment = await api.post(`/api/v1/epics/${id}/comments/inline`, {
+     content: "This needs clarification",
+     linked_text: "user authentication",
+     text_position_start: 45,
+     text_position_end: 63
+   });
+   
+   // Validate inline comments after content changes
+   const validation = await api.post(`/api/v1/epics/${id}/comments/inline/validate`, {
+     comments: [
+       {
+         comment_id: inlineComment.id,
+         text_position_start: 45,
+         text_position_end: 63
+       }
+     ]
+   });
+   ```
+
+2. **Comment Threading**:
+   ```typescript
+   // Create reply to comment
+   const reply = await api.post(`/api/v1/comments/${parentId}/replies`, {
+     content: "I agree with this point"
+   });
+   
+   // Get all replies
+   const replies = await api.get(`/api/v1/comments/${parentId}/replies`);
+   ```
+
+### Authentication & Authorization
+- All endpoints except `/auth/login`, `/ready`, and `/live` require JWT authentication
+- Configuration endpoints require Administrator role
+- Use `x-required-role` extension in OpenAPI for role-based access control
+- Handle 401 (Unauthorized) and 403 (Forbidden) responses appropriately
+
+### Response Format Consistency
+All list endpoints now use standardized `ListResponse` format:
+```typescript
+interface ListResponse<T> {
+  data: T[];
+  total_count: number;
+  limit: number;
+  offset: number;
+}
+```
+
+This ensures consistent pagination handling across all entity types.
+
+This documentation provides a complete foundation for implementing a web UI client for the Product Requirements Management API with full support for deletion workflows, comprehensive comment system, and all documented endpoints.
+---
+
+
+## 📚 Complete Documentation Suite
+
+For the most up-to-date and comprehensive API documentation, visit our generated documentation hub:
+
+### Interactive Documentation
+- **[Documentation Hub](../docs/generated/index.html)** - Central access point for all documentation formats
+- **[Swagger UI](../docs/generated/swagger-ui.html)** - Interactive API explorer with live testing
+- **[Developer Guide](../docs/generated/developer-guide.md)** - Comprehensive integration guide with examples
+
+### Reference Documentation
+- **[HTML Documentation](../docs/generated/api-documentation.html)** - Complete API reference in HTML format
+- **[Markdown Documentation](../docs/generated/api-documentation.md)** - API reference in Markdown format
+- **[TypeScript Interfaces](../docs/generated/api-types.ts)** - Complete TypeScript type definitions
+- **[JSON Schema](../docs/generated/api-documentation.json)** - Machine-readable API documentation
+
+### Source Specifications
+- **[OpenAPI Specification](../docs/openapi-v3.yaml)** - Complete OpenAPI 3.0.3 specification
+- **[Swagger JSON](../docs/swagger.json)** - Generated Swagger documentation
+
+### Quick Access Commands
+```bash
+# Generate all documentation formats
+make docs-generate
+
+# Generate specific formats
+make docs-generate-html
+make docs-generate-markdown  
+make docs-generate-typescript
+make docs-generate-json
+
+# Generate interactive Swagger UI
+make swagger
+
+# Serve documentation locally
+make swagger-serve
+```
+
+### Documentation Features
+- **Interactive Testing**: Live API exploration with Swagger UI
+- **Multiple Formats**: HTML, Markdown, TypeScript, JSON for different use cases
+- **Complete Coverage**: All 80+ endpoints documented with examples
+- **Type Safety**: Full TypeScript interface definitions
+- **Client Examples**: Implementation examples in multiple languages
+- **Best Practices**: Security, error handling, and performance guidance
+- **Real-time Updates**: Documentation generated from OpenAPI specification

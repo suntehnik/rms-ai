@@ -44,7 +44,7 @@
   - Add comment endpoints for Requirement entities (CRUD, inline, validation)
   - _Requirements: 4.2, 4.3_
 
-- [-] 7. Update TypeScript interfaces in steering documentation
+- [x] 7. Update TypeScript interfaces in steering documentation
   - Add deletion workflow TypeScript interfaces (DependencyInfo, DeletionResult, etc.)
   - Add enhanced comment system TypeScript interfaces
   - Add inline comment validation TypeScript interfaces
@@ -58,14 +58,14 @@
   - Check that all entity types are covered consistently
   - _Requirements: 6.1, 6.2, 6.3_
 
-- [ ] 9. Update steering documentation with complete API reference
+- [x] 9. Update steering documentation with complete API reference
   - Sync the steering api-client-export.md with updated OpenAPI specification
   - Add comprehensive endpoint tables for all missing functionality
   - Update TypeScript interface examples with new types
   - Add implementation notes for deletion workflows and comment system
   - _Requirements: 1.1, 4.1, 5.1, 7.1_
 
-- [ ] 10. Generate updated API documentation from OpenAPI specification
+- [x] 10. Generate updated API documentation from OpenAPI specification
   - Generate HTML documentation from updated OpenAPI specification
   - Create interactive API documentation with request/response examples
   - Generate client SDK documentation with TypeScript interfaces
@@ -95,7 +95,7 @@
     - Ensure 1:1 mapping between documented and implemented endpoints
   - _Requirements: 2.1, 2.2, 2.3, 6.1, 6.2, 6.3, 6.4_
 
-- [ ] 12. Create validation tests for documentation accuracy
+- [x] 12. Create validation tests for documentation accuracy
   - Write tests to verify OpenAPI spec matches actual route implementations
   - Create schema validation tests for response formats
   - Add tests to ensure authentication requirements are properly documented

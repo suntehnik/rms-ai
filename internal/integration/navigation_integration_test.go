@@ -21,9 +21,19 @@ import (
 )
 
 func TestNavigationIntegration(t *testing.T) {
+	// Skip if running in short mode or Docker not available
+	skipIfShort(t)
+	skipIfNoDocker(t)
+
+	logTestStart(t, "NavigationIntegration")
+	defer logTestEnd(t, "NavigationIntegration")
+
 	// Setup test database
 	testDB := SetupTestDatabase(t)
 	defer testDB.Cleanup(t)
+
+	// Setup authentication
+	authCtx := SetupTestAuth(t, testDB.DB)
 
 	// Setup Gin router
 	gin.SetMode(gin.TestMode)
@@ -34,18 +44,29 @@ func TestNavigationIntegration(t *testing.T) {
 		Postgres: testDB.DB,
 	}
 
-	// Setup configuration
-	cfg := &config.Config{}
+	// Setup configuration with JWT secret
+	cfg := &config.Config{
+		JWT: config.JWTConfig{
+			Secret: "test-jwt-secret-key-for-integration-tests",
+		},
+	}
 
 	// Setup routes
 	routes.Setup(router, cfg, db)
 
 	// Create test data
-	testData := setupNavigationTestData(t, testDB)
+	testData := setupNavigationTestData(t, testDB, authCtx.TestUser)
+
+	// Helper function to create authenticated requests
+	makeAuthenticatedRequest := func(method, url string) (*http.Request, *httptest.ResponseRecorder) {
+		req, _ := http.NewRequest(method, url, nil)
+		req.Header.Set("Authorization", "Bearer "+authCtx.Token)
+		w := httptest.NewRecorder()
+		return req, w
+	}
 
 	t.Run("GetHierarchy", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/api/v1/hierarchy", nil)
-		w := httptest.NewRecorder()
+		req, w := makeAuthenticatedRequest("GET", "/api/v1/hierarchy")
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
@@ -59,8 +80,7 @@ func TestNavigationIntegration(t *testing.T) {
 	})
 
 	t.Run("GetHierarchyWithExpansion", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/api/v1/hierarchy?expand=user_stories,requirements,acceptance_criteria", nil)
-		w := httptest.NewRecorder()
+		req, w := makeAuthenticatedRequest("GET", "/api/v1/hierarchy?expand=user_stories,requirements,acceptance_criteria")
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
@@ -70,12 +90,12 @@ func TestNavigationIntegration(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Greater(t, len(response.Epics), 0)
-		
+
 		// Check that user stories are expanded
 		if len(response.Epics) > 0 {
 			epic := response.Epics[0]
 			assert.NotNil(t, epic.UserStories)
-			
+
 			if len(epic.UserStories) > 0 {
 				userStory := epic.UserStories[0]
 				assert.NotNil(t, userStory.Requirements)
@@ -86,8 +106,7 @@ func TestNavigationIntegration(t *testing.T) {
 
 	t.Run("GetEpicHierarchy", func(t *testing.T) {
 		epicID := testData.Epic.ID.String()
-		req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/hierarchy/epics/%s", epicID), nil)
-		w := httptest.NewRecorder()
+		req, w := makeAuthenticatedRequest("GET", fmt.Sprintf("/api/v1/hierarchy/epics/%s", epicID))
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
@@ -101,8 +120,7 @@ func TestNavigationIntegration(t *testing.T) {
 	})
 
 	t.Run("GetEpicHierarchyByReferenceID", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/hierarchy/epics/%s", testData.Epic.ReferenceID), nil)
-		w := httptest.NewRecorder()
+		req, w := makeAuthenticatedRequest("GET", fmt.Sprintf("/api/v1/hierarchy/epics/%s", testData.Epic.ReferenceID))
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
@@ -117,8 +135,7 @@ func TestNavigationIntegration(t *testing.T) {
 
 	t.Run("GetUserStoryHierarchy", func(t *testing.T) {
 		userStoryID := testData.UserStory.ID.String()
-		req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/hierarchy/user-stories/%s?expand=requirements,acceptance_criteria", userStoryID), nil)
-		w := httptest.NewRecorder()
+		req, w := makeAuthenticatedRequest("GET", fmt.Sprintf("/api/v1/hierarchy/user-stories/%s?expand=requirements,acceptance_criteria", userStoryID))
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
@@ -134,8 +151,7 @@ func TestNavigationIntegration(t *testing.T) {
 
 	t.Run("GetEntityPath", func(t *testing.T) {
 		requirementID := testData.Requirement.ID.String()
-		req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/hierarchy/path/requirement/%s", requirementID), nil)
-		w := httptest.NewRecorder()
+		req, w := makeAuthenticatedRequest("GET", fmt.Sprintf("/api/v1/hierarchy/path/requirement/%s", requirementID))
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
@@ -158,8 +174,7 @@ func TestNavigationIntegration(t *testing.T) {
 	})
 
 	t.Run("GetHierarchyWithSorting", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/api/v1/hierarchy?order_by=priority&order_dir=asc", nil)
-		w := httptest.NewRecorder()
+		req, w := makeAuthenticatedRequest("GET", "/api/v1/hierarchy?order_by=priority&order_dir=asc")
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
@@ -173,8 +188,7 @@ func TestNavigationIntegration(t *testing.T) {
 
 	t.Run("GetHierarchyWithFiltering", func(t *testing.T) {
 		creatorID := testData.User.ID.String()
-		req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/hierarchy?creator_id=%s", creatorID), nil)
-		w := httptest.NewRecorder()
+		req, w := makeAuthenticatedRequest("GET", fmt.Sprintf("/api/v1/hierarchy?creator_id=%s", creatorID))
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
@@ -191,19 +205,36 @@ func TestNavigationIntegration(t *testing.T) {
 
 	t.Run("GetNonExistentEpicHierarchy", func(t *testing.T) {
 		nonExistentID := uuid.New().String()
-		req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/hierarchy/epics/%s", nonExistentID), nil)
-		w := httptest.NewRecorder()
+		req, w := makeAuthenticatedRequest("GET", fmt.Sprintf("/api/v1/hierarchy/epics/%s", nonExistentID))
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
 	})
 
 	t.Run("GetInvalidEntityTypePath", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/api/v1/hierarchy/path/invalid_type/123", nil)
-		w := httptest.NewRecorder()
+		req, w := makeAuthenticatedRequest("GET", "/api/v1/hierarchy/path/invalid_type/123")
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("UnauthorizedAccess", func(t *testing.T) {
+		// Test without authentication token
+		req, _ := http.NewRequest("GET", "/api/v1/hierarchy", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+	})
+
+	t.Run("InvalidToken", func(t *testing.T) {
+		// Test with invalid token
+		req, _ := http.NewRequest("GET", "/api/v1/hierarchy", nil)
+		req.Header.Set("Authorization", "Bearer invalid-token")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
 	})
 }
 
@@ -218,19 +249,9 @@ type NavigationTestData struct {
 }
 
 // setupNavigationTestData creates test data for navigation tests
-func setupNavigationTestData(t *testing.T, testDB *TestDatabase) *NavigationTestData {
+func setupNavigationTestData(t *testing.T, testDB *TestDatabase, user *models.User) *NavigationTestData {
 	// Create repositories
 	repos := repository.NewRepositories(testDB.DB)
-
-	// Create test user
-	user := &models.User{
-		ID:       uuid.New(),
-		Username: "testuser",
-		Email:    "test@example.com",
-		Role:     models.RoleUser,
-	}
-	err := repos.User.Create(user)
-	require.NoError(t, err)
 
 	// Get or create requirement type
 	reqType, err := repos.RequirementType.GetByName("Functional")
@@ -311,4 +332,3 @@ func setupNavigationTestData(t *testing.T, testDB *TestDatabase) *NavigationTest
 		RequirementType:    reqType,
 	}
 }
-

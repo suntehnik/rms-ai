@@ -3,8 +3,8 @@ package middleware
 import (
 	"os"
 	"product-requirements-management/internal/config"
-	"product-requirements-management/internal/docs"
 	"product-requirements-management/internal/logger"
+	"product-requirements-management/internal/swagger"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,13 +18,13 @@ func SetupSwaggerRoutes(router *gin.Engine, cfg *config.Config) {
 	}
 
 	// Apply environment configuration overrides
-	docs.ApplyEnvironmentConfig(environment)
+	swagger.ApplyEnvironmentConfig(environment)
 
 	// Get comprehensive Swagger configuration
-	swaggerCfg := docs.DefaultSwaggerConfig()
+	swaggerCfg := swagger.DefaultSwaggerConfig()
 
 	// Validate environment configuration and log warnings
-	warnings := docs.ValidateEnvironmentConfig(environment)
+	warnings := swagger.ValidateEnvironmentConfig(environment)
 	if len(warnings) > 0 && logger.Logger != nil {
 		for _, warning := range warnings {
 			logger.Logger.Warn("Swagger configuration warning: " + warning)
@@ -50,15 +50,15 @@ func SetupSwaggerRoutes(router *gin.Engine, cfg *config.Config) {
 	}
 
 	// Register Swagger routes with comprehensive configuration
-	docs.RegisterSwaggerRoutes(router, swaggerCfg)
+	swagger.RegisterSwaggerRoutes(router, swaggerCfg)
 
 	// Add environment status endpoint
 	router.GET("/api/v1/environment", func(c *gin.Context) {
-		c.JSON(200, docs.GetEnvironmentStatus())
+		c.JSON(200, swagger.GetEnvironmentStatus())
 	})
 
 	// Add deployment status endpoint
 	router.GET("/api/v1/deployment", func(c *gin.Context) {
-		c.JSON(200, docs.GetDeploymentStatus())
+		c.JSON(200, swagger.GetDeploymentStatus())
 	})
 }

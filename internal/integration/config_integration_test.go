@@ -90,7 +90,7 @@ func TestConfigIntegration_RequirementTypeLifecycle(t *testing.T) {
 		// 1. Create a new requirement type
 		createReq := service.CreateRequirementTypeRequest{
 			Name:        "Security",
-			Description: stringPtrIntegration("Security-related requirements"),
+			Description: stringPtr("Security-related requirements"),
 		}
 
 		reqBody, _ := json.Marshal(createReq)
@@ -125,8 +125,8 @@ func TestConfigIntegration_RequirementTypeLifecycle(t *testing.T) {
 
 		// 3. Update the requirement type
 		updateReq := service.UpdateRequirementTypeRequest{
-			Name:        stringPtrIntegration("Security & Privacy"),
-			Description: stringPtrIntegration("Security and privacy-related requirements"),
+			Name:        stringPtr("Security & Privacy"),
+			Description: stringPtr("Security and privacy-related requirements"),
 		}
 
 		reqBody, _ = json.Marshal(updateReq)
@@ -221,7 +221,7 @@ func TestConfigIntegration_RequirementTypeLifecycle(t *testing.T) {
 			Priority:    models.PriorityMedium,
 			Status:      models.EpicStatusDraft,
 			Title:       "Test Epic",
-			Description: stringPtrIntegration("Test epic description"),
+			Description: stringPtr("Test epic description"),
 		}
 		err = db.Create(epic).Error
 		require.NoError(t, err)
@@ -235,7 +235,7 @@ func TestConfigIntegration_RequirementTypeLifecycle(t *testing.T) {
 			Priority:    models.PriorityMedium,
 			Status:      models.UserStoryStatusDraft,
 			Title:       "Test User Story",
-			Description: stringPtrIntegration("Test user story description"),
+			Description: stringPtr("Test user story description"),
 		}
 		err = db.Create(userStory).Error
 		require.NoError(t, err)
@@ -250,7 +250,7 @@ func TestConfigIntegration_RequirementTypeLifecycle(t *testing.T) {
 			Status:      models.RequirementStatusDraft,
 			TypeID:      reqType.ID,
 			Title:       "Test Requirement",
-			Description: stringPtrIntegration("Test requirement description"),
+			Description: stringPtr("Test requirement description"),
 		}
 		err = db.Create(requirement).Error
 		require.NoError(t, err)
@@ -277,7 +277,7 @@ func TestConfigIntegration_RelationshipTypeLifecycle(t *testing.T) {
 		// 1. Create a new relationship type
 		createReq := service.CreateRelationshipTypeRequest{
 			Name:        "implements",
-			Description: stringPtrIntegration("Implementation relationship"),
+			Description: stringPtr("Implementation relationship"),
 		}
 
 		reqBody, _ := json.Marshal(createReq)
@@ -312,8 +312,8 @@ func TestConfigIntegration_RelationshipTypeLifecycle(t *testing.T) {
 
 		// 3. Update the relationship type
 		updateReq := service.UpdateRelationshipTypeRequest{
-			Name:        stringPtrIntegration("implements_feature"),
-			Description: stringPtrIntegration("Feature implementation relationship"),
+			Name:        stringPtr("implements_feature"),
+			Description: stringPtr("Feature implementation relationship"),
 		}
 
 		reqBody, _ = json.Marshal(updateReq)
@@ -473,9 +473,4 @@ func TestConfigIntegration_FilteringAndPagination(t *testing.T) {
 		types := response["relationship_types"].([]interface{})
 		assert.True(t, len(types) <= 3)
 	})
-}
-
-// Helper function for string pointers
-func stringPtrIntegration(s string) *string {
-	return &s
 }
