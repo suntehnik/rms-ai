@@ -674,7 +674,7 @@ func validateTagConsistency(t *testing.T, spec map[string]interface{}) {
 
 	tagUsage := make(map[string]int)
 
-	for pathName, pathValue := range paths {
+	for _, pathValue := range paths {
 		pathMap, ok := pathValue.(map[string]interface{})
 		if !ok {
 			continue
@@ -771,7 +771,7 @@ func validateExampleQuality(t *testing.T, spec map[string]interface{}) {
 	schemasWithExamples := 0
 	totalSchemas := len(schemas)
 
-	for schemaName, schemaValue := range schemas {
+	for _, schemaValue := range schemas {
 		schemaMap, ok := schemaValue.(map[string]interface{})
 		if !ok {
 			continue
@@ -804,7 +804,7 @@ func validateSchemaValidationRules(t *testing.T, spec map[string]interface{}) {
 	schemasWithValidation := 0
 	totalSchemas := len(schemas)
 
-	for schemaName, schemaValue := range schemas {
+	for _, schemaValue := range schemas {
 		schemaMap, ok := schemaValue.(map[string]interface{})
 		if !ok {
 			continue

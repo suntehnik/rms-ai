@@ -114,7 +114,6 @@ func extractAuthenticationRequirementsFromRoutes(filename string) ([]Authenticat
 	// Track current group and middleware
 	currentGroup := ""
 	var groupMiddleware []string
-	inAuthGroup := false
 
 	// Patterns for route definitions and middleware
 	groupPattern := regexp.MustCompile(`^\s*(\w+)\s*:=\s*router\.Group\("([^"]+)"\)`)
@@ -134,7 +133,6 @@ func extractAuthenticationRequirementsFromRoutes(filename string) ([]Authenticat
 		if matches := groupPattern.FindStringSubmatch(line); len(matches) > 2 {
 			currentGroup = matches[2]
 			groupMiddleware = []string{}
-			inAuthGroup = strings.Contains(currentGroup, "auth")
 		}
 
 		// Check for middleware usage
