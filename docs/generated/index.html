@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Requirements Management API - Documentation Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 40px 0;
+        }
+        
+        .header h1 {
+            font-size: 3em;
+            font-weight: 300;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        
+        .version-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 25px;
+            display: inline-block;
+            font-size: 1em;
+            backdrop-filter: blur(10px);
+        }
+        
+        .docs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .doc-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .doc-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+        
+        .doc-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .doc-card .icon {
+            font-size: 1.5em;
+        }
+        
+        .doc-card p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .doc-card .features {
+            list-style: none;
+            margin-bottom: 25px;
+        }
+        
+        .doc-card .features li {
+            padding: 5px 0;
+            color: #555;
+            position: relative;
+            padding-left: 20px;
+        }
+        
+        .doc-card .features li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(135deg, #2980b9, #1f5f8b);
+            transform: translateY(-2px);
+        }
+        
+        .btn.secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+        }
+        
+        .btn.secondary:hover {
+            background: linear-gradient(135deg, #7f8c8d, #6c7b7d);
+        }
+        
+        .quick-start {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .quick-start h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        .quick-start-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .quick-start-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .quick-start-item h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .quick-start-item p {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .code-snippet {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 30px 0;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            margin-top: 40px;
+        }
+        
+        .footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .docs-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 API Documentation Hub</h1>
+            <p>Product Requirements Management API</p>
+            <div class="version-badge">Version 1.0.0</div>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <span class="stat-number">80+</span>
+                    <span class="stat-label">API Endpoints</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">15+</span>
+                    <span class="stat-label">Entity Types</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">5</span>
+                    <span class="stat-label">Documentation Formats</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">100%</span>
+                    <span class="stat-label">OpenAPI Coverage</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="quick-start">
+            <h2>🚀 Quick Start</h2>
+            <div class="quick-start-grid">
+                <div class="quick-start-item">
+                    <h4>1. Explore Interactively</h4>
+                    <p>Use Swagger UI to test endpoints with live requests and responses</p>
+                </div>
+                <div class="quick-start-item">
+                    <h4>2. Read the Guide</h4>
+                    <p>Comprehensive developer guide with examples and best practices</p>
+                </div>
+                <div class="quick-start-item">
+                    <h4>3. Get TypeScript Types</h4>
+                    <p>Download complete TypeScript interfaces for type-safe development</p>
+                </div>
+                <div class="quick-start-item">
+                    <h4>4. Check Examples</h4>
+                    <p>Review client implementation examples in multiple languages</p>
+                </div>
+            </div>
+            
+            <div class="code-snippet">
+# Quick API Test
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "demo", "password": "demo"}'
+            </div>
+        </div>
+
+        <div class="docs-grid">
+            <div class="doc-card">
+                <h3><span class="icon">🌐</span> Interactive API Explorer</h3>
+                <p>Test API endpoints directly in your browser with Swagger UI. Includes request/response examples, authentication, and live testing capabilities.</p>
+                <ul class="features">
+                    <li>Live API testing</li>
+                    <li>Request/response examples</li>
+                    <li>Authentication support</li>
+                    <li>Schema validation</li>
+                </ul>
+                <a href="swagger-ui.html" class="btn">Open Swagger UI</a>
+            </div>
+
+            <div class="doc-card">
+                <h3><span class="icon">📖</span> Developer Guide</h3>
+                <p>Comprehensive guide for integrating with the API. Includes client examples, best practices, error handling, and advanced features.</p>
+                <ul class="features">
+                    <li>Client implementation examples</li>
+                    <li>Authentication workflows</li>
+                    <li>Error handling patterns</li>
+                    <li>Performance optimization</li>
+                </ul>
+                <a href="developer-guide.md" class="btn">Read Guide</a>
+            </div>
+
+            <div class="doc-card">
+                <h3><span class="icon">📄</span> Complete HTML Reference</h3>
+                <p>Full API reference documentation in HTML format. Organized by endpoint categories with detailed parameter and response information.</p>
+                <ul class="features">
+                    <li>All endpoints documented</li>
+                    <li>Parameter specifications</li>
+                    <li>Response schemas</li>
+                    <li>Searchable interface</li>
+                </ul>
+                <a href="api-documentation.html" class="btn">View HTML Docs</a>
+            </div>
+
+            <div class="doc-card">
+                <h3><span class="icon">⚡</span> TypeScript Interfaces</h3>
+                <p>Complete TypeScript type definitions generated from the OpenAPI specification. Perfect for type-safe client development.</p>
+                <ul class="features">
+                    <li>Full type coverage</li>
+                    <li>Request/response types</li>
+                    <li>Client interface definitions</li>
+                    <li>Enum definitions</li>
+                </ul>
+                <a href="api-types.ts" class="btn">Download Types</a>
+                <a href="api-types.ts" class="btn secondary" download>Save File</a>
+            </div>
+
+            <div class="doc-card">
+                <h3><span class="icon">📝</span> Markdown Documentation</h3>
+                <p>API documentation in Markdown format, perfect for integration into wikis, README files, or documentation sites.</p>
+                <ul class="features">
+                    <li>Markdown formatted</li>
+                    <li>Copy-paste friendly</li>
+                    <li>Version control friendly</li>
+                    <li>Platform independent</li>
+                </ul>
+                <a href="api-documentation.md" class="btn">View Markdown</a>
+                <a href="api-documentation.md" class="btn secondary" download>Download</a>
+            </div>
+
+            <div class="doc-card">
+                <h3><span class="icon">🔧</span> Machine-Readable Formats</h3>
+                <p>JSON schema and OpenAPI specification files for automated tooling, code generation, and integration testing.</p>
+                <ul class="features">
+                    <li>OpenAPI 3.0.3 specification</li>
+                    <li>JSON schema format</li>
+                    <li>Code generation ready</li>
+                    <li>Testing framework integration</li>
+                </ul>
+                <a href="api-documentation.json" class="btn">JSON Schema</a>
+                <a href="../openapi-v3.yaml" class="btn secondary">OpenAPI Spec</a>
+            </div>
+        </div>
+
+        <div class="quick-start">
+            <h2>🏗️ API Architecture Overview</h2>
+            <div class="quick-start-grid">
+                <div class="quick-start-item">
+                    <h4>Hierarchical Structure</h4>
+                    <p>Epics → User Stories → Requirements with full relationship mapping</p>
+                </div>
+                <div class="quick-start-item">
+                    <h4>Comment System</h4>
+                    <p>General and inline comments with threading and resolution tracking</p>
+                </div>
+                <div class="quick-start-item">
+                    <h4>Safe Deletion</h4>
+                    <p>Dependency validation and comprehensive deletion workflows</p>
+                </div>
+                <div class="quick-start-item">
+                    <h4>Full-Text Search</h4>
+                    <p>PostgreSQL-powered search across all entities with suggestions</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Generated from <a href="../openapi-v3.yaml">OpenAPI 3.0.3 specification</a> | 
+            <a href="../swagger.json">Swagger JSON</a> | 
+            <a href="https://github.com/swagger-api/swagger-ui">Powered by Swagger UI</a></p>
+            <p>Product Requirements Management API v1.0.0</p>
+        </div>
+    </div>
+
+    <script>
+        // Add some interactive features
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click tracking for analytics (if needed)
+            document.querySelectorAll('.btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    console.log('Documentation accessed:', this.href);
+                });
+            });
+
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case '1':
+                            e.preventDefault();
+                            window.open('swagger-ui.html', '_blank');
+                            break;
+                        case '2':
+                            e.preventDefault();
+                            window.open('developer-guide.md', '_blank');
+                            break;
+                        case '3':
+                            e.preventDefault();
+                            window.open('api-documentation.html', '_blank');
+                            break;
+                    }
+                }
+            });
+
+            // Show keyboard shortcuts hint
+            const shortcutsHint = document.createElement('div');
+            shortcutsHint.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: rgba(0,0,0,0.8);
+                color: white;
+                padding: 10px 15px;
+                border-radius: 5px;
+                font-size: 12px;
+                opacity: 0.7;
+                z-index: 1000;
+            `;
+            shortcutsHint.innerHTML = 'Shortcuts: Ctrl+1 (Swagger), Ctrl+2 (Guide), Ctrl+3 (HTML Docs)';
+            document.body.appendChild(shortcutsHint);
+
+            // Auto-hide shortcuts hint after 5 seconds
+            setTimeout(() => {
+                shortcutsHint.style.opacity = '0';
+                setTimeout(() => shortcutsHint.remove(), 300);
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

@@ -367,6 +367,71 @@ docs-quality-check:
 	(echo "❌ Documentation quality below 80%. Run 'make docs-metrics' for details." && exit 1)
 	@echo "✅ Documentation quality check passed"
 
+# Documentation validation tests
+docs-validate:
+	@echo "🔍 Running comprehensive documentation validation..."
+	go run scripts/validate_documentation_accuracy.go
+	@echo "✅ Documentation validation completed"
+
+docs-validate-routes:
+	@echo "🔍 Validating route implementation vs documentation..."
+	go test -v ./internal/validation -run TestOpenAPIRouteCompleteness
+	@echo "✅ Route validation completed"
+
+docs-validate-schemas:
+	@echo "🔍 Validating response schema consistency..."
+	go test -v ./internal/validation -run TestResponseSchemaValidation
+	@echo "✅ Schema validation completed"
+
+docs-validate-auth:
+	@echo "🔍 Validating authentication documentation..."
+	go test -v ./internal/validation -run TestAuthenticationDocumentation
+	@echo "✅ Authentication validation completed"
+
+docs-validate-completeness:
+	@echo "🔍 Validating documentation completeness..."
+	go test -v ./internal/validation -run TestDocumentationCompleteness
+	@echo "✅ Completeness validation completed"
+
+docs-validate-all:
+	@echo "🔍 Running all documentation validation tests..."
+	@$(MAKE) docs-validate-routes
+	@$(MAKE) docs-validate-schemas
+	@$(MAKE) docs-validate-auth
+	@$(MAKE) docs-validate-completeness
+	@echo "✅ All documentation validation tests completed"
+
+# Generate comprehensive API documentation from OpenAPI specification
+docs-generate:
+	@echo "📚 Generating comprehensive API documentation..."
+	@mkdir -p docs/generated
+	go run scripts/generate_api_documentation.go -input=docs/openapi-v3.yaml -output=docs/generated -format=all -verbose
+	@echo "✅ API documentation generated in docs/generated/"
+
+docs-generate-html:
+	@echo "📚 Generating HTML API documentation..."
+	@mkdir -p docs/generated
+	go run scripts/generate_api_documentation.go -input=docs/openapi-v3.yaml -output=docs/generated -format=html -verbose
+	@echo "✅ HTML documentation generated: docs/generated/api-documentation.html"
+
+docs-generate-markdown:
+	@echo "📚 Generating Markdown API documentation..."
+	@mkdir -p docs/generated
+	go run scripts/generate_api_documentation.go -input=docs/openapi-v3.yaml -output=docs/generated -format=markdown -verbose
+	@echo "✅ Markdown documentation generated: docs/generated/api-documentation.md"
+
+docs-generate-typescript:
+	@echo "📚 Generating TypeScript API documentation..."
+	@mkdir -p docs/generated
+	go run scripts/generate_api_documentation.go -input=docs/openapi-v3.yaml -output=docs/generated -format=typescript -verbose
+	@echo "✅ TypeScript documentation generated: docs/generated/api-types.ts"
+
+docs-generate-json:
+	@echo "📚 Generating JSON API documentation..."
+	@mkdir -p docs/generated
+	go run scripts/generate_api_documentation.go -input=docs/openapi-v3.yaml -output=docs/generated -format=json -verbose
+	@echo "✅ JSON documentation generated: docs/generated/api-documentation.json"
+
 # Show help for all available targets
 help:
 	@echo "📋 Available Make targets:"
@@ -425,10 +490,21 @@ help:
 	@echo "  swagger-deploy     - Deploy Swagger for current environment"
 	@echo "  swagger-test       - Test Swagger documentation generation"
 	@echo "  swagger-serve      - Start server with Swagger enabled"
+	@echo "  docs-generate      - Generate comprehensive API documentation (all formats)"
+	@echo "  docs-generate-html - Generate HTML API documentation"
+	@echo "  docs-generate-markdown - Generate Markdown API documentation"
+	@echo "  docs-generate-typescript - Generate TypeScript API documentation"
+	@echo "  docs-generate-json - Generate JSON API documentation"
 	@echo "  docs-metrics       - Generate documentation quality metrics"
 	@echo "  docs-metrics-json  - Generate metrics in JSON format"
 	@echo "  docs-metrics-summary - Show documentation quality summary"
 	@echo "  docs-quality-check - Check if documentation quality meets standards"
+	@echo "  docs-validate      - Run comprehensive documentation validation"
+	@echo "  docs-validate-routes - Validate route implementation vs documentation"
+	@echo "  docs-validate-schemas - Validate response schema consistency"
+	@echo "  docs-validate-auth - Validate authentication documentation"
+	@echo "  docs-validate-completeness - Validate documentation completeness"
+	@echo "  docs-validate-all  - Run all documentation validation tests"
 	@echo ""
 	@echo "🐳 Docker:"
 	@echo "  docker-up          - Start development containers"
