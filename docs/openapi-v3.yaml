@@ -90,6 +90,9 @@ paths:
     get:
       tags: [Authentication]
       summary: Get current user profile
+      description: Get the profile information of the currently authenticated user
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: User profile
@@ -102,6 +105,9 @@ paths:
     post:
       tags: [Authentication]
       summary: Change user password
+      description: Change the password for the currently authenticated user
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -2175,6 +2181,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: JWT token for authentication. Include as Authorization Bearer token header.
 
   parameters:
     EntityIdParam:
@@ -2301,6 +2308,7 @@ components:
     # Core entities
     User:
       type: object
+      description: User account information with role-based access control
       required: [id, username, email, role, created_at, updated_at]
       properties:
         id:
@@ -2364,6 +2372,7 @@ components:
 
     Epic:
       type: object
+      description: High-level feature or initiative containing multiple user stories
       required: [id, reference_id, title, status, priority, creator_id, created_at, last_modified]
       properties:
         id:
@@ -2704,12 +2713,16 @@ components:
     # Request schemas
     LoginRequest:
       type: object
+      description: User login credentials
       required: [username, password]
       properties:
         username:
           type: string
         password:
           type: string
+      example:
+        username: "john_doe"
+        password: "securePassword123"
 
     LoginResponse:
       type: object
@@ -2911,6 +2924,7 @@ components:
     # Response schemas
     ErrorResponse:
       type: object
+      description: Standard error response with code and message
       required: [error]
       properties:
         error:

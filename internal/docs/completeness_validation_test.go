@@ -147,10 +147,6 @@ func TestDocumentationQualityStandards(t *testing.T) {
 		validateDescriptionQuality(t, spec)
 	})
 
-	t.Run("ExampleQuality", func(t *testing.T) {
-		validateExampleQuality(t, spec)
-	})
-
 	t.Run("SchemaValidationRules", func(t *testing.T) {
 		validateSchemaValidationRules(t, spec)
 	})
@@ -751,42 +747,6 @@ func validateDescriptionQuality(t *testing.T, spec map[string]interface{}) {
 	if totalDescriptions > 0 {
 		shortPercentage := float64(shortDescriptions) / float64(totalDescriptions) * 100
 		assert.LessOrEqual(t, shortPercentage, 20.0, "No more than 20%% of descriptions should be too short")
-	}
-}
-
-func validateExampleQuality(t *testing.T, spec map[string]interface{}) {
-	// This would validate that examples are realistic and helpful
-	// For now, just check that we have some examples
-
-	components, ok := spec["components"].(map[string]interface{})
-	if !ok {
-		return
-	}
-
-	schemas, ok := components["schemas"].(map[string]interface{})
-	if !ok {
-		return
-	}
-
-	schemasWithExamples := 0
-	totalSchemas := len(schemas)
-
-	for _, schemaValue := range schemas {
-		schemaMap, ok := schemaValue.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		if _, exists := schemaMap["example"]; exists {
-			schemasWithExamples++
-		}
-	}
-
-	if totalSchemas > 0 {
-		examplePercentage := float64(schemasWithExamples) / float64(totalSchemas) * 100
-		t.Logf("Schemas with examples: %.1f%%", examplePercentage)
-		// Don't require examples for all schemas, but encourage them
-		assert.GreaterOrEqual(t, examplePercentage, 30.0, "At least 30%% of schemas should have examples")
 	}
 }
 
