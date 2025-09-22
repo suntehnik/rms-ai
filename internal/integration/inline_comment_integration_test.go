@@ -184,9 +184,9 @@ func TestInlineCommentIntegration(t *testing.T) {
 		req := service.CreateCommentRequest{
 			AuthorID:          user.ID,
 			Content:           "This is an inline comment",
-			LinkedText:        inlineStringPtr("test epic"),
-			TextPositionStart: inlineIntPtr(10),
-			TextPositionEnd:   inlineIntPtr(19),
+			LinkedText:        stringPtr("test epic"),
+			TextPositionStart: intPtr(10),
+			TextPositionEnd:   intPtr(19),
 		}
 
 		body, _ := json.Marshal(req)
@@ -218,9 +218,9 @@ func TestInlineCommentIntegration(t *testing.T) {
 		req := service.CreateCommentRequest{
 			AuthorID:          user.ID,
 			Content:           "This is an inline comment",
-			LinkedText:        inlineStringPtr("wrong text"),
-			TextPositionStart: inlineIntPtr(10),
-			TextPositionEnd:   inlineIntPtr(20),
+			LinkedText:        stringPtr("wrong text"),
+			TextPositionStart: intPtr(10),
+			TextPositionEnd:   intPtr(20),
 		}
 
 		body, _ := json.Marshal(req)
@@ -244,9 +244,9 @@ func TestInlineCommentIntegration(t *testing.T) {
 		req := service.CreateCommentRequest{
 			AuthorID:          user.ID,
 			Content:           "This is an inline comment",
-			LinkedText:        inlineStringPtr("test"),
-			TextPositionStart: inlineIntPtr(100), // Beyond text length
-			TextPositionEnd:   inlineIntPtr(104),
+			LinkedText:        stringPtr("test"),
+			TextPositionStart: intPtr(100), // Beyond text length
+			TextPositionEnd:   intPtr(104),
 		}
 
 		body, _ := json.Marshal(req)
@@ -266,9 +266,9 @@ func TestInlineCommentIntegration(t *testing.T) {
 		req := service.CreateCommentRequest{
 			AuthorID:          user.ID,
 			Content:           "Visible inline comment",
-			LinkedText:        inlineStringPtr("description"),
-			TextPositionStart: inlineIntPtr(20),
-			TextPositionEnd:   inlineIntPtr(31),
+			LinkedText:        stringPtr("description"),
+			TextPositionStart: intPtr(20),
+			TextPositionEnd:   intPtr(31),
 		}
 
 		body, _ := json.Marshal(req)
@@ -307,9 +307,9 @@ func TestInlineCommentIntegration(t *testing.T) {
 		req := service.CreateCommentRequest{
 			AuthorID:          user.ID,
 			Content:           "Comment to be hidden",
-			LinkedText:        inlineStringPtr("inline comments"),
-			TextPositionStart: inlineIntPtr(36),
-			TextPositionEnd:   inlineIntPtr(51),
+			LinkedText:        stringPtr("inline comments"),
+			TextPositionStart: intPtr(36),
+			TextPositionEnd:   intPtr(51),
 		}
 
 		body, _ := json.Marshal(req)
@@ -383,9 +383,9 @@ func TestInlineCommentIntegration(t *testing.T) {
 		inlineReq := service.CreateCommentRequest{
 			AuthorID:          user.ID,
 			Content:           "This is an inline comment",
-			LinkedText:        inlineStringPtr("test"),
-			TextPositionStart: inlineIntPtr(10),
-			TextPositionEnd:   inlineIntPtr(14),
+			LinkedText:        stringPtr("test"),
+			TextPositionStart: intPtr(10),
+			TextPositionEnd:   intPtr(14),
 		}
 
 		body, _ = json.Marshal(inlineReq)
@@ -466,9 +466,9 @@ func TestInlineCommentIntegration(t *testing.T) {
 				req := service.CreateCommentRequest{
 					AuthorID:          user.ID,
 					Content:           fmt.Sprintf("Inline comment on %s", entity.entityType),
-					LinkedText:        inlineStringPtr(entity.text),
-					TextPositionStart: inlineIntPtr(entity.start),
-					TextPositionEnd:   inlineIntPtr(entity.end),
+					LinkedText:        stringPtr(entity.text),
+					TextPositionStart: intPtr(entity.start),
+					TextPositionEnd:   intPtr(entity.end),
 				}
 
 				body, _ := json.Marshal(req)
@@ -506,43 +506,43 @@ func TestInlineCommentIntegration(t *testing.T) {
 			{
 				name:          "MissingLinkedText",
 				linkedText:    nil,
-				start:         inlineIntPtr(0),
-				end:           inlineIntPtr(5),
+				start:         intPtr(0),
+				end:           intPtr(5),
 				expectedError: true,
 			},
 			{
 				name:          "MissingStart",
-				linkedText:    inlineStringPtr("test"),
+				linkedText:    stringPtr("test"),
 				start:         nil,
-				end:           inlineIntPtr(5),
+				end:           intPtr(5),
 				expectedError: true,
 			},
 			{
 				name:          "MissingEnd",
-				linkedText:    inlineStringPtr("test"),
-				start:         inlineIntPtr(0),
+				linkedText:    stringPtr("test"),
+				start:         intPtr(0),
 				end:           nil,
 				expectedError: true,
 			},
 			{
 				name:          "EmptyLinkedText",
-				linkedText:    inlineStringPtr(""),
-				start:         inlineIntPtr(0),
-				end:           inlineIntPtr(5),
+				linkedText:    stringPtr(""),
+				start:         intPtr(0),
+				end:           intPtr(5),
 				expectedError: true,
 			},
 			{
 				name:          "NegativeStart",
-				linkedText:    inlineStringPtr("test"),
-				start:         inlineIntPtr(-1),
-				end:           inlineIntPtr(5),
+				linkedText:    stringPtr("test"),
+				start:         intPtr(-1),
+				end:           intPtr(5),
 				expectedError: true,
 			},
 			{
 				name:          "StartGreaterThanEnd",
-				linkedText:    inlineStringPtr("test"),
-				start:         inlineIntPtr(10),
-				end:           inlineIntPtr(5),
+				linkedText:    stringPtr("test"),
+				start:         intPtr(10),
+				end:           intPtr(5),
 				expectedError: true,
 			},
 		}
@@ -572,13 +572,4 @@ func TestInlineCommentIntegration(t *testing.T) {
 			})
 		}
 	})
-}
-
-// Helper functions
-func inlineStringPtr(s string) *string {
-	return &s
-}
-
-func inlineIntPtr(i int) *int {
-	return &i
 }

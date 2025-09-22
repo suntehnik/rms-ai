@@ -315,8 +315,3 @@ func TestEpicIntegration_ChangeEpicStatus(t *testing.T) {
 	assert.Equal(t, epic.ID, updatedEpic.ID)
 	assert.Equal(t, models.EpicStatusInProgress, updatedEpic.Status)
 }
-
-// Helper function to create string pointers
-func stringPtr(s string) *string {
-	return &s
-}
