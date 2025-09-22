@@ -24,6 +24,41 @@ security:
   - BearerAuth: []
 
 paths:
+  # Health Check endpoints (Public)
+  /ready:
+    get:
+      tags: [Health]
+      summary: Readiness check
+      description: Check if the application is ready to serve requests
+      security: []
+      responses:
+        '200':
+          description: Application is ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+        '503':
+          description: Application is not ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+
+  /live:
+    get:
+      tags: [Health]
+      summary: Liveness check
+      description: Check if the application is alive
+      security: []
+      responses:
+        '200':
+          description: Application is alive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+
   # Authentication endpoints
   /auth/login:
     post:
@@ -83,6 +118,117 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  # User Management (Admin Only)
+  /auth/users:
+    post:
+      tags: [Authentication, User Management]
+      summary: Create user (Admin only)
+      description: Create a new user account
+      x-required-role: Administrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    get:
+      tags: [Authentication, User Management]
+      summary: List users (Admin only)
+      description: Get list of all users
+      x-required-role: Administrator
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/OffsetParam'
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /auth/users/{id}:
+    parameters:
+      - $ref: '#/components/parameters/EntityIdParam'
+    get:
+      tags: [Authentication, User Management]
+      summary: Get user by ID (Admin only)
+      description: Get user details by ID
+      x-required-role: Administrator
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Authentication, User Management]
+      summary: Update user (Admin only)
+      description: Update user information
+      x-required-role: Administrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Authentication, User Management]
+      summary: Delete user (Admin only)
+      description: Delete user account
+      x-required-role: Administrator
+      responses:
+        '204':
+          description: User deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   # Epic endpoints
   /api/v1/epics:
     get:
@@ -107,6 +253,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EpicListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
     post:
       tags: [Epics]
@@ -124,6 +272,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Epic'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /api/v1/epics/{id}:
     parameters:
@@ -286,19 +438,23 @@ paths:
     get:
       tags: [Epics, Comments]
       summary: Get epic comments
+      description: Retrieve all comments associated with a specific epic, including both general and inline comments
       parameters:
         - $ref: '#/components/parameters/LimitParam'
         - $ref: '#/components/parameters/OffsetParam'
       responses:
         '200':
-          description: List of epic comments
+          description: List of epic comments retrieved successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommentListResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
     post:
       tags: [Epics, Comments]
       summary: Create epic comment
+      description: Create a new general comment on an epic
       requestBody:
         required: true
         content:
@@ -307,11 +463,15 @@ paths:
               $ref: '#/components/schemas/CreateCommentRequest'
       responses:
         '201':
-          description: Comment created
+          description: Comment created successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Comment'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/v1/epics/{id}/comments/inline:
     parameters:
@@ -353,6 +513,7 @@ paths:
     post:
       tags: [Epics, Comments]
       summary: Validate epic inline comments
+      description: Validate that inline comment positions are still valid against the current epic content
       requestBody:
         required: true
         content:
@@ -361,11 +522,15 @@ paths:
               $ref: '#/components/schemas/InlineCommentValidationRequest'
       responses:
         '200':
-          description: Validation result
+          description: Validation completed successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   # User Story endpoints
   /api/v1/user-stories:
@@ -1206,6 +1371,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SearchResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /api/v1/search/suggestions:
     get:
@@ -1342,20 +1509,47 @@ paths:
     get:
       tags: [Deletion]
       summary: Get deletion confirmation
-      description: Get general deletion confirmation information
+      description: Get deletion validation information for any entity type using query parameters
+      parameters:
+        - name: entity_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [epic, user_story, acceptance_criteria, requirement]
+          description: Type of entity to validate deletion for
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Entity ID to validate deletion for
       responses:
         '200':
-          description: Deletion confirmation information
+          description: Deletion validation result
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  timestamp:
-                    type: string
-                    format: date-time
+                $ref: '#/components/schemas/DependencyInfo'
+        '400':
+          description: Bad request - missing or invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # General Comment endpoints
   /api/v1/comments/{id}:
@@ -1366,12 +1560,14 @@ paths:
         schema:
           type: string
           format: uuid
+        description: UUID of the comment
     get:
       tags: [Comments]
       summary: Get comment by ID
+      description: Retrieve a specific comment with its details and optional populated fields
       responses:
         '200':
-          description: Comment details
+          description: Comment details retrieved successfully
           content:
             application/json:
               schema:
@@ -1381,6 +1577,7 @@ paths:
     put:
       tags: [Comments]
       summary: Update comment
+      description: Update the content of an existing comment
       requestBody:
         required: true
         content:
@@ -1389,17 +1586,24 @@ paths:
               $ref: '#/components/schemas/UpdateCommentRequest'
       responses:
         '200':
-          description: Comment updated
+          description: Comment updated successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Comment'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
     delete:
       tags: [Comments]
       summary: Delete comment
+      description: Delete a comment and all its replies (cascade deletion)
       responses:
         '204':
-          description: Comment deleted
+          description: Comment deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/v1/comments/{id}/resolve:
     parameters:
@@ -1409,16 +1613,20 @@ paths:
         schema:
           type: string
           format: uuid
+        description: UUID of the comment to resolve
     post:
       tags: [Comments]
       summary: Resolve comment
+      description: Mark a comment as resolved, indicating that the issue or question has been addressed
       responses:
         '200':
-          description: Comment resolved
+          description: Comment resolved successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Comment'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/v1/comments/{id}/unresolve:
     parameters:
@@ -1428,21 +1636,26 @@ paths:
         schema:
           type: string
           format: uuid
+        description: UUID of the comment to unresolve
     post:
       tags: [Comments]
       summary: Unresolve comment
+      description: Mark a previously resolved comment as unresolved, reopening the discussion
       responses:
         '200':
-          description: Comment unresolved
+          description: Comment unresolved successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Comment'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/v1/comments/status/{status}:
     get:
       tags: [Comments]
       summary: Get comments by status
+      description: Retrieve comments filtered by their resolution status across all entities
       parameters:
         - name: status
           in: path
@@ -1450,15 +1663,19 @@ paths:
           schema:
             type: string
             enum: [resolved, unresolved]
+          description: Filter comments by resolution status
+          example: "unresolved"
         - $ref: '#/components/parameters/LimitParam'
         - $ref: '#/components/parameters/OffsetParam'
       responses:
         '200':
-          description: List of comments by status
+          description: List of comments filtered by status
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommentListResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
 
   /api/v1/comments/{id}/replies:
     parameters:
@@ -1468,22 +1685,27 @@ paths:
         schema:
           type: string
           format: uuid
+        description: UUID of the parent comment
     get:
       tags: [Comments]
       summary: Get comment replies
+      description: Retrieve all replies to a specific comment with pagination support
       parameters:
         - $ref: '#/components/parameters/LimitParam'
         - $ref: '#/components/parameters/OffsetParam'
       responses:
         '200':
-          description: List of comment replies
+          description: List of comment replies retrieved successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommentListResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
     post:
       tags: [Comments]
       summary: Create comment reply
+      description: Create a new reply to an existing comment, establishing a parent-child relationship
       requestBody:
         required: true
         content:
@@ -1492,11 +1714,15 @@ paths:
               $ref: '#/components/schemas/CreateCommentRequest'
       responses:
         '201':
-          description: Reply created
+          description: Reply created successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Comment'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   # Configuration Management endpoints
   /api/v1/config/requirement-types:
@@ -1513,6 +1739,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RequirementTypeListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     post:
       tags: [Configuration]
       summary: Create requirement type
@@ -1532,6 +1762,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RequirementType'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /api/v1/config/requirement-types/{id}:
     parameters:
@@ -2086,6 +2322,46 @@ components:
           type: string
           format: date-time
 
+    CreateUserRequest:
+      type: object
+      required: [username, email, password, role]
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        role:
+          $ref: '#/components/schemas/UserRole'
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+        email:
+          type: string
+          format: email
+        role:
+          $ref: '#/components/schemas/UserRole'
+
+    UserListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ListResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/User'
+
     Epic:
       type: object
       required: [id, reference_id, title, status, priority, creator_id, created_at, last_modified]
@@ -2296,44 +2572,66 @@ components:
         id:
           type: string
           format: uuid
+          description: Unique identifier for the comment
         content:
           type: string
+          description: The text content of the comment
+          example: "This requirement needs clarification on the user authentication flow."
         entity_type:
           $ref: '#/components/schemas/EntityType'
+          description: Type of entity this comment is attached to
         entity_id:
           type: string
           format: uuid
+          description: UUID of the entity this comment is attached to
         author_id:
           type: string
           format: uuid
+          description: UUID of the user who created the comment
         parent_comment_id:
           type: string
           format: uuid
+          description: UUID of the parent comment if this is a reply
         is_resolved:
           type: boolean
+          description: Whether the comment has been resolved
+          example: false
         linked_text:
           type: string
+          description: Text that this inline comment is linked to (for inline comments only)
+          example: "user authentication"
         text_position_start:
           type: integer
           minimum: 0
+          description: Start position of the linked text (for inline comments only)
+          example: 45
         text_position_end:
           type: integer
           minimum: 0
+          description: End position of the linked text (for inline comments only)
+          example: 63
         created_at:
           type: string
           format: date-time
+          description: Timestamp when the comment was created
+          example: "2024-01-15T10:30:00Z"
         updated_at:
           type: string
           format: date-time
+          description: Timestamp when the comment was last updated
+          example: "2024-01-15T14:20:00Z"
         # Optional populated fields
         author:
           $ref: '#/components/schemas/User'
+          description: Author user object (populated when include=author)
         parent_comment:
           $ref: '#/components/schemas/Comment'
+          description: Parent comment object (populated for replies)
         replies:
           type: array
           items:
             $ref: '#/components/schemas/Comment'
+          description: Array of reply comments (populated when include=replies)
 
     RequirementType:
       type: object
@@ -2563,9 +2861,13 @@ components:
       properties:
         content:
           type: string
+          description: The text content of the comment
+          example: "This requirement needs clarification on the user authentication flow."
+          maxLength: 5000
         parent_comment_id:
           type: string
           format: uuid
+          description: UUID of the parent comment if creating a reply (optional)
 
     CreateInlineCommentRequest:
       type: object
@@ -2573,14 +2875,23 @@ components:
       properties:
         content:
           type: string
+          description: The text content of the inline comment
+          example: "This term needs better definition"
+          maxLength: 5000
         linked_text:
           type: string
+          description: The exact text that this comment is linked to
+          example: "user authentication"
         text_position_start:
           type: integer
           minimum: 0
+          description: Start character position of the linked text in the entity content
+          example: 45
         text_position_end:
           type: integer
           minimum: 0
+          description: End character position of the linked text in the entity content
+          example: 63
 
     StatusChangeRequest:
       type: object
@@ -2854,6 +3165,8 @@ components:
         content:
           type: string
           description: Updated comment content
+          example: "This requirement needs clarification on the user authentication flow and error handling."
+          maxLength: 5000
 
     InlineCommentValidationRequest:
       type: object
@@ -2863,7 +3176,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/InlineCommentPosition'
-          description: List of inline comment positions to validate
+          description: List of inline comment positions to validate against current entity content
+          example:
+            - comment_id: "123e4567-e89b-12d3-a456-426614174000"
+              text_position_start: 45
+              text_position_end: 63
+            - comment_id: "987fcdeb-51a2-43d7-b123-456789abcdef"
+              text_position_start: 120
+              text_position_end: 135
 
     InlineCommentPosition:
       type: object
@@ -2872,15 +3192,18 @@ components:
         comment_id:
           type: string
           format: uuid
-          description: UUID of the comment
+          description: UUID of the inline comment to validate
+          example: "123e4567-e89b-12d3-a456-426614174000"
         text_position_start:
           type: integer
           minimum: 0
-          description: Start position of the comment in the text
+          description: Start character position of the comment in the entity content
+          example: 45
         text_position_end:
           type: integer
           minimum: 0
-          description: End position of the comment in the text
+          description: End character position of the comment in the entity content
+          example: 63
 
     # Relationship Management Schemas
     CreateRelationshipRequest:
@@ -3165,6 +3488,19 @@ components:
           items:
             type: string
           description: List of validation error messages
+
+    # Health Check Response Schema
+    HealthCheckResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok, error]
+          description: Health check status
+        reason:
+          type: string
+          description: Reason for the status (optional)
 
     # Configuration List Response Schemas
     RequirementTypeListResponse:

@@ -347,6 +347,7 @@ interface CreateEpicRequest {
   title: string;
   description?: string;
   priority: 1 | 2 | 3 | 4;
+  creator_id: string;
   assignee_id?: string;
 }
 
@@ -498,6 +499,42 @@ interface CreateInlineCommentRequest {
   text_position_end: number;
 }
 
+interface UpdateCommentRequest {
+  content: string;
+}
+
+// Inline Comment Validation Types
+interface InlineCommentValidationRequest {
+  comments: InlineCommentPosition[];
+}
+
+interface InlineCommentPosition {
+  comment_id: string;
+  text_position_start: number;
+  text_position_end: number;
+}
+
+// Enhanced Comment System Types
+interface CommentThread {
+  parent_comment: Comment;
+  replies: Comment[];
+  total_replies: number;
+}
+
+interface InlineCommentContext {
+  linked_text: string;
+  text_position_start: number;
+  text_position_end: number;
+  is_valid: boolean;
+}
+
+interface CommentResolution {
+  is_resolved: boolean;
+  resolved_by?: User;
+  resolved_at?: string;
+  resolution_note?: string;
+}
+
 // Configuration Types
 interface RequirementType {
   id: string;
@@ -534,6 +571,27 @@ interface CreateRelationshipRequest {
   source_requirement_id: string;
   target_requirement_id: string;
   relationship_type_id: string;
+}
+
+// Configuration Management Request Types
+interface CreateRequirementTypeRequest {
+  name: string;
+  description?: string;
+}
+
+interface UpdateRequirementTypeRequest {
+  name?: string;
+  description?: string;
+}
+
+interface CreateRelationshipTypeRequest {
+  name: string;
+  description?: string;
+}
+
+interface UpdateRelationshipTypeRequest {
+  name?: string;
+  description?: string;
 }
 
 // Status Management Types
@@ -622,27 +680,31 @@ interface EntityPath {
   title: string;
 }
 
-// Deletion Types
+// Deletion Workflow Types
 interface DependencyInfo {
   can_delete: boolean;
-  dependencies: {
-    entity_type: string;
-    entity_id: string;
-    reference_id: string;
-    title: string;
-    dependency_type: string;
-  }[];
+  dependencies: DependencyItem[];
   warnings: string[];
+}
+
+interface DependencyItem {
+  entity_type: string;
+  entity_id: string;
+  reference_id: string;
+  title: string;
+  dependency_type: string; // 'child', 'reference', 'relationship'
 }
 
 interface DeletionResult {
   success: boolean;
-  deleted_entities: {
-    entity_type: string;
-    entity_id: string;
-    reference_id: string;
-  }[];
+  deleted_entities: DeletedEntity[];
   message: string;
+}
+
+interface DeletedEntity {
+  entity_type: string;
+  entity_id: string;
+  reference_id: string;
 }
 
 // List Response Types
@@ -661,6 +723,12 @@ interface StatusChangeRequest {
 interface AssignmentRequest {
   assignee_id?: string; // null to unassign
 }
+
+// Health Check Types
+interface HealthCheckResponse {
+  status: string;
+  reason?: string;
+}
 ```
 
 ### API Response Types
@@ -676,37 +744,19 @@ interface ApiResponse<T = any> {
 }
 
 // List responses
+interface UserListResponse extends ListResponse<User> {}
 interface EpicListResponse extends ListResponse<Epic> {}
 interface UserStoryListResponse extends ListResponse<UserStory> {}
 interface AcceptanceCriteriaListResponse extends ListResponse<AcceptanceCriteria> {}
 interface RequirementListResponse extends ListResponse<Requirement> {}
 interface CommentListResponse extends ListResponse<Comment> {}
 
-// Configuration list responses
-interface RequirementTypeListResponse {
-  requirement_types: RequirementType[];
-  count: number;
-}
-
-interface RelationshipTypeListResponse {
-  relationship_types: RelationshipType[];
-  count: number;
-}
-
-interface StatusModelListResponse {
-  status_models: StatusModel[];
-  count: number;
-}
-
-interface StatusListResponse {
-  statuses: Status[];
-  count: number;
-}
-
-interface StatusTransitionListResponse {
-  transitions: StatusTransition[];
-  count: number;
-}
+// Configuration list responses (standardized format)
+interface RequirementTypeListResponse extends ListResponse<RequirementType> {}
+interface RelationshipTypeListResponse extends ListResponse<RelationshipType> {}
+interface StatusModelListResponse extends ListResponse<StatusModel> {}
+interface StatusListResponse extends ListResponse<Status> {}
+interface StatusTransitionListResponse extends ListResponse<StatusTransition> {}
 ```
 
 ---
@@ -740,6 +790,31 @@ interface ErrorResponse {
 - `ENTITY_NOT_FOUND` - Requested entity doesn't exist
 - `DELETION_CONFLICT` - Entity has dependencies preventing deletion
 - `INTERNAL_ERROR` - Server-side error
+
+### Enhanced Error Types
+```typescript
+interface ValidationError {
+  field: string;
+  message: string;
+  code: string;
+}
+
+interface ValidationErrorResponse extends ErrorResponse {
+  error: {
+    code: 'VALIDATION_ERROR';
+    message: string;
+    validation_errors: ValidationError[];
+  };
+}
+
+interface DeletionConflictResponse extends ErrorResponse {
+  error: {
+    code: 'DELETION_CONFLICT';
+    message: string;
+    dependencies: DependencyItem[];
+  };
+}
+```
 
 ---
 

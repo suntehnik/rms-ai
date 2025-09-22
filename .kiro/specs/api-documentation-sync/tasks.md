@@ -13,14 +13,14 @@
   - Standardize error response formats across all endpoints
   - _Requirements: 2.1, 2.2, 2.3, 6.4_
 
-- [ ] 3. Document authentication and authorization requirements
+- [x] 3. Document authentication and authorization requirements
   - Add security requirements to all protected endpoints
   - Mark admin-only endpoints with appropriate security schemes
   - Document public endpoints (login, etc.) with no security requirements
   - Add custom extensions for role-based access requirements
   - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-- [ ] 4. Add deletion system schemas and endpoints
+- [x] 4. Add deletion system schemas and endpoints
   - Define DependencyInfo schema for deletion validation responses
   - Define DeletionResult schema for deletion operation responses
   - Define DependencyItem and DeletedEntity supporting schemas
@@ -29,7 +29,7 @@
   - Add general deletion confirmation endpoint
   - _Requirements: 5.1, 5.2, 5.3, 5.4_
 
-- [ ] 5. Add comprehensive comment system documentation
+- [x] 5. Add comprehensive comment system documentation
   - Define CommentListResponse schema using standard ListResponse format
   - Define InlineCommentValidationRequest and supporting schemas
   - Add general comment endpoints (get, update, delete, resolve, unresolve)
@@ -37,21 +37,21 @@
   - Add comment status filtering endpoints
   - _Requirements: 4.1, 4.4_
 
-- [ ] 6. Add entity-specific comment endpoints
+- [x] 6. Add entity-specific comment endpoints
   - Add comment endpoints for Epic entities (CRUD, inline, validation)
   - Add comment endpoints for UserStory entities (CRUD, inline, validation)
   - Add comment endpoints for AcceptanceCriteria entities (CRUD, inline, validation)
   - Add comment endpoints for Requirement entities (CRUD, inline, validation)
   - _Requirements: 4.2, 4.3_
 
-- [ ] 7. Update TypeScript interfaces in steering documentation
+- [-] 7. Update TypeScript interfaces in steering documentation
   - Add deletion workflow TypeScript interfaces (DependencyInfo, DeletionResult, etc.)
   - Add enhanced comment system TypeScript interfaces
   - Add inline comment validation TypeScript interfaces
   - Update existing interfaces to match standardized response formats
   - _Requirements: 7.1, 7.2, 7.3, 7.4_
 
-- [ ] 8. Validate OpenAPI specification completeness
+- [x] 8. Validate OpenAPI specification completeness
   - Verify all routes from routes.go have corresponding OpenAPI documentation
   - Ensure all documented endpoints have proper request/response schemas
   - Validate that parameter definitions match implementation
