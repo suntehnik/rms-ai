@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -105,12 +106,12 @@ type Epic struct {
 	// Relationships - These fields are populated when explicitly requested and contain related entities
 
 	// Creator contains the user information of who created the epic
-	// @Description User who created this epic (populated when requested with ?include=creator)
-	Creator User `gorm:"foreignKey:CreatorID;constraint:OnDelete:RESTRICT" json:"creator,omitempty"`
+	// @Description User who created this epic (included when explicitly preloaded)
+	Creator User `gorm:"foreignKey:CreatorID;constraint:OnDelete:RESTRICT" json:"-"`
 
 	// Assignee contains the user information of who is assigned to the epic
-	// @Description User currently assigned to this epic (populated when requested with ?include=assignee)
-	Assignee User `gorm:"foreignKey:AssigneeID;constraint:OnDelete:RESTRICT" json:"assignee,omitempty"`
+	// @Description User currently assigned to this epic (included when explicitly preloaded)
+	Assignee User `gorm:"foreignKey:AssigneeID;constraint:OnDelete:RESTRICT" json:"-"`
 
 	// UserStories contains all user stories that belong to this epic
 	// @Description List of user stories that belong to this epic (populated when requested with ?include=user_stories)
@@ -196,4 +197,50 @@ func (e *Epic) CanTransitionTo(newStatus EpicStatus) bool {
 // HasUserStories checks if the epic has any associated user stories
 func (e *Epic) HasUserStories() bool {
 	return len(e.UserStories) > 0
+}
+
+// MarshalJSON implements custom JSON marshaling for Epic
+// This ensures that creator and assignee objects are only included when they are actually populated
+func (e *Epic) MarshalJSON() ([]byte, error) {
+	type Alias Epic
+
+	// Create a map to build the JSON response
+	result := map[string]interface{}{
+		"id":            e.ID,
+		"reference_id":  e.ReferenceID,
+		"creator_id":    e.CreatorID,
+		"assignee_id":   e.AssigneeID,
+		"created_at":    e.CreatedAt,
+		"last_modified": e.LastModified,
+		"priority":      e.Priority,
+		"status":        e.Status,
+		"title":         e.Title,
+	}
+
+	// Only include description if it's not nil
+	if e.Description != nil {
+		result["description"] = *e.Description
+	}
+
+	// Only include creator if it has been populated (has a username, indicating it was preloaded)
+	if e.Creator.Username != "" {
+		result["creator"] = e.Creator
+	}
+
+	// Only include assignee if it has been populated (has a username, indicating it was preloaded)
+	if e.Assignee.Username != "" {
+		result["assignee"] = e.Assignee
+	}
+
+	// Only include user_stories if they have been populated
+	if len(e.UserStories) > 0 {
+		result["user_stories"] = e.UserStories
+	}
+
+	// Only include comments if they have been populated
+	if len(e.Comments) > 0 {
+		result["comments"] = e.Comments
+	}
+
+	return json.Marshal(result)
 }

@@ -77,3 +77,27 @@ func (r *epicRepository) HasUserStories(id uuid.UUID) (bool, error) {
 	}
 	return count > 0, nil
 }
+
+// GetByIDWithUsers retrieves an epic by its ID with creator and assignee preloaded
+func (r *epicRepository) GetByIDWithUsers(id uuid.UUID) (*models.Epic, error) {
+	var epic models.Epic
+	if err := r.GetDB().Preload("Creator").Preload("Assignee").Where("id = ?", id).First(&epic).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, r.handleDBError(err)
+	}
+	return &epic, nil
+}
+
+// GetByReferenceIDWithUsers retrieves an epic by its reference ID with creator and assignee preloaded
+func (r *epicRepository) GetByReferenceIDWithUsers(referenceID string) (*models.Epic, error) {
+	var epic models.Epic
+	if err := r.GetDB().Preload("Creator").Preload("Assignee").Where("reference_id = ?", referenceID).First(&epic).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, r.handleDBError(err)
+	}
+	return &epic, nil
+}

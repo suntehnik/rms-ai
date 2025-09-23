@@ -258,9 +258,9 @@ func (s *userStoryService) CreateUserStory(req CreateUserStoryRequest) (*models.
 	return userStory, nil
 }
 
-// GetUserStoryByID retrieves a user story by its ID
+// GetUserStoryByID retrieves a user story by its ID with creator and assignee populated
 func (s *userStoryService) GetUserStoryByID(id uuid.UUID) (*models.UserStory, error) {
-	userStory, err := s.userStoryRepo.GetByID(id)
+	userStory, err := s.userStoryRepo.GetByIDWithUsers(id)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return nil, ErrUserStoryNotFound
@@ -270,9 +270,9 @@ func (s *userStoryService) GetUserStoryByID(id uuid.UUID) (*models.UserStory, er
 	return userStory, nil
 }
 
-// GetUserStoryByReferenceID retrieves a user story by its reference ID
+// GetUserStoryByReferenceID retrieves a user story by its reference ID with creator and assignee populated
 func (s *userStoryService) GetUserStoryByReferenceID(referenceID string) (*models.UserStory, error) {
-	userStory, err := s.userStoryRepo.GetByReferenceID(referenceID)
+	userStory, err := s.userStoryRepo.GetByReferenceIDWithUsers(referenceID)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return nil, ErrUserStoryNotFound

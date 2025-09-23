@@ -107,3 +107,27 @@ func (r *userStoryRepository) HasRequirements(id uuid.UUID) (bool, error) {
 	}
 	return count > 0, nil
 }
+
+// GetByIDWithUsers retrieves a user story by its ID with creator and assignee preloaded
+func (r *userStoryRepository) GetByIDWithUsers(id uuid.UUID) (*models.UserStory, error) {
+	var userStory models.UserStory
+	if err := r.GetDB().Preload("Creator").Preload("Assignee").Where("id = ?", id).First(&userStory).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, r.handleDBError(err)
+	}
+	return &userStory, nil
+}
+
+// GetByReferenceIDWithUsers retrieves a user story by its reference ID with creator and assignee preloaded
+func (r *userStoryRepository) GetByReferenceIDWithUsers(referenceID string) (*models.UserStory, error) {
+	var userStory models.UserStory
+	if err := r.GetDB().Preload("Creator").Preload("Assignee").Where("reference_id = ?", referenceID).First(&userStory).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, r.handleDBError(err)
+	}
+	return &userStory, nil
+}

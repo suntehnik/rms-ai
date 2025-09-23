@@ -219,9 +219,9 @@ func (s *epicService) CreateEpic(req CreateEpicRequest) (*models.Epic, error) {
 	return epic, nil
 }
 
-// GetEpicByID retrieves an epic by its ID
+// GetEpicByID retrieves an epic by its ID with creator and assignee preloaded
 func (s *epicService) GetEpicByID(id uuid.UUID) (*models.Epic, error) {
-	epic, err := s.epicRepo.GetByID(id)
+	epic, err := s.epicRepo.GetByIDWithUsers(id)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return nil, ErrEpicNotFound
@@ -231,9 +231,9 @@ func (s *epicService) GetEpicByID(id uuid.UUID) (*models.Epic, error) {
 	return epic, nil
 }
 
-// GetEpicByReferenceID retrieves an epic by its reference ID
+// GetEpicByReferenceID retrieves an epic by its reference ID with creator and assignee preloaded
 func (s *epicService) GetEpicByReferenceID(referenceID string) (*models.Epic, error) {
-	epic, err := s.epicRepo.GetByReferenceID(referenceID)
+	epic, err := s.epicRepo.GetByReferenceIDWithUsers(referenceID)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return nil, ErrEpicNotFound

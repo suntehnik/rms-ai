@@ -132,6 +132,22 @@ func (m *MockUserStoryRepository) HasRequirements(id uuid.UUID) (bool, error) {
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MockUserStoryRepository) GetByIDWithUsers(id uuid.UUID) (*models.UserStory, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.UserStory), args.Error(1)
+}
+
+func (m *MockUserStoryRepository) GetByReferenceIDWithUsers(referenceID string) (*models.UserStory, error) {
+	args := m.Called(referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.UserStory), args.Error(1)
+}
+
 func TestUserStoryService_CreateUserStory(t *testing.T) {
 	mockUserStoryRepo := new(MockUserStoryRepository)
 	mockEpicRepo := new(MockEpicRepository)
@@ -275,7 +291,7 @@ func TestUserStoryService_GetUserStoryByID(t *testing.T) {
 			Title: "Test User Story",
 		}
 
-		mockUserStoryRepo.On("GetByID", userStoryID).Return(expectedUserStory, nil)
+		mockUserStoryRepo.On("GetByIDWithUsers", userStoryID).Return(expectedUserStory, nil)
 
 		result, err := service.GetUserStoryByID(userStoryID)
 
@@ -288,7 +304,7 @@ func TestUserStoryService_GetUserStoryByID(t *testing.T) {
 	t.Run("user story not found", func(t *testing.T) {
 		userStoryID := uuid.New()
 
-		mockUserStoryRepo.On("GetByID", userStoryID).Return(nil, repository.ErrNotFound)
+		mockUserStoryRepo.On("GetByIDWithUsers", userStoryID).Return(nil, repository.ErrNotFound)
 
 		result, err := service.GetUserStoryByID(userStoryID)
 

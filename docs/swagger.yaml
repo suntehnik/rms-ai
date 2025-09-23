@@ -369,12 +369,6 @@ definitions:
       user stories. It represents a significant feature or initiative that delivers
       business value.
     properties:
-      assignee:
-        allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.User'
-        description: |-
-          Assignee contains the user information of who is assigned to the epic
-          @Description User currently assigned to this epic (populated when requested with ?include=assignee)
       assignee_id:
         description: |-
           AssigneeID is the UUID of the user assigned to the epic
@@ -394,12 +388,6 @@ definitions:
           @Description Timestamp when the epic was created (RFC3339 format)
           @Example "2023-01-15T10:30:00Z"
         type: string
-      creator:
-        allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.User'
-        description: |-
-          Creator contains the user information of who created the epic
-          @Description User who created this epic (populated when requested with ?include=creator)
       creator_id:
         description: |-
           CreatorID is the UUID of the user who created the epic
@@ -863,12 +851,6 @@ definitions:
         items:
           $ref: '#/definitions/product-requirements-management_internal_models.AcceptanceCriteria'
         type: array
-      assignee:
-        allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.User'
-        description: |-
-          Assignee contains the user information of who is assigned to the user story
-          @Description User currently assigned to this user story (populated when requested with ?include=assignee)
       assignee_id:
         description: |-
           AssigneeID is the UUID of the user assigned to the user story
@@ -888,12 +870,6 @@ definitions:
           @Description Timestamp when the user story was created (RFC3339 format)
           @Example "2023-01-15T10:30:00Z"
         type: string
-      creator:
-        allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.User'
-        description: |-
-          Creator contains the user information of who created the user story
-          @Description User who created this user story (populated when requested with ?include=creator)
       creator_id:
         description: |-
           CreatorID is the UUID of the user who created the user story
@@ -908,13 +884,6 @@ definitions:
           @Example "As a registered user, I want to log in with my email and password, so that I can access my personalized dashboard and account features."
         maxLength: 2000
         type: string
-      epic:
-        allOf:
-        - $ref: '#/definitions/product-requirements-management_internal_models.Epic'
-        description: |-
-          Relationships
-          Epic contains the epic information this user story belongs to
-          @Description Epic that contains this user story (populated when requested with ?include=epic)
       epic_id:
         description: |-
           EpicID is the UUID of the epic this user story belongs to
@@ -2323,7 +2292,8 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully retrieved acceptance criteria list with count
+          description: Successfully retrieved acceptance criteria list with pagination
+            info
           schema:
             additionalProperties: true
             type: object
@@ -4638,7 +4608,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully retrieved requirements list with count
+          description: Successfully retrieved requirements list with pagination info
           schema:
             additionalProperties: true
             type: object
@@ -5363,7 +5333,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully retrieved user stories list with count
+          description: Successfully retrieved user stories list with pagination info
           schema:
             additionalProperties: true
             type: object
