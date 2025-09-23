@@ -58,12 +58,12 @@ func (m *MockAcceptanceCriteriaService) DeleteAcceptanceCriteria(id uuid.UUID, f
 	return args.Error(0)
 }
 
-func (m *MockAcceptanceCriteriaService) ListAcceptanceCriteria(filters service.AcceptanceCriteriaFilters) ([]models.AcceptanceCriteria, error) {
+func (m *MockAcceptanceCriteriaService) ListAcceptanceCriteria(filters service.AcceptanceCriteriaFilters) ([]models.AcceptanceCriteria, int64, error) {
 	args := m.Called(filters)
 	if args.Get(0) == nil {
-		return nil, args.Error(1)
+		return nil, args.Get(1).(int64), args.Error(2)
 	}
-	return args.Get(0).([]models.AcceptanceCriteria), args.Error(1)
+	return args.Get(0).([]models.AcceptanceCriteria), args.Get(1).(int64), args.Error(2)
 }
 
 func (m *MockAcceptanceCriteriaService) GetAcceptanceCriteriaByUserStory(userStoryID uuid.UUID) ([]models.AcceptanceCriteria, error) {
@@ -89,12 +89,12 @@ func (m *MockAcceptanceCriteriaService) ValidateUserStoryHasAcceptanceCriteria(u
 
 func setupAcceptanceCriteriaTestRouter() (*gin.Engine, *MockAcceptanceCriteriaService) {
 	gin.SetMode(gin.TestMode)
-	
+
 	mockService := new(MockAcceptanceCriteriaService)
 	handler := NewAcceptanceCriteriaHandler(mockService)
-	
+
 	router := gin.New()
-	
+
 	v1 := router.Group("/api/v1")
 	{
 		v1.POST("/user-stories/:id/acceptance-criteria", handler.CreateAcceptanceCriteria)
@@ -104,7 +104,7 @@ func setupAcceptanceCriteriaTestRouter() (*gin.Engine, *MockAcceptanceCriteriaSe
 		v1.GET("/acceptance-criteria", handler.ListAcceptanceCriteria)
 		v1.GET("/user-stories/:id/acceptance-criteria", handler.GetAcceptanceCriteriaByUserStory)
 	}
-	
+
 	return router, mockService
 }
 
@@ -418,7 +418,7 @@ func TestAcceptanceCriteriaHandler_ListAcceptanceCriteria(t *testing.T) {
 
 	userStoryID := uuid.New()
 	authorID := uuid.New()
-	
+
 	expectedAcceptanceCriteria := []models.AcceptanceCriteria{
 		{
 			ID:          uuid.New(),
@@ -448,16 +448,19 @@ func TestAcceptanceCriteriaHandler_ListAcceptanceCriteria(t *testing.T) {
 			queryParams: "",
 			setupMocks: func() {
 				expectedFilters := service.AcceptanceCriteriaFilters{}
-				mockService.On("ListAcceptanceCriteria", expectedFilters).Return(expectedAcceptanceCriteria, nil)
+				mockService.On("ListAcceptanceCriteria", expectedFilters).Return(expectedAcceptanceCriteria, int64(2), nil)
 			},
 			expectedStatus: http.StatusOK,
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
 				var response map[string]interface{}
 				err := json.Unmarshal(w.Body.Bytes(), &response)
 				assert.NoError(t, err)
-				assert.Equal(t, float64(2), response["count"])
-				
-				criteria := response["acceptance_criteria"].([]interface{})
+				assert.Equal(t, float64(2), response["total_count"])
+				assert.Equal(t, float64(50), response["limit"])
+				assert.Equal(t, float64(0), response["offset"])
+				assert.NotNil(t, response["data"])
+
+				criteria := response["data"].([]interface{})
 				assert.Len(t, criteria, 2)
 			},
 		},
@@ -468,14 +471,17 @@ func TestAcceptanceCriteriaHandler_ListAcceptanceCriteria(t *testing.T) {
 				expectedFilters := service.AcceptanceCriteriaFilters{
 					UserStoryID: &userStoryID,
 				}
-				mockService.On("ListAcceptanceCriteria", expectedFilters).Return(expectedAcceptanceCriteria, nil)
+				mockService.On("ListAcceptanceCriteria", expectedFilters).Return(expectedAcceptanceCriteria, int64(2), nil)
 			},
 			expectedStatus: http.StatusOK,
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
 				var response map[string]interface{}
 				err := json.Unmarshal(w.Body.Bytes(), &response)
 				assert.NoError(t, err)
-				assert.Equal(t, float64(2), response["count"])
+				assert.Equal(t, float64(2), response["total_count"])
+				assert.Equal(t, float64(50), response["limit"])
+				assert.Equal(t, float64(0), response["offset"])
+				assert.NotNil(t, response["data"])
 			},
 		},
 	}

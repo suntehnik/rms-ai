@@ -388,7 +388,10 @@ func (suite *UserStoryIntegrationTestSuite) TestListUserStories() {
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), float64(3), response["count"])
+	assert.Equal(suite.T(), float64(3), response["total_count"])
+	assert.Equal(suite.T(), float64(50), response["limit"])
+	assert.Equal(suite.T(), float64(0), response["offset"])
+	assert.NotNil(suite.T(), response["data"])
 
 	// Test list with epic filter
 	req, _ = http.NewRequest("GET", fmt.Sprintf("/api/v1/user-stories?epic_id=%s", suite.testEpic.ID.String()), nil)
@@ -399,7 +402,10 @@ func (suite *UserStoryIntegrationTestSuite) TestListUserStories() {
 
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), float64(3), response["count"])
+	assert.Equal(suite.T(), float64(3), response["total_count"])
+	assert.Equal(suite.T(), float64(50), response["limit"])
+	assert.Equal(suite.T(), float64(0), response["offset"])
+	assert.NotNil(suite.T(), response["data"])
 }
 
 func (suite *UserStoryIntegrationTestSuite) TestChangeUserStoryStatus() {

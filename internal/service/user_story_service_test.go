@@ -136,14 +136,14 @@ func TestUserStoryService_CreateUserStory(t *testing.T) {
 	mockUserStoryRepo := new(MockUserStoryRepository)
 	mockEpicRepo := new(MockEpicRepository)
 	mockUserRepo := new(MockUserRepository)
-	
+
 	service := NewUserStoryService(mockUserStoryRepo, mockEpicRepo, mockUserRepo)
 
 	t.Run("successful creation", func(t *testing.T) {
 		epicID := uuid.New()
 		creatorID := uuid.New()
 		description := "As a user, I want to login, so that I can access my account"
-		
+
 		req := CreateUserStoryRequest{
 			EpicID:      epicID,
 			CreatorID:   creatorID,
@@ -191,7 +191,7 @@ func TestUserStoryService_CreateUserStory(t *testing.T) {
 	t.Run("epic not found", func(t *testing.T) {
 		epicID := uuid.New()
 		creatorID := uuid.New()
-		
+
 		req := CreateUserStoryRequest{
 			EpicID:    epicID,
 			CreatorID: creatorID,
@@ -213,7 +213,7 @@ func TestUserStoryService_CreateUserStory(t *testing.T) {
 	t.Run("creator not found", func(t *testing.T) {
 		epicID := uuid.New()
 		creatorID := uuid.New()
-		
+
 		req := CreateUserStoryRequest{
 			EpicID:    epicID,
 			CreatorID: creatorID,
@@ -238,7 +238,7 @@ func TestUserStoryService_CreateUserStory(t *testing.T) {
 		epicID := uuid.New()
 		creatorID := uuid.New()
 		invalidDescription := "This is not a proper user story template"
-		
+
 		req := CreateUserStoryRequest{
 			EpicID:      epicID,
 			CreatorID:   creatorID,
@@ -265,7 +265,7 @@ func TestUserStoryService_GetUserStoryByID(t *testing.T) {
 	mockUserStoryRepo := new(MockUserStoryRepository)
 	mockEpicRepo := new(MockEpicRepository)
 	mockUserRepo := new(MockUserRepository)
-	
+
 	service := NewUserStoryService(mockUserStoryRepo, mockEpicRepo, mockUserRepo)
 
 	t.Run("successful retrieval", func(t *testing.T) {
@@ -304,7 +304,7 @@ func TestUserStoryService_UpdateUserStory(t *testing.T) {
 	mockUserStoryRepo := new(MockUserStoryRepository)
 	mockEpicRepo := new(MockEpicRepository)
 	mockUserRepo := new(MockUserRepository)
-	
+
 	service := NewUserStoryService(mockUserStoryRepo, mockEpicRepo, mockUserRepo)
 
 	t.Run("successful update", func(t *testing.T) {
@@ -392,7 +392,7 @@ func TestUserStoryService_DeleteUserStory(t *testing.T) {
 	mockUserStoryRepo := new(MockUserStoryRepository)
 	mockEpicRepo := new(MockEpicRepository)
 	mockUserRepo := new(MockUserRepository)
-	
+
 	service := NewUserStoryService(mockUserStoryRepo, mockEpicRepo, mockUserRepo)
 
 	t.Run("successful deletion without requirements", func(t *testing.T) {
@@ -466,7 +466,7 @@ func TestUserStoryService_ListUserStories(t *testing.T) {
 	mockUserStoryRepo := new(MockUserStoryRepository)
 	mockEpicRepo := new(MockEpicRepository)
 	mockUserRepo := new(MockUserRepository)
-	
+
 	service := NewUserStoryService(mockUserStoryRepo, mockEpicRepo, mockUserRepo)
 
 	t.Run("successful listing with filters", func(t *testing.T) {
@@ -494,12 +494,14 @@ func TestUserStoryService_ListUserStories(t *testing.T) {
 			"priority": priority,
 		}
 
+		mockUserStoryRepo.On("Count", expectedFilters).Return(int64(2), nil)
 		mockUserStoryRepo.On("List", expectedFilters, "priority ASC", 10, 0).Return(expectedUserStories, nil)
 
-		result, err := service.ListUserStories(filters)
+		result, count, err := service.ListUserStories(filters)
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedUserStories, result)
+		assert.Equal(t, int64(2), count)
 
 		mockUserStoryRepo.AssertExpectations(t)
 	})
@@ -513,12 +515,14 @@ func TestUserStoryService_ListUserStories(t *testing.T) {
 
 		expectedFilters := map[string]interface{}{}
 
+		mockUserStoryRepo.On("Count", expectedFilters).Return(int64(1), nil)
 		mockUserStoryRepo.On("List", expectedFilters, "created_at DESC", 50, 0).Return(expectedUserStories, nil)
 
-		result, err := service.ListUserStories(filters)
+		result, count, err := service.ListUserStories(filters)
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedUserStories, result)
+		assert.Equal(t, int64(1), count)
 
 		mockUserStoryRepo.AssertExpectations(t)
 	})
@@ -528,7 +532,7 @@ func TestUserStoryService_ValidateUserStoryTemplate(t *testing.T) {
 	mockUserStoryRepo := new(MockUserStoryRepository)
 	mockEpicRepo := new(MockEpicRepository)
 	mockUserRepo := new(MockUserRepository)
-	
+
 	service := &userStoryService{
 		userStoryRepo: mockUserStoryRepo,
 		epicRepo:      mockEpicRepo,

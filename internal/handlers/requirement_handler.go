@@ -359,7 +359,7 @@ func (h *RequirementHandler) DeleteRequirement(c *gin.Context) {
 // @Param order_by query string false "Order by field (e.g., 'created_at DESC', 'priority ASC')" example("created_at DESC")
 // @Param limit query integer false "Maximum number of results" minimum(1) maximum(100) example(50)
 // @Param offset query integer false "Number of results to skip" minimum(0) example(0)
-// @Success 200 {object} map[string]interface{} "Successfully retrieved requirements list with count"
+// @Success 200 {object} map[string]interface{} "Successfully retrieved requirements list with pagination info"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/requirements [get]
 func (h *RequirementHandler) ListRequirements(c *gin.Context) {
@@ -424,17 +424,28 @@ func (h *RequirementHandler) ListRequirements(c *gin.Context) {
 		}
 	}
 
-	requirements, err := h.requirementService.ListRequirements(filters)
+	requirements, totalCount, err := h.requirementService.ListRequirements(filters)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to list requirements",
+			"error": gin.H{
+				"code":    "INTERNAL_ERROR",
+				"message": "Failed to list requirements",
+			},
 		})
 		return
 	}
 
+	// Set default limit if not specified
+	limit := 50
+	if filters.Limit > 0 {
+		limit = filters.Limit
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"requirements": requirements,
-		"count":        len(requirements),
+		"data":        requirements,
+		"total_count": totalCount,
+		"limit":       limit,
+		"offset":      filters.Offset,
 	})
 }
 

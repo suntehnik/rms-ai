@@ -331,7 +331,7 @@ func (h *UserStoryHandler) DeleteUserStory(c *gin.Context) {
 // @Param order_by query string false "Sort order for results" example("created_at DESC") example("priority ASC") example("title ASC")
 // @Param limit query integer false "Maximum number of results to return" minimum(1) maximum(100) default(50) example(20)
 // @Param offset query integer false "Number of results to skip for pagination" minimum(0) default(0) example(0)
-// @Success 200 {object} map[string]interface{} "Successfully retrieved user stories list with count"
+// @Success 200 {object} map[string]interface{} "Successfully retrieved user stories list with pagination info"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/user-stories [get]
 func (h *UserStoryHandler) ListUserStories(c *gin.Context) {
@@ -384,17 +384,28 @@ func (h *UserStoryHandler) ListUserStories(c *gin.Context) {
 		}
 	}
 
-	userStories, err := h.userStoryService.ListUserStories(filters)
+	userStories, totalCount, err := h.userStoryService.ListUserStories(filters)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to list user stories",
+			"error": gin.H{
+				"code":    "INTERNAL_ERROR",
+				"message": "Failed to list user stories",
+			},
 		})
 		return
 	}
 
+	// Set default limit if not specified
+	limit := 50
+	if filters.Limit > 0 {
+		limit = filters.Limit
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"user_stories": userStories,
-		"count":        len(userStories),
+		"data":        userStories,
+		"total_count": totalCount,
+		"limit":       limit,
+		"offset":      filters.Offset,
 	})
 }
 
