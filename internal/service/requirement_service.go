@@ -26,7 +26,7 @@ type RequirementService interface {
 	GetRequirementByReferenceID(referenceID string) (*models.Requirement, error)
 	UpdateRequirement(id uuid.UUID, req UpdateRequirementRequest) (*models.Requirement, error)
 	DeleteRequirement(id uuid.UUID, force bool) error
-	ListRequirements(filters RequirementFilters) ([]models.Requirement, error)
+	ListRequirements(filters RequirementFilters) ([]models.Requirement, int64, error)
 	GetRequirementWithRelationships(id uuid.UUID) (*models.Requirement, error)
 	GetRequirementsByUserStory(userStoryID uuid.UUID) ([]models.Requirement, error)
 	ChangeRequirementStatus(id uuid.UUID, newStatus models.RequirementStatus) (*models.Requirement, error)
@@ -311,7 +311,7 @@ func (s *requirementService) DeleteRequirement(id uuid.UUID, force bool) error {
 }
 
 // ListRequirements retrieves requirements with optional filtering
-func (s *requirementService) ListRequirements(filters RequirementFilters) ([]models.Requirement, error) {
+func (s *requirementService) ListRequirements(filters RequirementFilters) ([]models.Requirement, int64, error) {
 	// Build filter map
 	filterMap := make(map[string]interface{})
 
@@ -337,6 +337,12 @@ func (s *requirementService) ListRequirements(filters RequirementFilters) ([]mod
 		filterMap["type_id"] = *filters.TypeID
 	}
 
+	// Get total count with filters
+	totalCount, err := s.requirementRepo.Count(filterMap)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count requirements: %w", err)
+	}
+
 	// Set default ordering
 	orderBy := "created_at DESC"
 	if filters.OrderBy != "" {
@@ -351,10 +357,10 @@ func (s *requirementService) ListRequirements(filters RequirementFilters) ([]mod
 
 	requirements, err := s.requirementRepo.List(filterMap, orderBy, limit, filters.Offset)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list requirements: %w", err)
+		return nil, 0, fmt.Errorf("failed to list requirements: %w", err)
 	}
 
-	return requirements, nil
+	return requirements, totalCount, nil
 }
 
 // GetRequirementWithRelationships retrieves a requirement with its relationships

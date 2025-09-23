@@ -242,7 +242,7 @@ func (h *AcceptanceCriteriaHandler) DeleteAcceptanceCriteria(c *gin.Context) {
 // @Param order_by query string false "Order by field (e.g., 'created_at DESC', 'reference_id ASC')" example("created_at DESC")
 // @Param limit query integer false "Maximum number of results" minimum(1) maximum(100) example(50)
 // @Param offset query integer false "Number of results to skip" minimum(0) example(0)
-// @Success 200 {object} map[string]interface{} "Successfully retrieved acceptance criteria list with count"
+// @Success 200 {object} map[string]interface{} "Successfully retrieved acceptance criteria list with pagination info"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/acceptance-criteria [get]
 func (h *AcceptanceCriteriaHandler) ListAcceptanceCriteria(c *gin.Context) {
@@ -277,17 +277,28 @@ func (h *AcceptanceCriteriaHandler) ListAcceptanceCriteria(c *gin.Context) {
 		}
 	}
 
-	acceptanceCriteria, err := h.acceptanceCriteriaService.ListAcceptanceCriteria(filters)
+	acceptanceCriteria, totalCount, err := h.acceptanceCriteriaService.ListAcceptanceCriteria(filters)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to list acceptance criteria",
+			"error": gin.H{
+				"code":    "INTERNAL_ERROR",
+				"message": "Failed to list acceptance criteria",
+			},
 		})
 		return
 	}
 
+	// Set default limit if not specified
+	limit := 50
+	if filters.Limit > 0 {
+		limit = filters.Limit
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"acceptance_criteria": acceptanceCriteria,
-		"count":               len(acceptanceCriteria),
+		"data":        acceptanceCriteria,
+		"total_count": totalCount,
+		"limit":       limit,
+		"offset":      filters.Offset,
 	})
 }
 

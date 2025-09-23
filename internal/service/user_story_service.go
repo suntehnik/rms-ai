@@ -25,7 +25,7 @@ type UserStoryService interface {
 	GetUserStoryByReferenceID(referenceID string) (*models.UserStory, error)
 	UpdateUserStory(id uuid.UUID, req UpdateUserStoryRequest) (*models.UserStory, error)
 	DeleteUserStory(id uuid.UUID, force bool) error
-	ListUserStories(filters UserStoryFilters) ([]models.UserStory, error)
+	ListUserStories(filters UserStoryFilters) ([]models.UserStory, int64, error)
 	GetUserStoryWithAcceptanceCriteria(id uuid.UUID) (*models.UserStory, error)
 	GetUserStoryWithRequirements(id uuid.UUID) (*models.UserStory, error)
 	GetUserStoriesByEpic(epicID uuid.UUID) ([]models.UserStory, error)
@@ -370,7 +370,7 @@ func (s *userStoryService) DeleteUserStory(id uuid.UUID, force bool) error {
 }
 
 // ListUserStories retrieves user stories with optional filtering
-func (s *userStoryService) ListUserStories(filters UserStoryFilters) ([]models.UserStory, error) {
+func (s *userStoryService) ListUserStories(filters UserStoryFilters) ([]models.UserStory, int64, error) {
 	// Build filter map
 	filterMap := make(map[string]interface{})
 
@@ -390,6 +390,12 @@ func (s *userStoryService) ListUserStories(filters UserStoryFilters) ([]models.U
 		filterMap["priority"] = *filters.Priority
 	}
 
+	// Get total count with filters
+	totalCount, err := s.userStoryRepo.Count(filterMap)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count user stories: %w", err)
+	}
+
 	// Set default ordering
 	orderBy := "created_at DESC"
 	if filters.OrderBy != "" {
@@ -404,10 +410,10 @@ func (s *userStoryService) ListUserStories(filters UserStoryFilters) ([]models.U
 
 	userStories, err := s.userStoryRepo.List(filterMap, orderBy, limit, filters.Offset)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list user stories: %w", err)
+		return nil, 0, fmt.Errorf("failed to list user stories: %w", err)
 	}
 
-	return userStories, nil
+	return userStories, totalCount, nil
 }
 
 // GetUserStoryWithAcceptanceCriteria retrieves a user story with its acceptance criteria

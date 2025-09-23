@@ -23,7 +23,7 @@ type AcceptanceCriteriaService interface {
 	GetAcceptanceCriteriaByReferenceID(referenceID string) (*models.AcceptanceCriteria, error)
 	UpdateAcceptanceCriteria(id uuid.UUID, req UpdateAcceptanceCriteriaRequest) (*models.AcceptanceCriteria, error)
 	DeleteAcceptanceCriteria(id uuid.UUID, force bool) error
-	ListAcceptanceCriteria(filters AcceptanceCriteriaFilters) ([]models.AcceptanceCriteria, error)
+	ListAcceptanceCriteria(filters AcceptanceCriteriaFilters) ([]models.AcceptanceCriteria, int64, error)
 	GetAcceptanceCriteriaByUserStory(userStoryID uuid.UUID) ([]models.AcceptanceCriteria, error)
 	GetAcceptanceCriteriaByAuthor(authorID uuid.UUID) ([]models.AcceptanceCriteria, error)
 	ValidateUserStoryHasAcceptanceCriteria(userStoryID uuid.UUID) error
@@ -188,7 +188,7 @@ func (s *acceptanceCriteriaService) DeleteAcceptanceCriteria(id uuid.UUID, force
 }
 
 // ListAcceptanceCriteria retrieves acceptance criteria with optional filtering
-func (s *acceptanceCriteriaService) ListAcceptanceCriteria(filters AcceptanceCriteriaFilters) ([]models.AcceptanceCriteria, error) {
+func (s *acceptanceCriteriaService) ListAcceptanceCriteria(filters AcceptanceCriteriaFilters) ([]models.AcceptanceCriteria, int64, error) {
 	// Build filter map
 	filterMap := make(map[string]interface{})
 
@@ -197,6 +197,12 @@ func (s *acceptanceCriteriaService) ListAcceptanceCriteria(filters AcceptanceCri
 	}
 	if filters.AuthorID != nil {
 		filterMap["author_id"] = *filters.AuthorID
+	}
+
+	// Get total count with filters
+	totalCount, err := s.acceptanceCriteriaRepo.Count(filterMap)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count acceptance criteria: %w", err)
 	}
 
 	// Set default ordering
@@ -213,10 +219,10 @@ func (s *acceptanceCriteriaService) ListAcceptanceCriteria(filters AcceptanceCri
 
 	acceptanceCriteria, err := s.acceptanceCriteriaRepo.List(filterMap, orderBy, limit, filters.Offset)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list acceptance criteria: %w", err)
+		return nil, 0, fmt.Errorf("failed to list acceptance criteria: %w", err)
 	}
 
-	return acceptanceCriteria, nil
+	return acceptanceCriteria, totalCount, nil
 }
 
 // GetAcceptanceCriteriaByUserStory retrieves acceptance criteria by user story ID

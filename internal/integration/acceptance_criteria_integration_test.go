@@ -259,9 +259,12 @@ func TestAcceptanceCriteriaIntegration(t *testing.T) {
 		require.NoError(t, err)
 
 		// Should have 2 acceptance criteria (one from Create test, one from createTestAcceptanceCriteria)
-		assert.Equal(t, float64(2), response["count"])
+		assert.Equal(t, float64(2), response["total_count"])
+		assert.Equal(t, float64(50), response["limit"])
+		assert.Equal(t, float64(0), response["offset"])
+		assert.NotNil(t, response["data"])
 
-		criteria := response["acceptance_criteria"].([]interface{})
+		criteria := response["data"].([]interface{})
 		assert.Len(t, criteria, 2)
 	})
 
@@ -277,9 +280,12 @@ func TestAcceptanceCriteriaIntegration(t *testing.T) {
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
 
-		assert.Equal(t, float64(2), response["count"])
+		assert.Equal(t, float64(2), response["total_count"])
+		assert.Equal(t, float64(50), response["limit"])
+		assert.Equal(t, float64(0), response["offset"])
+		assert.NotNil(t, response["data"])
 
-		criteria := response["acceptance_criteria"].([]interface{})
+		criteria := response["data"].([]interface{})
 		assert.Len(t, criteria, 2)
 	})
 

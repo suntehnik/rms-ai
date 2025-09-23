@@ -58,9 +58,9 @@ func (m *MockRequirementService) DeleteRequirement(id uuid.UUID, force bool) err
 	return args.Error(0)
 }
 
-func (m *MockRequirementService) ListRequirements(filters service.RequirementFilters) ([]models.Requirement, error) {
+func (m *MockRequirementService) ListRequirements(filters service.RequirementFilters) ([]models.Requirement, int64, error) {
 	args := m.Called(filters)
-	return args.Get(0).([]models.Requirement), args.Error(1)
+	return args.Get(0).([]models.Requirement), args.Get(1).(int64), args.Error(2)
 }
 
 func (m *MockRequirementService) GetRequirementWithRelationships(id uuid.UUID) (*models.Requirement, error) {

@@ -463,8 +463,11 @@ func (suite *RequirementIntegrationTestSuite) TestListRequirements() {
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	suite.Require().NoError(err)
 
-	suite.Equal(float64(3), response["count"])
-	requirements := response["requirements"].([]interface{})
+	suite.Equal(float64(3), response["total_count"])
+	suite.Equal(float64(50), response["limit"])
+	suite.Equal(float64(0), response["offset"])
+	suite.NotNil(response["data"])
+	requirements := response["data"].([]interface{})
 	suite.Len(requirements, 3)
 }
 
