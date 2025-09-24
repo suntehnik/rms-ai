@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -99,15 +100,15 @@ type UserStory struct {
 	// Relationships
 	// Epic contains the epic information this user story belongs to
 	// @Description Epic that contains this user story (populated when requested with ?include=epic)
-	Epic Epic `gorm:"foreignKey:EpicID;constraint:OnDelete:CASCADE" json:"epic,omitempty"`
+	Epic Epic `gorm:"foreignKey:EpicID;constraint:OnDelete:CASCADE" json:"-"`
 
 	// Creator contains the user information of who created the user story
 	// @Description User who created this user story (populated when requested with ?include=creator)
-	Creator User `gorm:"foreignKey:CreatorID;constraint:OnDelete:RESTRICT" json:"creator,omitempty"`
+	Creator User `gorm:"foreignKey:CreatorID;constraint:OnDelete:RESTRICT" json:"-"`
 
 	// Assignee contains the user information of who is assigned to the user story
 	// @Description User currently assigned to this user story (populated when requested with ?include=assignee)
-	Assignee User `gorm:"foreignKey:AssigneeID;constraint:OnDelete:RESTRICT" json:"assignee,omitempty"`
+	Assignee User `gorm:"foreignKey:AssigneeID;constraint:OnDelete:RESTRICT" json:"-"`
 
 	// AcceptanceCriteria contains all acceptance criteria that belong to this user story
 	// @Description List of acceptance criteria that define when this user story is considered complete (populated when requested with ?include=acceptance_criteria)
@@ -223,4 +224,35 @@ func (us *UserStory) IsUserStoryTemplate() bool {
 // Helper function to check if string contains substring
 func contains(s, substr string) bool {
 	return strings.Contains(s, substr)
+}
+
+// MarshalJSON implements custom JSON marshaling for UserStory
+// This method conditionally includes epic, creator and assignee objects only when they have populated data
+func (us *UserStory) MarshalJSON() ([]byte, error) {
+	type Alias UserStory
+	aux := &struct {
+		*Alias
+		Epic     *Epic `json:"epic,omitempty"`
+		Creator  *User `json:"creator,omitempty"`
+		Assignee *User `json:"assignee,omitempty"`
+	}{
+		Alias: (*Alias)(us),
+	}
+
+	// Only include epic if it has a populated title (indicating it was preloaded)
+	if us.Epic.Title != "" {
+		aux.Epic = &us.Epic
+	}
+
+	// Only include creator if it has a populated username (indicating it was preloaded)
+	if us.Creator.Username != "" {
+		aux.Creator = &us.Creator
+	}
+
+	// Only include assignee if it has a populated username (indicating it was preloaded)
+	if us.Assignee.Username != "" {
+		aux.Assignee = &us.Assignee
+	}
+
+	return json.Marshal(aux)
 }

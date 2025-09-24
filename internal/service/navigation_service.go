@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -48,21 +49,87 @@ type HierarchyResponse struct {
 
 // EpicHierarchy represents an epic with its hierarchical children
 type EpicHierarchy struct {
-	*models.Epic
-	UserStories []UserStoryHierarchy `json:"user_stories,omitempty"`
+	models.Epic
+	UserStories []UserStoryHierarchy `json:"user_stories"`
 }
 
 // UserStoryHierarchy represents a user story with its hierarchical children
 type UserStoryHierarchy struct {
-	*models.UserStory
-	AcceptanceCriteria []models.AcceptanceCriteria `json:"acceptance_criteria,omitempty"`
-	Requirements       []RequirementHierarchy      `json:"requirements,omitempty"`
+	models.UserStory
+	AcceptanceCriteria []models.AcceptanceCriteria `json:"acceptance_criteria"`
+	Requirements       []RequirementHierarchy      `json:"requirements"`
 }
 
 // RequirementHierarchy represents a requirement with its relationships
 type RequirementHierarchy struct {
-	*models.Requirement
-	Relationships []models.RequirementRelationship `json:"relationships,omitempty"`
+	models.Requirement
+	Relationships []models.RequirementRelationship `json:"relationships"`
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling for EpicHierarchy
+func (eh *EpicHierarchy) UnmarshalJSON(data []byte) error {
+	type Alias EpicHierarchy
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(eh),
+	}
+
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+
+	// Ensure UserStories is never nil
+	if eh.UserStories == nil {
+		eh.UserStories = make([]UserStoryHierarchy, 0)
+	}
+
+	return nil
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling for UserStoryHierarchy
+func (ush *UserStoryHierarchy) UnmarshalJSON(data []byte) error {
+	type Alias UserStoryHierarchy
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(ush),
+	}
+
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+
+	// Ensure slices are never nil
+	if ush.Requirements == nil {
+		ush.Requirements = make([]RequirementHierarchy, 0)
+	}
+	if ush.AcceptanceCriteria == nil {
+		ush.AcceptanceCriteria = make([]models.AcceptanceCriteria, 0)
+	}
+
+	return nil
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling for RequirementHierarchy
+func (rh *RequirementHierarchy) UnmarshalJSON(data []byte) error {
+	type Alias RequirementHierarchy
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(rh),
+	}
+
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+
+	// Ensure Relationships is never nil
+	if rh.Relationships == nil {
+		rh.Relationships = make([]models.RequirementRelationship, 0)
+	}
+
+	return nil
 }
 
 // PathElement represents an element in the entity path
@@ -158,7 +225,10 @@ func (s *navigationService) GetHierarchy(filters HierarchyFilters) (*HierarchyRe
 	hierarchyEpics := make([]EpicHierarchy, 0, len(epics))
 
 	for _, epic := range epics {
-		epicHierarchy := EpicHierarchy{Epic: &epic}
+		epicHierarchy := EpicHierarchy{
+			Epic:        epic,
+			UserStories: make([]UserStoryHierarchy, 0), // Initialize empty slice
+		}
 
 		// Check if we should expand user stories
 		if shouldExpand(filters.Expand, "user_stories") {
@@ -169,7 +239,11 @@ func (s *navigationService) GetHierarchy(filters HierarchyFilters) (*HierarchyRe
 
 			// Build user story hierarchies
 			for _, userStory := range userStories {
-				userStoryHierarchy := UserStoryHierarchy{UserStory: &userStory}
+				userStoryHierarchy := UserStoryHierarchy{
+					UserStory:          userStory,
+					Requirements:       make([]RequirementHierarchy, 0),      // Initialize empty slice
+					AcceptanceCriteria: make([]models.AcceptanceCriteria, 0), // Initialize empty slice
+				}
 
 				// Check if we should expand requirements and acceptance criteria
 				if shouldExpand(filters.Expand, "requirements") {
@@ -180,7 +254,10 @@ func (s *navigationService) GetHierarchy(filters HierarchyFilters) (*HierarchyRe
 
 					// Build requirement hierarchies
 					for _, requirement := range requirements {
-						reqHierarchy := RequirementHierarchy{Requirement: &requirement}
+						reqHierarchy := RequirementHierarchy{
+							Requirement:   requirement,
+							Relationships: make([]models.RequirementRelationship, 0), // Initialize empty slice
+						}
 
 						if shouldExpand(filters.Expand, "relationships") {
 							relationships, err := s.relationshipRepo.GetByRequirement(requirement.ID)
@@ -218,7 +295,7 @@ func (s *navigationService) GetHierarchy(filters HierarchyFilters) (*HierarchyRe
 
 // GetEpicHierarchy returns a single epic with its complete hierarchy
 func (s *navigationService) GetEpicHierarchy(epicID uuid.UUID, expand, orderBy, orderDirection string) (*EpicHierarchy, error) {
-	epic, err := s.epicRepo.GetByID(epicID)
+	epic, err := s.epicRepo.GetByIDWithUsers(epicID)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return nil, ErrEpicNotFound
@@ -226,7 +303,10 @@ func (s *navigationService) GetEpicHierarchy(epicID uuid.UUID, expand, orderBy, 
 		return nil, fmt.Errorf("failed to get epic: %w", err)
 	}
 
-	epicHierarchy := &EpicHierarchy{Epic: epic}
+	epicHierarchy := &EpicHierarchy{
+		Epic:        *epic,
+		UserStories: make([]UserStoryHierarchy, 0), // Initialize empty slice
+	}
 
 	// Always expand user stories for single epic view
 	userStories, err := s.getUserStoriesForEpic(epicID, orderBy, orderDirection)
@@ -235,7 +315,11 @@ func (s *navigationService) GetEpicHierarchy(epicID uuid.UUID, expand, orderBy, 
 	}
 
 	for _, userStory := range userStories {
-		userStoryHierarchy := UserStoryHierarchy{UserStory: &userStory}
+		userStoryHierarchy := UserStoryHierarchy{
+			UserStory:          userStory,
+			Requirements:       make([]RequirementHierarchy, 0),      // Initialize empty slice
+			AcceptanceCriteria: make([]models.AcceptanceCriteria, 0), // Initialize empty slice
+		}
 
 		// Expand requirements if requested
 		if shouldExpand(expand, "requirements") {
@@ -245,7 +329,10 @@ func (s *navigationService) GetEpicHierarchy(epicID uuid.UUID, expand, orderBy, 
 			}
 
 			for _, requirement := range requirements {
-				reqHierarchy := RequirementHierarchy{Requirement: &requirement}
+				reqHierarchy := RequirementHierarchy{
+					Requirement:   requirement,
+					Relationships: make([]models.RequirementRelationship, 0), // Initialize empty slice
+				}
 
 				if shouldExpand(expand, "relationships") {
 					relationships, err := s.relationshipRepo.GetByRequirement(requirement.ID)
@@ -276,7 +363,7 @@ func (s *navigationService) GetEpicHierarchy(epicID uuid.UUID, expand, orderBy, 
 
 // GetUserStoryHierarchy returns a single user story with its complete hierarchy
 func (s *navigationService) GetUserStoryHierarchy(userStoryID uuid.UUID, expand, orderBy, orderDirection string) (*UserStoryHierarchy, error) {
-	userStory, err := s.userStoryRepo.GetByID(userStoryID)
+	userStory, err := s.userStoryRepo.GetByIDWithUsers(userStoryID)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return nil, ErrUserStoryNotFound
@@ -284,7 +371,11 @@ func (s *navigationService) GetUserStoryHierarchy(userStoryID uuid.UUID, expand,
 		return nil, fmt.Errorf("failed to get user story: %w", err)
 	}
 
-	userStoryHierarchy := &UserStoryHierarchy{UserStory: userStory}
+	userStoryHierarchy := &UserStoryHierarchy{
+		UserStory:          *userStory,
+		Requirements:       make([]RequirementHierarchy, 0),      // Initialize empty slice
+		AcceptanceCriteria: make([]models.AcceptanceCriteria, 0), // Initialize empty slice
+	}
 
 	// Expand requirements if requested
 	if shouldExpand(expand, "requirements") {
@@ -294,7 +385,10 @@ func (s *navigationService) GetUserStoryHierarchy(userStoryID uuid.UUID, expand,
 		}
 
 		for _, requirement := range requirements {
-			reqHierarchy := RequirementHierarchy{Requirement: &requirement}
+			reqHierarchy := RequirementHierarchy{
+				Requirement:   requirement,
+				Relationships: make([]models.RequirementRelationship, 0), // Initialize empty slice
+			}
 
 			if shouldExpand(expand, "relationships") {
 				relationships, err := s.relationshipRepo.GetByRequirement(requirement.ID)
@@ -518,30 +612,9 @@ func (s *navigationService) ResolveReferenceID(entityType, referenceID string) (
 
 // getUserStoriesForEpic gets user stories for an epic with sorting
 func (s *navigationService) getUserStoriesForEpic(epicID uuid.UUID, orderBy, orderDirection string) ([]models.UserStory, error) {
-	filters := UserStoryFilters{
-		EpicID:  &epicID,
-		OrderBy: orderBy,
-	}
-
-	// Apply order direction if specified
-	if orderDirection == "desc" {
-		filters.OrderBy = orderBy + " desc"
-	}
-
-	// Use the service layer instead of repository directly
-	// For now, we'll use the repository method directly
-	filterMap := make(map[string]interface{})
-	filterMap["epic_id"] = epicID
-
-	orderByClause := "created_at DESC"
-	if orderBy != "" {
-		orderByClause = orderBy
-		if orderDirection == "desc" {
-			orderByClause += " DESC"
-		}
-	}
-
-	return s.userStoryRepo.List(filterMap, orderByClause, 100, 0)
+	// Get user stories by epic ID - this will return user stories with populated users
+	// since they're being used in hierarchy context where user info is expected
+	return s.userStoryRepo.GetByEpic(epicID)
 }
 
 // getRequirementsForUserStory gets requirements for a user story with sorting

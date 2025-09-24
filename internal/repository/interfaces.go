@@ -61,6 +61,8 @@ type EpicRepository interface {
 	GetByStatus(status EpicStatus) ([]Epic, error)
 	GetByPriority(priority Priority) ([]Epic, error)
 	HasUserStories(id uuid.UUID) (bool, error)
+	GetByIDWithUsers(id uuid.UUID) (*Epic, error)
+	GetByReferenceIDWithUsers(referenceID string) (*Epic, error)
 }
 
 // UserStoryRepository defines user story-specific repository operations
@@ -75,6 +77,8 @@ type UserStoryRepository interface {
 	GetByPriority(priority Priority) ([]UserStory, error)
 	HasAcceptanceCriteria(id uuid.UUID) (bool, error)
 	HasRequirements(id uuid.UUID) (bool, error)
+	GetByIDWithUsers(id uuid.UUID) (*UserStory, error)
+	GetByReferenceIDWithUsers(referenceID string) (*UserStory, error)
 }
 
 // AcceptanceCriteriaRepository defines acceptance criteria-specific repository operations

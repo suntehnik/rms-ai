@@ -259,6 +259,167 @@ func TestEpicHandler_ListEpics(t *testing.T) {
 	}
 }
 
+// TestEpicHandler_ListEpics_JSONResponse tests that the ListEpics handler returns
+// creator_id and assignee_id fields without including the full creator and assignee objects
+// in the JSON response. This ensures the API returns clean, minimal responses with only
+// the necessary ID fields.
+func TestEpicHandler_ListEpics_JSONResponse(t *testing.T) {
+	t.Run("should return creator_id and assignee_id without creator and assignee objects", func(t *testing.T) {
+		// Setup
+		mockService := new(MockEpicService)
+
+		creatorID := uuid.New()
+		assigneeID := uuid.New()
+
+		epics := []models.Epic{
+			{
+				ID:          uuid.New(),
+				ReferenceID: "EP-001",
+				CreatorID:   creatorID,
+				AssigneeID:  assigneeID,
+				Title:       "Test Epic",
+				Description: stringPtr("Test Description"),
+				Priority:    models.PriorityHigh,
+				Status:      models.EpicStatusBacklog,
+			},
+		}
+
+		mockService.On("ListEpics", mock.AnythingOfType("service.EpicFilters")).Return(epics, int64(1), nil)
+
+		handler := NewEpicHandler(mockService)
+		router := setupTestRouter()
+		router.GET("/epics", handler.ListEpics)
+
+		// Execute
+		req, _ := http.NewRequest("GET", "/epics", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		// Assert HTTP response
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		// Parse JSON response
+		var response map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+
+		// Verify response structure
+		assert.Contains(t, response, "data")
+		assert.Contains(t, response, "total_count")
+		assert.Contains(t, response, "limit")
+		assert.Contains(t, response, "offset")
+
+		// Get the epics data
+		data, ok := response["data"].([]interface{})
+		assert.True(t, ok, "data should be an array")
+		assert.Len(t, data, 1, "should have one epic")
+
+		// Get the first epic
+		epic, ok := data[0].(map[string]interface{})
+		assert.True(t, ok, "epic should be an object")
+
+		// Verify that creator_id and assignee_id are present
+		assert.Contains(t, epic, "creator_id", "should contain creator_id field")
+		assert.Contains(t, epic, "assignee_id", "should contain assignee_id field")
+
+		// Verify that creator_id and assignee_id have the correct values
+		assert.Equal(t, creatorID.String(), epic["creator_id"], "creator_id should match")
+		assert.Equal(t, assigneeID.String(), epic["assignee_id"], "assignee_id should match")
+
+		// Verify that creator and assignee objects are NOT present
+		assert.NotContains(t, epic, "creator", "should NOT contain creator object")
+		assert.NotContains(t, epic, "assignee", "should NOT contain assignee object")
+
+		// Verify other expected fields are present
+		assert.Contains(t, epic, "id")
+		assert.Contains(t, epic, "reference_id")
+		assert.Contains(t, epic, "title")
+		assert.Contains(t, epic, "description")
+		assert.Contains(t, epic, "priority")
+		assert.Contains(t, epic, "status")
+
+		// Verify the values
+		assert.Equal(t, "EP-001", epic["reference_id"])
+		assert.Equal(t, "Test Epic", epic["title"])
+		assert.Equal(t, "Test Description", epic["description"])
+		assert.Equal(t, float64(2), epic["priority"]) // JSON unmarshals numbers as float64
+		assert.Equal(t, "Backlog", epic["status"])
+
+		mockService.AssertExpectations(t)
+	})
+
+	t.Run("should handle multiple epics correctly", func(t *testing.T) {
+		// Setup
+		mockService := new(MockEpicService)
+
+		creator1ID := uuid.New()
+		assignee1ID := uuid.New()
+		creator2ID := uuid.New()
+		assignee2ID := uuid.New()
+
+		epics := []models.Epic{
+			{
+				ID:          uuid.New(),
+				ReferenceID: "EP-001",
+				CreatorID:   creator1ID,
+				AssigneeID:  assignee1ID,
+				Title:       "Epic 1",
+				Priority:    models.PriorityHigh,
+				Status:      models.EpicStatusBacklog,
+			},
+			{
+				ID:          uuid.New(),
+				ReferenceID: "EP-002",
+				CreatorID:   creator2ID,
+				AssigneeID:  assignee2ID,
+				Title:       "Epic 2",
+				Priority:    models.PriorityMedium,
+				Status:      models.EpicStatusInProgress,
+			},
+		}
+
+		mockService.On("ListEpics", mock.AnythingOfType("service.EpicFilters")).Return(epics, int64(2), nil)
+
+		handler := NewEpicHandler(mockService)
+		router := setupTestRouter()
+		router.GET("/epics", handler.ListEpics)
+
+		// Execute
+		req, _ := http.NewRequest("GET", "/epics", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		// Assert HTTP response
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		// Parse JSON response
+		var response map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+
+		// Get the epics data
+		data, ok := response["data"].([]interface{})
+		assert.True(t, ok, "data should be an array")
+		assert.Len(t, data, 2, "should have two epics")
+
+		// Check both epics
+		for i, expectedEpic := range epics {
+			epic, ok := data[i].(map[string]interface{})
+			assert.True(t, ok, "epic should be an object")
+
+			// Verify creator_id and assignee_id are present with correct values
+			assert.Equal(t, expectedEpic.CreatorID.String(), epic["creator_id"], "creator_id should match for epic %d", i)
+			assert.Equal(t, expectedEpic.AssigneeID.String(), epic["assignee_id"], "assignee_id should match for epic %d", i)
+
+			// Verify creator and assignee objects are NOT present
+			assert.NotContains(t, epic, "creator", "epic %d should NOT contain creator object", i)
+			assert.NotContains(t, epic, "assignee", "epic %d should NOT contain assignee object", i)
+		}
+
+		mockService.AssertExpectations(t)
+	})
+}
+
 func TestEpicHandler_DeleteEpic(t *testing.T) {
 	tests := []struct {
 		name           string

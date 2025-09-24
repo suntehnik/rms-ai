@@ -115,6 +115,22 @@ func (m *MockEpicRepository) HasUserStories(id uuid.UUID) (bool, error) {
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MockEpicRepository) GetByIDWithUsers(id uuid.UUID) (*models.Epic, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Epic), args.Error(1)
+}
+
+func (m *MockEpicRepository) GetByReferenceIDWithUsers(referenceID string) (*models.Epic, error) {
+	args := m.Called(referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Epic), args.Error(1)
+}
+
 // MockUserRepository is a mock implementation of UserRepository
 type MockUserRepository struct {
 	mock.Mock
@@ -261,13 +277,13 @@ func TestEpicService_CreateEpic(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			epicRepo := new(MockEpicRepository)
 			userRepo := new(MockUserRepository)
-			
+
 			tt.setupMocks(epicRepo, userRepo)
-			
+
 			service := NewEpicService(epicRepo, userRepo)
-			
+
 			epic, err := service.CreateEpic(tt.request)
-			
+
 			if tt.expectedError != nil {
 				assert.Error(t, err)
 				assert.True(t, errors.Is(err, tt.expectedError))
@@ -279,7 +295,7 @@ func TestEpicService_CreateEpic(t *testing.T) {
 				assert.Equal(t, tt.request.Priority, epic.Priority)
 				assert.Equal(t, models.EpicStatusBacklog, epic.Status)
 			}
-			
+
 			epicRepo.AssertExpectations(t)
 			userRepo.AssertExpectations(t)
 		})
@@ -301,7 +317,7 @@ func TestEpicService_GetEpicByID(t *testing.T) {
 					ID:    uuid.New(),
 					Title: "Test Epic",
 				}
-				epicRepo.On("GetByID", mock.AnythingOfType("uuid.UUID")).Return(epic, nil)
+				epicRepo.On("GetByIDWithUsers", mock.AnythingOfType("uuid.UUID")).Return(epic, nil)
 			},
 			expectedError: nil,
 		},
@@ -309,7 +325,7 @@ func TestEpicService_GetEpicByID(t *testing.T) {
 			name:   "epic not found",
 			epicID: uuid.New(),
 			setupMocks: func(epicRepo *MockEpicRepository, userRepo *MockUserRepository) {
-				epicRepo.On("GetByID", mock.AnythingOfType("uuid.UUID")).Return(nil, repository.ErrNotFound)
+				epicRepo.On("GetByIDWithUsers", mock.AnythingOfType("uuid.UUID")).Return(nil, repository.ErrNotFound)
 			},
 			expectedError: ErrEpicNotFound,
 		},
@@ -319,13 +335,13 @@ func TestEpicService_GetEpicByID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			epicRepo := new(MockEpicRepository)
 			userRepo := new(MockUserRepository)
-			
+
 			tt.setupMocks(epicRepo, userRepo)
-			
+
 			service := NewEpicService(epicRepo, userRepo)
-			
+
 			epic, err := service.GetEpicByID(tt.epicID)
-			
+
 			if tt.expectedError != nil {
 				assert.Error(t, err)
 				assert.True(t, errors.Is(err, tt.expectedError))
@@ -334,7 +350,7 @@ func TestEpicService_GetEpicByID(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, epic)
 			}
-			
+
 			epicRepo.AssertExpectations(t)
 			userRepo.AssertExpectations(t)
 		})
@@ -398,20 +414,20 @@ func TestEpicService_DeleteEpic(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			epicRepo := new(MockEpicRepository)
 			userRepo := new(MockUserRepository)
-			
+
 			tt.setupMocks(epicRepo, userRepo)
-			
+
 			service := NewEpicService(epicRepo, userRepo)
-			
+
 			err := service.DeleteEpic(tt.epicID, tt.force)
-			
+
 			if tt.expectedError != nil {
 				assert.Error(t, err)
 				assert.True(t, errors.Is(err, tt.expectedError))
 			} else {
 				assert.NoError(t, err)
 			}
-			
+
 			epicRepo.AssertExpectations(t)
 			userRepo.AssertExpectations(t)
 		})
@@ -459,13 +475,13 @@ func TestEpicService_ChangeEpicStatus(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			epicRepo := new(MockEpicRepository)
 			userRepo := new(MockUserRepository)
-			
+
 			tt.setupMocks(epicRepo, userRepo)
-			
+
 			service := NewEpicService(epicRepo, userRepo)
-			
+
 			epic, err := service.ChangeEpicStatus(tt.epicID, tt.newStatus)
-			
+
 			if tt.expectedError != nil {
 				assert.Error(t, err)
 				assert.True(t, errors.Is(err, tt.expectedError))
@@ -475,7 +491,7 @@ func TestEpicService_ChangeEpicStatus(t *testing.T) {
 				assert.NotNil(t, epic)
 				assert.Equal(t, tt.newStatus, epic.Status)
 			}
-			
+
 			epicRepo.AssertExpectations(t)
 			userRepo.AssertExpectations(t)
 		})

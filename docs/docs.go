@@ -647,7 +647,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully retrieved acceptance criteria list with count",
+                        "description": "Successfully retrieved acceptance criteria list with pagination info",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -3907,7 +3907,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully retrieved requirements list with count",
+                        "description": "Successfully retrieved requirements list with pagination info",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -4890,7 +4890,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully retrieved user stories list with count",
+                        "description": "Successfully retrieved user stories list with pagination info",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -7202,14 +7202,6 @@ const docTemplate = `{
                 "title"
             ],
             "properties": {
-                "assignee": {
-                    "description": "Assignee contains the user information of who is assigned to the epic\n@Description User currently assigned to this epic (populated when requested with ?include=assignee)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
-                        }
-                    ]
-                },
                 "assignee_id": {
                     "description": "AssigneeID is the UUID of the user assigned to the epic\n@Description UUID of the user currently assigned to work on this epic\n@Example \"123e4567-e89b-12d3-a456-426614174002\"",
                     "type": "string"
@@ -7224,14 +7216,6 @@ const docTemplate = `{
                 "created_at": {
                     "description": "CreatedAt is the timestamp when the epic was created\n@Description Timestamp when the epic was created (RFC3339 format)\n@Example \"2023-01-15T10:30:00Z\"",
                     "type": "string"
-                },
-                "creator": {
-                    "description": "Creator contains the user information of who created the epic\n@Description User who created this epic (populated when requested with ?include=creator)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
-                        }
-                    ]
                 },
                 "creator_id": {
                     "description": "CreatorID is the UUID of the user who created the epic\n@Description UUID of the user who created this epic\n@Example \"123e4567-e89b-12d3-a456-426614174001\"",
@@ -7839,14 +7823,6 @@ const docTemplate = `{
                         "$ref": "#/definitions/product-requirements-management_internal_models.AcceptanceCriteria"
                     }
                 },
-                "assignee": {
-                    "description": "Assignee contains the user information of who is assigned to the user story\n@Description User currently assigned to this user story (populated when requested with ?include=assignee)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
-                        }
-                    ]
-                },
                 "assignee_id": {
                     "description": "AssigneeID is the UUID of the user assigned to the user story\n@Description UUID of the user currently assigned to work on this user story\n@Example \"123e4567-e89b-12d3-a456-426614174003\"",
                     "type": "string"
@@ -7862,14 +7838,6 @@ const docTemplate = `{
                     "description": "CreatedAt is the timestamp when the user story was created\n@Description Timestamp when the user story was created (RFC3339 format)\n@Example \"2023-01-15T10:30:00Z\"",
                     "type": "string"
                 },
-                "creator": {
-                    "description": "Creator contains the user information of who created the user story\n@Description User who created this user story (populated when requested with ?include=creator)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
-                        }
-                    ]
-                },
                 "creator_id": {
                     "description": "CreatorID is the UUID of the user who created the user story\n@Description UUID of the user who created this user story\n@Example \"123e4567-e89b-12d3-a456-426614174002\"",
                     "type": "string"
@@ -7878,14 +7846,6 @@ const docTemplate = `{
                     "description": "Description provides detailed information about the user story\n@Description Detailed description of the user story, preferably in the format 'As [role], I want [function], so that [goal]' (optional, max 2000 characters)\n@MaxLength 2000\n@Example \"As a registered user, I want to log in with my email and password, so that I can access my personalized dashboard and account features.\"",
                     "type": "string",
                     "maxLength": 2000
-                },
-                "epic": {
-                    "description": "Relationships\nEpic contains the epic information this user story belongs to\n@Description Epic that contains this user story (populated when requested with ?include=epic)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Epic"
-                        }
-                    ]
                 },
                 "epic_id": {
                     "description": "EpicID is the UUID of the epic this user story belongs to\n@Description UUID of the epic that contains this user story\n@Example \"123e4567-e89b-12d3-a456-426614174001\"",
