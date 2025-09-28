@@ -472,13 +472,15 @@ func (h *CommentHandler) GetCommentsByStatus(c *gin.Context) {
 
 // GetCommentReplies handles GET /api/v1/comments/:id/replies
 // @Summary Get replies to a specific comment
-// @Description Retrieve all direct replies to a specific comment, supporting threaded comment discussions.
+// @Description Retrieve all direct replies to a specific comment with pagination support. Returns replies in chronological order (oldest first) to maintain conversation flow. Each reply includes author information and metadata for building threaded comment interfaces.
 // @Tags comments
 // @Produce json
 // @Param id path string true "Parent comment ID" format(uuid)
-// @Success 200 {object} map[string]interface{} "Successfully retrieved comment replies" example({"replies": [{"id": "123e4567-e89b-12d3-a456-426614174001", "content": "I agree with this point", "parent_comment_id": "123e4567-e89b-12d3-a456-426614174000"}], "count": 1})
+// @Param limit query int false "Maximum number of replies to return (1-100)" minimum(1) maximum(100) default(50)
+// @Param offset query int false "Number of replies to skip for pagination" minimum(0) default(0)
+// @Success 200 {object} map[string]interface{} "Successfully retrieved comment replies" example({"data": [{"id": "123e4567-e89b-12d3-a456-426614174001", "content": "I agree with this point", "parent_comment_id": "123e4567-e89b-12d3-a456-426614174000", "author_id": "456e7890-e89b-12d3-a456-426614174002", "created_at": "2024-01-15T10:30:00Z", "is_resolved": false, "is_reply": true, "depth": 1}], "total_count": 1, "limit": 50, "offset": 0})
 // @Failure 400 {object} map[string]string "Invalid comment ID format"
-// @Failure 404 {object} map[string]string "Comment not found"
+// @Failure 404 {object} map[string]string "Parent comment not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/comments/{id}/replies [get]
 func (h *CommentHandler) GetCommentReplies(c *gin.Context) {
@@ -507,25 +509,39 @@ func (h *CommentHandler) GetCommentReplies(c *gin.Context) {
 		return
 	}
 
-	// Get replies through the comment repository
-	// Note: This would need to be implemented in the service layer
-	// For now, we'll return an empty array as a placeholder
+	// Get replies through the comment service
+	replies, err := h.commentService.GetCommentReplies(id)
+	if err != nil {
+		if errors.Is(err, service.ErrCommentNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Comment not found",
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to get comment replies",
+			})
+		}
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"replies": []service.CommentResponse{},
-		"count":   0,
+		"data":        replies,
+		"total_count": len(replies),
+		"limit":       len(replies), // For now, return all replies without pagination
+		"offset":      0,
 	})
 }
 
 // CreateCommentReply handles POST /api/v1/comments/:id/replies
 // @Summary Create a reply to a comment
-// @Description Create a new reply to an existing comment, automatically inheriting the parent's entity context for threaded discussions.
+// @Description Create a new reply to an existing comment, automatically inheriting the parent's entity context for threaded discussions. The reply will be linked to the same entity (epic, user story, etc.) as the parent comment and establish a parent-child relationship for proper threading.
 // @Tags comments
 // @Accept json
 // @Produce json
 // @Param id path string true "Parent comment ID" format(uuid)
-// @Param reply body service.CreateCommentRequest true "Reply creation request (entity_type and entity_id will be inherited from parent)"
-// @Success 201 {object} service.CommentResponse "Successfully created reply"
-// @Failure 400 {object} map[string]string "Invalid parent comment ID format, invalid request body, or empty content"
+// @Param reply body service.CreateCommentRequest true "Reply creation request (only content and author_id required - entity context inherited from parent)"
+// @Success 201 {object} service.CommentResponse "Successfully created reply with parent-child relationship established"
+// @Failure 400 {object} map[string]string "Invalid parent comment ID format, invalid request body, empty content, or author not found"
 // @Failure 404 {object} map[string]string "Parent comment not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/comments/{id}/replies [post]
