@@ -39,6 +39,7 @@ type CommentService interface {
 	ValidateInlineCommentsAfterTextChange(entityType models.EntityType, entityID uuid.UUID, newDescription string) error
 	ResolveComment(id uuid.UUID) (*CommentResponse, error)
 	UnresolveComment(id uuid.UUID) (*CommentResponse, error)
+	GetCommentReplies(parentID uuid.UUID) ([]CommentResponse, error)
 }
 
 // commentService implements CommentService interface
@@ -599,6 +600,31 @@ func (s *commentService) toCommentResponse(comment *models.Comment) *CommentResp
 	}
 
 	return response
+}
+
+// GetCommentReplies retrieves all direct replies to a specific comment
+func (s *commentService) GetCommentReplies(parentID uuid.UUID) ([]CommentResponse, error) {
+	// First verify the parent comment exists
+	_, err := s.commentRepo.GetByID(parentID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, ErrCommentNotFound
+		}
+		return nil, fmt.Errorf("failed to get parent comment: %w", err)
+	}
+
+	// Get replies
+	replies, err := s.commentRepo.GetByParent(parentID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get comment replies: %w", err)
+	}
+
+	responses := make([]CommentResponse, len(replies))
+	for i, reply := range replies {
+		responses[i] = *s.toCommentResponse(&reply)
+	}
+
+	return responses, nil
 }
 
 // toCommentResponseWithReplies converts a comment model to response format including replies

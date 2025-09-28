@@ -1692,10 +1692,24 @@ paths:
           type: string
           format: uuid
         description: UUID of the parent comment
+        example: "123e4567-e89b-12d3-a456-426614174000"
     get:
       tags: [Comments]
       summary: Get comment replies
-      description: Retrieve all replies to a specific comment with pagination support
+      description: |
+        Retrieve all direct replies to a specific comment with pagination support. 
+        Returns replies in chronological order (oldest first) to maintain conversation flow. 
+        Each reply includes author information and metadata for building threaded comment interfaces.
+        
+        **Threading Behavior:**
+        - Only returns direct replies (depth = 1 from parent)
+        - For nested replies, call this endpoint recursively with each reply's ID
+        - Replies inherit the same entity context as their parent comment
+        
+        **Use Cases:**
+        - Building threaded comment interfaces
+        - Loading conversation threads on demand
+        - Implementing expandable comment sections
       parameters:
         - $ref: '#/components/parameters/LimitParam'
         - $ref: '#/components/parameters/OffsetParam'
@@ -1706,28 +1720,139 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommentListResponse'
+              example:
+                data:
+                  - id: "456e7890-e89b-12d3-a456-426614174001"
+                    content: "I agree with this point, we should definitely consider this approach."
+                    entity_type: "requirement"
+                    entity_id: "789e0123-e89b-12d3-a456-426614174002"
+                    parent_comment_id: "123e4567-e89b-12d3-a456-426614174000"
+                    author_id: "abc12345-e89b-12d3-a456-426614174003"
+                    author:
+                      id: "abc12345-e89b-12d3-a456-426614174003"
+                      username: "john.doe"
+                      email: "john.doe@example.com"
+                    created_at: "2024-01-15T10:30:00Z"
+                    updated_at: "2024-01-15T10:30:00Z"
+                    is_resolved: false
+                    is_inline: false
+                    is_reply: true
+                    depth: 1
+                total_count: 1
+                limit: 50
+                offset: 0
+        '400':
+          description: Invalid parent comment ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "VALIDATION_ERROR"
+                  message: "Invalid comment ID format"
         '404':
-          $ref: '#/components/responses/NotFound'
+          description: Parent comment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "ENTITY_NOT_FOUND"
+                  message: "Comment not found"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     post:
       tags: [Comments]
       summary: Create comment reply
-      description: Create a new reply to an existing comment, establishing a parent-child relationship
+      description: |
+        Create a new reply to an existing comment, automatically inheriting the parent's entity context for threaded discussions.
+        
+        **Automatic Context Inheritance:**
+        - Entity type and ID are inherited from parent comment
+        - Parent-child relationship is automatically established
+        - Reply depth is calculated based on parent's depth
+        
+        **Threading Rules:**
+        - Replies can be nested to any depth
+        - Each reply maintains reference to its direct parent
+        - All replies in a thread share the same entity context
+        
+        **Required Fields:**
+        - Only `content` and `author_id` are required
+        - Entity context is inherited automatically
+        - Parent relationship is established via URL parameter
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateCommentRequest'
+              $ref: '#/components/schemas/CreateCommentReplyRequest'
+            example:
+              content: "That's a great point! I think we should also consider the security implications."
+              author_id: "def45678-e89b-12d3-a456-426614174004"
       responses:
         '201':
-          description: Reply created successfully
+          description: Reply created successfully with parent-child relationship established
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Comment'
+              example:
+                id: "ghi78901-e89b-12d3-a456-426614174005"
+                content: "That's a great point! I think we should also consider the security implications."
+                entity_type: "requirement"
+                entity_id: "789e0123-e89b-12d3-a456-426614174002"
+                parent_comment_id: "123e4567-e89b-12d3-a456-426614174000"
+                author_id: "def45678-e89b-12d3-a456-426614174004"
+                author:
+                  id: "def45678-e89b-12d3-a456-426614174004"
+                  username: "jane.smith"
+                  email: "jane.smith@example.com"
+                created_at: "2024-01-15T11:15:00Z"
+                updated_at: "2024-01-15T11:15:00Z"
+                is_resolved: false
+                is_inline: false
+                is_reply: true
+                depth: 1
         '400':
-          $ref: '#/components/responses/ValidationError'
+          description: Invalid request - bad parent ID format, missing required fields, or empty content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_parent_id:
+                  summary: Invalid parent comment ID
+                  value:
+                    error:
+                      code: "VALIDATION_ERROR"
+                      message: "Invalid parent comment ID format"
+                empty_content:
+                  summary: Empty content
+                  value:
+                    error:
+                      code: "VALIDATION_ERROR"
+                      message: "Content cannot be empty"
+                author_not_found:
+                  summary: Author not found
+                  value:
+                    error:
+                      code: "VALIDATION_ERROR"
+                      message: "Author not found"
         '404':
+          description: Parent comment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "ENTITY_NOT_FOUND"
+                  message: "Parent comment not found"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
           $ref: '#/components/responses/NotFound'
 
   # Configuration Management endpoints
@@ -2881,6 +3006,22 @@ components:
           type: string
           format: uuid
           description: UUID of the parent comment if creating a reply (optional)
+
+    CreateCommentReplyRequest:
+      type: object
+      required: [content, author_id]
+      properties:
+        content:
+          type: string
+          description: The text content of the reply
+          example: "I agree, we should add more details about the OAuth flow."
+          maxLength: 5000
+        author_id:
+          type: string
+          format: uuid
+          description: UUID of the user creating the reply
+          example: "123e4567-e89b-12d3-a456-426614174000"
+      description: Request body for creating a reply to an existing comment. Entity context (entity_type, entity_id) is automatically inherited from the parent comment.
 
     CreateInlineCommentRequest:
       type: object

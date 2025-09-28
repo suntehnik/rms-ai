@@ -1268,7 +1268,7 @@ const docTemplate = `{
         },
         "/api/v1/comments/{id}/replies": {
             "get": {
-                "description": "Retrieve all direct replies to a specific comment, supporting threaded comment discussions.",
+                "description": "Retrieve all direct replies to a specific comment with pagination support. Returns replies in chronological order (oldest first) to maintain conversation flow. Each reply includes author information and metadata for building threaded comment interfaces.",
                 "produces": [
                     "application/json"
                 ],
@@ -1284,11 +1284,28 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Maximum number of replies to return (1-100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Number of replies to skip for pagination",
+                        "name": "offset",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully retrieved comment replies\" example({\"replies\": [{\"id\": \"123e4567-e89b-12d3-a456-426614174001\", \"content\": \"I agree with this point\", \"parent_comment_id\": \"123e4567-e89b-12d3-a456-426614174000\"}], \"count\": 1})",
+                        "description": "Successfully retrieved comment replies\" example({\"data\": [{\"id\": \"123e4567-e89b-12d3-a456-426614174001\", \"content\": \"I agree with this point\", \"parent_comment_id\": \"123e4567-e89b-12d3-a456-426614174000\", \"author_id\": \"456e7890-e89b-12d3-a456-426614174002\", \"created_at\": \"2024-01-15T10:30:00Z\", \"is_resolved\": false, \"is_reply\": true, \"depth\": 1}], \"total_count\": 1, \"limit\": 50, \"offset\": 0})",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -1304,7 +1321,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Comment not found",
+                        "description": "Parent comment not found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1324,7 +1341,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new reply to an existing comment, automatically inheriting the parent's entity context for threaded discussions.",
+                "description": "Create a new reply to an existing comment, automatically inheriting the parent's entity context for threaded discussions. The reply will be linked to the same entity (epic, user story, etc.) as the parent comment and establish a parent-child relationship for proper threading.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1345,7 +1362,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Reply creation request (entity_type and entity_id will be inherited from parent)",
+                        "description": "Reply creation request (only content and author_id required - entity context inherited from parent)",
                         "name": "reply",
                         "in": "body",
                         "required": true,
@@ -1356,13 +1373,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Successfully created reply",
+                        "description": "Successfully created reply with parent-child relationship established",
                         "schema": {
                             "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid parent comment ID format, invalid request body, or empty content",
+                        "description": "Invalid parent comment ID format, invalid request body, empty content, or author not found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
