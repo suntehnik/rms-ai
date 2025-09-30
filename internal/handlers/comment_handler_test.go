@@ -112,6 +112,14 @@ func (m *MockCommentService) ValidateInlineCommentsAfterTextChange(entityType mo
 	return args.Error(0)
 }
 
+func (m *MockCommentService) GetCommentReplies(parentID uuid.UUID) ([]service.CommentResponse, error) {
+	args := m.Called(parentID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]service.CommentResponse), args.Error(1)
+}
+
 func setupCommentHandler() (*CommentHandler, *MockCommentService) {
 	mockService := &MockCommentService{}
 	handler := NewCommentHandler(mockService)
@@ -121,7 +129,7 @@ func setupCommentHandler() (*CommentHandler, *MockCommentService) {
 func setupGinRouter(handler *CommentHandler) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	
+
 	// Comment routes
 	v1 := router.Group("/api/v1")
 	{
@@ -160,7 +168,7 @@ func setupGinRouter(handler *CommentHandler) *gin.Engine {
 			requirements.POST("/:id/comments", handler.CreateRequirementComment)
 		}
 	}
-	
+
 	return router
 }
 
@@ -257,13 +265,13 @@ func TestCreateComment(t *testing.T) {
 			// Reset mock
 			mockService.ExpectedCalls = nil
 			mockService.Calls = nil
-			
+
 			tt.mockSetup()
 
 			// Create request
 			body, _ := json.Marshal(tt.requestBody)
-			req := httptest.NewRequest(http.MethodPost, 
-				fmt.Sprintf("/api/v1/%s/%s/comments", tt.entityType, tt.entityID), 
+			req := httptest.NewRequest(http.MethodPost,
+				fmt.Sprintf("/api/v1/%s/%s/comments", tt.entityType, tt.entityID),
 				bytes.NewBuffer(body))
 			req.Header.Set("Content-Type", "application/json")
 
@@ -378,10 +386,10 @@ func TestGetCommentsByEntity(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name:       "invalid entity ID",
-			entityType: "epics",
-			entityID:   "invalid-uuid",
-			mockSetup:  func() {},
+			name:           "invalid entity ID",
+			entityType:     "epics",
+			entityID:       "invalid-uuid",
+			mockSetup:      func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "Invalid entity ID format",
 		},
@@ -403,7 +411,7 @@ func TestGetCommentsByEntity(t *testing.T) {
 			// Reset mock
 			mockService.ExpectedCalls = nil
 			mockService.Calls = nil
-			
+
 			tt.mockSetup()
 
 			// Create request
@@ -487,11 +495,11 @@ func TestGetComment(t *testing.T) {
 			// Reset mock
 			mockService.ExpectedCalls = nil
 			mockService.Calls = nil
-			
+
 			tt.mockSetup()
 
 			// Create request
-			req := httptest.NewRequest(http.MethodGet, 
+			req := httptest.NewRequest(http.MethodGet,
 				fmt.Sprintf("/api/v1/comments/%s", tt.commentID), nil)
 
 			// Create response recorder
@@ -588,13 +596,13 @@ func TestUpdateComment(t *testing.T) {
 			// Reset mock
 			mockService.ExpectedCalls = nil
 			mockService.Calls = nil
-			
+
 			tt.mockSetup()
 
 			// Create request
 			body, _ := json.Marshal(tt.requestBody)
-			req := httptest.NewRequest(http.MethodPut, 
-				fmt.Sprintf("/api/v1/comments/%s", tt.commentID), 
+			req := httptest.NewRequest(http.MethodPut,
+				fmt.Sprintf("/api/v1/comments/%s", tt.commentID),
 				bytes.NewBuffer(body))
 			req.Header.Set("Content-Type", "application/json")
 
@@ -674,11 +682,11 @@ func TestDeleteComment(t *testing.T) {
 			// Reset mock
 			mockService.ExpectedCalls = nil
 			mockService.Calls = nil
-			
+
 			tt.mockSetup()
 
 			// Create request
-			req := httptest.NewRequest(http.MethodDelete, 
+			req := httptest.NewRequest(http.MethodDelete,
 				fmt.Sprintf("/api/v1/comments/%s", tt.commentID), nil)
 
 			// Create response recorder
@@ -758,11 +766,11 @@ func TestResolveComment(t *testing.T) {
 			// Reset mock
 			mockService.ExpectedCalls = nil
 			mockService.Calls = nil
-			
+
 			tt.mockSetup()
 
 			// Create request
-			req := httptest.NewRequest(http.MethodPost, 
+			req := httptest.NewRequest(http.MethodPost,
 				fmt.Sprintf("/api/v1/comments/%s/resolve", tt.commentID), nil)
 
 			// Create response recorder
@@ -853,11 +861,11 @@ func TestGetCommentsByStatus(t *testing.T) {
 			// Reset mock
 			mockService.ExpectedCalls = nil
 			mockService.Calls = nil
-			
+
 			tt.mockSetup()
 
 			// Create request
-			req := httptest.NewRequest(http.MethodGet, 
+			req := httptest.NewRequest(http.MethodGet,
 				fmt.Sprintf("/api/v1/comments/status/%s", tt.status), nil)
 
 			// Create response recorder
@@ -1116,7 +1124,7 @@ func TestCommentFiltering(t *testing.T) {
 			// Reset mock
 			mockService.ExpectedCalls = nil
 			mockService.Calls = nil
-			
+
 			tt.mockSetup()
 
 			// Create request
@@ -1207,11 +1215,11 @@ func TestUnresolveComment(t *testing.T) {
 			// Reset mock
 			mockService.ExpectedCalls = nil
 			mockService.Calls = nil
-			
+
 			tt.mockSetup()
 
 			// Create request
-			req := httptest.NewRequest(http.MethodPost, 
+			req := httptest.NewRequest(http.MethodPost,
 				fmt.Sprintf("/api/v1/comments/%s/unresolve", tt.commentID), nil)
 
 			// Create response recorder

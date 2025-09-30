@@ -293,15 +293,15 @@ func (g *MockDataGenerator) createEpic(title string) (*models.Epic, error) {
 	description := g.generateEpicDescription(title)
 
 	epic := &models.Epic{
-		ID:           uuid.New(),
-		CreatorID:    creator.ID,
-		AssigneeID:   assignee.ID,
-		CreatedAt:    g.getRandomPastTime(),
-		LastModified: time.Now().UTC(),
-		Priority:     g.getRandomPriority(),
-		Status:       g.getRandomEpicStatus(),
-		Title:        title,
-		Description:  &description,
+		ID:          uuid.New(),
+		CreatorID:   creator.ID,
+		AssigneeID:  assignee.ID,
+		CreatedAt:   g.getRandomPastTime(),
+		UpdatedAt:   time.Now().UTC(),
+		Priority:    g.getRandomPriority(),
+		Status:      g.getRandomEpicStatus(),
+		Title:       title,
+		Description: &description,
 	}
 
 	if err := g.db.Create(epic).Error; err != nil {
@@ -320,16 +320,16 @@ func (g *MockDataGenerator) createUserStory(epicID uuid.UUID, epicTitle string) 
 	description := g.generateUserStoryDescription(title)
 
 	userStory := &models.UserStory{
-		ID:           uuid.New(),
-		EpicID:       epicID,
-		CreatorID:    creator.ID,
-		AssigneeID:   assignee.ID,
-		CreatedAt:    g.getRandomPastTime(),
-		LastModified: time.Now().UTC(),
-		Priority:     g.getRandomPriority(),
-		Status:       g.getRandomUserStoryStatus(),
-		Title:        title,
-		Description:  &description,
+		ID:          uuid.New(),
+		EpicID:      epicID,
+		CreatorID:   creator.ID,
+		AssigneeID:  assignee.ID,
+		CreatedAt:   g.getRandomPastTime(),
+		UpdatedAt:   time.Now().UTC(),
+		Priority:    g.getRandomPriority(),
+		Status:      g.getRandomUserStoryStatus(),
+		Title:       title,
+		Description: &description,
 	}
 
 	if err := g.db.Create(userStory).Error; err != nil {
@@ -369,17 +369,17 @@ func (g *MockDataGenerator) createRequirement(userStoryID uuid.UUID) (*models.Re
 	description := g.generateRequirementDescription(title)
 
 	requirement := &models.Requirement{
-		ID:           uuid.New(),
-		UserStoryID:  userStoryID,
-		CreatorID:    creator.ID,
-		AssigneeID:   assignee.ID,
-		CreatedAt:    g.getRandomPastTime(),
-		LastModified: time.Now().UTC(),
-		Priority:     g.getRandomPriority(),
-		Status:       g.getRandomRequirementStatus(),
-		TypeID:       reqType.ID,
-		Title:        title,
-		Description:  &description,
+		ID:          uuid.New(),
+		UserStoryID: userStoryID,
+		CreatorID:   creator.ID,
+		AssigneeID:  assignee.ID,
+		CreatedAt:   g.getRandomPastTime(),
+		UpdatedAt:   time.Now().UTC(),
+		Priority:    g.getRandomPriority(),
+		Status:      g.getRandomRequirementStatus(),
+		TypeID:      reqType.ID,
+		Title:       title,
+		Description: &description,
 	}
 
 	if err := g.db.Create(requirement).Error; err != nil {

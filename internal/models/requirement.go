@@ -40,7 +40,7 @@ type Requirement struct {
 	CreatorID            uuid.UUID         `gorm:"not null" json:"creator_id" example:"123e4567-e89b-12d3-a456-426614174003"`                                                                                                                                                  // ID of the user who created the requirement
 	AssigneeID           uuid.UUID         `gorm:"not null" json:"assignee_id" example:"123e4567-e89b-12d3-a456-426614174004"`                                                                                                                                                 // ID of the user assigned to implement the requirement
 	CreatedAt            time.Time         `json:"created_at" example:"2023-01-01T00:00:00Z"`                                                                                                                                                                                  // Timestamp when the requirement was created
-	LastModified         time.Time         `json:"last_modified" example:"2023-01-02T12:30:00Z"`                                                                                                                                                                               // Timestamp when the requirement was last modified
+	UpdatedAt            time.Time         `json:"updated_at" db:"updated_at" example:"2023-01-02T12:30:00Z"`                                                                                                                                                                  // Timestamp when the requirement was last updated
 	Priority             Priority          `gorm:"not null" json:"priority" validate:"required,min=1,max=4" example:"2"`                                                                                                                                                       // Priority level (1=Critical, 2=High, 3=Medium, 4=Low)
 	Status               RequirementStatus `gorm:"not null" json:"status" validate:"required" example:"Draft"`                                                                                                                                                                 // Current status of the requirement
 	TypeID               uuid.UUID         `gorm:"not null" json:"type_id" example:"123e4567-e89b-12d3-a456-426614174005"`                                                                                                                                                     // ID of the requirement type (Functional, Non-Functional, etc.)
@@ -80,9 +80,9 @@ func (r *Requirement) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-// BeforeUpdate updates the LastModified timestamp
+// BeforeUpdate updates the UpdatedAt timestamp
 func (r *Requirement) BeforeUpdate(tx *gorm.DB) error {
-	r.LastModified = time.Now().UTC()
+	r.UpdatedAt = time.Now().UTC()
 	return nil
 }
 

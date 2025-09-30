@@ -370,7 +370,7 @@ docs-quality-check:
 # Documentation validation tests
 docs-validate:
 	@echo "🔍 Running comprehensive documentation validation..."
-	go run scripts/validate_documentation_accuracy.go
+	go run scripts/validate-documentation/main.go
 	@echo "✅ Documentation validation completed"
 
 docs-validate-routes:
@@ -378,10 +378,10 @@ docs-validate-routes:
 	go test -v ./internal/validation -run TestOpenAPIRouteCompleteness
 	@echo "✅ Route validation completed"
 
-docs-validate-schemas:
+docs-validate-response-schemas:
 	@echo "🔍 Validating response schema consistency..."
 	go test -v ./internal/validation -run TestResponseSchemaValidation
-	@echo "✅ Schema validation completed"
+	@echo "✅ Response schema validation completed"
 
 docs-validate-auth:
 	@echo "🔍 Validating authentication documentation..."
@@ -396,40 +396,71 @@ docs-validate-completeness:
 docs-validate-all:
 	@echo "🔍 Running all documentation validation tests..."
 	@$(MAKE) docs-validate-routes
-	@$(MAKE) docs-validate-schemas
+	@$(MAKE) docs-validate-response-schemas
 	@$(MAKE) docs-validate-auth
 	@$(MAKE) docs-validate-completeness
 	@echo "✅ All documentation validation tests completed"
+
+# Run comprehensive OpenAPI validation
+docs-validate-comprehensive:
+	@echo "🔍 Running comprehensive OpenAPI validation..."
+	go run scripts/comprehensive-validation/main.go
+	@echo "✅ Comprehensive validation completed"
+
+docs-validate-api-completeness:
+	@echo "🔍 Validating API completeness..."
+	go run scripts/validate-api-completeness/main.go
+	@echo "✅ API completeness validation completed"
+
+docs-validate-openapi:
+	@echo "🔍 Validating OpenAPI specification..."
+	go run scripts/validate-openapi/main.go
+	@echo "✅ OpenAPI validation completed"
+
+docs-validate-schemas:
+	@echo "🔍 Validating schemas and parameters..."
+	go run scripts/validate-schemas/main.go
+	@echo "✅ Schema validation completed"
+
+docs-verify-models:
+	@echo "🔍 Verifying model consistency..."
+	go run scripts/verify-models/main.go
+	@echo "✅ Model verification completed"
+
+docs-run-all-validation:
+	@echo "🔍 Running all validation tests..."
+	go run scripts/run-all-validation/main.go
+	@echo "✅ All validation tests completed"
 
 # Generate comprehensive API documentation from OpenAPI specification
 docs-generate:
 	@echo "📚 Generating comprehensive API documentation..."
 	@mkdir -p docs/generated
-	go run scripts/generate_api_documentation.go -input=docs/openapi-v3.yaml -output=docs/generated -format=all -verbose
+	go run scripts/generate-api-docs/main.go -input=docs/openapi-v3.yaml -output=docs/generated -format=all -verbose
 	@echo "✅ API documentation generated in docs/generated/"
 
 docs-generate-html:
 	@echo "📚 Generating HTML API documentation..."
 	@mkdir -p docs/generated
-	go run scripts/generate_api_documentation.go -input=docs/openapi-v3.yaml -output=docs/generated -format=html -verbose
+	go run scripts/generate-api-docs/main.go -input=docs/openapi-v3.yaml -output=docs/generated -format=html -verbose
 	@echo "✅ HTML documentation generated: docs/generated/api-documentation.html"
 
 docs-generate-markdown:
 	@echo "📚 Generating Markdown API documentation..."
 	@mkdir -p docs/generated
-	go run scripts/generate_api_documentation.go -input=docs/openapi-v3.yaml -output=docs/generated -format=markdown -verbose
+	go run scripts/generate-api-docs/main.go -input=docs/openapi-v3.yaml -output=docs/generated -format=markdown -verbose
 	@echo "✅ Markdown documentation generated: docs/generated/api-documentation.md"
 
 docs-generate-typescript:
 	@echo "📚 Generating TypeScript API documentation..."
 	@mkdir -p docs/generated
-	go run scripts/generate_api_documentation.go -input=docs/openapi-v3.yaml -output=docs/generated -format=typescript -verbose
+	go run scripts/generate-api-docs/main.go -input=docs/openapi-v3.yaml -output=docs/generated -format=typescript -verbose
 	@echo "✅ TypeScript documentation generated: docs/generated/api-types.ts"
 
 docs-generate-json:
 	@echo "📚 Generating JSON API documentation..."
 	@mkdir -p docs/generated
-	go run scripts/generate_api_documentation.go -input=docs/openapi-v3.yaml -output=docs/generated -format=json -verbose
+	go run scripts/generate-api-docs/main.go -input=docs/openapi-v3.yaml -output=docs/generated -format=json -verbose
 	@echo "✅ JSON documentation generated: docs/generated/api-documentation.json"
 
 # Show help for all available targets
@@ -501,9 +532,15 @@ help:
 	@echo "  docs-quality-check - Check if documentation quality meets standards"
 	@echo "  docs-validate      - Run comprehensive documentation validation"
 	@echo "  docs-validate-routes - Validate route implementation vs documentation"
-	@echo "  docs-validate-schemas - Validate response schema consistency"
+	@echo "  docs-validate-response-schemas - Validate response schema consistency"
 	@echo "  docs-validate-auth - Validate authentication documentation"
 	@echo "  docs-validate-completeness - Validate documentation completeness"
+	@echo "  docs-validate-comprehensive - Run comprehensive OpenAPI validation"
+	@echo "  docs-validate-api-completeness - Validate API completeness"
+	@echo "  docs-validate-openapi - Validate OpenAPI specification"
+	@echo "  docs-validate-schemas - Validate schemas and parameters"
+	@echo "  docs-verify-models - Verify model consistency"
+	@echo "  docs-run-all-validation - Run all validation tests"
 	@echo "  docs-validate-all  - Run all documentation validation tests"
 	@echo ""
 	@echo "🐳 Docker:"

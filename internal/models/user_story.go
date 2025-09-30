@@ -67,10 +67,10 @@ type UserStory struct {
 	// @Example "2023-01-15T10:30:00Z"
 	CreatedAt time.Time `json:"created_at"`
 
-	// LastModified is the timestamp when the user story was last updated
+	// UpdatedAt is the timestamp when the user story was last updated
 	// @Description Timestamp when the user story was last modified (RFC3339 format)
 	// @Example "2023-01-16T14:45:30Z"
-	LastModified time.Time `json:"last_modified"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 
 	// Priority indicates the importance level of the user story
 	// @Description Priority level of the user story (1=Critical, 2=High, 3=Medium, 4=Low)
@@ -144,9 +144,9 @@ func (us *UserStory) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-// BeforeUpdate updates the LastModified timestamp
+// BeforeUpdate updates the UpdatedAt timestamp
 func (us *UserStory) BeforeUpdate(tx *gorm.DB) error {
-	us.LastModified = time.Now().UTC()
+	us.UpdatedAt = time.Now().UTC()
 	return nil
 }
 

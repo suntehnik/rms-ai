@@ -73,10 +73,10 @@ type Epic struct {
 	// @Example "2023-01-15T10:30:00Z"
 	CreatedAt time.Time `json:"created_at"`
 
-	// LastModified is the timestamp when the epic was last updated
+	// UpdatedAt is the timestamp when the epic was last updated
 	// @Description Timestamp when the epic was last modified (RFC3339 format)
 	// @Example "2023-01-16T14:45:30Z"
-	LastModified time.Time `json:"last_modified"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 
 	// Priority indicates the importance level of the epic
 	// @Description Priority level of the epic (1=Critical, 2=High, 3=Medium, 4=Low)
@@ -143,9 +143,9 @@ func (e *Epic) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-// BeforeUpdate updates the LastModified timestamp
+// BeforeUpdate updates the UpdatedAt timestamp
 func (e *Epic) BeforeUpdate(tx *gorm.DB) error {
-	e.LastModified = time.Now().UTC()
+	e.UpdatedAt = time.Now().UTC()
 	return nil
 }
 
@@ -206,15 +206,15 @@ func (e *Epic) MarshalJSON() ([]byte, error) {
 
 	// Create a map to build the JSON response
 	result := map[string]interface{}{
-		"id":            e.ID,
-		"reference_id":  e.ReferenceID,
-		"creator_id":    e.CreatorID,
-		"assignee_id":   e.AssigneeID,
-		"created_at":    e.CreatedAt,
-		"last_modified": e.LastModified,
-		"priority":      e.Priority,
-		"status":        e.Status,
-		"title":         e.Title,
+		"id":           e.ID,
+		"reference_id": e.ReferenceID,
+		"creator_id":   e.CreatorID,
+		"assignee_id":  e.AssigneeID,
+		"created_at":   e.CreatedAt,
+		"updated_at":   e.UpdatedAt,
+		"priority":     e.Priority,
+		"status":       e.Status,
+		"title":        e.Title,
 	}
 
 	// Only include description if it's not nil

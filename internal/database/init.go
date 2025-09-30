@@ -38,10 +38,21 @@ func Initialize(cfg *config.Config) (*DB, error) {
 
 // InitializeWithoutMigrations sets up database connections without running migrations
 func InitializeWithoutMigrations(cfg *config.Config) (*DB, error) {
-	// Create database connections
-	db, err := New(cfg)
+	// Initialize PostgreSQL connection
+	pg, err := initPostgreSQL(cfg.Database)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create database connections: %w", err)
+		return nil, fmt.Errorf("failed to initialize PostgreSQL: %w", err)
+	}
+
+	// Initialize Redis connection
+	rdb, err := initRedis(cfg.Redis)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize Redis: %w", err)
+	}
+
+	db := &DB{
+		Postgres: pg,
+		Redis:    rdb,
 	}
 
 	// Test connections
