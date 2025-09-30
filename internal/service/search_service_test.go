@@ -9,8 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-
-
 func TestSearchService_prepareSearchQuery(t *testing.T) {
 	service := &SearchService{}
 
@@ -87,10 +85,10 @@ func TestSearchService_generateCacheKey(t *testing.T) {
 
 	// Same options should generate same key
 	assert.Equal(t, key1, key2)
-	
+
 	// Different options should generate different keys
 	assert.NotEqual(t, key1, key3)
-	
+
 	// Keys should start with "search:"
 	assert.Contains(t, key1, "search:")
 }
@@ -293,9 +291,9 @@ func TestSearchService_validateSearchOptions(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "valid sort fields - last_modified",
+			name: "valid sort fields - updated_at",
 			options: SearchOptions{
-				SortBy:    "last_modified",
+				SortBy:    "updated_at",
 				SortOrder: "desc",
 			},
 			expectError: false,
@@ -313,7 +311,7 @@ func TestSearchService_validateSearchOptions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := service.validateSearchOptions(tt.options)
-			
+
 			if tt.expectError {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.errorMsg)

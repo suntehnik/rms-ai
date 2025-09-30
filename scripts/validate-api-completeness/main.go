@@ -268,7 +268,10 @@ func analyzeEntityCoverage(implemented, documented map[string][]string) {
 	entities := []string{"epics", "user-stories", "acceptance-criteria", "requirements"}
 
 	for _, entity := range entities {
-		fmt.Printf("\n   %s:\n", strings.Title(strings.ReplaceAll(entity, "-", " ")))
+		// Use a simple title case conversion instead of deprecated strings.Title
+		entityTitle := strings.ToUpper(string(entity[0])) + strings.ToLower(entity[1:])
+		entityTitle = strings.ReplaceAll(entityTitle, "-", " ")
+		fmt.Printf("\n   %s:\n", entityTitle)
 
 		// Standard CRUD operations
 		crudOps := map[string]string{

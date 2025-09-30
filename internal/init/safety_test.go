@@ -37,7 +37,7 @@ func setupTestDB(t *testing.T) *gorm.DB {
 			creator_id TEXT NOT NULL,
 			assignee_id TEXT NOT NULL,
 			created_at DATETIME,
-			last_modified DATETIME,
+			updated_at DATETIME,
 			priority INTEGER NOT NULL,
 			status TEXT NOT NULL,
 			title TEXT NOT NULL,
@@ -54,7 +54,7 @@ func setupTestDB(t *testing.T) *gorm.DB {
 			creator_id TEXT NOT NULL,
 			assignee_id TEXT NOT NULL,
 			created_at DATETIME,
-			last_modified DATETIME,
+			updated_at DATETIME,
 			priority INTEGER NOT NULL,
 			status TEXT NOT NULL,
 			title TEXT NOT NULL,
@@ -72,7 +72,7 @@ func setupTestDB(t *testing.T) *gorm.DB {
 			creator_id TEXT NOT NULL,
 			assignee_id TEXT NOT NULL,
 			created_at DATETIME,
-			last_modified DATETIME,
+			updated_at DATETIME,
 			priority INTEGER NOT NULL,
 			status TEXT NOT NULL,
 			type_id TEXT NOT NULL,
@@ -89,7 +89,7 @@ func setupTestDB(t *testing.T) *gorm.DB {
 			user_story_id TEXT NOT NULL,
 			author_id TEXT NOT NULL,
 			created_at DATETIME,
-			last_modified DATETIME,
+			updated_at DATETIME,
 			description TEXT NOT NULL
 		)
 	`).Error
@@ -158,7 +158,7 @@ func TestSafetyChecker_IsDatabaseEmpty_WithEpics(t *testing.T) {
 
 	// Insert an epic
 	err := db.Exec(`
-		INSERT INTO epics (id, reference_id, creator_id, assignee_id, created_at, last_modified, priority, status, title)
+		INSERT INTO epics (id, reference_id, creator_id, assignee_id, created_at, updated_at, priority, status, title)
 		VALUES ('epic-1', 'EP-001', 'user-1', 'user-1', datetime('now'), datetime('now'), 1, 'Backlog', 'Test Epic')
 	`).Error
 	require.NoError(t, err)
@@ -175,7 +175,7 @@ func TestSafetyChecker_IsDatabaseEmpty_WithUserStories(t *testing.T) {
 
 	// Insert a user story
 	err := db.Exec(`
-		INSERT INTO user_stories (id, reference_id, epic_id, creator_id, assignee_id, created_at, last_modified, priority, status, title)
+		INSERT INTO user_stories (id, reference_id, epic_id, creator_id, assignee_id, created_at, updated_at, priority, status, title)
 		VALUES ('us-1', 'US-001', 'epic-1', 'user-1', 'user-1', datetime('now'), datetime('now'), 1, 'Backlog', 'Test User Story')
 	`).Error
 	require.NoError(t, err)
@@ -192,7 +192,7 @@ func TestSafetyChecker_IsDatabaseEmpty_WithRequirements(t *testing.T) {
 
 	// Insert a requirement
 	err := db.Exec(`
-		INSERT INTO requirements (id, reference_id, user_story_id, creator_id, assignee_id, created_at, last_modified, priority, status, type_id, title)
+		INSERT INTO requirements (id, reference_id, user_story_id, creator_id, assignee_id, created_at, updated_at, priority, status, type_id, title)
 		VALUES ('req-1', 'REQ-001', 'us-1', 'user-1', 'user-1', datetime('now'), datetime('now'), 1, 'Draft', 'type-1', 'Test Requirement')
 	`).Error
 	require.NoError(t, err)
@@ -209,7 +209,7 @@ func TestSafetyChecker_IsDatabaseEmpty_WithAcceptanceCriteria(t *testing.T) {
 
 	// Insert acceptance criteria
 	err := db.Exec(`
-		INSERT INTO acceptance_criteria (id, reference_id, user_story_id, author_id, created_at, last_modified, description)
+		INSERT INTO acceptance_criteria (id, reference_id, user_story_id, author_id, created_at, updated_at, description)
 		VALUES ('ac-1', 'AC-001', 'us-1', 'user-1', datetime('now'), datetime('now'), 'WHEN user logs in THEN system SHALL authenticate')
 	`).Error
 	require.NoError(t, err)
@@ -267,7 +267,7 @@ func TestSafetyChecker_GetDataSummary_WithData(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.Exec(`
-		INSERT INTO epics (id, reference_id, creator_id, assignee_id, created_at, last_modified, priority, status, title)
+		INSERT INTO epics (id, reference_id, creator_id, assignee_id, created_at, updated_at, priority, status, title)
 		VALUES 
 		('epic-1', 'EP-001', 'user-1', 'user-1', datetime('now'), datetime('now'), 1, 'Backlog', 'Test Epic 1'),
 		('epic-2', 'EP-002', 'user-1', 'user-1', datetime('now'), datetime('now'), 2, 'Draft', 'Test Epic 2')
@@ -319,7 +319,7 @@ func TestSafetyChecker_GetNonEmptyTablesReport_WithData(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.Exec(`
-		INSERT INTO epics (id, reference_id, creator_id, assignee_id, created_at, last_modified, priority, status, title)
+		INSERT INTO epics (id, reference_id, creator_id, assignee_id, created_at, updated_at, priority, status, title)
 		VALUES ('epic-1', 'EP-001', 'user-1', 'user-1', datetime('now'), datetime('now'), 1, 'Backlog', 'Test Epic')
 	`).Error
 	require.NoError(t, err)
@@ -401,25 +401,25 @@ func TestSafetyChecker_AllTablesWithData(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.Exec(`
-		INSERT INTO epics (id, reference_id, creator_id, assignee_id, created_at, last_modified, priority, status, title)
+		INSERT INTO epics (id, reference_id, creator_id, assignee_id, created_at, updated_at, priority, status, title)
 		VALUES ('epic-1', 'EP-001', 'user-1', 'user-1', datetime('now'), datetime('now'), 1, 'Backlog', 'Test Epic')
 	`).Error
 	require.NoError(t, err)
 
 	err = db.Exec(`
-		INSERT INTO user_stories (id, reference_id, epic_id, creator_id, assignee_id, created_at, last_modified, priority, status, title)
+		INSERT INTO user_stories (id, reference_id, epic_id, creator_id, assignee_id, created_at, updated_at, priority, status, title)
 		VALUES ('us-1', 'US-001', 'epic-1', 'user-1', 'user-1', datetime('now'), datetime('now'), 1, 'Backlog', 'Test User Story')
 	`).Error
 	require.NoError(t, err)
 
 	err = db.Exec(`
-		INSERT INTO requirements (id, reference_id, user_story_id, creator_id, assignee_id, created_at, last_modified, priority, status, type_id, title)
+		INSERT INTO requirements (id, reference_id, user_story_id, creator_id, assignee_id, created_at, updated_at, priority, status, type_id, title)
 		VALUES ('req-1', 'REQ-001', 'us-1', 'user-1', 'user-1', datetime('now'), datetime('now'), 1, 'Draft', 'type-1', 'Test Requirement')
 	`).Error
 	require.NoError(t, err)
 
 	err = db.Exec(`
-		INSERT INTO acceptance_criteria (id, reference_id, user_story_id, author_id, created_at, last_modified, description)
+		INSERT INTO acceptance_criteria (id, reference_id, user_story_id, author_id, created_at, updated_at, description)
 		VALUES ('ac-1', 'AC-001', 'us-1', 'user-1', datetime('now'), datetime('now'), 'WHEN user logs in THEN system SHALL authenticate')
 	`).Error
 	require.NoError(t, err)
@@ -470,7 +470,7 @@ func TestSafetyChecker_MultipleRecordsInTables(t *testing.T) {
 
 	// Insert multiple epics
 	err = db.Exec(`
-		INSERT INTO epics (id, reference_id, creator_id, assignee_id, created_at, last_modified, priority, status, title)
+		INSERT INTO epics (id, reference_id, creator_id, assignee_id, created_at, updated_at, priority, status, title)
 		VALUES 
 		('epic-1', 'EP-001', 'user-1', 'user-1', datetime('now'), datetime('now'), 1, 'Backlog', 'Test Epic 1'),
 		('epic-2', 'EP-002', 'user-2', 'user-2', datetime('now'), datetime('now'), 2, 'Draft', 'Test Epic 2')
@@ -624,7 +624,7 @@ func TestSafetyChecker_GetDataSummary_MixedScenario(t *testing.T) {
 			creator_id TEXT NOT NULL,
 			assignee_id TEXT NOT NULL,
 			created_at DATETIME,
-			last_modified DATETIME,
+			updated_at DATETIME,
 			priority INTEGER NOT NULL,
 			status TEXT NOT NULL,
 			title TEXT NOT NULL,

@@ -584,7 +584,7 @@ export interface Epic {
   creator_id: string;
   assignee_id?: string;
   created_at: string;
-  last_modified: string;
+  updated_at: string;
   
   // Optional populated fields
   creator?: User;
@@ -622,7 +622,7 @@ export interface UserStory {
   creator_id: string;
   assignee_id?: string;
   created_at: string;
-  last_modified: string;
+  updated_at: string;
   
   // Optional populated fields
   epic?: Epic;
@@ -656,7 +656,7 @@ export interface AcceptanceCriteria {
   user_story_id: string;
   author_id: string;
   created_at: string;
-  last_modified: string;
+  updated_at: string;
   
   // Optional populated fields
   user_story?: UserStory;
@@ -690,7 +690,7 @@ export interface Requirement {
   creator_id: string;
   assignee_id?: string;
   created_at: string;
-  last_modified: string;
+  updated_at: string;
   
   // Optional populated fields
   user_story?: UserStory;

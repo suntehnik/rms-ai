@@ -37,7 +37,7 @@ type SearchFilters struct {
 type SearchOptions struct {
 	Query     string        `json:"query"`
 	Filters   SearchFilters `json:"filters"`
-	SortBy    string        `json:"sort_by"`    // priority, created_at, last_modified, title
+	SortBy    string        `json:"sort_by"`    // priority, created_at, updated_at, title
 	SortOrder string        `json:"sort_order"` // asc, desc
 	Limit     int           `json:"limit"`
 	Offset    int           `json:"offset"`
@@ -125,10 +125,10 @@ func (s *SearchService) validateSearchOptions(options SearchOptions) error {
 
 	// Validate sort by
 	validSortFields := map[string]bool{
-		"priority":      true,
-		"created_at":    true,
-		"last_modified": true,
-		"title":         true,
+		"priority":   true,
+		"created_at": true,
+		"updated_at": true,
+		"title":      true,
 	}
 	if options.SortBy != "" && !validSortFields[options.SortBy] {
 		return fmt.Errorf("invalid sort_by field: %s", options.SortBy)

@@ -107,7 +107,7 @@ interface Epic {
   creator: User;
   assignee: User;
   createdAt: Date;
-  lastModified: Date;
+  updatedAt: Date;
   priority: Priority; // 1-4 (Critical, High, Medium, Low)
   status: EpicStatus; // Backlog, Draft, In Progress, Done, Cancelled
   title: string;
@@ -125,7 +125,7 @@ interface UserStory {
   creator: User;
   assignee: User;
   createdAt: Date;
-  lastModified: Date;
+  updatedAt: Date;
   priority: Priority;
   status: UserStoryStatus; // Backlog, Draft, In Progress, Done, Cancelled
   title: string;
@@ -143,7 +143,7 @@ interface AcceptanceCriteria {
   userStory: UserStory;
   author: User;
   createdAt: Date;
-  lastModified: Date;
+  updatedAt: Date;
   description: string;
 }
 ```
@@ -158,7 +158,7 @@ interface Requirement {
   creator: User;
   assignee: User;
   createdAt: Date;
-  lastModified: Date;
+  updatedAt: Date;
   priority: Priority;
   status: RequirementStatus; // Draft, Active, Obsolete
   type: RequirementType; // Configurable

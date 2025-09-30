@@ -184,7 +184,7 @@ func TestAcceptanceCriteriaIntegration(t *testing.T) {
 		assert.Equal(t, user.ID, response.AuthorID)
 		assert.Equal(t, "WHEN user clicks submit THEN system SHALL validate the form", response.Description)
 		assert.False(t, response.CreatedAt.IsZero())
-		assert.False(t, response.LastModified.IsZero())
+		assert.False(t, response.UpdatedAt.IsZero())
 	})
 
 	// Create acceptance criteria for further tests
@@ -243,7 +243,7 @@ func TestAcceptanceCriteriaIntegration(t *testing.T) {
 
 		assert.Equal(t, acceptanceCriteria.ID, response.ID)
 		assert.Equal(t, "WHEN user submits form THEN system SHALL validate all required fields - updated", response.Description)
-		assert.True(t, response.LastModified.After(response.CreatedAt))
+		assert.True(t, response.UpdatedAt.After(response.CreatedAt))
 	})
 
 	t.Run("List Acceptance Criteria", func(t *testing.T) {

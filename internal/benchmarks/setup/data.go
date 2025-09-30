@@ -116,16 +116,16 @@ func (dg *DataGenerator) CreateEpics(count int, users []*models.User) ([]*models
 		assignee := users[dg.rand.Intn(len(users))]
 
 		epic := &models.Epic{
-			ID:           uuid.New(),
-			ReferenceID:  fmt.Sprintf("EP-%03d", i+1),
-			CreatorID:    creator.ID,
-			AssigneeID:   assignee.ID,
-			CreatedAt:    time.Now().UTC(),
-			LastModified: time.Now().UTC(),
-			Priority:     dg.randomPriority(),
-			Status:       dg.randomEpicStatus(),
-			Title:        fmt.Sprintf("Epic %d: %s", i+1, dg.randomEpicTitle()),
-			Description:  dg.stringPtr(dg.randomEpicDescription()),
+			ID:          uuid.New(),
+			ReferenceID: fmt.Sprintf("EP-%03d", i+1),
+			CreatorID:   creator.ID,
+			AssigneeID:  assignee.ID,
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+			Priority:    dg.randomPriority(),
+			Status:      dg.randomEpicStatus(),
+			Title:       fmt.Sprintf("Epic %d: %s", i+1, dg.randomEpicTitle()),
+			Description: dg.stringPtr(dg.randomEpicDescription()),
 		}
 		epics = append(epics, epic)
 	}
@@ -153,17 +153,17 @@ func (dg *DataGenerator) CreateUserStories(storiesPerEpic int, epics []*models.E
 			assignee := users[dg.rand.Intn(len(users))]
 
 			userStory := &models.UserStory{
-				ID:           uuid.New(),
-				ReferenceID:  fmt.Sprintf("US-%03d", storyCounter),
-				EpicID:       epic.ID,
-				CreatorID:    creator.ID,
-				AssigneeID:   assignee.ID,
-				CreatedAt:    time.Now().UTC(),
-				LastModified: time.Now().UTC(),
-				Priority:     dg.randomPriority(),
-				Status:       dg.randomUserStoryStatus(),
-				Title:        fmt.Sprintf("User Story %d: %s", storyCounter, dg.randomUserStoryTitle()),
-				Description:  dg.stringPtr(dg.randomUserStoryDescription()),
+				ID:          uuid.New(),
+				ReferenceID: fmt.Sprintf("US-%03d", storyCounter),
+				EpicID:      epic.ID,
+				CreatorID:   creator.ID,
+				AssigneeID:  assignee.ID,
+				CreatedAt:   time.Now().UTC(),
+				UpdatedAt:   time.Now().UTC(),
+				Priority:    dg.randomPriority(),
+				Status:      dg.randomUserStoryStatus(),
+				Title:       fmt.Sprintf("User Story %d: %s", storyCounter, dg.randomUserStoryTitle()),
+				Description: dg.stringPtr(dg.randomUserStoryDescription()),
 			}
 			userStories = append(userStories, userStory)
 			storyCounter++
@@ -203,18 +203,18 @@ func (dg *DataGenerator) CreateRequirements(requirementsPerUS int, userStories [
 			reqType := reqTypes[dg.rand.Intn(len(reqTypes))]
 
 			requirement := &models.Requirement{
-				ID:           uuid.New(),
-				ReferenceID:  fmt.Sprintf("REQ-%03d", reqCounter),
-				UserStoryID:  userStory.ID,
-				CreatorID:    creator.ID,
-				AssigneeID:   assignee.ID,
-				CreatedAt:    time.Now().UTC(),
-				LastModified: time.Now().UTC(),
-				Priority:     dg.randomPriority(),
-				Status:       dg.randomRequirementStatus(),
-				TypeID:       reqType.ID,
-				Title:        fmt.Sprintf("Requirement %d: %s", reqCounter, dg.randomRequirementTitle()),
-				Description:  dg.stringPtr(dg.randomRequirementDescription()),
+				ID:          uuid.New(),
+				ReferenceID: fmt.Sprintf("REQ-%03d", reqCounter),
+				UserStoryID: userStory.ID,
+				CreatorID:   creator.ID,
+				AssigneeID:  assignee.ID,
+				CreatedAt:   time.Now().UTC(),
+				UpdatedAt:   time.Now().UTC(),
+				Priority:    dg.randomPriority(),
+				Status:      dg.randomRequirementStatus(),
+				TypeID:      reqType.ID,
+				Title:       fmt.Sprintf("Requirement %d: %s", reqCounter, dg.randomRequirementTitle()),
+				Description: dg.stringPtr(dg.randomRequirementDescription()),
 			}
 			requirements = append(requirements, requirement)
 			reqCounter++
@@ -242,13 +242,13 @@ func (dg *DataGenerator) CreateAcceptanceCriteria(count int, userStories []*mode
 		author := users[dg.rand.Intn(len(users))]
 
 		ac := &models.AcceptanceCriteria{
-			ID:           uuid.New(),
-			ReferenceID:  fmt.Sprintf("AC-%03d", i+1),
-			UserStoryID:  userStory.ID,
-			AuthorID:     author.ID,
-			CreatedAt:    time.Now().UTC(),
-			LastModified: time.Now().UTC(),
-			Description:  dg.randomAcceptanceCriteriaDescription(),
+			ID:          uuid.New(),
+			ReferenceID: fmt.Sprintf("AC-%03d", i+1),
+			UserStoryID: userStory.ID,
+			AuthorID:    author.ID,
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+			Description: dg.randomAcceptanceCriteriaDescription(),
 		}
 		acceptanceCriteria = append(acceptanceCriteria, ac)
 	}
