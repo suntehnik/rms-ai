@@ -31,6 +31,7 @@ type UserStoryIntegrationTestSuite struct {
 	userRepo         repository.UserRepository
 	testUser         *models.User
 	testEpic         *models.Epic
+	authContext      *TestAuthContext
 }
 
 func (suite *UserStoryIntegrationTestSuite) SetupSuite() {
@@ -66,11 +67,16 @@ func (suite *UserStoryIntegrationTestSuite) SetupSuite() {
 	// Setup handlers
 	suite.userStoryHandler = handlers.NewUserStoryHandler(suite.userStoryService)
 
+	// Setup authentication
+	suite.authContext = SetupTestAuth(suite.T(), db)
+
 	// Setup router
 	gin.SetMode(gin.TestMode)
 	suite.router = gin.New()
 
 	v1 := suite.router.Group("/api/v1")
+	// Apply authentication middleware to all routes
+	v1.Use(suite.authContext.AuthService.Middleware())
 	{
 		v1.POST("/user-stories", suite.userStoryHandler.CreateUserStory)
 		v1.POST("/epics/:id/user-stories", suite.userStoryHandler.CreateUserStoryInEpic)
@@ -89,17 +95,10 @@ func (suite *UserStoryIntegrationTestSuite) SetupTest() {
 	// Clean up database before each test
 	suite.db.Exec("DELETE FROM user_stories")
 	suite.db.Exec("DELETE FROM epics")
-	suite.db.Exec("DELETE FROM users")
+	suite.db.Exec("DELETE FROM users WHERE username NOT IN ('testuser', 'adminuser')")
 
-	// Create test user
-	suite.testUser = &models.User{
-		ID:       uuid.New(),
-		Username: "testuser",
-		Email:    "test@example.com",
-		Role:     models.RoleUser,
-	}
-	err := suite.userRepo.Create(suite.testUser)
-	suite.Require().NoError(err)
+	// Use the authenticated test user
+	suite.testUser = suite.authContext.TestUser
 
 	// Create test epic
 	suite.testEpic = &models.Epic{
@@ -112,7 +111,7 @@ func (suite *UserStoryIntegrationTestSuite) SetupTest() {
 		Title:       "Test Epic",
 		Description: stringPtr("Test epic description"),
 	}
-	err = suite.epicRepo.Create(suite.testEpic)
+	err := suite.epicRepo.Create(suite.testEpic)
 	suite.Require().NoError(err)
 }
 
@@ -134,6 +133,7 @@ func (suite *UserStoryIntegrationTestSuite) TestCreateUserStory() {
 	jsonBody, _ := json.Marshal(reqBody)
 	req, _ := http.NewRequest("POST", "/api/v1/user-stories", bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -165,6 +165,7 @@ func (suite *UserStoryIntegrationTestSuite) TestCreateUserStoryInEpic() {
 	jsonBody, _ := json.Marshal(reqBody)
 	req, _ := http.NewRequest("POST", fmt.Sprintf("/api/v1/epics/%s/user-stories", suite.testEpic.ID.String()), bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -191,16 +192,43 @@ func (suite *UserStoryIntegrationTestSuite) TestCreateUserStoryWithInvalidTempla
 	jsonBody, _ := json.Marshal(reqBody)
 	req, _ := http.NewRequest("POST", "/api/v1/user-stories", bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
 
 	assert.Equal(suite.T(), http.StatusBadRequest, w.Code)
 
-	var response map[string]interface{}
+	var response map[string]any
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(suite.T(), err)
 	assert.Contains(suite.T(), response["error"], "template")
+}
+
+func (suite *UserStoryIntegrationTestSuite) TestCreateUserStoryRequiresAuthentication() {
+	description := "As a user, I want to test authentication, so that I can verify security"
+	reqBody := service.CreateUserStoryRequest{
+		EpicID:      suite.testEpic.ID,
+		CreatorID:   suite.testUser.ID,
+		Priority:    models.PriorityHigh,
+		Title:       "Test Authentication",
+		Description: &description,
+	}
+
+	jsonBody, _ := json.Marshal(reqBody)
+	req, _ := http.NewRequest("POST", "/api/v1/user-stories", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	// Intentionally not setting Authorization header
+
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusUnauthorized, w.Code)
+
+	var response map[string]any
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.NoError(suite.T(), err)
+	assert.Contains(suite.T(), response["error"], "Authorization header required")
 }
 
 func (suite *UserStoryIntegrationTestSuite) TestGetUserStory() {
@@ -222,6 +250,7 @@ func (suite *UserStoryIntegrationTestSuite) TestGetUserStory() {
 
 	// Test get by UUID
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/user-stories/%s", userStory.ID.String()), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
 
@@ -235,6 +264,7 @@ func (suite *UserStoryIntegrationTestSuite) TestGetUserStory() {
 
 	// Test get by reference ID
 	req, _ = http.NewRequest("GET", fmt.Sprintf("/api/v1/user-stories/%s", userStory.ReferenceID), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 	w = httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
 
@@ -272,6 +302,7 @@ func (suite *UserStoryIntegrationTestSuite) TestUpdateUserStory() {
 	jsonBody, _ := json.Marshal(reqBody)
 	req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/v1/user-stories/%s", userStory.ID.String()), bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -312,13 +343,14 @@ func (suite *UserStoryIntegrationTestSuite) TestUpdateUserStoryWithInvalidTempla
 	jsonBody, _ := json.Marshal(reqBody)
 	req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/v1/user-stories/%s", userStory.ID.String()), bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
 
 	assert.Equal(suite.T(), http.StatusBadRequest, w.Code)
 
-	var response map[string]interface{}
+	var response map[string]any
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(suite.T(), err)
 	assert.Contains(suite.T(), response["error"], "template")
@@ -343,6 +375,7 @@ func (suite *UserStoryIntegrationTestSuite) TestDeleteUserStory() {
 
 	// Delete the user story
 	req, _ := http.NewRequest("DELETE", fmt.Sprintf("/api/v1/user-stories/%s", userStory.ID.String()), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
 
@@ -380,12 +413,13 @@ func (suite *UserStoryIntegrationTestSuite) TestListUserStories() {
 
 	// Test list all user stories
 	req, _ := http.NewRequest("GET", "/api/v1/user-stories", nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
 
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
 
-	var response map[string]interface{}
+	var response map[string]any
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), float64(3), response["total_count"])
@@ -395,6 +429,7 @@ func (suite *UserStoryIntegrationTestSuite) TestListUserStories() {
 
 	// Test list with epic filter
 	req, _ = http.NewRequest("GET", fmt.Sprintf("/api/v1/user-stories?epic_id=%s", suite.testEpic.ID.String()), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 	w = httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
 
@@ -426,13 +461,14 @@ func (suite *UserStoryIntegrationTestSuite) TestChangeUserStoryStatus() {
 	suite.Require().NoError(err)
 
 	// Change status
-	reqBody := map[string]interface{}{
+	reqBody := map[string]any{
 		"status": models.UserStoryStatusInProgress,
 	}
 
 	jsonBody, _ := json.Marshal(reqBody)
 	req, _ := http.NewRequest("PATCH", fmt.Sprintf("/api/v1/user-stories/%s/status", userStory.ID.String()), bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -473,13 +509,14 @@ func (suite *UserStoryIntegrationTestSuite) TestAssignUserStory() {
 	suite.Require().NoError(err)
 
 	// Assign to different user
-	reqBody := map[string]interface{}{
+	reqBody := map[string]any{
 		"assignee_id": assignee.ID,
 	}
 
 	jsonBody, _ := json.Marshal(reqBody)
 	req, _ := http.NewRequest("PATCH", fmt.Sprintf("/api/v1/user-stories/%s/assign", userStory.ID.String()), bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
