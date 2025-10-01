@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
 
 	"product-requirements-management/internal/handlers"
@@ -20,68 +20,93 @@ import (
 	"product-requirements-management/internal/service"
 )
 
-// setupTestServer creates a test server with in-memory database
-func setupTestServer(t *testing.T) (*gin.Engine, *gorm.DB, func()) {
-	// Create in-memory SQLite database
-	testDatabase := SetupTestDatabase(t)
+type EpicIntegrationTestSuite struct {
+	suite.Suite
+	db          *gorm.DB
+	router      *gin.Engine
+	epicHandler *handlers.EpicHandler
+	epicService service.EpicService
+	epicRepo    repository.EpicRepository
+	userRepo    repository.UserRepository
+	testUser    *models.User
+	authContext *TestAuthContext
+}
+
+func (suite *EpicIntegrationTestSuite) SetupSuite() {
+	// Setup test database
+	testDatabase := SetupTestDatabase(suite.T())
 	db := testDatabase.DB
 
-	// Auto-migrate models
-	err := models.AutoMigrate(db)
-	require.NoError(t, err)
+	// Auto-migrate the schema
+	err := db.AutoMigrate(
+		&models.User{},
+		&models.Epic{},
+		&models.UserStory{},
+		&models.AcceptanceCriteria{},
+		&models.Requirement{},
+		&models.Comment{},
+	)
+	suite.Require().NoError(err)
 
 	// Seed default data
 	err = models.SeedDefaultData(db)
-	require.NoError(t, err)
+	suite.Require().NoError(err)
 
-	// Create repositories
-	epicRepo := repository.NewEpicRepository(db)
-	userRepo := repository.NewUserRepository(db)
+	suite.db = db
 
-	// Create services
-	epicService := service.NewEpicService(epicRepo, userRepo)
+	// Setup repositories
+	suite.userRepo = repository.NewUserRepository(db)
+	suite.epicRepo = repository.NewEpicRepository(db)
 
-	// Create handlers
-	epicHandler := handlers.NewEpicHandler(epicService)
+	// Setup services
+	suite.epicService = service.NewEpicService(suite.epicRepo, suite.userRepo)
 
-	// Setup Gin router
+	// Setup handlers
+	suite.epicHandler = handlers.NewEpicHandler(suite.epicService)
+
+	// Setup authentication
+	suite.authContext = SetupTestAuth(suite.T(), db)
+
+	// Setup router
 	gin.SetMode(gin.TestMode)
-	router := gin.New()
+	suite.router = gin.New()
 
-	// Setup routes
-	v1 := router.Group("/api/v1")
-	epics := v1.Group("/epics")
+	v1 := suite.router.Group("/api/v1")
+	// Apply authentication middleware to all routes
+	v1.Use(suite.authContext.AuthService.Middleware())
 	{
-		epics.POST("", epicHandler.CreateEpic)
-		epics.GET("", epicHandler.ListEpics)
-		epics.GET("/:id", epicHandler.GetEpic)
-		epics.PUT("/:id", epicHandler.UpdateEpic)
-		epics.DELETE("/:id", epicHandler.DeleteEpic)
-		epics.GET("/:id/user-stories", epicHandler.GetEpicWithUserStories)
-		epics.PATCH("/:id/status", epicHandler.ChangeEpicStatus)
-		epics.PATCH("/:id/assign", epicHandler.AssignEpic)
-	}
-
-	cleanup := func() {
-		sqlDB, _ := db.DB()
-		if sqlDB != nil {
-			sqlDB.Close()
+		epics := v1.Group("/epics")
+		{
+			epics.POST("", suite.epicHandler.CreateEpic)
+			epics.GET("", suite.epicHandler.ListEpics)
+			epics.GET("/:id", suite.epicHandler.GetEpic)
+			epics.PUT("/:id", suite.epicHandler.UpdateEpic)
+			epics.DELETE("/:id", suite.epicHandler.DeleteEpic)
+			epics.GET("/:id/user-stories", suite.epicHandler.GetEpicWithUserStories)
+			epics.PATCH("/:id/status", suite.epicHandler.ChangeEpicStatus)
+			epics.PATCH("/:id/assign", suite.epicHandler.AssignEpic)
 		}
 	}
-
-	return router, db, cleanup
 }
 
-func TestEpicIntegration_CreateAndGetEpic(t *testing.T) {
-	router, db, cleanup := setupTestServer(t)
-	defer cleanup()
+func (suite *EpicIntegrationTestSuite) SetupTest() {
+	// Clean up database before each test
+	suite.db.Exec("DELETE FROM epics")
+	suite.db.Exec("DELETE FROM users WHERE username NOT IN ('testuser', 'adminuser')")
 
-	// Create test user
-	user := createTestUser(t, db)
+	// Use the authenticated test user
+	suite.testUser = suite.authContext.TestUser
+}
 
+func (suite *EpicIntegrationTestSuite) TearDownSuite() {
+	sqlDB, _ := suite.db.DB()
+	sqlDB.Close()
+}
+
+func (suite *EpicIntegrationTestSuite) TestCreateEpic() {
 	// Test data
 	createReq := service.CreateEpicRequest{
-		CreatorID:   user.ID,
+		CreatorID:   suite.testUser.ID,
 		Priority:    models.PriorityHigh,
 		Title:       "Integration Test Epic",
 		Description: stringPtr("This is a test epic for integration testing"),
@@ -91,131 +116,172 @@ func TestEpicIntegration_CreateAndGetEpic(t *testing.T) {
 	body, _ := json.Marshal(createReq)
 	req, _ := http.NewRequest("POST", "/api/v1/epics", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	suite.router.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(suite.T(), http.StatusCreated, w.Code)
 
 	var createdEpic models.Epic
 	err := json.Unmarshal(w.Body.Bytes(), &createdEpic)
-	require.NoError(t, err)
+	suite.Require().NoError(err)
 
-	assert.NotEqual(t, uuid.Nil, createdEpic.ID)
-	assert.Equal(t, createReq.Title, createdEpic.Title)
-	assert.Equal(t, createReq.Priority, createdEpic.Priority)
-	assert.Equal(t, models.EpicStatusBacklog, createdEpic.Status)
-
-	// Get epic by ID
-	req, _ = http.NewRequest("GET", fmt.Sprintf("/api/v1/epics/%s", createdEpic.ID), nil)
-	w = httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	var retrievedEpic models.Epic
-	err = json.Unmarshal(w.Body.Bytes(), &retrievedEpic)
-	require.NoError(t, err)
-
-	assert.Equal(t, createdEpic.ID, retrievedEpic.ID)
-	assert.Equal(t, createdEpic.Title, retrievedEpic.Title)
+	assert.NotEqual(suite.T(), uuid.Nil, createdEpic.ID)
+	assert.Equal(suite.T(), createReq.Title, createdEpic.Title)
+	assert.Equal(suite.T(), createReq.Priority, createdEpic.Priority)
+	assert.Equal(suite.T(), models.EpicStatusBacklog, createdEpic.Status)
+	assert.NotEmpty(suite.T(), createdEpic.ReferenceID)
 }
 
-func TestEpicIntegration_UpdateEpic(t *testing.T) {
-	router, db, cleanup := setupTestServer(t)
-	defer cleanup()
-
-	// Create test user
-	user := createTestUser(t, db)
-
+func (suite *EpicIntegrationTestSuite) TestGetEpic() {
 	// Create epic first
 	epic := &models.Epic{
 		ID:          uuid.New(),
 		ReferenceID: "EP-001",
-		CreatorID:   user.ID,
-		AssigneeID:  user.ID,
+		CreatorID:   suite.testUser.ID,
+		AssigneeID:  suite.testUser.ID,
+		Priority:    models.PriorityHigh,
+		Status:      models.EpicStatusBacklog,
+		Title:       "Test Epic",
+		Description: stringPtr("Test epic description"),
+	}
+
+	err := suite.epicRepo.Create(epic)
+	suite.Require().NoError(err)
+
+	// Get epic by ID
+	req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/epics/%s", epic.ID), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
+
+	var retrievedEpic models.Epic
+	err = json.Unmarshal(w.Body.Bytes(), &retrievedEpic)
+	suite.Require().NoError(err)
+
+	assert.Equal(suite.T(), epic.ID, retrievedEpic.ID)
+	assert.Equal(suite.T(), epic.Title, retrievedEpic.Title)
+	assert.Equal(suite.T(), epic.ReferenceID, retrievedEpic.ReferenceID)
+}
+
+func (suite *EpicIntegrationTestSuite) TestGetEpicByReferenceID() {
+	// Create epic first
+	epic := &models.Epic{
+		ID:          uuid.New(),
+		ReferenceID: "EP-001",
+		CreatorID:   suite.testUser.ID,
+		AssigneeID:  suite.testUser.ID,
+		Priority:    models.PriorityHigh,
+		Status:      models.EpicStatusBacklog,
+		Title:       "Test Epic",
+		Description: stringPtr("Test epic description"),
+	}
+
+	err := suite.epicRepo.Create(epic)
+	suite.Require().NoError(err)
+
+	// Get epic by reference ID
+	req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/epics/%s", epic.ReferenceID), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
+
+	var retrievedEpic models.Epic
+	err = json.Unmarshal(w.Body.Bytes(), &retrievedEpic)
+	suite.Require().NoError(err)
+
+	assert.Equal(suite.T(), epic.ID, retrievedEpic.ID)
+	assert.Equal(suite.T(), epic.ReferenceID, retrievedEpic.ReferenceID)
+}
+
+func (suite *EpicIntegrationTestSuite) TestUpdateEpic() {
+	// Create epic first
+	epic := &models.Epic{
+		ID:          uuid.New(),
+		ReferenceID: "EP-001",
+		CreatorID:   suite.testUser.ID,
+		AssigneeID:  suite.testUser.ID,
 		Priority:    models.PriorityMedium,
 		Status:      models.EpicStatusBacklog,
 		Title:       "Original Title",
+		Description: stringPtr("Original description"),
 	}
 
-	err := db.Create(epic).Error
-	require.NoError(t, err)
+	err := suite.epicRepo.Create(epic)
+	suite.Require().NoError(err)
 
 	// Update epic
+	newTitle := "Updated Title"
+	newPriority := models.PriorityHigh
 	updateReq := service.UpdateEpicRequest{
-		Priority: &[]models.Priority{models.PriorityHigh}[0],
-		Title:    &[]string{"Updated Title"}[0],
+		Priority: &newPriority,
+		Title:    &newTitle,
 	}
 
 	body, _ := json.Marshal(updateReq)
 	req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/v1/epics/%s", epic.ID), bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	suite.router.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
 
 	var updatedEpic models.Epic
 	err = json.Unmarshal(w.Body.Bytes(), &updatedEpic)
-	require.NoError(t, err)
+	suite.Require().NoError(err)
 
-	assert.Equal(t, epic.ID, updatedEpic.ID)
-	assert.Equal(t, "Updated Title", updatedEpic.Title)
-	assert.Equal(t, models.PriorityHigh, updatedEpic.Priority)
+	assert.Equal(suite.T(), epic.ID, updatedEpic.ID)
+	assert.Equal(suite.T(), "Updated Title", updatedEpic.Title)
+	assert.Equal(suite.T(), models.PriorityHigh, updatedEpic.Priority)
 }
 
-func TestEpicIntegration_DeleteEpic(t *testing.T) {
-	router, db, cleanup := setupTestServer(t)
-	defer cleanup()
-
-	// Create test user
-	user := createTestUser(t, db)
-
+func (suite *EpicIntegrationTestSuite) TestDeleteEpic() {
 	// Create epic first
 	epic := &models.Epic{
 		ID:          uuid.New(),
 		ReferenceID: "EP-001",
-		CreatorID:   user.ID,
-		AssigneeID:  user.ID,
+		CreatorID:   suite.testUser.ID,
+		AssigneeID:  suite.testUser.ID,
 		Priority:    models.PriorityMedium,
 		Status:      models.EpicStatusBacklog,
 		Title:       "Epic to Delete",
 	}
 
-	err := db.Create(epic).Error
-	require.NoError(t, err)
+	err := suite.epicRepo.Create(epic)
+	suite.Require().NoError(err)
 
 	// Delete epic
 	req, _ := http.NewRequest("DELETE", fmt.Sprintf("/api/v1/epics/%s", epic.ID), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	suite.router.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusNoContent, w.Code)
+	assert.Equal(suite.T(), http.StatusNoContent, w.Code)
 
 	// Verify epic is deleted
 	req, _ = http.NewRequest("GET", fmt.Sprintf("/api/v1/epics/%s", epic.ID), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 	w = httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	suite.router.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusNotFound, w.Code)
+	assert.Equal(suite.T(), http.StatusNotFound, w.Code)
 }
 
-func TestEpicIntegration_ListEpics(t *testing.T) {
-	router, db, cleanup := setupTestServer(t)
-	defer cleanup()
-
-	// Create test user
-	user := createTestUser(t, db)
-
+func (suite *EpicIntegrationTestSuite) TestListEpics() {
 	// Create multiple epics
 	epics := []*models.Epic{
 		{
 			ID:          uuid.New(),
 			ReferenceID: "EP-001",
-			CreatorID:   user.ID,
-			AssigneeID:  user.ID,
+			CreatorID:   suite.testUser.ID,
+			AssigneeID:  suite.testUser.ID,
 			Priority:    models.PriorityHigh,
 			Status:      models.EpicStatusBacklog,
 			Title:       "Epic 1",
@@ -223,8 +289,8 @@ func TestEpicIntegration_ListEpics(t *testing.T) {
 		{
 			ID:          uuid.New(),
 			ReferenceID: "EP-002",
-			CreatorID:   user.ID,
-			AssigneeID:  user.ID,
+			CreatorID:   suite.testUser.ID,
+			AssigneeID:  suite.testUser.ID,
 			Priority:    models.PriorityMedium,
 			Status:      models.EpicStatusInProgress,
 			Title:       "Epic 2",
@@ -232,16 +298,17 @@ func TestEpicIntegration_ListEpics(t *testing.T) {
 	}
 
 	for _, epic := range epics {
-		err := db.Create(epic).Error
-		require.NoError(t, err)
+		err := suite.epicRepo.Create(epic)
+		suite.Require().NoError(err)
 	}
 
 	// List all epics
 	req, _ := http.NewRequest("GET", "/api/v1/epics", nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	suite.router.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
 
 	var response struct {
 		Data       []models.Epic `json:"data"`
@@ -250,49 +317,76 @@ func TestEpicIntegration_ListEpics(t *testing.T) {
 		Offset     int           `json:"offset"`
 	}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
-	require.NoError(t, err)
+	suite.Require().NoError(err)
 
-	assert.Equal(t, int64(2), response.TotalCount)
-	assert.Len(t, response.Data, 2)
-
-	// List epics with status filter
-	req, _ = http.NewRequest("GET", "/api/v1/epics?status=Backlog", nil)
-	w = httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	err = json.Unmarshal(w.Body.Bytes(), &response)
-	require.NoError(t, err)
-
-	assert.Equal(t, int64(1), response.TotalCount)
-	if len(response.Data) > 0 {
-		assert.Equal(t, models.EpicStatusBacklog, response.Data[0].Status)
-	} else {
-		t.Errorf("Expected at least 1 epic with Backlog status, but got 0")
-	}
+	assert.Equal(suite.T(), int64(2), response.TotalCount)
+	assert.Len(suite.T(), response.Data, 2)
 }
 
-func TestEpicIntegration_ChangeEpicStatus(t *testing.T) {
-	router, db, cleanup := setupTestServer(t)
-	defer cleanup()
+func (suite *EpicIntegrationTestSuite) TestListEpicsWithStatusFilter() {
+	// Create multiple epics
+	epics := []*models.Epic{
+		{
+			ID:          uuid.New(),
+			ReferenceID: "EP-001",
+			CreatorID:   suite.testUser.ID,
+			AssigneeID:  suite.testUser.ID,
+			Priority:    models.PriorityHigh,
+			Status:      models.EpicStatusBacklog,
+			Title:       "Epic 1",
+		},
+		{
+			ID:          uuid.New(),
+			ReferenceID: "EP-002",
+			CreatorID:   suite.testUser.ID,
+			AssigneeID:  suite.testUser.ID,
+			Priority:    models.PriorityMedium,
+			Status:      models.EpicStatusInProgress,
+			Title:       "Epic 2",
+		},
+	}
 
-	// Create test user
-	user := createTestUser(t, db)
+	for _, epic := range epics {
+		err := suite.epicRepo.Create(epic)
+		suite.Require().NoError(err)
+	}
 
+	// List epics with status filter
+	req, _ := http.NewRequest("GET", "/api/v1/epics?status=Backlog", nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
+
+	var response struct {
+		Data       []models.Epic `json:"data"`
+		TotalCount int64         `json:"total_count"`
+		Limit      int           `json:"limit"`
+		Offset     int           `json:"offset"`
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	suite.Require().NoError(err)
+
+	assert.Equal(suite.T(), int64(1), response.TotalCount)
+	assert.Len(suite.T(), response.Data, 1)
+	assert.Equal(suite.T(), models.EpicStatusBacklog, response.Data[0].Status)
+}
+
+func (suite *EpicIntegrationTestSuite) TestChangeEpicStatus() {
 	// Create epic first
 	epic := &models.Epic{
 		ID:          uuid.New(),
 		ReferenceID: "EP-001",
-		CreatorID:   user.ID,
-		AssigneeID:  user.ID,
+		CreatorID:   suite.testUser.ID,
+		AssigneeID:  suite.testUser.ID,
 		Priority:    models.PriorityMedium,
 		Status:      models.EpicStatusBacklog,
 		Title:       "Epic for Status Change",
 	}
 
-	err := db.Create(epic).Error
-	require.NoError(t, err)
+	err := suite.epicRepo.Create(epic)
+	suite.Require().NoError(err)
 
 	// Change status
 	statusReq := map[string]string{
@@ -302,16 +396,168 @@ func TestEpicIntegration_ChangeEpicStatus(t *testing.T) {
 	body, _ := json.Marshal(statusReq)
 	req, _ := http.NewRequest("PATCH", fmt.Sprintf("/api/v1/epics/%s/status", epic.ID), bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	suite.router.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
 
 	var updatedEpic models.Epic
 	err = json.Unmarshal(w.Body.Bytes(), &updatedEpic)
-	require.NoError(t, err)
+	suite.Require().NoError(err)
 
-	assert.Equal(t, epic.ID, updatedEpic.ID)
-	assert.Equal(t, models.EpicStatusInProgress, updatedEpic.Status)
+	assert.Equal(suite.T(), epic.ID, updatedEpic.ID)
+	assert.Equal(suite.T(), models.EpicStatusInProgress, updatedEpic.Status)
+}
+
+func (suite *EpicIntegrationTestSuite) TestAssignEpic() {
+	// Create epic first
+	epic := &models.Epic{
+		ID:          uuid.New(),
+		ReferenceID: "EP-001",
+		CreatorID:   suite.testUser.ID,
+		AssigneeID:  suite.testUser.ID,
+		Priority:    models.PriorityMedium,
+		Status:      models.EpicStatusBacklog,
+		Title:       "Epic for Assignment",
+	}
+
+	err := suite.epicRepo.Create(epic)
+	suite.Require().NoError(err)
+
+	// Assign to admin user
+	assignReq := map[string]string{
+		"assignee_id": suite.authContext.AdminUser.ID.String(),
+	}
+
+	body, _ := json.Marshal(assignReq)
+	req, _ := http.NewRequest("PATCH", fmt.Sprintf("/api/v1/epics/%s/assign", epic.ID), bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
+
+	var updatedEpic models.Epic
+	err = json.Unmarshal(w.Body.Bytes(), &updatedEpic)
+	suite.Require().NoError(err)
+
+	assert.Equal(suite.T(), epic.ID, updatedEpic.ID)
+	assert.Equal(suite.T(), suite.authContext.AdminUser.ID, updatedEpic.AssigneeID)
+}
+
+func (suite *EpicIntegrationTestSuite) TestGetEpicWithUserStories() {
+	// Create epic first
+	epic := &models.Epic{
+		ID:          uuid.New(),
+		ReferenceID: "EP-001",
+		CreatorID:   suite.testUser.ID,
+		AssigneeID:  suite.testUser.ID,
+		Priority:    models.PriorityMedium,
+		Status:      models.EpicStatusBacklog,
+		Title:       "Epic with User Stories",
+	}
+
+	err := suite.epicRepo.Create(epic)
+	suite.Require().NoError(err)
+
+	// Get epic with user stories (should be empty initially)
+	req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/epics/%s/user-stories", epic.ID), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
+
+	var response models.Epic
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	suite.Require().NoError(err)
+
+	assert.Equal(suite.T(), epic.ID, response.ID)
+	assert.Equal(suite.T(), epic.Title, response.Title)
+	// UserStories should be empty initially
+	if response.UserStories != nil {
+		assert.Len(suite.T(), response.UserStories, 0)
+	}
+}
+
+func (suite *EpicIntegrationTestSuite) TestUnauthorizedAccess() {
+	req, _ := http.NewRequest("GET", "/api/v1/epics", nil)
+	// Intentionally not setting Authorization header
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusUnauthorized, w.Code)
+}
+
+func (suite *EpicIntegrationTestSuite) TestInvalidToken() {
+	req, _ := http.NewRequest("GET", "/api/v1/epics", nil)
+	req.Header.Set("Authorization", "Bearer invalid-token")
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusUnauthorized, w.Code)
+}
+
+func (suite *EpicIntegrationTestSuite) TestCreateEpicWithInvalidData() {
+	// Test with missing required fields
+	createReq := service.CreateEpicRequest{
+		// Missing CreatorID, Title
+		Priority: models.PriorityHigh,
+	}
+
+	body, _ := json.Marshal(createReq)
+	req, _ := http.NewRequest("POST", "/api/v1/epics", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusBadRequest, w.Code)
+}
+
+func (suite *EpicIntegrationTestSuite) TestGetNonExistentEpic() {
+	nonExistentID := uuid.New()
+	req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/epics/%s", nonExistentID), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusNotFound, w.Code)
+}
+
+func (suite *EpicIntegrationTestSuite) TestUpdateNonExistentEpic() {
+	nonExistentID := uuid.New()
+	newTitle := "Updated Title"
+	updateReq := service.UpdateEpicRequest{
+		Title: &newTitle,
+	}
+
+	body, _ := json.Marshal(updateReq)
+	req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/v1/epics/%s", nonExistentID), bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusNotFound, w.Code)
+}
+
+func (suite *EpicIntegrationTestSuite) TestDeleteNonExistentEpic() {
+	nonExistentID := uuid.New()
+	req, _ := http.NewRequest("DELETE", fmt.Sprintf("/api/v1/epics/%s", nonExistentID), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusNotFound, w.Code)
+}
+
+func TestEpicIntegrationTestSuite(t *testing.T) {
+	suite.Run(t, new(EpicIntegrationTestSuite))
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
 
 	"product-requirements-management/internal/handlers"
@@ -20,446 +20,482 @@ import (
 	"product-requirements-management/internal/service"
 )
 
-// setupAcceptanceCriteriaTestServer creates a test server with in-memory database
-func setupAcceptanceCriteriaTestServer(t *testing.T) (*gin.Engine, *gorm.DB, func()) {
-	// Create in-memory SQLite database
-	testDatabase := SetupTestDatabase(t)
+type AcceptanceCriteriaIntegrationTestSuite struct {
+	suite.Suite
+	db                        *gorm.DB
+	router                    *gin.Engine
+	acceptanceCriteriaHandler *handlers.AcceptanceCriteriaHandler
+	acceptanceCriteriaService service.AcceptanceCriteriaService
+	acceptanceCriteriaRepo    repository.AcceptanceCriteriaRepository
+	userStoryRepo             repository.UserStoryRepository
+	epicRepo                  repository.EpicRepository
+	userRepo                  repository.UserRepository
+	testUser                  *models.User
+	testEpic                  *models.Epic
+	testUserStory             *models.UserStory
+	authContext               *TestAuthContext
+}
+
+func (suite *AcceptanceCriteriaIntegrationTestSuite) SetupSuite() {
+	// Setup test database
+	testDatabase := SetupTestDatabase(suite.T())
 	db := testDatabase.DB
 
-	// Auto-migrate models
-	err := models.AutoMigrate(db)
-	require.NoError(t, err)
+	// Auto-migrate the schema
+	err := db.AutoMigrate(
+		&models.User{},
+		&models.Epic{},
+		&models.UserStory{},
+		&models.AcceptanceCriteria{},
+		&models.Requirement{},
+		&models.Comment{},
+	)
+	suite.Require().NoError(err)
 
 	// Seed default data
 	err = models.SeedDefaultData(db)
-	require.NoError(t, err)
+	suite.Require().NoError(err)
 
-	// Create repositories
-	epicRepo := repository.NewEpicRepository(db)
-	userRepo := repository.NewUserRepository(db)
-	userStoryRepo := repository.NewUserStoryRepository(db)
-	acceptanceCriteriaRepo := repository.NewAcceptanceCriteriaRepository(db)
+	suite.db = db
 
-	// Create services
-	epicService := service.NewEpicService(epicRepo, userRepo)
-	userStoryService := service.NewUserStoryService(userStoryRepo, epicRepo, userRepo)
-	acceptanceCriteriaService := service.NewAcceptanceCriteriaService(acceptanceCriteriaRepo, userStoryRepo, userRepo)
+	// Setup repositories
+	suite.userRepo = repository.NewUserRepository(db)
+	suite.epicRepo = repository.NewEpicRepository(db)
+	suite.userStoryRepo = repository.NewUserStoryRepository(db)
+	suite.acceptanceCriteriaRepo = repository.NewAcceptanceCriteriaRepository(db)
 
-	// Create handlers
-	epicHandler := handlers.NewEpicHandler(epicService)
-	userStoryHandler := handlers.NewUserStoryHandler(userStoryService)
-	acceptanceCriteriaHandler := handlers.NewAcceptanceCriteriaHandler(acceptanceCriteriaService)
+	// Setup services
+	suite.acceptanceCriteriaService = service.NewAcceptanceCriteriaService(suite.acceptanceCriteriaRepo, suite.userStoryRepo, suite.userRepo)
 
-	// Setup Gin router
+	// Setup handlers
+	suite.acceptanceCriteriaHandler = handlers.NewAcceptanceCriteriaHandler(suite.acceptanceCriteriaService)
+
+	// Setup authentication
+	suite.authContext = SetupTestAuth(suite.T(), db)
+
+	// Setup router
 	gin.SetMode(gin.TestMode)
-	router := gin.New()
+	suite.router = gin.New()
 
-	v1 := router.Group("/api/v1")
+	v1 := suite.router.Group("/api/v1")
+	// Apply authentication middleware to all routes
+	v1.Use(suite.authContext.AuthService.Middleware())
 	{
-		// Epic routes
-		epics := v1.Group("/epics")
-		{
-			epics.POST("", epicHandler.CreateEpic)
-			epics.GET("/:id", epicHandler.GetEpic)
-			epics.POST("/:id/user-stories", userStoryHandler.CreateUserStoryInEpic)
-		}
-
 		// User Story routes
 		userStories := v1.Group("/user-stories")
 		{
-			userStories.POST("", userStoryHandler.CreateUserStory)
-			userStories.GET("/:id", userStoryHandler.GetUserStory)
-			userStories.POST("/:id/acceptance-criteria", acceptanceCriteriaHandler.CreateAcceptanceCriteria)
-			userStories.GET("/:id/acceptance-criteria", acceptanceCriteriaHandler.GetAcceptanceCriteriaByUserStory)
+			userStories.POST("/:id/acceptance-criteria", suite.acceptanceCriteriaHandler.CreateAcceptanceCriteria)
+			userStories.GET("/:id/acceptance-criteria", suite.acceptanceCriteriaHandler.GetAcceptanceCriteriaByUserStory)
 		}
 
 		// Acceptance Criteria routes
 		acceptanceCriteria := v1.Group("/acceptance-criteria")
 		{
-			acceptanceCriteria.GET("", acceptanceCriteriaHandler.ListAcceptanceCriteria)
-			acceptanceCriteria.GET("/:id", acceptanceCriteriaHandler.GetAcceptanceCriteria)
-			acceptanceCriteria.PUT("/:id", acceptanceCriteriaHandler.UpdateAcceptanceCriteria)
-			acceptanceCriteria.DELETE("/:id", acceptanceCriteriaHandler.DeleteAcceptanceCriteria)
+			acceptanceCriteria.GET("", suite.acceptanceCriteriaHandler.ListAcceptanceCriteria)
+			acceptanceCriteria.GET("/:id", suite.acceptanceCriteriaHandler.GetAcceptanceCriteria)
+			acceptanceCriteria.PUT("/:id", suite.acceptanceCriteriaHandler.UpdateAcceptanceCriteria)
+			acceptanceCriteria.DELETE("/:id", suite.acceptanceCriteriaHandler.DeleteAcceptanceCriteria)
 		}
 	}
-
-	cleanup := func() {
-		sqlDB, _ := db.DB()
-		sqlDB.Close()
-	}
-
-	return router, db, cleanup
 }
 
-// createAcceptanceCriteriaTestUser creates a test user in the database
-func createAcceptanceCriteriaTestUser(t *testing.T, db *gorm.DB) *models.User {
-	user := &models.User{
-		ID:           uuid.New(),
-		Username:     "testuser",
-		Email:        "test@example.com",
-		PasswordHash: "hashedpassword",
-		Role:         models.RoleUser,
-	}
+func (suite *AcceptanceCriteriaIntegrationTestSuite) SetupTest() {
+	// Clean up database before each test
+	suite.db.Exec("DELETE FROM acceptance_criteria")
+	suite.db.Exec("DELETE FROM user_stories")
+	suite.db.Exec("DELETE FROM epics")
+	suite.db.Exec("DELETE FROM users WHERE username NOT IN ('testuser', 'adminuser')")
 
-	err := db.Create(user).Error
-	require.NoError(t, err)
+	// Use the authenticated test user
+	suite.testUser = suite.authContext.TestUser
 
-	return user
-}
-
-// createAcceptanceCriteriaTestEpic creates a test epic in the database
-func createAcceptanceCriteriaTestEpic(t *testing.T, db *gorm.DB, creatorID uuid.UUID) *models.Epic {
-	epic := &models.Epic{
+	// Create test epic
+	suite.testEpic = &models.Epic{
 		ID:          uuid.New(),
-		CreatorID:   creatorID,
-		AssigneeID:  creatorID,
+		ReferenceID: "EP-001",
+		CreatorID:   suite.testUser.ID,
+		AssigneeID:  suite.testUser.ID,
 		Priority:    models.PriorityHigh,
 		Status:      models.EpicStatusBacklog,
 		Title:       "Test Epic",
 		Description: stringPtr("Epic description"),
 	}
+	err := suite.epicRepo.Create(suite.testEpic)
+	suite.Require().NoError(err)
 
-	err := db.Create(epic).Error
-	require.NoError(t, err)
-
-	return epic
-}
-
-// createAcceptanceCriteriaTestUserStory creates a test user story in the database
-func createAcceptanceCriteriaTestUserStory(t *testing.T, db *gorm.DB, epicID, creatorID uuid.UUID) *models.UserStory {
+	// Create test user story
 	description := "As a user, I want to test, so that I can verify"
-	userStory := &models.UserStory{
+	suite.testUserStory = &models.UserStory{
 		ID:          uuid.New(),
-		EpicID:      epicID,
-		CreatorID:   creatorID,
-		AssigneeID:  creatorID,
+		ReferenceID: "US-001",
+		EpicID:      suite.testEpic.ID,
+		CreatorID:   suite.testUser.ID,
+		AssigneeID:  suite.testUser.ID,
 		Priority:    models.PriorityHigh,
 		Status:      models.UserStoryStatusBacklog,
 		Title:       "Test User Story",
 		Description: &description,
 	}
-
-	err := db.Create(userStory).Error
-	require.NoError(t, err)
-
-	return userStory
+	err = suite.userStoryRepo.Create(suite.testUserStory)
+	suite.Require().NoError(err)
 }
 
-func TestAcceptanceCriteriaIntegration(t *testing.T) {
-	// Setup test environment
-	router, db, cleanup := setupAcceptanceCriteriaTestServer(t)
-	defer cleanup()
+func (suite *AcceptanceCriteriaIntegrationTestSuite) TearDownSuite() {
+	sqlDB, _ := suite.db.DB()
+	sqlDB.Close()
+}
 
-	// Create test user
-	user := createAcceptanceCriteriaTestUser(t, db)
+func (suite *AcceptanceCriteriaIntegrationTestSuite) TestCreateAcceptanceCriteria() {
+	requestBody := map[string]any{
+		"author_id":   suite.testUser.ID.String(),
+		"description": "WHEN user clicks submit THEN system SHALL validate the form",
+	}
+
+	body, _ := json.Marshal(requestBody)
+	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/user-stories/%s/acceptance-criteria", suite.testUserStory.ID.String()), bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
 
-	// Create test epic
-	epic := createAcceptanceCriteriaTestEpic(t, db, user.ID)
+	suite.router.ServeHTTP(w, req)
 
-	// Create test user story
-	userStory := createAcceptanceCriteriaTestUserStory(t, db, epic.ID, user.ID)
+	assert.Equal(suite.T(), http.StatusCreated, w.Code)
 
-	t.Run("Create Acceptance Criteria", func(t *testing.T) {
-		requestBody := map[string]interface{}{
-			"author_id":   user.ID.String(),
-			"description": "WHEN user clicks submit THEN system SHALL validate the form",
-		}
+	var response models.AcceptanceCriteria
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	suite.Require().NoError(err)
 
-		body, _ := json.Marshal(requestBody)
-		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/user-stories/%s/acceptance-criteria", userStory.ID.String()), bytes.NewBuffer(body))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
+	assert.NotEqual(suite.T(), uuid.Nil, response.ID)
+	assert.NotEmpty(suite.T(), response.ReferenceID)
+	assert.Equal(suite.T(), suite.testUserStory.ID, response.UserStoryID)
+	assert.Equal(suite.T(), suite.testUser.ID, response.AuthorID)
+	assert.Equal(suite.T(), "WHEN user clicks submit THEN system SHALL validate the form", response.Description)
+	assert.False(suite.T(), response.CreatedAt.IsZero())
+	assert.False(suite.T(), response.UpdatedAt.IsZero())
+}
 
-		router.ServeHTTP(w, req)
+func (suite *AcceptanceCriteriaIntegrationTestSuite) TestGetAcceptanceCriteriaByID() {
+	// Create acceptance criteria for the test
+	acceptanceCriteria := suite.createTestAcceptanceCriteria("WHEN user submits form THEN system SHALL validate all required fields")
 
-		assert.Equal(t, http.StatusCreated, w.Code)
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/acceptance-criteria/%s", acceptanceCriteria.ID.String()), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
 
-		var response models.AcceptanceCriteria
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		require.NoError(t, err)
+	suite.router.ServeHTTP(w, req)
 
-		assert.NotEqual(t, uuid.Nil, response.ID)
-		assert.NotEmpty(t, response.ReferenceID)
-		assert.Equal(t, userStory.ID, response.UserStoryID)
-		assert.Equal(t, user.ID, response.AuthorID)
-		assert.Equal(t, "WHEN user clicks submit THEN system SHALL validate the form", response.Description)
-		assert.False(t, response.CreatedAt.IsZero())
-		assert.False(t, response.UpdatedAt.IsZero())
-	})
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
 
-	// Create acceptance criteria for further tests
-	acceptanceCriteria := createTestAcceptanceCriteria(t, db, userStory.ID, user.ID, "WHEN user submits form THEN system SHALL validate all required fields")
+	var response models.AcceptanceCriteria
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	suite.Require().NoError(err)
 
-	t.Run("Get Acceptance Criteria by ID", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/acceptance-criteria/%s", acceptanceCriteria.ID.String()), nil)
-		w := httptest.NewRecorder()
+	assert.Equal(suite.T(), acceptanceCriteria.ID, response.ID)
+	assert.Equal(suite.T(), acceptanceCriteria.ReferenceID, response.ReferenceID)
+	assert.Equal(suite.T(), acceptanceCriteria.Description, response.Description)
+}
 
-		router.ServeHTTP(w, req)
+func (suite *AcceptanceCriteriaIntegrationTestSuite) TestGetAcceptanceCriteriaByReferenceID() {
+	// Create acceptance criteria for the test
+	acceptanceCriteria := suite.createTestAcceptanceCriteria("WHEN user submits form THEN system SHALL validate all required fields")
 
-		assert.Equal(t, http.StatusOK, w.Code)
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/acceptance-criteria/%s", acceptanceCriteria.ReferenceID), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
 
-		var response models.AcceptanceCriteria
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		require.NoError(t, err)
+	suite.router.ServeHTTP(w, req)
 
-		assert.Equal(t, acceptanceCriteria.ID, response.ID)
-		assert.Equal(t, acceptanceCriteria.ReferenceID, response.ReferenceID)
-		assert.Equal(t, acceptanceCriteria.Description, response.Description)
-	})
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
 
-	t.Run("Get Acceptance Criteria by Reference ID", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/acceptance-criteria/%s", acceptanceCriteria.ReferenceID), nil)
-		w := httptest.NewRecorder()
+	var response models.AcceptanceCriteria
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	suite.Require().NoError(err)
 
-		router.ServeHTTP(w, req)
+	assert.Equal(suite.T(), acceptanceCriteria.ID, response.ID)
+	assert.Equal(suite.T(), acceptanceCriteria.ReferenceID, response.ReferenceID)
+}
 
-		assert.Equal(t, http.StatusOK, w.Code)
+func (suite *AcceptanceCriteriaIntegrationTestSuite) TestUpdateAcceptanceCriteria() {
+	// Create acceptance criteria for the test
+	acceptanceCriteria := suite.createTestAcceptanceCriteria("WHEN user submits form THEN system SHALL validate all required fields")
 
-		var response models.AcceptanceCriteria
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		require.NoError(t, err)
+	requestBody := map[string]any{
+		"description": "WHEN user submits form THEN system SHALL validate all required fields - updated",
+	}
 
-		assert.Equal(t, acceptanceCriteria.ID, response.ID)
-		assert.Equal(t, acceptanceCriteria.ReferenceID, response.ReferenceID)
-	})
+	body, _ := json.Marshal(requestBody)
+	req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/v1/acceptance-criteria/%s", acceptanceCriteria.ID.String()), bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
 
-	t.Run("Update Acceptance Criteria", func(t *testing.T) {
-		requestBody := map[string]interface{}{
-			"description": "WHEN user submits form THEN system SHALL validate all required fields - updated",
-		}
+	suite.router.ServeHTTP(w, req)
 
-		body, _ := json.Marshal(requestBody)
-		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/v1/acceptance-criteria/%s", acceptanceCriteria.ID.String()), bytes.NewBuffer(body))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
 
-		router.ServeHTTP(w, req)
+	var response models.AcceptanceCriteria
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	suite.Require().NoError(err)
 
-		assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(suite.T(), acceptanceCriteria.ID, response.ID)
+	assert.Equal(suite.T(), "WHEN user submits form THEN system SHALL validate all required fields - updated", response.Description)
+	assert.True(suite.T(), response.UpdatedAt.After(response.CreatedAt))
+}
 
-		var response models.AcceptanceCriteria
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		require.NoError(t, err)
+func (suite *AcceptanceCriteriaIntegrationTestSuite) TestListAcceptanceCriteria() {
+	// Create test acceptance criteria
+	suite.createTestAcceptanceCriteria("WHEN user submits form THEN system SHALL validate all required fields")
+	suite.createTestAcceptanceCriteria("WHEN user clicks cancel THEN system SHALL discard changes")
 
-		assert.Equal(t, acceptanceCriteria.ID, response.ID)
-		assert.Equal(t, "WHEN user submits form THEN system SHALL validate all required fields - updated", response.Description)
-		assert.True(t, response.UpdatedAt.After(response.CreatedAt))
-	})
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/acceptance-criteria", nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
 
-	t.Run("List Acceptance Criteria", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/api/v1/acceptance-criteria", nil)
-		w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
 
-		router.ServeHTTP(w, req)
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
 
-		assert.Equal(t, http.StatusOK, w.Code)
+	var response map[string]any
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	suite.Require().NoError(err)
 
-		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		require.NoError(t, err)
+	assert.Equal(suite.T(), float64(2), response["total_count"])
+	assert.Equal(suite.T(), float64(50), response["limit"])
+	assert.Equal(suite.T(), float64(0), response["offset"])
+	assert.NotNil(suite.T(), response["data"])
 
-		// Should have 2 acceptance criteria (one from Create test, one from createTestAcceptanceCriteria)
-		assert.Equal(t, float64(2), response["total_count"])
-		assert.Equal(t, float64(50), response["limit"])
-		assert.Equal(t, float64(0), response["offset"])
-		assert.NotNil(t, response["data"])
+	criteria := response["data"].([]any)
+	assert.Len(suite.T(), criteria, 2)
+}
 
-		criteria := response["data"].([]interface{})
-		assert.Len(t, criteria, 2)
-	})
+func (suite *AcceptanceCriteriaIntegrationTestSuite) TestListAcceptanceCriteriaWithUserStoryFilter() {
+	// Create test acceptance criteria
+	suite.createTestAcceptanceCriteria("WHEN user submits form THEN system SHALL validate all required fields")
+	suite.createTestAcceptanceCriteria("WHEN user clicks cancel THEN system SHALL discard changes")
 
-	t.Run("List Acceptance Criteria with User Story Filter", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/acceptance-criteria?user_story_id=%s", userStory.ID.String()), nil)
-		w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/acceptance-criteria?user_story_id=%s", suite.testUserStory.ID.String()), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
 
-		router.ServeHTTP(w, req)
+	suite.router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
 
-		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		require.NoError(t, err)
+	var response map[string]any
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	suite.Require().NoError(err)
 
-		assert.Equal(t, float64(2), response["total_count"])
-		assert.Equal(t, float64(50), response["limit"])
-		assert.Equal(t, float64(0), response["offset"])
-		assert.NotNil(t, response["data"])
+	assert.Equal(suite.T(), float64(2), response["total_count"])
+	assert.Equal(suite.T(), float64(50), response["limit"])
+	assert.Equal(suite.T(), float64(0), response["offset"])
+	assert.NotNil(suite.T(), response["data"])
 
-		criteria := response["data"].([]interface{})
-		assert.Len(t, criteria, 2)
-	})
+	criteria := response["data"].([]any)
+	assert.Len(suite.T(), criteria, 2)
+}
 
-	t.Run("Get Acceptance Criteria by User Story", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/user-stories/%s/acceptance-criteria", userStory.ID.String()), nil)
-		w := httptest.NewRecorder()
+func (suite *AcceptanceCriteriaIntegrationTestSuite) TestGetAcceptanceCriteriaByUserStory() {
+	// Create test acceptance criteria
+	suite.createTestAcceptanceCriteria("WHEN user submits form THEN system SHALL validate all required fields")
+	suite.createTestAcceptanceCriteria("WHEN user clicks cancel THEN system SHALL discard changes")
 
-		router.ServeHTTP(w, req)
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/user-stories/%s/acceptance-criteria", suite.testUserStory.ID.String()), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
 
-		assert.Equal(t, http.StatusOK, w.Code)
+	suite.router.ServeHTTP(w, req)
 
-		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		require.NoError(t, err)
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
 
-		assert.Equal(t, float64(2), response["count"])
+	var response map[string]any
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	suite.Require().NoError(err)
 
-		criteria := response["acceptance_criteria"].([]interface{})
-		assert.Len(t, criteria, 2)
-	})
+	assert.Equal(suite.T(), float64(2), response["count"])
 
-	t.Run("Delete Acceptance Criteria - Prevent Last One", func(t *testing.T) {
-		// First, delete one acceptance criteria to leave only one
-		var allCriteria []models.AcceptanceCriteria
-		err := db.Where("user_story_id = ?", userStory.ID).Find(&allCriteria).Error
-		require.NoError(t, err)
-		require.Len(t, allCriteria, 2)
+	criteria := response["acceptance_criteria"].([]any)
+	assert.Len(suite.T(), criteria, 2)
+}
 
-		// Delete the first one
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/acceptance-criteria/%s", allCriteria[0].ID.String()), nil)
-		w := httptest.NewRecorder()
+func (suite *AcceptanceCriteriaIntegrationTestSuite) TestDeleteAcceptanceCriteriaPreventLastOne() {
+	// Create two acceptance criteria
+	criteria1 := suite.createTestAcceptanceCriteria("WHEN user submits form THEN system SHALL validate all required fields")
+	criteria2 := suite.createTestAcceptanceCriteria("WHEN user clicks cancel THEN system SHALL discard changes")
 
-		router.ServeHTTP(w, req)
+	// Delete the first one
+	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/acceptance-criteria/%s", criteria1.ID.String()), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
 
-		assert.Equal(t, http.StatusNoContent, w.Code)
+	suite.router.ServeHTTP(w, req)
 
-		// Now try to delete the last one - should fail
-		req = httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/acceptance-criteria/%s", allCriteria[1].ID.String()), nil)
-		w = httptest.NewRecorder()
+	assert.Equal(suite.T(), http.StatusNoContent, w.Code)
 
-		router.ServeHTTP(w, req)
+	// Now try to delete the last one - should fail
+	req = httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/acceptance-criteria/%s", criteria2.ID.String()), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w = httptest.NewRecorder()
 
-		assert.Equal(t, http.StatusConflict, w.Code)
+	suite.router.ServeHTTP(w, req)
 
-		var response map[string]interface{}
-		err = json.Unmarshal(w.Body.Bytes(), &response)
-		require.NoError(t, err)
-		assert.Contains(t, response["error"], "must have at least one acceptance criteria")
-	})
+	assert.Equal(suite.T(), http.StatusConflict, w.Code)
 
-	t.Run("Force Delete Last Acceptance Criteria", func(t *testing.T) {
-		// Get the remaining acceptance criteria
-		var remainingCriteria models.AcceptanceCriteria
-		err := db.Where("user_story_id = ?", userStory.ID).First(&remainingCriteria).Error
-		require.NoError(t, err)
+	var response map[string]any
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	suite.Require().NoError(err)
+	assert.Contains(suite.T(), response["error"], "must have at least one acceptance criteria")
+}
 
-		// Force delete the last one
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/acceptance-criteria/%s?force=true", remainingCriteria.ID.String()), nil)
-		w := httptest.NewRecorder()
+func (suite *AcceptanceCriteriaIntegrationTestSuite) TestForceDeleteLastAcceptanceCriteria() {
+	// Create one acceptance criteria
+	criteria := suite.createTestAcceptanceCriteria("WHEN user submits form THEN system SHALL validate all required fields")
 
-		router.ServeHTTP(w, req)
+	// Force delete the last one
+	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/acceptance-criteria/%s?force=true", criteria.ID.String()), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
 
-		assert.Equal(t, http.StatusNoContent, w.Code)
+	suite.router.ServeHTTP(w, req)
 
-		// Verify it's deleted
-		var count int64
-		err = db.Model(&models.AcceptanceCriteria{}).Where("user_story_id = ?", userStory.ID).Count(&count).Error
-		require.NoError(t, err)
-		assert.Equal(t, int64(0), count)
-	})
+	assert.Equal(suite.T(), http.StatusNoContent, w.Code)
 
-	t.Run("Error Cases", func(t *testing.T) {
-		t.Run("Create with Invalid User Story ID", func(t *testing.T) {
-			requestBody := map[string]interface{}{
-				"author_id":   user.ID.String(),
-				"description": "WHEN user clicks submit THEN system SHALL validate the form",
-			}
+	// Verify it's deleted
+	var count int64
+	err := suite.db.Model(&models.AcceptanceCriteria{}).Where("user_story_id = ?", suite.testUserStory.ID).Count(&count).Error
+	suite.Require().NoError(err)
+	assert.Equal(suite.T(), int64(0), count)
+}
 
-			body, _ := json.Marshal(requestBody)
-			req := httptest.NewRequest(http.MethodPost, "/api/v1/user-stories/invalid-uuid/acceptance-criteria", bytes.NewBuffer(body))
-			req.Header.Set("Content-Type", "application/json")
-			w := httptest.NewRecorder()
+func (suite *AcceptanceCriteriaIntegrationTestSuite) TestCreateWithInvalidUserStoryID() {
+	requestBody := map[string]any{
+		"author_id":   suite.testUser.ID.String(),
+		"description": "WHEN user clicks submit THEN system SHALL validate the form",
+	}
 
-			router.ServeHTTP(w, req)
+	body, _ := json.Marshal(requestBody)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/user-stories/invalid-uuid/acceptance-criteria", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
 
-			assert.Equal(t, http.StatusBadRequest, w.Code)
-		})
+	suite.router.ServeHTTP(w, req)
 
-		t.Run("Create with Non-existent User Story", func(t *testing.T) {
-			nonExistentID := uuid.New()
-			requestBody := map[string]interface{}{
-				"author_id":   user.ID.String(),
-				"description": "WHEN user clicks submit THEN system SHALL validate the form",
-			}
+	assert.Equal(suite.T(), http.StatusBadRequest, w.Code)
+}
 
-			body, _ := json.Marshal(requestBody)
-			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/user-stories/%s/acceptance-criteria", nonExistentID.String()), bytes.NewBuffer(body))
-			req.Header.Set("Content-Type", "application/json")
-			w := httptest.NewRecorder()
+func (suite *AcceptanceCriteriaIntegrationTestSuite) TestCreateWithNonExistentUserStory() {
+	nonExistentID := uuid.New()
+	requestBody := map[string]any{
+		"author_id":   suite.testUser.ID.String(),
+		"description": "WHEN user clicks submit THEN system SHALL validate the form",
+	}
 
-			router.ServeHTTP(w, req)
+	body, _ := json.Marshal(requestBody)
+	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/user-stories/%s/acceptance-criteria", nonExistentID.String()), bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
 
-			assert.Equal(t, http.StatusBadRequest, w.Code)
+	suite.router.ServeHTTP(w, req)
 
-			var response map[string]interface{}
-			err := json.Unmarshal(w.Body.Bytes(), &response)
-			require.NoError(t, err)
-			assert.Contains(t, response["error"], "User story not found")
-		})
+	assert.Equal(suite.T(), http.StatusBadRequest, w.Code)
 
-		t.Run("Get Non-existent Acceptance Criteria", func(t *testing.T) {
-			nonExistentID := uuid.New()
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/acceptance-criteria/%s", nonExistentID.String()), nil)
-			w := httptest.NewRecorder()
+	var response map[string]any
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	suite.Require().NoError(err)
+	assert.Contains(suite.T(), response["error"], "User story not found")
+}
 
-			router.ServeHTTP(w, req)
+func (suite *AcceptanceCriteriaIntegrationTestSuite) TestGetNonExistentAcceptanceCriteria() {
+	nonExistentID := uuid.New()
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/acceptance-criteria/%s", nonExistentID.String()), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
 
-			assert.Equal(t, http.StatusNotFound, w.Code)
+	suite.router.ServeHTTP(w, req)
 
-			var response map[string]interface{}
-			err := json.Unmarshal(w.Body.Bytes(), &response)
-			require.NoError(t, err)
-			assert.Contains(t, response["error"], "Acceptance criteria not found")
-		})
+	assert.Equal(suite.T(), http.StatusNotFound, w.Code)
 
-		t.Run("Update Non-existent Acceptance Criteria", func(t *testing.T) {
-			nonExistentID := uuid.New()
-			requestBody := map[string]interface{}{
-				"description": "Updated description",
-			}
+	var response map[string]any
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	suite.Require().NoError(err)
+	assert.Contains(suite.T(), response["error"], "Acceptance criteria not found")
+}
 
-			body, _ := json.Marshal(requestBody)
-			req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/v1/acceptance-criteria/%s", nonExistentID.String()), bytes.NewBuffer(body))
-			req.Header.Set("Content-Type", "application/json")
-			w := httptest.NewRecorder()
+func (suite *AcceptanceCriteriaIntegrationTestSuite) TestUpdateNonExistentAcceptanceCriteria() {
+	nonExistentID := uuid.New()
+	requestBody := map[string]any{
+		"description": "Updated description",
+	}
 
-			router.ServeHTTP(w, req)
+	body, _ := json.Marshal(requestBody)
+	req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/v1/acceptance-criteria/%s", nonExistentID.String()), bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
 
-			assert.Equal(t, http.StatusNotFound, w.Code)
+	suite.router.ServeHTTP(w, req)
 
-			var response map[string]interface{}
-			err := json.Unmarshal(w.Body.Bytes(), &response)
-			require.NoError(t, err)
-			assert.Contains(t, response["error"], "Acceptance criteria not found")
-		})
+	assert.Equal(suite.T(), http.StatusNotFound, w.Code)
 
-		t.Run("Delete Non-existent Acceptance Criteria", func(t *testing.T) {
-			nonExistentID := uuid.New()
-			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/acceptance-criteria/%s", nonExistentID.String()), nil)
-			w := httptest.NewRecorder()
+	var response map[string]any
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	suite.Require().NoError(err)
+	assert.Contains(suite.T(), response["error"], "Acceptance criteria not found")
+}
 
-			router.ServeHTTP(w, req)
+func (suite *AcceptanceCriteriaIntegrationTestSuite) TestDeleteNonExistentAcceptanceCriteria() {
+	nonExistentID := uuid.New()
+	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/acceptance-criteria/%s", nonExistentID.String()), nil)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+	w := httptest.NewRecorder()
 
-			assert.Equal(t, http.StatusNotFound, w.Code)
+	suite.router.ServeHTTP(w, req)
 
-			var response map[string]interface{}
-			err := json.Unmarshal(w.Body.Bytes(), &response)
-			require.NoError(t, err)
-			assert.Contains(t, response["error"], "Acceptance criteria not found")
-		})
-	})
+	assert.Equal(suite.T(), http.StatusNotFound, w.Code)
+
+	var response map[string]any
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	suite.Require().NoError(err)
+	assert.Contains(suite.T(), response["error"], "Acceptance criteria not found")
 }
 
 // Helper function to create test acceptance criteria
-func createTestAcceptanceCriteria(t *testing.T, db *gorm.DB, userStoryID, authorID uuid.UUID, description string) *models.AcceptanceCriteria {
+func (suite *AcceptanceCriteriaIntegrationTestSuite) createTestAcceptanceCriteria(description string) *models.AcceptanceCriteria {
 	acceptanceCriteria := &models.AcceptanceCriteria{
 		ID:          uuid.New(),
-		UserStoryID: userStoryID,
-		AuthorID:    authorID,
+		UserStoryID: suite.testUserStory.ID,
+		AuthorID:    suite.testUser.ID,
 		Description: description,
 	}
 
-	err := db.Create(acceptanceCriteria).Error
-	require.NoError(t, err)
+	err := suite.acceptanceCriteriaRepo.Create(acceptanceCriteria)
+	suite.Require().NoError(err)
 
 	return acceptanceCriteria
+}
+
+func (suite *AcceptanceCriteriaIntegrationTestSuite) TestUnauthorizedAccess() {
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/acceptance-criteria", nil)
+	// Intentionally not setting Authorization header
+	w := httptest.NewRecorder()
+
+	suite.router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusUnauthorized, w.Code)
+}
+
+func (suite *AcceptanceCriteriaIntegrationTestSuite) TestInvalidToken() {
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/acceptance-criteria", nil)
+	req.Header.Set("Authorization", "Bearer invalid-token")
+	w := httptest.NewRecorder()
+
+	suite.router.ServeHTTP(w, req)
+
+	assert.Equal(suite.T(), http.StatusUnauthorized, w.Code)
+}
+
+// TestAcceptanceCriteriaIntegration runs the acceptance criteria integration test suite
+func TestAcceptanceCriteriaIntegration(t *testing.T) {
+	suite.Run(t, new(AcceptanceCriteriaIntegrationTestSuite))
 }

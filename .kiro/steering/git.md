@@ -12,3 +12,5 @@
 - WHEN creating a PR you SHOULD always escape special characters, quotes, back quotes and other non-literal or non-numeric characters
 - YOU SHOULD MARK TASK COMPLETE IF AND ONLY IF ALL POINTS ABOVE ARE SATISFIED
 
+- WHEN you make a commit, you SHOULD make a temporary file for commit message and use git commit -F temporary_file.txt and delete it after successfull commit
+- WHEN you make a pull request, you SHOULD make a temporary file for a comprehensive pull request description and use gh pr -F temporary_file.txt and delete it upon successfull creation of the pr

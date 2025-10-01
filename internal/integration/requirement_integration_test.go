@@ -39,6 +39,7 @@ type RequirementIntegrationTestSuite struct {
 	testAcceptanceCriteria      *models.AcceptanceCriteria
 	testRequirementType         *models.RequirementType
 	testRelationshipType        *models.RelationshipType
+	authContext                 *TestAuthContext
 }
 
 func (suite *RequirementIntegrationTestSuite) SetupSuite() {
@@ -90,12 +91,17 @@ func (suite *RequirementIntegrationTestSuite) SetupSuite() {
 	// Setup handlers
 	suite.requirementHandler = handlers.NewRequirementHandler(suite.requirementService)
 
+	// Setup authentication
+	suite.authContext = SetupTestAuth(suite.T(), db)
+
 	// Setup Gin router
 	gin.SetMode(gin.TestMode)
 	suite.router = gin.New()
 
 	// Setup routes
 	v1 := suite.router.Group("/api/v1")
+	// Apply authentication middleware to all routes
+	v1.Use(suite.authContext.AuthService.Middleware())
 	{
 		v1.POST("/requirements", suite.requirementHandler.CreateRequirement)
 		v1.GET("/requirements/:id", suite.requirementHandler.GetRequirement)
@@ -119,19 +125,12 @@ func (suite *RequirementIntegrationTestSuite) SetupTest() {
 	suite.db.Exec("DELETE FROM acceptance_criteria")
 	suite.db.Exec("DELETE FROM user_stories")
 	suite.db.Exec("DELETE FROM epics")
-	suite.db.Exec("DELETE FROM users")
+	suite.db.Exec("DELETE FROM users WHERE username NOT IN ('testuser', 'adminuser')")
 	suite.db.Exec("DELETE FROM requirement_types")
 	suite.db.Exec("DELETE FROM relationship_types")
 
-	// Create test user
-	suite.testUser = &models.User{
-		ID:       uuid.New(),
-		Username: "testuser",
-		Email:    "test@example.com",
-		Role:     models.RoleUser,
-	}
-	err := suite.userRepo.Create(suite.testUser)
-	suite.Require().NoError(err)
+	// Use the authenticated test user
+	suite.testUser = suite.authContext.TestUser
 
 	// Create test epic
 	suite.testEpic = &models.Epic{
@@ -142,7 +141,7 @@ func (suite *RequirementIntegrationTestSuite) SetupTest() {
 		Status:     models.EpicStatusBacklog,
 		Title:      "Test Epic",
 	}
-	err = suite.epicRepo.Create(suite.testEpic)
+	err := suite.epicRepo.Create(suite.testEpic)
 	suite.Require().NoError(err)
 
 	// Create test user story
@@ -206,6 +205,7 @@ func (suite *RequirementIntegrationTestSuite) TestCreateRequirement() {
 	req, err := http.NewRequest("POST", "/api/v1/requirements", bytes.NewBuffer(jsonBody))
 	suite.Require().NoError(err)
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -242,6 +242,7 @@ func (suite *RequirementIntegrationTestSuite) TestCreateRequirementInUserStory()
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	suite.Require().NoError(err)
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -280,6 +281,7 @@ func (suite *RequirementIntegrationTestSuite) TestGetRequirement() {
 	// Test get by UUID
 	req, err := http.NewRequest("GET", "/api/v1/requirements/"+requirement.ID.String(), nil)
 	suite.Require().NoError(err)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -327,6 +329,7 @@ func (suite *RequirementIntegrationTestSuite) TestUpdateRequirement() {
 	req, err := http.NewRequest("PUT", "/api/v1/requirements/"+requirement.ID.String(), bytes.NewBuffer(jsonBody))
 	suite.Require().NoError(err)
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -361,6 +364,7 @@ func (suite *RequirementIntegrationTestSuite) TestDeleteRequirement() {
 	// Delete request
 	req, err := http.NewRequest("DELETE", "/api/v1/requirements/"+requirement.ID.String(), nil)
 	suite.Require().NoError(err)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -416,6 +420,7 @@ func (suite *RequirementIntegrationTestSuite) TestCreateRelationship() {
 	req, err := http.NewRequest("POST", "/api/v1/requirements/relationships", bytes.NewBuffer(jsonBody))
 	suite.Require().NoError(err)
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -434,7 +439,7 @@ func (suite *RequirementIntegrationTestSuite) TestCreateRelationship() {
 
 func (suite *RequirementIntegrationTestSuite) TestListRequirements() {
 	// Create multiple requirements
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		requirement := &models.Requirement{
 			ID:          uuid.New(),
 			ReferenceID: fmt.Sprintf("REQ-%03d", i+1),
@@ -453,13 +458,14 @@ func (suite *RequirementIntegrationTestSuite) TestListRequirements() {
 	// List requirements
 	req, err := http.NewRequest("GET", "/api/v1/requirements", nil)
 	suite.Require().NoError(err)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
 
 	suite.Equal(http.StatusOK, w.Code)
 
-	var response map[string]interface{}
+	var response map[string]any
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	suite.Require().NoError(err)
 
@@ -467,7 +473,7 @@ func (suite *RequirementIntegrationTestSuite) TestListRequirements() {
 	suite.Equal(float64(50), response["limit"])
 	suite.Equal(float64(0), response["offset"])
 	suite.NotNil(response["data"])
-	requirements := response["data"].([]interface{})
+	requirements := response["data"].([]any)
 	suite.Len(requirements, 3)
 }
 
@@ -504,18 +510,19 @@ func (suite *RequirementIntegrationTestSuite) TestSearchRequirements() {
 	// Search for "login"
 	req, err := http.NewRequest("GET", "/api/v1/requirements/search?q=Login", nil)
 	suite.Require().NoError(err)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
 
 	suite.Equal(http.StatusOK, w.Code)
 
-	var response map[string]interface{}
+	var response map[string]any
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	suite.Require().NoError(err)
 
 	suite.Equal("Login", response["query"])
-	requirements := response["requirements"].([]interface{})
+	requirements := response["requirements"].([]any)
 	suite.Len(requirements, 1)
 }
 
@@ -546,6 +553,7 @@ func (suite *RequirementIntegrationTestSuite) TestChangeRequirementStatus() {
 	req, err := http.NewRequest("PATCH", "/api/v1/requirements/"+requirement.ID.String()+"/status", bytes.NewBuffer(jsonBody))
 	suite.Require().NoError(err)
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -557,6 +565,257 @@ func (suite *RequirementIntegrationTestSuite) TestChangeRequirementStatus() {
 	suite.Require().NoError(err)
 
 	suite.Equal(models.RequirementStatusActive, response.Status)
+}
+
+func (suite *RequirementIntegrationTestSuite) TestAssignRequirement() {
+	// Create a requirement first
+	requirement := &models.Requirement{
+		ID:          uuid.New(),
+		ReferenceID: "REQ-001",
+		UserStoryID: suite.testUserStory.ID,
+		CreatorID:   suite.testUser.ID,
+		AssigneeID:  suite.testUser.ID,
+		Priority:    models.PriorityHigh,
+		Status:      models.RequirementStatusDraft,
+		TypeID:      suite.testRequirementType.ID,
+		Title:       "Test Requirement",
+	}
+	err := suite.requirementRepo.Create(requirement)
+	suite.Require().NoError(err)
+
+	// Assign to admin user
+	assignReq := map[string]string{
+		"assignee_id": suite.authContext.AdminUser.ID.String(),
+	}
+
+	jsonBody, err := json.Marshal(assignReq)
+	suite.Require().NoError(err)
+
+	req, err := http.NewRequest("PATCH", "/api/v1/requirements/"+requirement.ID.String()+"/assign", bytes.NewBuffer(jsonBody))
+	suite.Require().NoError(err)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	suite.Equal(http.StatusOK, w.Code)
+
+	var response models.Requirement
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	suite.Require().NoError(err)
+
+	suite.Equal(suite.authContext.AdminUser.ID, response.AssigneeID)
+}
+
+func (suite *RequirementIntegrationTestSuite) TestGetRequirementWithRelationships() {
+	// Create two requirements
+	requirement1 := &models.Requirement{
+		ID:          uuid.New(),
+		ReferenceID: "REQ-001",
+		UserStoryID: suite.testUserStory.ID,
+		CreatorID:   suite.testUser.ID,
+		AssigneeID:  suite.testUser.ID,
+		Priority:    models.PriorityHigh,
+		Status:      models.RequirementStatusDraft,
+		TypeID:      suite.testRequirementType.ID,
+		Title:       "Requirement 1",
+	}
+	err := suite.requirementRepo.Create(requirement1)
+	suite.Require().NoError(err)
+
+	requirement2 := &models.Requirement{
+		ID:          uuid.New(),
+		ReferenceID: "REQ-002",
+		UserStoryID: suite.testUserStory.ID,
+		CreatorID:   suite.testUser.ID,
+		AssigneeID:  suite.testUser.ID,
+		Priority:    models.PriorityHigh,
+		Status:      models.RequirementStatusDraft,
+		TypeID:      suite.testRequirementType.ID,
+		Title:       "Requirement 2",
+	}
+	err = suite.requirementRepo.Create(requirement2)
+	suite.Require().NoError(err)
+
+	// Create relationship
+	relationship := &models.RequirementRelationship{
+		ID:                  uuid.New(),
+		SourceRequirementID: requirement1.ID,
+		TargetRequirementID: requirement2.ID,
+		RelationshipTypeID:  suite.testRelationshipType.ID,
+		CreatedBy:           suite.testUser.ID,
+	}
+	err = suite.requirementRelationshipRepo.Create(relationship)
+	suite.Require().NoError(err)
+
+	// Get requirement with relationships
+	req, err := http.NewRequest("GET", "/api/v1/requirements/"+requirement1.ID.String()+"/relationships", nil)
+	suite.Require().NoError(err)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	suite.Equal(http.StatusOK, w.Code)
+
+	var response models.Requirement
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	suite.Require().NoError(err)
+
+	suite.Equal(requirement1.ID, response.ID)
+	suite.NotNil(response.SourceRelationships)
+	suite.Len(response.SourceRelationships, 1)
+	suite.Equal(relationship.ID, response.SourceRelationships[0].ID)
+}
+
+func (suite *RequirementIntegrationTestSuite) TestDeleteRelationship() {
+	// Create two requirements
+	requirement1 := &models.Requirement{
+		ID:          uuid.New(),
+		ReferenceID: "REQ-001",
+		UserStoryID: suite.testUserStory.ID,
+		CreatorID:   suite.testUser.ID,
+		AssigneeID:  suite.testUser.ID,
+		Priority:    models.PriorityHigh,
+		Status:      models.RequirementStatusDraft,
+		TypeID:      suite.testRequirementType.ID,
+		Title:       "Requirement 1",
+	}
+	err := suite.requirementRepo.Create(requirement1)
+	suite.Require().NoError(err)
+
+	requirement2 := &models.Requirement{
+		ID:          uuid.New(),
+		ReferenceID: "REQ-002",
+		UserStoryID: suite.testUserStory.ID,
+		CreatorID:   suite.testUser.ID,
+		AssigneeID:  suite.testUser.ID,
+		Priority:    models.PriorityHigh,
+		Status:      models.RequirementStatusDraft,
+		TypeID:      suite.testRequirementType.ID,
+		Title:       "Requirement 2",
+	}
+	err = suite.requirementRepo.Create(requirement2)
+	suite.Require().NoError(err)
+
+	// Create relationship
+	relationship := &models.RequirementRelationship{
+		ID:                  uuid.New(),
+		SourceRequirementID: requirement1.ID,
+		TargetRequirementID: requirement2.ID,
+		RelationshipTypeID:  suite.testRelationshipType.ID,
+		CreatedBy:           suite.testUser.ID,
+	}
+	err = suite.requirementRelationshipRepo.Create(relationship)
+	suite.Require().NoError(err)
+
+	// Delete relationship
+	req, err := http.NewRequest("DELETE", "/api/v1/requirement-relationships/"+relationship.ID.String(), nil)
+	suite.Require().NoError(err)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	suite.Equal(http.StatusNoContent, w.Code)
+
+	// Verify relationship is deleted
+	_, err = suite.requirementRelationshipRepo.GetByID(relationship.ID)
+	suite.Error(err)
+}
+
+func (suite *RequirementIntegrationTestSuite) TestUnauthorizedAccess() {
+	req, err := http.NewRequest("GET", "/api/v1/requirements", nil)
+	suite.Require().NoError(err)
+	// Intentionally not setting Authorization header
+
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	suite.Equal(http.StatusUnauthorized, w.Code)
+}
+
+func (suite *RequirementIntegrationTestSuite) TestInvalidToken() {
+	req, err := http.NewRequest("GET", "/api/v1/requirements", nil)
+	suite.Require().NoError(err)
+	req.Header.Set("Authorization", "Bearer invalid-token")
+
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	suite.Equal(http.StatusUnauthorized, w.Code)
+}
+
+func (suite *RequirementIntegrationTestSuite) TestCreateRequirementWithInvalidData() {
+	// Test with missing required fields
+	reqBody := service.CreateRequirementRequest{
+		// Missing UserStoryID, CreatorID, TypeID, Title
+		Priority: models.PriorityHigh,
+	}
+
+	jsonBody, err := json.Marshal(reqBody)
+	suite.Require().NoError(err)
+
+	req, err := http.NewRequest("POST", "/api/v1/requirements", bytes.NewBuffer(jsonBody))
+	suite.Require().NoError(err)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	suite.Equal(http.StatusBadRequest, w.Code)
+}
+
+func (suite *RequirementIntegrationTestSuite) TestGetNonExistentRequirement() {
+	nonExistentID := uuid.New()
+	req, err := http.NewRequest("GET", "/api/v1/requirements/"+nonExistentID.String(), nil)
+	suite.Require().NoError(err)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	suite.Equal(http.StatusNotFound, w.Code)
+}
+
+func (suite *RequirementIntegrationTestSuite) TestUpdateNonExistentRequirement() {
+	nonExistentID := uuid.New()
+	newTitle := "Updated Title"
+	updateReq := service.UpdateRequirementRequest{
+		Title: &newTitle,
+	}
+
+	jsonBody, err := json.Marshal(updateReq)
+	suite.Require().NoError(err)
+
+	req, err := http.NewRequest("PUT", "/api/v1/requirements/"+nonExistentID.String(), bytes.NewBuffer(jsonBody))
+	suite.Require().NoError(err)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	suite.Equal(http.StatusNotFound, w.Code)
+}
+
+func (suite *RequirementIntegrationTestSuite) TestDeleteNonExistentRequirement() {
+	nonExistentID := uuid.New()
+	req, err := http.NewRequest("DELETE", "/api/v1/requirements/"+nonExistentID.String(), nil)
+	suite.Require().NoError(err)
+	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
+
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	suite.Equal(http.StatusNotFound, w.Code)
+}
+
+func (suite *RequirementIntegrationTestSuite) TearDownSuite() {
+	sqlDB, _ := suite.db.DB()
+	sqlDB.Close()
 }
 
 func TestRequirementIntegrationTestSuite(t *testing.T) {
