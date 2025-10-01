@@ -37,7 +37,7 @@ type CreateEpicRequest struct {
 	// CreatorID is the UUID of the user creating the epic
 	// @Description UUID of the user who is creating this epic (required)
 	// @Example "123e4567-e89b-12d3-a456-426614174001"
-	CreatorID uuid.UUID `json:"creator_id" binding:"required"`
+	CreatorID uuid.UUID `json:"creator_id"`
 
 	// AssigneeID is the UUID of the user to assign the epic to (optional, defaults to creator)
 	// @Description UUID of the user to assign this epic to (optional, defaults to creator if not provided)
@@ -183,7 +183,7 @@ func (s *epicService) CreateEpic(req CreateEpicRequest) (*models.Epic, error) {
 		return nil, ErrInvalidPriority
 	}
 
-	// Validate creator exists
+	// Validate creator exists (creator ID is set from authenticated context)
 	if exists, err := s.userRepo.Exists(req.CreatorID); err != nil {
 		return nil, fmt.Errorf("failed to check creator existence: %w", err)
 	} else if !exists {

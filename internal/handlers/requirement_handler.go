@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"product-requirements-management/internal/auth"
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/service"
 )
@@ -47,6 +48,18 @@ func (h *RequirementHandler) CreateRequirement(c *gin.Context) {
 		})
 		return
 	}
+
+	// Get current user ID from JWT token context
+	creatorID, ok := auth.GetCurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User authentication required",
+		})
+		return
+	}
+
+	// Set the creator ID from the authenticated user
+	req.CreatorID = uuid.MustParse(creatorID)
 
 	requirement, err := h.requirementService.CreateRequirement(req)
 	if err != nil {
@@ -110,10 +123,9 @@ func (h *RequirementHandler) CreateRequirementInUserStory(c *gin.Context) {
 		return
 	}
 
-	// Use a struct without required UserStoryID for this endpoint
+	// Use a struct without required UserStoryID and CreatorID for this endpoint
 	var reqBody struct {
 		AcceptanceCriteriaID *uuid.UUID      `json:"acceptance_criteria_id,omitempty"`
-		CreatorID            uuid.UUID       `json:"creator_id" binding:"required"`
 		AssigneeID           *uuid.UUID      `json:"assignee_id,omitempty"`
 		Priority             models.Priority `json:"priority" binding:"required,min=1,max=4"`
 		TypeID               uuid.UUID       `json:"type_id" binding:"required"`
@@ -129,11 +141,20 @@ func (h *RequirementHandler) CreateRequirementInUserStory(c *gin.Context) {
 		return
 	}
 
-	// Create the full request with user story ID from URL
+	// Get current user ID from JWT token context
+	creatorID, ok := auth.GetCurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User authentication required",
+		})
+		return
+	}
+
+	// Create the full request with user story ID from URL and creator ID from context
 	req := service.CreateRequirementRequest{
 		UserStoryID:          userStoryID,
 		AcceptanceCriteriaID: reqBody.AcceptanceCriteriaID,
-		CreatorID:            reqBody.CreatorID,
+		CreatorID:            uuid.MustParse(creatorID),
 		AssigneeID:           reqBody.AssigneeID,
 		Priority:             reqBody.Priority,
 		TypeID:               reqBody.TypeID,

@@ -42,13 +42,13 @@
   - Update any caching keys or logic that incorporates the field name
   - _Requirements: Service layer functionality, business logic integrity_
 
-- [ ] 8. Update API handlers and response serialization
+- [x] 8. Update API handlers and response serialization
   - Search and update all handler files for references to `LastModified` field
   - Verify that API responses will serialize with `updated_at` key after model changes
   - Update any manual JSON construction that includes the timestamp field
   - _Requirements: API response consistency, handler functionality_
 
-- [ ] 9. Update OpenAPI specification schemas
+- [x] 9. Update OpenAPI specification schemas
   - Update Epic schema in `docs/openapi-v3.yaml` to use `updated_at` property instead of `last_modified`
   - Update UserStory schema to use `updated_at` property instead of `last_modified`
   - Update AcceptanceCriteria schema to use `updated_at` property instead of `last_modified`
@@ -56,7 +56,7 @@
   - Update required field lists to reference `updated_at` instead of `last_modified`
   - _Requirements: API documentation accuracy, schema consistency_
 
-- [ ] 10. Update all test files for field name changes
+- [x] 10. Update all test files for field name changes
   - Search and update all test files (`*_test.go`) for references to `LastModified` field
   - Update test assertions and expectations to use `UpdatedAt` field
   - Update JSON test data and expectations to use `updated_at` key
