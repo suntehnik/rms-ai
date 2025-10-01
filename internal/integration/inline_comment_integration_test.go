@@ -14,13 +14,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"product-requirements-management/internal/handlers"
+	"product-requirements-management/internal/config"
+	"product-requirements-management/internal/database"
 	"product-requirements-management/internal/models"
-	"product-requirements-management/internal/repository"
+	"product-requirements-management/internal/server/routes"
 	"product-requirements-management/internal/service"
 )
 
-func setupInlineCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, func()) {
+func setupInlineCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, *TestAuthContext, func()) {
 	// Create in-memory SQLite database
 	testDatabase := SetupTestDatabase(t)
 	db := testDatabase.DB
@@ -33,59 +34,33 @@ func setupInlineCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, fun
 	err = models.SeedDefaultData(db)
 	require.NoError(t, err)
 
-	// Initialize repositories
-	repos := repository.NewRepositories(db)
-
-	// Initialize services
-	commentService := service.NewCommentService(repos)
-
-	// Initialize handlers
-	commentHandler := handlers.NewCommentHandler(commentService)
+	// Setup authentication
+	authCtx := SetupTestAuth(t, db)
 
 	// Setup Gin router
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 
-	// Setup routes for inline comments
-	v1 := router.Group("/api/v1")
-	{
-		epics := v1.Group("/epics")
-		{
-			epics.POST("/:id/comments", commentHandler.CreateEpicComment)
-			epics.POST("/:id/comments/inline", commentHandler.CreateEpicInlineComment)
-			epics.GET("/:id/comments/inline/visible", commentHandler.GetEpicVisibleInlineComments)
-			epics.POST("/:id/comments/inline/validate", commentHandler.ValidateEpicInlineComments)
-			epics.GET("/:id/comments", commentHandler.GetEpicComments)
-		}
-
-		userStories := v1.Group("/user-stories")
-		{
-			userStories.POST("/:id/comments/inline", commentHandler.CreateUserStoryInlineComment)
-			userStories.GET("/:id/comments/inline/visible", commentHandler.GetUserStoryVisibleInlineComments)
-			userStories.POST("/:id/comments/inline/validate", commentHandler.ValidateUserStoryInlineComments)
-		}
-
-		acceptanceCriteria := v1.Group("/acceptance-criteria")
-		{
-			acceptanceCriteria.POST("/:id/comments/inline", commentHandler.CreateAcceptanceCriteriaInlineComment)
-			acceptanceCriteria.GET("/:id/comments/inline/visible", commentHandler.GetAcceptanceCriteriaVisibleInlineComments)
-			acceptanceCriteria.POST("/:id/comments/inline/validate", commentHandler.ValidateAcceptanceCriteriaInlineComments)
-		}
-
-		requirements := v1.Group("/requirements")
-		{
-			requirements.POST("/:id/comments/inline", commentHandler.CreateRequirementInlineComment)
-			requirements.GET("/:id/comments/inline/visible", commentHandler.GetRequirementVisibleInlineComments)
-			requirements.POST("/:id/comments/inline/validate", commentHandler.ValidateRequirementInlineComments)
-		}
+	// Setup database wrapper
+	dbWrapper := &database.DB{
+		Postgres: db,
 	}
+
+	// Setup configuration with JWT secret
+	cfg := &config.Config{
+		JWT: config.JWTConfig{
+			Secret: "test-jwt-secret-key-for-integration-tests",
+		},
+	}
+
+	// Setup routes with authentication middleware
+	routes.Setup(router, cfg, dbWrapper)
 
 	cleanup := func() {
-		sqlDB, _ := db.DB()
-		sqlDB.Close()
+		testDatabase.Cleanup(t)
 	}
 
-	return router, db, cleanup
+	return router, db, authCtx, cleanup
 }
 
 func createInlineTestEpic(t *testing.T, db *gorm.DB, creator *models.User) *models.Epic {
@@ -170,14 +145,28 @@ func createInlineTestRequirement(t *testing.T, db *gorm.DB, userStoryID uuid.UUI
 
 func TestInlineCommentIntegration(t *testing.T) {
 	// Setup test environment
-	router, db, cleanup := setupInlineCommentIntegrationTest(t)
+	router, db, authCtx, cleanup := setupInlineCommentIntegrationTest(t)
 	defer cleanup()
 
-	// Create test user
-	user := createTestUser(t, db)
+	// Use the authenticated test user
+	user := authCtx.TestUser
 
 	// Create test epic with description
 	epic := createInlineTestEpic(t, db, user)
+
+	// Helper function to create authenticated requests
+	makeAuthenticatedRequest := func(method, url string, body *bytes.Buffer) (*http.Request, *httptest.ResponseRecorder) {
+		var req *http.Request
+		if body != nil {
+			req, _ = http.NewRequest(method, url, body)
+		} else {
+			req, _ = http.NewRequest(method, url, nil)
+		}
+		req.Header.Set("Authorization", "Bearer "+authCtx.Token)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		return req, w
+	}
 
 	t.Run("CreateInlineComment", func(t *testing.T) {
 		// Test creating an inline comment
@@ -190,9 +179,7 @@ func TestInlineCommentIntegration(t *testing.T) {
 		}
 
 		body, _ := json.Marshal(req)
-		w := httptest.NewRecorder()
-		httpReq, _ := http.NewRequest("POST", fmt.Sprintf("/api/v1/epics/%s/comments/inline", epic.ID), bytes.NewBuffer(body))
-		httpReq.Header.Set("Content-Type", "application/json")
+		httpReq, w := makeAuthenticatedRequest("POST", fmt.Sprintf("/api/v1/epics/%s/comments/inline", epic.ID), bytes.NewBuffer(body))
 
 		router.ServeHTTP(w, httpReq)
 
@@ -224,15 +211,13 @@ func TestInlineCommentIntegration(t *testing.T) {
 		}
 
 		body, _ := json.Marshal(req)
-		w := httptest.NewRecorder()
-		httpReq, _ := http.NewRequest("POST", fmt.Sprintf("/api/v1/epics/%s/comments/inline", epic.ID), bytes.NewBuffer(body))
-		httpReq.Header.Set("Content-Type", "application/json")
+		httpReq, w := makeAuthenticatedRequest("POST", fmt.Sprintf("/api/v1/epics/%s/comments/inline", epic.ID), bytes.NewBuffer(body))
 
 		router.ServeHTTP(w, httpReq)
 
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 
-		var response map[string]interface{}
+		var response map[string]any
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
 
@@ -250,9 +235,7 @@ func TestInlineCommentIntegration(t *testing.T) {
 		}
 
 		body, _ := json.Marshal(req)
-		w := httptest.NewRecorder()
-		httpReq, _ := http.NewRequest("POST", fmt.Sprintf("/api/v1/epics/%s/comments/inline", epic.ID), bytes.NewBuffer(body))
-		httpReq.Header.Set("Content-Type", "application/json")
+		httpReq, w := makeAuthenticatedRequest("POST", fmt.Sprintf("/api/v1/epics/%s/comments/inline", epic.ID), bytes.NewBuffer(body))
 
 		router.ServeHTTP(w, httpReq)
 
@@ -272,9 +255,7 @@ func TestInlineCommentIntegration(t *testing.T) {
 		}
 
 		body, _ := json.Marshal(req)
-		w := httptest.NewRecorder()
-		httpReq, _ := http.NewRequest("POST", fmt.Sprintf("/api/v1/epics/%s/comments/inline", epic.ID), bytes.NewBuffer(body))
-		httpReq.Header.Set("Content-Type", "application/json")
+		httpReq, w := makeAuthenticatedRequest("POST", fmt.Sprintf("/api/v1/epics/%s/comments/inline", epic.ID), bytes.NewBuffer(body))
 		router.ServeHTTP(w, httpReq)
 		if w.Code != http.StatusCreated {
 			t.Logf("Create comment response body: %s", w.Body.String())
@@ -282,8 +263,7 @@ func TestInlineCommentIntegration(t *testing.T) {
 		require.Equal(t, http.StatusCreated, w.Code)
 
 		// Now get visible inline comments
-		w = httptest.NewRecorder()
-		httpReq, _ = http.NewRequest("GET", fmt.Sprintf("/api/v1/epics/%s/comments/inline/visible", epic.ID), nil)
+		httpReq, w = makeAuthenticatedRequest("GET", fmt.Sprintf("/api/v1/epics/%s/comments/inline/visible", epic.ID), nil)
 		router.ServeHTTP(w, httpReq)
 
 		if w.Code != http.StatusOK {
@@ -313,9 +293,7 @@ func TestInlineCommentIntegration(t *testing.T) {
 		}
 
 		body, _ := json.Marshal(req)
-		w := httptest.NewRecorder()
-		httpReq, _ := http.NewRequest("POST", fmt.Sprintf("/api/v1/epics/%s/comments/inline", epic.ID), bytes.NewBuffer(body))
-		httpReq.Header.Set("Content-Type", "application/json")
+		httpReq, w := makeAuthenticatedRequest("POST", fmt.Sprintf("/api/v1/epics/%s/comments/inline", epic.ID), bytes.NewBuffer(body))
 		router.ServeHTTP(w, httpReq)
 		if w.Code != http.StatusCreated {
 			t.Logf("Create comment response body: %s", w.Body.String())
@@ -335,16 +313,13 @@ func TestInlineCommentIntegration(t *testing.T) {
 		}
 
 		body, _ = json.Marshal(validateReq)
-		w = httptest.NewRecorder()
-		httpReq, _ = http.NewRequest("POST", fmt.Sprintf("/api/v1/epics/%s/comments/inline/validate", epic.ID), bytes.NewBuffer(body))
-		httpReq.Header.Set("Content-Type", "application/json")
+		httpReq, w = makeAuthenticatedRequest("POST", fmt.Sprintf("/api/v1/epics/%s/comments/inline/validate", epic.ID), bytes.NewBuffer(body))
 		router.ServeHTTP(w, httpReq)
 
 		assert.Equal(t, http.StatusOK, w.Code)
 
 		// Verify the comment is now hidden by checking visible inline comments
-		w = httptest.NewRecorder()
-		httpReq, _ = http.NewRequest("GET", fmt.Sprintf("/api/v1/epics/%s/comments/inline/visible", epic.ID), nil)
+		httpReq, w = makeAuthenticatedRequest("GET", fmt.Sprintf("/api/v1/epics/%s/comments/inline/visible", epic.ID), nil)
 		router.ServeHTTP(w, httpReq)
 
 		var visibleResponse struct {
@@ -370,9 +345,7 @@ func TestInlineCommentIntegration(t *testing.T) {
 		}
 
 		body, _ := json.Marshal(generalReq)
-		w := httptest.NewRecorder()
-		httpReq, _ := http.NewRequest("POST", fmt.Sprintf("/api/v1/epics/%s/comments", epic.ID), bytes.NewBuffer(body))
-		httpReq.Header.Set("Content-Type", "application/json")
+		httpReq, w := makeAuthenticatedRequest("POST", fmt.Sprintf("/api/v1/epics/%s/comments", epic.ID), bytes.NewBuffer(body))
 		router.ServeHTTP(w, httpReq)
 		if w.Code != http.StatusCreated {
 			t.Logf("General comment response body: %s", w.Body.String())
@@ -389,9 +362,7 @@ func TestInlineCommentIntegration(t *testing.T) {
 		}
 
 		body, _ = json.Marshal(inlineReq)
-		w = httptest.NewRecorder()
-		httpReq, _ = http.NewRequest("POST", fmt.Sprintf("/api/v1/epics/%s/comments/inline", epic.ID), bytes.NewBuffer(body))
-		httpReq.Header.Set("Content-Type", "application/json")
+		httpReq, w = makeAuthenticatedRequest("POST", fmt.Sprintf("/api/v1/epics/%s/comments/inline", epic.ID), bytes.NewBuffer(body))
 		router.ServeHTTP(w, httpReq)
 		if w.Code != http.StatusCreated {
 			t.Logf("Inline comment response body: %s", w.Body.String())
@@ -399,8 +370,7 @@ func TestInlineCommentIntegration(t *testing.T) {
 		require.Equal(t, http.StatusCreated, w.Code)
 
 		// Test filtering for inline comments only
-		w = httptest.NewRecorder()
-		httpReq, _ = http.NewRequest("GET", fmt.Sprintf("/api/v1/epics/%s/comments?inline=true", epic.ID), nil)
+		httpReq, w = makeAuthenticatedRequest("GET", fmt.Sprintf("/api/v1/epics/%s/comments?inline=true", epic.ID), nil)
 		router.ServeHTTP(w, httpReq)
 
 		if w.Code != http.StatusOK {
@@ -421,8 +391,7 @@ func TestInlineCommentIntegration(t *testing.T) {
 		}
 
 		// Test getting all comments (should include both)
-		w = httptest.NewRecorder()
-		httpReq, _ = http.NewRequest("GET", fmt.Sprintf("/api/v1/epics/%s/comments", epic.ID), nil)
+		httpReq, w = makeAuthenticatedRequest("GET", fmt.Sprintf("/api/v1/epics/%s/comments", epic.ID), nil)
 		router.ServeHTTP(w, httpReq)
 
 		assert.Equal(t, http.StatusOK, w.Code)
@@ -472,9 +441,7 @@ func TestInlineCommentIntegration(t *testing.T) {
 				}
 
 				body, _ := json.Marshal(req)
-				w := httptest.NewRecorder()
-				httpReq, _ := http.NewRequest("POST", fmt.Sprintf("/api/v1/%s/%s/comments/inline", entity.entityType, entity.entityID), bytes.NewBuffer(body))
-				httpReq.Header.Set("Content-Type", "application/json")
+				httpReq, w := makeAuthenticatedRequest("POST", fmt.Sprintf("/api/v1/%s/%s/comments/inline", entity.entityType, entity.entityID), bytes.NewBuffer(body))
 
 				router.ServeHTTP(w, httpReq)
 
@@ -558,9 +525,7 @@ func TestInlineCommentIntegration(t *testing.T) {
 				}
 
 				body, _ := json.Marshal(req)
-				w := httptest.NewRecorder()
-				httpReq, _ := http.NewRequest("POST", fmt.Sprintf("/api/v1/epics/%s/comments/inline", epic.ID), bytes.NewBuffer(body))
-				httpReq.Header.Set("Content-Type", "application/json")
+				httpReq, w := makeAuthenticatedRequest("POST", fmt.Sprintf("/api/v1/epics/%s/comments/inline", epic.ID), bytes.NewBuffer(body))
 
 				router.ServeHTTP(w, httpReq)
 

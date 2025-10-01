@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"product-requirements-management/internal/auth"
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/service"
 )
@@ -49,6 +50,21 @@ func (h *EpicHandler) CreateEpic(c *gin.Context) {
 		})
 		return
 	}
+
+	// Get current user ID from JWT token context
+	creatorID, ok := auth.GetCurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": gin.H{
+				"code":    "AUTHENTICATION_REQUIRED",
+				"message": "User authentication required",
+			},
+		})
+		return
+	}
+
+	// Set the creator ID from the authenticated user
+	req.CreatorID = uuid.MustParse(creatorID)
 
 	epic, err := h.epicService.CreateEpic(req)
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"product-requirements-management/internal/auth"
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/service"
 )
@@ -57,8 +58,18 @@ func (h *AcceptanceCriteriaHandler) CreateAcceptanceCriteria(c *gin.Context) {
 		return
 	}
 
-	// Set user story ID from URL parameter
+	// Get current user ID from JWT token context
+	authorID, ok := auth.GetCurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User authentication required",
+		})
+		return
+	}
+
+	// Set user story ID from URL parameter and author ID from context
 	req.UserStoryID = userStoryID
+	req.AuthorID = uuid.MustParse(authorID)
 
 	acceptanceCriteria, err := h.acceptanceCriteriaService.CreateAcceptanceCriteria(req)
 	if err != nil {

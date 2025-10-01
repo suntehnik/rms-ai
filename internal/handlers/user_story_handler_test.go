@@ -247,9 +247,6 @@ func TestUserStoryHandler_CreateUserStoryInEpic(t *testing.T) {
 			Description: &description,
 		}
 
-		expectedReq := reqBody
-		expectedReq.EpicID = epicID
-
 		expectedUserStory := &models.UserStory{
 			ID:          uuid.New(),
 			EpicID:      epicID,

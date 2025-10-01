@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"product-requirements-management/internal/auth"
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/service"
 )
@@ -201,7 +202,6 @@ func (h *CommentHandler) GetCommentsByEntity(c *gin.Context) {
 			default:
 				// Invalid status filter, return all comments
 				filteredComments = comments
-				break
 			}
 		}
 		comments = filteredComments
@@ -791,9 +791,19 @@ func (h *CommentHandler) createInlineCommentForEntity(c *gin.Context, entityType
 		return
 	}
 
-	// Set entity type and ID
+	// Get current user ID from JWT token context
+	authorID, ok := auth.GetCurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User authentication required",
+		})
+		return
+	}
+
+	// Set entity type, ID, and author ID from context
 	req.EntityType = entityType
 	req.EntityID = entityID
+	req.AuthorID = uuid.MustParse(authorID)
 
 	// Validate that this is an inline comment request
 	if req.LinkedText == nil || req.TextPositionStart == nil || req.TextPositionEnd == nil {
@@ -1199,9 +1209,19 @@ func (h *CommentHandler) createCommentForEntity(c *gin.Context, entityType model
 		return
 	}
 
-	// Set entity type and ID
+	// Get current user ID from JWT token context
+	authorID, ok := auth.GetCurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User authentication required",
+		})
+		return
+	}
+
+	// Set entity type, ID, and author ID from context
 	req.EntityType = entityType
 	req.EntityID = entityID
+	req.AuthorID = uuid.MustParse(authorID)
 
 	comment, err := h.commentService.CreateComment(req)
 	if err != nil {
@@ -1340,7 +1360,6 @@ func (h *CommentHandler) getCommentsForEntity(c *gin.Context, entityType models.
 			default:
 				// Invalid status filter, return all comments
 				filteredComments = comments
-				break
 			}
 		}
 		comments = filteredComments

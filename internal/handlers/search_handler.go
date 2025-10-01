@@ -71,7 +71,7 @@ type SearchRequest struct {
 //	@Param			acceptance_criteria_id	query		string	false	"Filter by parent acceptance criteria ID (UUID format). Returns requirements within the acceptance criteria."														example("123e4567-e89b-12d3-a456-426614174004")
 //	@Param			requirement_type_id		query		string	false	"Filter by requirement type ID (UUID format). Only applies to requirement entities."																					example("123e4567-e89b-12d3-a456-426614174005")
 //	@Param			author_id				query		string	false	"Filter by author ID (UUID format). Applies to comments and acceptance criteria."																						example("123e4567-e89b-12d3-a456-426614174006")
-//	@Param			sort_by					query		string	false	"Sort by field: priority, created_at, last_modified, title, relevance (relevance only available with query)"														default(created_at)	example("priority")
+//	@Param			sort_by					query		string	false	"Sort by field: priority, created_at, updated_at, title, relevance (relevance only available with query)"														default(created_at)	example("priority")
 //	@Param			sort_order				query		string	false	"Sort order: asc (ascending) or desc (descending)"																													default(desc)			example("asc")
 //	@Param			limit					query		int		false	"Maximum number of results to return (1-100)"																															default(50)				example(20)
 //	@Param			offset					query		int		false	"Number of results to skip for pagination (0-based)"																													default(0)				example(0)

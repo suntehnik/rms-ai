@@ -2498,7 +2498,7 @@ components:
     Epic:
       type: object
       description: High-level feature or initiative containing multiple user stories
-      required: [id, reference_id, title, status, priority, creator_id, created_at, last_modified]
+      required: [id, reference_id, title, status, priority, creator_id, created_at, updated_at]
       properties:
         id:
           type: string
@@ -2525,7 +2525,7 @@ components:
         created_at:
           type: string
           format: date-time
-        last_modified:
+        updated_at:
           type: string
           format: date-time
         # Optional populated fields
@@ -2544,7 +2544,7 @@ components:
 
     UserStory:
       type: object
-      required: [id, reference_id, title, status, priority, epic_id, creator_id, created_at, last_modified]
+      required: [id, reference_id, title, status, priority, epic_id, creator_id, created_at, updated_at]
       properties:
         id:
           type: string
@@ -2574,7 +2574,7 @@ components:
         created_at:
           type: string
           format: date-time
-        last_modified:
+        updated_at:
           type: string
           format: date-time
         # Optional populated fields
@@ -2599,7 +2599,7 @@ components:
 
     AcceptanceCriteria:
       type: object
-      required: [id, reference_id, description, user_story_id, author_id, created_at, last_modified]
+      required: [id, reference_id, description, user_story_id, author_id, created_at, updated_at]
       properties:
         id:
           type: string
@@ -2618,7 +2618,7 @@ components:
         created_at:
           type: string
           format: date-time
-        last_modified:
+        updated_at:
           type: string
           format: date-time
         # Optional populated fields
@@ -2637,7 +2637,7 @@ components:
 
     Requirement:
       type: object
-      required: [id, reference_id, title, status, priority, user_story_id, type_id, creator_id, created_at, last_modified]
+      required: [id, reference_id, title, status, priority, user_story_id, type_id, creator_id, created_at, updated_at]
       properties:
         id:
           type: string
@@ -2672,7 +2672,7 @@ components:
         created_at:
           type: string
           format: date-time
-        last_modified:
+        updated_at:
           type: string
           format: date-time
         # Optional populated fields
