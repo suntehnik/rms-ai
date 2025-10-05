@@ -398,8 +398,10 @@ func (h *EpicHandler) ListEpics(c *gin.Context) {
 // @Tags epics
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Epic ID (UUID) or reference ID (EP-XXX)" example("123e4567-e89b-12d3-a456-426614174000")
 // @Success 200 {object} models.Epic "Epic with user stories retrieved successfully"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Epic not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/epics/{id}/user-stories [get]
@@ -449,10 +451,12 @@ func (h *EpicHandler) GetEpicWithUserStories(c *gin.Context) {
 // @Tags epics
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Epic UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param status body service.ChangeEpicStatusRequest true "Status change request"
 // @Success 200 {object} models.Epic "Epic status updated successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid epic ID format, request body, epic status, or status transition"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Epic not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/epics/{id}/status [patch]
@@ -527,10 +531,12 @@ func (h *EpicHandler) ChangeEpicStatus(c *gin.Context) {
 // @Tags epics
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Epic UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param assignment body service.AssignEpicRequest true "Assignment request"
 // @Success 200 {object} models.Epic "Epic assigned successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid epic ID format, request body, or assignee not found"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Epic not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/epics/{id}/assign [patch]

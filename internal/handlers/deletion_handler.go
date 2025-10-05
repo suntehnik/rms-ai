@@ -54,8 +54,10 @@ type DeleteRequirementRequest struct {
 //	@Param			id	path		string	true	"Epic ID (UUID or reference ID)"
 //	@Success		200	{object}	service.DependencyInfo
 //	@Failure		400	{object}	ErrorResponse
+//	@Failure		401	{object}	ErrorResponse
 //	@Failure		404	{object}	ErrorResponse
 //	@Failure		500	{object}	ErrorResponse
+//	@Security		BearerAuth
 //	@Router			/api/epics/{id}/validate-deletion [get]
 func (h *DeletionHandler) ValidateEpicDeletion(c *gin.Context) {
 	idParam := c.Param("id")
@@ -121,9 +123,11 @@ func (h *DeletionHandler) ValidateEpicDeletion(c *gin.Context) {
 //	@Param			request	body		DeleteEpicRequest	false	"Deletion options"
 //	@Success		200		{object}	service.DeletionResult
 //	@Failure		400		{object}	ErrorResponse
+//	@Failure		401		{object}	ErrorResponse
 //	@Failure		404		{object}	ErrorResponse
 //	@Failure		409		{object}	ErrorResponse
 //	@Failure		500		{object}	ErrorResponse
+//	@Security		BearerAuth
 //	@Router			/api/epics/{id}/delete [delete]
 func (h *DeletionHandler) DeleteEpic(c *gin.Context) {
 	idParam := c.Param("id")
@@ -237,8 +241,10 @@ func (h *DeletionHandler) DeleteEpic(c *gin.Context) {
 //	@Param			id	path		string	true	"User Story ID (UUID or reference ID)"
 //	@Success		200	{object}	service.DependencyInfo
 //	@Failure		400	{object}	ErrorResponse
+//	@Failure		401	{object}	ErrorResponse
 //	@Failure		404	{object}	ErrorResponse
 //	@Failure		500	{object}	ErrorResponse
+//	@Security		BearerAuth
 //	@Router			/api/user-stories/{id}/validate-deletion [get]
 func (h *DeletionHandler) ValidateUserStoryDeletion(c *gin.Context) {
 	idParam := c.Param("id")
@@ -301,9 +307,11 @@ func (h *DeletionHandler) ValidateUserStoryDeletion(c *gin.Context) {
 //	@Param			request	body		DeleteUserStoryRequest	false	"Deletion options"
 //	@Success		200		{object}	service.DeletionResult
 //	@Failure		400		{object}	ErrorResponse
+//	@Failure		401		{object}	ErrorResponse
 //	@Failure		404		{object}	ErrorResponse
 //	@Failure		409		{object}	ErrorResponse
 //	@Failure		500		{object}	ErrorResponse
+//	@Security		BearerAuth
 //	@Router			/api/user-stories/{id}/delete [delete]
 func (h *DeletionHandler) DeleteUserStory(c *gin.Context) {
 	idParam := c.Param("id")
@@ -415,8 +423,10 @@ func (h *DeletionHandler) DeleteUserStory(c *gin.Context) {
 //	@Param			id	path		string	true	"Acceptance Criteria ID (UUID or reference ID)"
 //	@Success		200	{object}	service.DependencyInfo
 //	@Failure		400	{object}	ErrorResponse
+//	@Failure		401	{object}	ErrorResponse
 //	@Failure		404	{object}	ErrorResponse
 //	@Failure		500	{object}	ErrorResponse
+//	@Security		BearerAuth
 //	@Router			/api/acceptance-criteria/{id}/validate-deletion [get]
 func (h *DeletionHandler) ValidateAcceptanceCriteriaDeletion(c *gin.Context) {
 	idParam := c.Param("id")
@@ -479,9 +489,11 @@ func (h *DeletionHandler) ValidateAcceptanceCriteriaDeletion(c *gin.Context) {
 //	@Param			request	body		DeleteAcceptanceCriteriaRequest	false	"Deletion options"
 //	@Success		200		{object}	service.DeletionResult
 //	@Failure		400		{object}	ErrorResponse
+//	@Failure		401		{object}	ErrorResponse
 //	@Failure		404		{object}	ErrorResponse
 //	@Failure		409		{object}	ErrorResponse
 //	@Failure		500		{object}	ErrorResponse
+//	@Security		BearerAuth
 //	@Router			/api/acceptance-criteria/{id}/delete [delete]
 func (h *DeletionHandler) DeleteAcceptanceCriteria(c *gin.Context) {
 	idParam := c.Param("id")
@@ -593,8 +605,10 @@ func (h *DeletionHandler) DeleteAcceptanceCriteria(c *gin.Context) {
 //	@Param			id	path		string	true	"Requirement ID (UUID or reference ID)"
 //	@Success		200	{object}	service.DependencyInfo
 //	@Failure		400	{object}	ErrorResponse
+//	@Failure		401	{object}	ErrorResponse
 //	@Failure		404	{object}	ErrorResponse
 //	@Failure		500	{object}	ErrorResponse
+//	@Security		BearerAuth
 //	@Router			/api/requirements/{id}/validate-deletion [get]
 func (h *DeletionHandler) ValidateRequirementDeletion(c *gin.Context) {
 	idParam := c.Param("id")
@@ -657,9 +671,11 @@ func (h *DeletionHandler) ValidateRequirementDeletion(c *gin.Context) {
 //	@Param			request	body		DeleteRequirementRequest	false	"Deletion options"
 //	@Success		200		{object}	service.DeletionResult
 //	@Failure		400		{object}	ErrorResponse
+//	@Failure		401		{object}	ErrorResponse
 //	@Failure		404		{object}	ErrorResponse
 //	@Failure		409		{object}	ErrorResponse
 //	@Failure		500		{object}	ErrorResponse
+//	@Security		BearerAuth
 //	@Router			/api/requirements/{id}/delete [delete]
 func (h *DeletionHandler) DeleteRequirement(c *gin.Context) {
 	idParam := c.Param("id")
@@ -772,8 +788,10 @@ func (h *DeletionHandler) DeleteRequirement(c *gin.Context) {
 //	@Param			id			query		string	true	"Entity ID (UUID)"
 //	@Success		200			{object}	service.DependencyInfo
 //	@Failure		400			{object}	ErrorResponse
+//	@Failure		401			{object}	ErrorResponse
 //	@Failure		404			{object}	ErrorResponse
 //	@Failure		500			{object}	ErrorResponse
+//	@Security		BearerAuth
 //	@Router			/api/deletion/confirm [get]
 func (h *DeletionHandler) GetDeletionConfirmation(c *gin.Context) {
 	entityType := c.Query("entity_type")

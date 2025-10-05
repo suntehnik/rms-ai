@@ -31,10 +31,12 @@ func NewAcceptanceCriteriaHandler(acceptanceCriteriaService service.AcceptanceCr
 // @Tags user-stories
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param acceptance_criteria body service.CreateAcceptanceCriteriaRequest true "Acceptance criteria creation request (user_story_id will be set from path parameter)"
 // @Success 201 {object} models.AcceptanceCriteria "Successfully created acceptance criteria within user story"
 // @Failure 400 {object} map[string]interface{} "Invalid user story ID format, request body, user story not found, or author not found"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/user-stories/{id}/acceptance-criteria [post]
 func (h *AcceptanceCriteriaHandler) CreateAcceptanceCriteria(c *gin.Context) {
@@ -99,8 +101,10 @@ func (h *AcceptanceCriteriaHandler) CreateAcceptanceCriteria(c *gin.Context) {
 // @Tags acceptance-criteria
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Acceptance criteria UUID or reference ID" example("123e4567-e89b-12d3-a456-426614174000")
 // @Success 200 {object} models.AcceptanceCriteria "Successfully retrieved acceptance criteria"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Acceptance criteria not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/acceptance-criteria/{id} [get]
@@ -139,10 +143,12 @@ func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteria(c *gin.Context) {
 // @Tags acceptance-criteria
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Acceptance criteria UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param acceptance_criteria body service.UpdateAcceptanceCriteriaRequest true "Acceptance criteria update request with optional fields"
 // @Success 200 {object} models.AcceptanceCriteria "Successfully updated acceptance criteria"
 // @Failure 400 {object} map[string]interface{} "Invalid acceptance criteria ID format or request body"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Acceptance criteria not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/acceptance-criteria/{id} [put]
@@ -191,10 +197,12 @@ func (h *AcceptanceCriteriaHandler) UpdateAcceptanceCriteria(c *gin.Context) {
 // @Tags acceptance-criteria
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Acceptance criteria UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param force query boolean false "Force delete with dependencies and constraints" example(false)
 // @Success 204 "Successfully deleted acceptance criteria"
 // @Failure 400 {object} map[string]interface{} "Invalid acceptance criteria ID format"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Acceptance criteria not found"
 // @Failure 409 {object} map[string]interface{} "Acceptance criteria has associated requirements or is the last one for user story (use force=true)"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
@@ -248,12 +256,14 @@ func (h *AcceptanceCriteriaHandler) DeleteAcceptanceCriteria(c *gin.Context) {
 // @Tags acceptance-criteria
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param user_story_id query string false "Filter by user story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param author_id query string false "Filter by author UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174001")
 // @Param order_by query string false "Order by field (e.g., 'created_at DESC', 'reference_id ASC')" example("created_at DESC")
 // @Param limit query integer false "Maximum number of results" minimum(1) maximum(100) example(50)
 // @Param offset query integer false "Number of results to skip" minimum(0) example(0)
 // @Success 200 {object} map[string]interface{} "Successfully retrieved acceptance criteria list with pagination info"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/acceptance-criteria [get]
 func (h *AcceptanceCriteriaHandler) ListAcceptanceCriteria(c *gin.Context) {
@@ -319,9 +329,11 @@ func (h *AcceptanceCriteriaHandler) ListAcceptanceCriteria(c *gin.Context) {
 // @Tags user-stories
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Success 200 {object} map[string]interface{} "Successfully retrieved acceptance criteria list with count"
 // @Failure 400 {object} map[string]interface{} "Invalid user story ID format (UUID required)"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "User story not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/user-stories/{id}/acceptance-criteria [get]
@@ -370,9 +382,11 @@ func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteriaByUserStory(c *gin.Cont
 // @Tags users
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Author UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Success 200 {object} map[string]interface{} "Successfully retrieved acceptance criteria list with count"
 // @Failure 400 {object} map[string]interface{} "Invalid author ID format"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Author not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/users/{id}/acceptance-criteria [get]

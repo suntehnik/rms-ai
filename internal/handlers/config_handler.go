@@ -105,13 +105,15 @@ func (h *ConfigHandler) CreateRequirementType(c *gin.Context) {
 // GetRequirementType handles GET /api/v1/config/requirement-types/:id
 //
 //	@Summary		Get requirement type by ID
-//	@Description	Retrieves a specific requirement type by its UUID. Returns complete requirement type information including name, description, and metadata.
+//	@Description	Retrieves a specific requirement type by its UUID. Returns complete requirement type information including name, description, and metadata. Requires authentication.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			id	path		string					true	"Requirement type ID (UUID)"	example("123e4567-e89b-12d3-a456-426614174000")
 //	@Success		200	{object}	models.RequirementType	"Successfully retrieved requirement type"
 //	@Failure		400	{object}	ErrorResponse			"Invalid UUID format"
+//	@Failure		401	{object}	ErrorResponse			"Authentication required"
 //	@Failure		404	{object}	ErrorResponse			"Requirement type not found"
 //	@Failure		500	{object}	ErrorResponse			"Internal server error"
 //	@Router			/api/v1/config/requirement-types/{id} [get]
@@ -146,14 +148,17 @@ func (h *ConfigHandler) GetRequirementType(c *gin.Context) {
 // UpdateRequirementType handles PUT /api/v1/config/requirement-types/:id
 //
 //	@Summary		Update requirement type
-//	@Description	Updates an existing requirement type. Only provided fields will be updated. Name must be unique across all requirement types.
+//	@Description	Updates an existing requirement type. Only provided fields will be updated. Name must be unique across all requirement types. Requires Administrator role.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			id					path		string									true	"Requirement type ID (UUID)"	example("123e4567-e89b-12d3-a456-426614174000")
 //	@Param			requirement_type	body		service.UpdateRequirementTypeRequest	true	"Requirement type update request"
 //	@Success		200					{object}	models.RequirementType					"Successfully updated requirement type"
 //	@Failure		400					{object}	ErrorResponse							"Invalid request body or UUID format"
+//	@Failure		401					{object}	ErrorResponse							"Authentication required"
+//	@Failure		403					{object}	ErrorResponse							"Administrator role required"
 //	@Failure		404					{object}	ErrorResponse							"Requirement type not found"
 //	@Failure		409					{object}	ErrorResponse							"Requirement type name already exists"
 //	@Failure		500					{object}	ErrorResponse							"Internal server error"
@@ -203,14 +208,17 @@ func (h *ConfigHandler) UpdateRequirementType(c *gin.Context) {
 // DeleteRequirementType handles DELETE /api/v1/config/requirement-types/:id
 //
 //	@Summary		Delete requirement type
-//	@Description	Deletes a requirement type. By default, deletion is prevented if there are requirements using this type. Use force=true to override this protection (use with caution).
+//	@Description	Deletes a requirement type. By default, deletion is prevented if there are requirements using this type. Use force=true to override this protection (use with caution). Requires Administrator role.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			id		path	string	true	"Requirement type ID (UUID)"						example("123e4567-e89b-12d3-a456-426614174000")
 //	@Param			force	query	boolean	false	"Force deletion even if requirements exist"			default(false)	example(false)
 //	@Success		204		"Successfully deleted requirement type (no content)"
 //	@Failure		400		{object}	ErrorResponse	"Invalid UUID format"
+//	@Failure		401		{object}	ErrorResponse	"Authentication required"
+//	@Failure		403		{object}	ErrorResponse	"Administrator role required"
 //	@Failure		404		{object}	ErrorResponse	"Requirement type not found"
 //	@Failure		409		{object}	ErrorResponse	"Requirement type has associated requirements and cannot be deleted"
 //	@Failure		500		{object}	ErrorResponse	"Internal server error"
@@ -255,14 +263,16 @@ func (h *ConfigHandler) DeleteRequirementType(c *gin.Context) {
 // ListRequirementTypes handles GET /api/v1/config/requirement-types
 //
 //	@Summary		List requirement types
-//	@Description	Retrieves a paginated list of all requirement types with optional sorting. Supports ordering by name, created_at, or updated_at fields.
+//	@Description	Retrieves a paginated list of all requirement types with optional sorting. Supports ordering by name, created_at, or updated_at fields. Requires authentication.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			order_by	query		string	false	"Sort field (name, created_at, updated_at)"	default(name)		example("name")
 //	@Param			limit		query		int		false	"Maximum number of results (1-100)"		default(100)		example(50)
 //	@Param			offset		query		int		false	"Number of results to skip"					default(0)			example(0)
 //	@Success		200			{object}	RequirementTypeListResponse						"Successfully retrieved requirement types"
+//	@Failure		401			{object}	ErrorResponse									"Authentication required"
 //	@Failure		500			{object}	ErrorResponse									"Internal server error"
 //	@Router			/api/v1/config/requirement-types [get]
 func (h *ConfigHandler) ListRequirementTypes(c *gin.Context) {
@@ -303,13 +313,16 @@ func (h *ConfigHandler) ListRequirementTypes(c *gin.Context) {
 // CreateRelationshipType handles POST /api/v1/config/relationship-types
 //
 //	@Summary		Create a new relationship type
-//	@Description	Creates a new relationship type for defining how requirements relate to each other. Common types include depends_on, blocks, relates_to, conflicts_with, and derives_from.
+//	@Description	Creates a new relationship type for defining how requirements relate to each other. Common types include depends_on, blocks, relates_to, conflicts_with, and derives_from. Requires Administrator role.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			relationship_type	body		service.CreateRelationshipTypeRequest	true	"Relationship type creation request"
 //	@Success		201					{object}	models.RelationshipType					"Successfully created relationship type"
 //	@Failure		400					{object}	ErrorResponse							"Invalid request body or validation error"
+//	@Failure		401					{object}	ErrorResponse							"Authentication required"
+//	@Failure		403					{object}	ErrorResponse							"Administrator role required"
 //	@Failure		409					{object}	ErrorResponse							"Relationship type name already exists"
 //	@Failure		500					{object}	ErrorResponse							"Internal server error"
 //	@Router			/api/v1/config/relationship-types [post]
@@ -344,13 +357,15 @@ func (h *ConfigHandler) CreateRelationshipType(c *gin.Context) {
 // GetRelationshipType handles GET /api/v1/config/relationship-types/:id
 //
 //	@Summary		Get relationship type by ID
-//	@Description	Retrieves a specific relationship type by its UUID. Returns complete relationship type information including name, description, and usage metadata.
+//	@Description	Retrieves a specific relationship type by its UUID. Returns complete relationship type information including name, description, and usage metadata. Requires authentication.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			id	path		string						true	"Relationship type ID (UUID)"	example("123e4567-e89b-12d3-a456-426614174000")
 //	@Success		200	{object}	models.RelationshipType		"Successfully retrieved relationship type"
 //	@Failure		400	{object}	ErrorResponse				"Invalid UUID format"
+//	@Failure		401	{object}	ErrorResponse				"Authentication required"
 //	@Failure		404	{object}	ErrorResponse				"Relationship type not found"
 //	@Failure		500	{object}	ErrorResponse				"Internal server error"
 //	@Router			/api/v1/config/relationship-types/{id} [get]
@@ -385,14 +400,17 @@ func (h *ConfigHandler) GetRelationshipType(c *gin.Context) {
 // UpdateRelationshipType handles PUT /api/v1/config/relationship-types/:id
 //
 //	@Summary		Update relationship type
-//	@Description	Updates an existing relationship type. Only provided fields will be updated. Name must be unique across all relationship types.
+//	@Description	Updates an existing relationship type. Only provided fields will be updated. Name must be unique across all relationship types. Requires Administrator role.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			id					path		string										true	"Relationship type ID (UUID)"	example("123e4567-e89b-12d3-a456-426614174000")
 //	@Param			relationship_type	body		service.UpdateRelationshipTypeRequest	true	"Relationship type update request"
 //	@Success		200					{object}	models.RelationshipType					"Successfully updated relationship type"
 //	@Failure		400					{object}	ErrorResponse							"Invalid request body or UUID format"
+//	@Failure		401					{object}	ErrorResponse							"Authentication required"
+//	@Failure		403					{object}	ErrorResponse							"Administrator role required"
 //	@Failure		404					{object}	ErrorResponse							"Relationship type not found"
 //	@Failure		409					{object}	ErrorResponse							"Relationship type name already exists"
 //	@Failure		500					{object}	ErrorResponse							"Internal server error"
@@ -442,14 +460,17 @@ func (h *ConfigHandler) UpdateRelationshipType(c *gin.Context) {
 // DeleteRelationshipType handles DELETE /api/v1/config/relationship-types/:id
 //
 //	@Summary		Delete relationship type
-//	@Description	Deletes a relationship type. By default, deletion is prevented if there are requirement relationships using this type. Use force=true to override this protection (use with caution).
+//	@Description	Deletes a relationship type. By default, deletion is prevented if there are requirement relationships using this type. Use force=true to override this protection (use with caution). Requires Administrator role.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			id		path	string	true	"Relationship type ID (UUID)"							example("123e4567-e89b-12d3-a456-426614174000")
 //	@Param			force	query	boolean	false	"Force deletion even if relationships exist"			default(false)	example(false)
 //	@Success		204		"Successfully deleted relationship type (no content)"
 //	@Failure		400		{object}	ErrorResponse	"Invalid UUID format"
+//	@Failure		401		{object}	ErrorResponse	"Authentication required"
+//	@Failure		403		{object}	ErrorResponse	"Administrator role required"
 //	@Failure		404		{object}	ErrorResponse	"Relationship type not found"
 //	@Failure		409		{object}	ErrorResponse	"Relationship type has associated relationships and cannot be deleted"
 //	@Failure		500		{object}	ErrorResponse	"Internal server error"
@@ -494,14 +515,16 @@ func (h *ConfigHandler) DeleteRelationshipType(c *gin.Context) {
 // ListRelationshipTypes handles GET /api/v1/config/relationship-types
 //
 //	@Summary		List relationship types
-//	@Description	Retrieves a paginated list of all relationship types with optional sorting. Supports ordering by name, created_at, or updated_at fields.
+//	@Description	Retrieves a paginated list of all relationship types with optional sorting. Supports ordering by name, created_at, or updated_at fields. Requires authentication.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			order_by	query		string	false	"Sort field (name, created_at, updated_at)"	default(name)		example("name")
 //	@Param			limit		query		int		false	"Maximum number of results (1-100)"		default(100)		example(50)
 //	@Param			offset		query		int		false	"Number of results to skip"					default(0)			example(0)
 //	@Success		200			{object}	RelationshipTypeListResponse					"Successfully retrieved relationship types"
+//	@Failure		401			{object}	ErrorResponse									"Authentication required"
 //	@Failure		500			{object}	ErrorResponse									"Internal server error"
 //	@Router			/api/v1/config/relationship-types [get]
 func (h *ConfigHandler) ListRelationshipTypes(c *gin.Context) {
@@ -542,13 +565,16 @@ func (h *ConfigHandler) ListRelationshipTypes(c *gin.Context) {
 // CreateStatusModel handles POST /api/v1/config/status-models
 //
 //	@Summary		Create a new status model
-//	@Description	Creates a new status model for defining status workflows for different entity types (epic, user_story, requirement, acceptance_criteria). Each entity type can have multiple status models with one marked as default.
+//	@Description	Creates a new status model for defining status workflows for different entity types (epic, user_story, requirement, acceptance_criteria). Each entity type can have multiple status models with one marked as default. Requires Administrator role.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			status_model	body		service.CreateStatusModelRequest	true	"Status model creation request"
 //	@Success		201				{object}	models.StatusModel					"Successfully created status model"
 //	@Failure		400				{object}	ErrorResponse						"Invalid request body, validation error, or invalid entity type"
+//	@Failure		401				{object}	ErrorResponse						"Authentication required"
+//	@Failure		403				{object}	ErrorResponse						"Administrator role required"
 //	@Failure		409				{object}	ErrorResponse						"Status model name already exists for this entity type"
 //	@Failure		500				{object}	ErrorResponse						"Internal server error"
 //	@Router			/api/v1/config/status-models [post]
@@ -587,13 +613,15 @@ func (h *ConfigHandler) CreateStatusModel(c *gin.Context) {
 // GetStatusModel handles GET /api/v1/config/status-models/:id
 //
 //	@Summary		Get status model by ID
-//	@Description	Retrieves a specific status model by its UUID. Returns complete status model information including entity type, name, description, and default flag.
+//	@Description	Retrieves a specific status model by its UUID. Returns complete status model information including entity type, name, description, and default flag. Requires authentication.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			id	path		string				true	"Status model ID (UUID)"	example("123e4567-e89b-12d3-a456-426614174000")
 //	@Success		200	{object}	models.StatusModel	"Successfully retrieved status model"
 //	@Failure		400	{object}	ErrorResponse		"Invalid UUID format"
+//	@Failure		401	{object}	ErrorResponse		"Authentication required"
 //	@Failure		404	{object}	ErrorResponse		"Status model not found"
 //	@Failure		500	{object}	ErrorResponse		"Internal server error"
 //	@Router			/api/v1/config/status-models/{id} [get]
@@ -628,14 +656,17 @@ func (h *ConfigHandler) GetStatusModel(c *gin.Context) {
 // UpdateStatusModel handles PUT /api/v1/config/status-models/:id
 //
 //	@Summary		Update status model
-//	@Description	Updates an existing status model. Only provided fields will be updated. Name must be unique within the same entity type. Setting is_default=true will make other models for the same entity type non-default.
+//	@Description	Updates an existing status model. Only provided fields will be updated. Name must be unique within the same entity type. Setting is_default=true will make other models for the same entity type non-default. Requires Administrator role.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			id				path		string								true	"Status model ID (UUID)"	example("123e4567-e89b-12d3-a456-426614174000")
 //	@Param			status_model	body		service.UpdateStatusModelRequest	true	"Status model update request"
 //	@Success		200				{object}	models.StatusModel					"Successfully updated status model"
 //	@Failure		400				{object}	ErrorResponse						"Invalid request body or UUID format"
+//	@Failure		401				{object}	ErrorResponse						"Authentication required"
+//	@Failure		403				{object}	ErrorResponse						"Administrator role required"
 //	@Failure		404				{object}	ErrorResponse						"Status model not found"
 //	@Failure		409				{object}	ErrorResponse						"Status model name already exists for this entity type"
 //	@Failure		500				{object}	ErrorResponse						"Internal server error"
@@ -685,14 +716,17 @@ func (h *ConfigHandler) UpdateStatusModel(c *gin.Context) {
 // DeleteStatusModel handles DELETE /api/v1/config/status-models/:id
 //
 //	@Summary		Delete status model
-//	@Description	Deletes a status model and all its associated statuses and transitions. Use with caution as this will affect entities using this status model. Consider setting a different default model before deletion.
+//	@Description	Deletes a status model and all its associated statuses and transitions. Use with caution as this will affect entities using this status model. Consider setting a different default model before deletion. Requires Administrator role.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			id		path	string	true	"Status model ID (UUID)"	example("123e4567-e89b-12d3-a456-426614174000")
 //	@Param			force	query	boolean	false	"Force deletion (reserved for future use)"	default(false)	example(false)
 //	@Success		204		"Successfully deleted status model (no content)"
 //	@Failure		400		{object}	ErrorResponse	"Invalid UUID format"
+//	@Failure		401		{object}	ErrorResponse	"Authentication required"
+//	@Failure		403		{object}	ErrorResponse	"Administrator role required"
 //	@Failure		404		{object}	ErrorResponse	"Status model not found"
 //	@Failure		500		{object}	ErrorResponse	"Internal server error"
 //	@Router			/api/v1/config/status-models/{id} [delete]
@@ -731,15 +765,17 @@ func (h *ConfigHandler) DeleteStatusModel(c *gin.Context) {
 // ListStatusModels handles GET /api/v1/config/status-models
 //
 //	@Summary		List status models
-//	@Description	Retrieves a paginated list of status models with optional filtering by entity type and sorting. Supports ordering by entity_type, name, created_at, or updated_at fields.
+//	@Description	Retrieves a paginated list of status models with optional filtering by entity type and sorting. Supports ordering by entity_type, name, created_at, or updated_at fields. Requires authentication.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			entity_type	query		string	false	"Filter by entity type (epic, user_story, requirement, acceptance_criteria)"	example("epic")
 //	@Param			order_by	query		string	false	"Sort field (entity_type, name, created_at, updated_at)"						default("entity_type, name")	example("entity_type")
 //	@Param			limit		query		int		false	"Maximum number of results (1-100)"											default(100)					example(50)
 //	@Param			offset		query		int		false	"Number of results to skip"														default(0)						example(0)
 //	@Success		200			{object}	StatusModelListResponse													"Successfully retrieved status models"
+//	@Failure		401			{object}	ErrorResponse															"Authentication required"
 //	@Failure		500			{object}	ErrorResponse															"Internal server error"
 //	@Router			/api/v1/config/status-models [get]
 func (h *ConfigHandler) ListStatusModels(c *gin.Context) {
@@ -782,12 +818,14 @@ func (h *ConfigHandler) ListStatusModels(c *gin.Context) {
 // GetDefaultStatusModel handles GET /api/v1/config/status-models/default/:entity_type
 //
 //	@Summary		Get default status model for entity type
-//	@Description	Retrieves the default status model for a specific entity type. The default status model is used when creating new entities of that type.
+//	@Description	Retrieves the default status model for a specific entity type. The default status model is used when creating new entities of that type. Requires authentication.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			entity_type	path		string				true	"Entity type (epic, user_story, requirement, acceptance_criteria)"	example("epic")
 //	@Success		200			{object}	models.StatusModel	"Successfully retrieved default status model"
+//	@Failure		401			{object}	ErrorResponse		"Authentication required"
 //	@Failure		404			{object}	ErrorResponse		"Default status model not found for entity type"
 //	@Failure		500			{object}	ErrorResponse		"Internal server error"
 //	@Router			/api/v1/config/status-models/default/{entity_type} [get]
@@ -816,13 +854,16 @@ func (h *ConfigHandler) GetDefaultStatusModel(c *gin.Context) {
 // CreateStatus handles POST /api/v1/config/statuses
 //
 //	@Summary		Create a new status
-//	@Description	Creates a new status within a status model. Statuses define the possible states for entities. Each status can be marked as initial (starting state) or final (ending state) and has an order for display purposes.
+//	@Description	Creates a new status within a status model. Statuses define the possible states for entities. Each status can be marked as initial (starting state) or final (ending state) and has an order for display purposes. Requires Administrator role.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			status	body		service.CreateStatusRequest	true	"Status creation request"
 //	@Success		201		{object}	models.Status				"Successfully created status"
 //	@Failure		400		{object}	ErrorResponse				"Invalid request body, validation error, or status model not found"
+//	@Failure		401		{object}	ErrorResponse				"Authentication required"
+//	@Failure		403		{object}	ErrorResponse				"Administrator role required"
 //	@Failure		409		{object}	ErrorResponse				"Status name already exists in this model"
 //	@Failure		500		{object}	ErrorResponse				"Internal server error"
 //	@Router			/api/v1/config/statuses [post]
@@ -861,13 +902,15 @@ func (h *ConfigHandler) CreateStatus(c *gin.Context) {
 // GetStatus handles GET /api/v1/config/statuses/:id
 //
 //	@Summary		Get status by ID
-//	@Description	Retrieves a specific status by its UUID. Returns complete status information including name, description, color, flags, and order within the status model.
+//	@Description	Retrieves a specific status by its UUID. Returns complete status information including name, description, color, flags, and order within the status model. Requires authentication.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			id	path		string			true	"Status ID (UUID)"	example("123e4567-e89b-12d3-a456-426614174000")
 //	@Success		200	{object}	models.Status	"Successfully retrieved status"
 //	@Failure		400	{object}	ErrorResponse	"Invalid UUID format"
+//	@Failure		401	{object}	ErrorResponse	"Authentication required"
 //	@Failure		404	{object}	ErrorResponse	"Status not found"
 //	@Failure		500	{object}	ErrorResponse	"Internal server error"
 //	@Router			/api/v1/config/statuses/{id} [get]
@@ -902,14 +945,17 @@ func (h *ConfigHandler) GetStatus(c *gin.Context) {
 // UpdateStatus handles PUT /api/v1/config/statuses/:id
 //
 //	@Summary		Update status
-//	@Description	Updates an existing status. Only provided fields will be updated. Name must be unique within the same status model. Changing initial/final flags may affect status transitions.
+//	@Description	Updates an existing status. Only provided fields will be updated. Name must be unique within the same status model. Changing initial/final flags may affect status transitions. Requires Administrator role.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			id		path		string						true	"Status ID (UUID)"	example("123e4567-e89b-12d3-a456-426614174000")
 //	@Param			status	body		service.UpdateStatusRequest	true	"Status update request"
 //	@Success		200		{object}	models.Status				"Successfully updated status"
 //	@Failure		400		{object}	ErrorResponse				"Invalid request body or UUID format"
+//	@Failure		401		{object}	ErrorResponse				"Authentication required"
+//	@Failure		403		{object}	ErrorResponse				"Administrator role required"
 //	@Failure		404		{object}	ErrorResponse				"Status not found"
 //	@Failure		409		{object}	ErrorResponse				"Status name already exists in this model"
 //	@Failure		500		{object}	ErrorResponse				"Internal server error"
@@ -959,14 +1005,17 @@ func (h *ConfigHandler) UpdateStatus(c *gin.Context) {
 // DeleteStatus handles DELETE /api/v1/config/statuses/:id
 //
 //	@Summary		Delete status
-//	@Description	Deletes a status from a status model. This will also remove any status transitions involving this status. Use with caution as entities using this status may be affected.
+//	@Description	Deletes a status from a status model. This will also remove any status transitions involving this status. Use with caution as entities using this status may be affected. Requires Administrator role.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			id		path	string	true	"Status ID (UUID)"							example("123e4567-e89b-12d3-a456-426614174000")
 //	@Param			force	query	boolean	false	"Force deletion (reserved for future use)"	default(false)	example(false)
 //	@Success		204		"Successfully deleted status (no content)"
 //	@Failure		400		{object}	ErrorResponse	"Invalid UUID format"
+//	@Failure		401		{object}	ErrorResponse	"Authentication required"
+//	@Failure		403		{object}	ErrorResponse	"Administrator role required"
 //	@Failure		404		{object}	ErrorResponse	"Status not found"
 //	@Failure		500		{object}	ErrorResponse	"Internal server error"
 //	@Router			/api/v1/config/statuses/{id} [delete]
@@ -1005,13 +1054,15 @@ func (h *ConfigHandler) DeleteStatus(c *gin.Context) {
 // ListStatusesByModel handles GET /api/v1/config/status-models/:id/statuses
 //
 //	@Summary		List statuses by status model
-//	@Description	Retrieves all statuses belonging to a specific status model, ordered by their display order. Includes initial and final status flags for workflow understanding.
+//	@Description	Retrieves all statuses belonging to a specific status model, ordered by their display order. Includes initial and final status flags for workflow understanding. Requires authentication.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			id	path		string				true	"Status model ID (UUID)"	example("123e4567-e89b-12d3-a456-426614174000")
 //	@Success		200	{object}	StatusListResponse	"Successfully retrieved statuses"
 //	@Failure		400	{object}	ErrorResponse		"Invalid UUID format"
+//	@Failure		401	{object}	ErrorResponse		"Authentication required"
 //	@Failure		500	{object}	ErrorResponse		"Internal server error"
 //	@Router			/api/v1/config/status-models/{id}/statuses [get]
 func (h *ConfigHandler) ListStatusesByModel(c *gin.Context) {
@@ -1044,13 +1095,16 @@ func (h *ConfigHandler) ListStatusesByModel(c *gin.Context) {
 // CreateStatusTransition handles POST /api/v1/config/status-transitions
 //
 //	@Summary		Create a new status transition
-//	@Description	Creates a new status transition rule within a status model. Transitions define which status changes are allowed. Both from_status and to_status must belong to the same status model.
+//	@Description	Creates a new status transition rule within a status model. Transitions define which status changes are allowed. Both from_status and to_status must belong to the same status model. Requires Administrator role.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			transition	body		service.CreateStatusTransitionRequest	true	"Status transition creation request"
 //	@Success		201			{object}	models.StatusTransition					"Successfully created status transition"
 //	@Failure		400			{object}	ErrorResponse							"Invalid request body, validation error, status model not found, or invalid status transition"
+//	@Failure		401			{object}	ErrorResponse							"Authentication required"
+//	@Failure		403			{object}	ErrorResponse							"Administrator role required"
 //	@Failure		409			{object}	ErrorResponse							"Status transition already exists"
 //	@Failure		500			{object}	ErrorResponse							"Internal server error"
 //	@Router			/api/v1/config/status-transitions [post]
@@ -1097,13 +1151,15 @@ func (h *ConfigHandler) CreateStatusTransition(c *gin.Context) {
 // GetStatusTransition handles GET /api/v1/config/status-transitions/:id
 //
 //	@Summary		Get status transition by ID
-//	@Description	Retrieves a specific status transition by its UUID. Returns complete transition information including from/to statuses, name, and description.
+//	@Description	Retrieves a specific status transition by its UUID. Returns complete transition information including from/to statuses, name, and description. Requires authentication.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			id	path		string					true	"Status transition ID (UUID)"	example("123e4567-e89b-12d3-a456-426614174000")
 //	@Success		200	{object}	models.StatusTransition	"Successfully retrieved status transition"
 //	@Failure		400	{object}	ErrorResponse			"Invalid UUID format"
+//	@Failure		401	{object}	ErrorResponse			"Authentication required"
 //	@Failure		404	{object}	ErrorResponse			"Status transition not found"
 //	@Failure		500	{object}	ErrorResponse			"Internal server error"
 //	@Router			/api/v1/config/status-transitions/{id} [get]
@@ -1138,14 +1194,17 @@ func (h *ConfigHandler) GetStatusTransition(c *gin.Context) {
 // UpdateStatusTransition handles PUT /api/v1/config/status-transitions/:id
 //
 //	@Summary		Update status transition
-//	@Description	Updates an existing status transition. Only provided fields will be updated. The from_status and to_status cannot be changed after creation.
+//	@Description	Updates an existing status transition. Only provided fields will be updated. The from_status and to_status cannot be changed after creation. Requires Administrator role.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			id			path		string									true	"Status transition ID (UUID)"	example("123e4567-e89b-12d3-a456-426614174000")
 //	@Param			transition	body		service.UpdateStatusTransitionRequest	true	"Status transition update request"
 //	@Success		200			{object}	models.StatusTransition					"Successfully updated status transition"
 //	@Failure		400			{object}	ErrorResponse							"Invalid request body or UUID format"
+//	@Failure		401			{object}	ErrorResponse							"Authentication required"
+//	@Failure		403			{object}	ErrorResponse							"Administrator role required"
 //	@Failure		404			{object}	ErrorResponse							"Status transition not found"
 //	@Failure		500			{object}	ErrorResponse							"Internal server error"
 //	@Router			/api/v1/config/status-transitions/{id} [put]
@@ -1190,13 +1249,16 @@ func (h *ConfigHandler) UpdateStatusTransition(c *gin.Context) {
 // DeleteStatusTransition handles DELETE /api/v1/config/status-transitions/:id
 //
 //	@Summary		Delete status transition
-//	@Description	Deletes a status transition rule. This will prevent the corresponding status change from being allowed in the future. Existing entities will not be affected.
+//	@Description	Deletes a status transition rule. This will prevent the corresponding status change from being allowed in the future. Existing entities will not be affected. Requires Administrator role.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			id	path	string	true	"Status transition ID (UUID)"	example("123e4567-e89b-12d3-a456-426614174000")
 //	@Success		204	"Successfully deleted status transition (no content)"
 //	@Failure		400	{object}	ErrorResponse	"Invalid UUID format"
+//	@Failure		401	{object}	ErrorResponse	"Authentication required"
+//	@Failure		403	{object}	ErrorResponse	"Administrator role required"
 //	@Failure		404	{object}	ErrorResponse	"Status transition not found"
 //	@Failure		500	{object}	ErrorResponse	"Internal server error"
 //	@Router			/api/v1/config/status-transitions/{id} [delete]
@@ -1232,13 +1294,15 @@ func (h *ConfigHandler) DeleteStatusTransition(c *gin.Context) {
 // ListStatusTransitionsByModel handles GET /api/v1/config/status-models/:id/transitions
 //
 //	@Summary		List status transitions by status model
-//	@Description	Retrieves all status transitions belonging to a specific status model. Shows the complete workflow rules including allowed status changes and transition metadata.
+//	@Description	Retrieves all status transitions belonging to a specific status model. Shows the complete workflow rules including allowed status changes and transition metadata. Requires authentication.
 //	@Tags			configuration
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			id	path		string						true	"Status model ID (UUID)"	example("123e4567-e89b-12d3-a456-426614174000")
 //	@Success		200	{object}	StatusTransitionListResponse	"Successfully retrieved status transitions"
 //	@Failure		400	{object}	ErrorResponse					"Invalid UUID format"
+//	@Failure		401	{object}	ErrorResponse					"Authentication required"
 //	@Failure		500	{object}	ErrorResponse					"Internal server error"
 //	@Router			/api/v1/config/status-models/{id}/transitions [get]
 func (h *ConfigHandler) ListStatusTransitionsByModel(c *gin.Context) {

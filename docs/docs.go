@@ -26,6 +26,11 @@ const docTemplate = `{
     "paths": {
         "/api/acceptance-criteria/{id}/delete": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Deletes acceptance criteria with comprehensive validation and cascading deletion",
                 "consumes": [
                     "application/json"
@@ -67,6 +72,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -90,6 +101,11 @@ const docTemplate = `{
         },
         "/api/acceptance-criteria/{id}/validate-deletion": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Validates if acceptance criteria can be deleted and returns dependency information",
                 "consumes": [
                     "application/json"
@@ -123,6 +139,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -140,6 +162,11 @@ const docTemplate = `{
         },
         "/api/deletion/confirm": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Provides detailed information for user confirmation before deletion",
                 "consumes": [
                     "application/json"
@@ -180,6 +207,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -197,6 +230,11 @@ const docTemplate = `{
         },
         "/api/epics/{id}/delete": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Deletes an epic with comprehensive validation and cascading deletion",
                 "consumes": [
                     "application/json"
@@ -238,6 +276,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -261,6 +305,11 @@ const docTemplate = `{
         },
         "/api/epics/{id}/validate-deletion": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Validates if an epic can be deleted and returns dependency information",
                 "consumes": [
                     "application/json"
@@ -294,6 +343,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -311,6 +366,11 @@ const docTemplate = `{
         },
         "/api/requirements/{id}/delete": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Deletes a requirement with comprehensive validation and cascading deletion",
                 "consumes": [
                     "application/json"
@@ -352,6 +412,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -375,6 +441,11 @@ const docTemplate = `{
         },
         "/api/requirements/{id}/validate-deletion": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Validates if a requirement can be deleted and returns dependency information",
                 "consumes": [
                     "application/json"
@@ -408,6 +479,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -425,7 +502,12 @@ const docTemplate = `{
         },
         "/api/search/suggestions": {
             "get": {
-                "description": "Provides search suggestions based on partial query input. Returns matching titles, reference IDs, and available status values to help users construct effective search queries.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Provides search suggestions based on partial query input. Returns matching titles, reference IDs, and available status values to help users construct effective search queries. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -467,6 +549,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error during suggestion generation",
                         "schema": {
@@ -478,6 +566,11 @@ const docTemplate = `{
         },
         "/api/user-stories/{id}/delete": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Deletes a user story with comprehensive validation and cascading deletion",
                 "consumes": [
                     "application/json"
@@ -519,6 +612,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -542,6 +641,11 @@ const docTemplate = `{
         },
         "/api/user-stories/{id}/validate-deletion": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Validates if a user story can be deleted and returns dependency information",
                 "consumes": [
                     "application/json"
@@ -575,6 +679,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -592,6 +702,11 @@ const docTemplate = `{
         },
         "/api/v1/acceptance-criteria": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve a list of acceptance criteria with optional filtering by user story and author. Supports pagination and custom ordering to help organize testable conditions across the system.",
                 "consumes": [
                     "application/json"
@@ -653,6 +768,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -665,6 +787,11 @@ const docTemplate = `{
         },
         "/api/v1/acceptance-criteria/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve specific acceptance criteria by its UUID or human-readable reference ID (e.g., AC-001). Returns the acceptance criteria with all its properties including the testable condition and associated user story.",
                 "consumes": [
                     "application/json"
@@ -693,6 +820,13 @@ const docTemplate = `{
                             "$ref": "#/definitions/product-requirements-management_internal_models.AcceptanceCriteria"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "Acceptance criteria not found",
                         "schema": {
@@ -710,6 +844,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Update acceptance criteria properties including the testable condition text and description. Only provided fields will be updated, maintaining the relationship to the parent user story.",
                 "consumes": [
                     "application/json"
@@ -755,6 +894,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "Acceptance criteria not found",
                         "schema": {
@@ -772,6 +918,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Delete acceptance criteria by its UUID. Deletion is prevented if the acceptance criteria has associated requirements or if it's the last acceptance criteria for a user story. Use force=true to override these constraints.",
                 "consumes": [
                     "application/json"
@@ -812,6 +963,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "Acceptance criteria not found",
                         "schema": {
@@ -838,7 +996,12 @@ const docTemplate = `{
         },
         "/api/v1/acceptance-criteria/{id}/comments/inline": {
             "post": {
-                "description": "Create an inline comment linked to specific text positions within acceptance criteria description or conditions.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create an inline comment linked to specific text positions within acceptance criteria description or conditions. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -886,6 +1049,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
                         "description": "Acceptance criteria not found",
                         "schema": {
@@ -909,7 +1081,12 @@ const docTemplate = `{
         },
         "/api/v1/acceptance-criteria/{id}/comments/inline/validate": {
             "post": {
-                "description": "Validate and update inline comment positions after acceptance criteria text content has been modified.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Validate and update inline comment positions after acceptance criteria text content has been modified. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -960,6 +1137,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "500": {
                         "description": "Internal server error during validation",
                         "schema": {
@@ -974,7 +1160,12 @@ const docTemplate = `{
         },
         "/api/v1/acceptance-criteria/{id}/comments/inline/visible": {
             "get": {
-                "description": "Retrieve all visible inline comments for specific acceptance criteria, excluding those invalidated by text changes.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all visible inline comments for specific acceptance criteria, excluding those invalidated by text changes. Requires authentication.",
                 "produces": [
                     "application/json"
                 ],
@@ -1011,6 +1202,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
                         "description": "Acceptance criteria not found",
                         "schema": {
@@ -1034,6 +1234,11 @@ const docTemplate = `{
         },
         "/api/v1/comments/status/{status}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve all comments filtered by their resolution status (resolved or unresolved) across all entities.",
                 "produces": [
                     "application/json"
@@ -1072,6 +1277,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -1086,6 +1300,11 @@ const docTemplate = `{
         },
         "/api/v1/comments/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve a single comment by its unique identifier, including author information and thread context.",
                 "produces": [
                     "application/json"
@@ -1120,6 +1339,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
                         "description": "Comment not found",
                         "schema": {
@@ -1141,6 +1369,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Update the content of an existing comment. Only the comment content can be modified after creation.",
                 "consumes": [
                     "application/json"
@@ -1187,6 +1420,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
                         "description": "Comment not found",
                         "schema": {
@@ -1208,6 +1450,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Delete a comment by ID. Comments with replies cannot be deleted to maintain thread integrity.",
                 "tags": [
                     "comments"
@@ -1229,6 +1476,15 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid comment ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1268,6 +1524,11 @@ const docTemplate = `{
         },
         "/api/v1/comments/{id}/replies": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve all direct replies to a specific comment with pagination support. Returns replies in chronological order (oldest first) to maintain conversation flow. Each reply includes author information and metadata for building threaded comment interfaces.",
                 "produces": [
                     "application/json"
@@ -1320,6 +1581,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
                         "description": "Parent comment not found",
                         "schema": {
@@ -1341,6 +1611,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Create a new reply to an existing comment, automatically inheriting the parent's entity context for threaded discussions. The reply will be linked to the same entity (epic, user story, etc.) as the parent comment and establish a parent-child relationship for proper threading.",
                 "consumes": [
                     "application/json"
@@ -1387,6 +1662,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
                         "description": "Parent comment not found",
                         "schema": {
@@ -1410,6 +1694,11 @@ const docTemplate = `{
         },
         "/api/v1/comments/{id}/resolve": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Mark a comment as resolved to indicate that the issue or question has been addressed.",
                 "produces": [
                     "application/json"
@@ -1444,6 +1733,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
                         "description": "Comment not found",
                         "schema": {
@@ -1467,6 +1765,11 @@ const docTemplate = `{
         },
         "/api/v1/comments/{id}/unresolve": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Mark a previously resolved comment as unresolved to reopen the discussion or issue.",
                 "produces": [
                     "application/json"
@@ -1501,6 +1804,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
                         "description": "Comment not found",
                         "schema": {
@@ -1524,7 +1836,12 @@ const docTemplate = `{
         },
         "/api/v1/config/relationship-types": {
             "get": {
-                "description": "Retrieves a paginated list of all relationship types with optional sorting. Supports ordering by name, created_at, or updated_at fields.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a paginated list of all relationship types with optional sorting. Supports ordering by name, created_at, or updated_at fields. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1568,6 +1885,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.RelationshipTypeListResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -1577,7 +1900,12 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Creates a new relationship type for defining how requirements relate to each other. Common types include depends_on, blocks, relates_to, conflicts_with, and derives_from.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new relationship type for defining how requirements relate to each other. Common types include depends_on, blocks, relates_to, conflicts_with, and derives_from. Requires Administrator role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1612,6 +1940,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "409": {
                         "description": "Relationship type name already exists",
                         "schema": {
@@ -1629,7 +1969,12 @@ const docTemplate = `{
         },
         "/api/v1/config/relationship-types/{id}": {
             "get": {
-                "description": "Retrieves a specific relationship type by its UUID. Returns complete relationship type information including name, description, and usage metadata.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a specific relationship type by its UUID. Returns complete relationship type information including name, description, and usage metadata. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1663,6 +2008,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Relationship type not found",
                         "schema": {
@@ -1678,7 +2029,12 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Updates an existing relationship type. Only provided fields will be updated. Name must be unique across all relationship types.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an existing relationship type. Only provided fields will be updated. Name must be unique across all relationship types. Requires Administrator role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1721,6 +2077,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Relationship type not found",
                         "schema": {
@@ -1742,7 +2110,12 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Deletes a relationship type. By default, deletion is prevented if there are requirement relationships using this type. Use force=true to override this protection (use with caution).",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a relationship type. By default, deletion is prevented if there are requirement relationships using this type. Use force=true to override this protection (use with caution). Requires Administrator role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1781,6 +2154,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Relationship type not found",
                         "schema": {
@@ -1804,7 +2189,12 @@ const docTemplate = `{
         },
         "/api/v1/config/requirement-types": {
             "get": {
-                "description": "Retrieves a paginated list of all requirement types with optional sorting. Supports ordering by name, created_at, or updated_at fields.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a paginated list of all requirement types with optional sorting. Supports ordering by name, created_at, or updated_at fields. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1846,6 +2236,12 @@ const docTemplate = `{
                         "description": "Successfully retrieved requirement types",
                         "schema": {
                             "$ref": "#/definitions/internal_handlers.RequirementTypeListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
                     "500": {
@@ -1926,7 +2322,12 @@ const docTemplate = `{
         },
         "/api/v1/config/requirement-types/{id}": {
             "get": {
-                "description": "Retrieves a specific requirement type by its UUID. Returns complete requirement type information including name, description, and metadata.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a specific requirement type by its UUID. Returns complete requirement type information including name, description, and metadata. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1960,6 +2361,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Requirement type not found",
                         "schema": {
@@ -1975,7 +2382,12 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Updates an existing requirement type. Only provided fields will be updated. Name must be unique across all requirement types.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an existing requirement type. Only provided fields will be updated. Name must be unique across all requirement types. Requires Administrator role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2018,6 +2430,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Requirement type not found",
                         "schema": {
@@ -2039,7 +2463,12 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Deletes a requirement type. By default, deletion is prevented if there are requirements using this type. Use force=true to override this protection (use with caution).",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a requirement type. By default, deletion is prevented if there are requirements using this type. Use force=true to override this protection (use with caution). Requires Administrator role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2078,6 +2507,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Requirement type not found",
                         "schema": {
@@ -2101,7 +2542,12 @@ const docTemplate = `{
         },
         "/api/v1/config/status-models": {
             "get": {
-                "description": "Retrieves a paginated list of status models with optional filtering by entity type and sorting. Supports ordering by entity_type, name, created_at, or updated_at fields.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a paginated list of status models with optional filtering by entity type and sorting. Supports ordering by entity_type, name, created_at, or updated_at fields. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2152,6 +2598,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.StatusModelListResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -2161,7 +2613,12 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Creates a new status model for defining status workflows for different entity types (epic, user_story, requirement, acceptance_criteria). Each entity type can have multiple status models with one marked as default.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new status model for defining status workflows for different entity types (epic, user_story, requirement, acceptance_criteria). Each entity type can have multiple status models with one marked as default. Requires Administrator role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2196,6 +2653,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "409": {
                         "description": "Status model name already exists for this entity type",
                         "schema": {
@@ -2213,7 +2682,12 @@ const docTemplate = `{
         },
         "/api/v1/config/status-models/default/{entity_type}": {
             "get": {
-                "description": "Retrieves the default status model for a specific entity type. The default status model is used when creating new entities of that type.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves the default status model for a specific entity type. The default status model is used when creating new entities of that type. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2241,6 +2715,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/product-requirements-management_internal_models.StatusModel"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Default status model not found for entity type",
                         "schema": {
@@ -2258,7 +2738,12 @@ const docTemplate = `{
         },
         "/api/v1/config/status-models/{id}": {
             "get": {
-                "description": "Retrieves a specific status model by its UUID. Returns complete status model information including entity type, name, description, and default flag.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a specific status model by its UUID. Returns complete status model information including entity type, name, description, and default flag. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2292,6 +2777,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Status model not found",
                         "schema": {
@@ -2307,7 +2798,12 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Updates an existing status model. Only provided fields will be updated. Name must be unique within the same entity type. Setting is_default=true will make other models for the same entity type non-default.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an existing status model. Only provided fields will be updated. Name must be unique within the same entity type. Setting is_default=true will make other models for the same entity type non-default. Requires Administrator role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2350,6 +2846,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Status model not found",
                         "schema": {
@@ -2371,7 +2879,12 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Deletes a status model and all its associated statuses and transitions. Use with caution as this will affect entities using this status model. Consider setting a different default model before deletion.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a status model and all its associated statuses and transitions. Use with caution as this will affect entities using this status model. Consider setting a different default model before deletion. Requires Administrator role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2410,6 +2923,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Status model not found",
                         "schema": {
@@ -2427,7 +2952,12 @@ const docTemplate = `{
         },
         "/api/v1/config/status-models/{id}/statuses": {
             "get": {
-                "description": "Retrieves all statuses belonging to a specific status model, ordered by their display order. Includes initial and final status flags for workflow understanding.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves all statuses belonging to a specific status model, ordered by their display order. Includes initial and final status flags for workflow understanding. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2461,6 +2991,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -2472,7 +3008,12 @@ const docTemplate = `{
         },
         "/api/v1/config/status-models/{id}/transitions": {
             "get": {
-                "description": "Retrieves all status transitions belonging to a specific status model. Shows the complete workflow rules including allowed status changes and transition metadata.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves all status transitions belonging to a specific status model. Shows the complete workflow rules including allowed status changes and transition metadata. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2506,6 +3047,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -2517,7 +3064,12 @@ const docTemplate = `{
         },
         "/api/v1/config/status-transitions": {
             "post": {
-                "description": "Creates a new status transition rule within a status model. Transitions define which status changes are allowed. Both from_status and to_status must belong to the same status model.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new status transition rule within a status model. Transitions define which status changes are allowed. Both from_status and to_status must belong to the same status model. Requires Administrator role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2552,6 +3104,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "409": {
                         "description": "Status transition already exists",
                         "schema": {
@@ -2569,7 +3133,12 @@ const docTemplate = `{
         },
         "/api/v1/config/status-transitions/{id}": {
             "get": {
-                "description": "Retrieves a specific status transition by its UUID. Returns complete transition information including from/to statuses, name, and description.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a specific status transition by its UUID. Returns complete transition information including from/to statuses, name, and description. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2603,6 +3172,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Status transition not found",
                         "schema": {
@@ -2618,7 +3193,12 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Updates an existing status transition. Only provided fields will be updated. The from_status and to_status cannot be changed after creation.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an existing status transition. Only provided fields will be updated. The from_status and to_status cannot be changed after creation. Requires Administrator role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2661,6 +3241,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Status transition not found",
                         "schema": {
@@ -2676,7 +3268,12 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Deletes a status transition rule. This will prevent the corresponding status change from being allowed in the future. Existing entities will not be affected.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a status transition rule. This will prevent the corresponding status change from being allowed in the future. Existing entities will not be affected. Requires Administrator role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2707,6 +3304,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Status transition not found",
                         "schema": {
@@ -2724,7 +3333,12 @@ const docTemplate = `{
         },
         "/api/v1/config/statuses": {
             "post": {
-                "description": "Creates a new status within a status model. Statuses define the possible states for entities. Each status can be marked as initial (starting state) or final (ending state) and has an order for display purposes.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new status within a status model. Statuses define the possible states for entities. Each status can be marked as initial (starting state) or final (ending state) and has an order for display purposes. Requires Administrator role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2759,6 +3373,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "409": {
                         "description": "Status name already exists in this model",
                         "schema": {
@@ -2776,7 +3402,12 @@ const docTemplate = `{
         },
         "/api/v1/config/statuses/{id}": {
             "get": {
-                "description": "Retrieves a specific status by its UUID. Returns complete status information including name, description, color, flags, and order within the status model.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a specific status by its UUID. Returns complete status information including name, description, color, flags, and order within the status model. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2810,6 +3441,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Status not found",
                         "schema": {
@@ -2825,7 +3462,12 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Updates an existing status. Only provided fields will be updated. Name must be unique within the same status model. Changing initial/final flags may affect status transitions.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an existing status. Only provided fields will be updated. Name must be unique within the same status model. Changing initial/final flags may affect status transitions. Requires Administrator role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2868,6 +3510,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Status not found",
                         "schema": {
@@ -2889,7 +3543,12 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Deletes a status from a status model. This will also remove any status transitions involving this status. Use with caution as entities using this status may be affected.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a status from a status model. This will also remove any status transitions involving this status. Use with caution as entities using this status may be affected. Requires Administrator role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2924,6 +3583,18 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Administrator role required",
                         "schema": {
                             "$ref": "#/definitions/internal_handlers.ErrorResponse"
                         }
@@ -3343,6 +4014,11 @@ const docTemplate = `{
         },
         "/api/v1/epics/{id}/assign": {
             "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Assign an epic to a specific user by updating the assignee_id. The system validates that the assignee user exists before making the assignment.",
                 "consumes": [
                     "application/json"
@@ -3388,6 +4064,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "Epic not found",
                         "schema": {
@@ -3407,6 +4090,11 @@ const docTemplate = `{
         },
         "/api/v1/epics/{id}/comments/inline": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Create an inline comment linked to specific text positions within an epic's description or title.",
                 "consumes": [
                     "application/json"
@@ -3455,6 +4143,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
                         "description": "Epic not found",
                         "schema": {
@@ -3478,7 +4175,12 @@ const docTemplate = `{
         },
         "/api/v1/epics/{id}/comments/inline/validate": {
             "post": {
-                "description": "Validate and update inline comment positions after an epic's text content has been modified.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Validate and update inline comment positions after an epic's text content has been modified. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3529,6 +4231,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "500": {
                         "description": "Internal server error during validation",
                         "schema": {
@@ -3543,7 +4254,12 @@ const docTemplate = `{
         },
         "/api/v1/epics/{id}/comments/inline/visible": {
             "get": {
-                "description": "Retrieve all visible inline comments for a specific epic, excluding those invalidated by text changes.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all visible inline comments for a specific epic, excluding those invalidated by text changes. Requires authentication.",
                 "produces": [
                     "application/json"
                 ],
@@ -3580,6 +4296,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
                         "description": "Epic not found",
                         "schema": {
@@ -3603,6 +4328,11 @@ const docTemplate = `{
         },
         "/api/v1/epics/{id}/status": {
             "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Update the workflow status of an epic. The system validates status transitions and ensures only valid status changes are allowed. All status transitions are currently permitted as per business requirements.",
                 "consumes": [
                     "application/json"
@@ -3648,6 +4378,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "Epic not found",
                         "schema": {
@@ -3667,6 +4404,11 @@ const docTemplate = `{
         },
         "/api/v1/epics/{id}/user-stories": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve an epic along with all its associated user stories. This endpoint provides a hierarchical view of the epic and its child user stories, including their acceptance criteria and requirements if available.",
                 "consumes": [
                     "application/json"
@@ -3695,6 +4437,13 @@ const docTemplate = `{
                             "$ref": "#/definitions/product-requirements-management_internal_models.Epic"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "Epic not found",
                         "schema": {
@@ -3712,6 +4461,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Create a new user story that belongs to the specified epic. This is a nested resource creation that establishes the parent-child relationship between epic and user story. The epic ID from the URL path will override any epic_id in the request body.",
                 "consumes": [
                     "application/json"
@@ -3757,6 +4511,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -3769,6 +4530,11 @@ const docTemplate = `{
         },
         "/api/v1/requirement-relationships/{id}": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Delete a specific relationship between requirements by its UUID. This removes the dependency or association between the two requirements.",
                 "consumes": [
                     "application/json"
@@ -3802,6 +4568,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "Relationship not found",
                         "schema": {
@@ -3821,6 +4594,11 @@ const docTemplate = `{
         },
         "/api/v1/requirements": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve a list of requirements with optional filtering by user story, acceptance criteria, creator, assignee, status, priority, and type. Supports pagination and custom ordering.",
                 "consumes": [
                     "application/json"
@@ -3930,6 +4708,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -4007,6 +4792,11 @@ const docTemplate = `{
         },
         "/api/v1/requirements/relationships": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Create a typed relationship between two requirements (e.g., depends_on, blocks, relates_to, conflicts_with, derives_from). Prevents circular relationships and duplicate relationships. Validates that both requirements and the relationship type exist.",
                 "consumes": [
                     "application/json"
@@ -4043,6 +4833,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "409": {
                         "description": "Relationship already exists",
                         "schema": {
@@ -4062,6 +4859,11 @@ const docTemplate = `{
         },
         "/api/v1/requirements/search": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Perform full-text search across requirement titles and descriptions using PostgreSQL's text search capabilities. Returns requirements that match the search query with relevance ranking.",
                 "consumes": [
                     "application/json"
@@ -4098,6 +4900,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -4110,6 +4919,11 @@ const docTemplate = `{
         },
         "/api/v1/requirements/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve a specific requirement by its UUID or human-readable reference ID (e.g., REQ-001). Returns the requirement with all its properties and relationships.",
                 "consumes": [
                     "application/json"
@@ -4138,6 +4952,13 @@ const docTemplate = `{
                             "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "Requirement not found",
                         "schema": {
@@ -4155,6 +4976,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Update a requirement's properties including acceptance criteria, assignee, priority, status, type, title, and description. Only provided fields will be updated. Status transitions are validated according to business rules.",
                 "consumes": [
                     "application/json"
@@ -4200,6 +5026,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "Requirement not found",
                         "schema": {
@@ -4217,6 +5050,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Delete a requirement by its UUID. By default, deletion is prevented if the requirement has associated relationships. Use force=true query parameter to delete with all dependencies.",
                 "consumes": [
                     "application/json"
@@ -4257,6 +5095,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "Requirement not found",
                         "schema": {
@@ -4283,6 +5128,11 @@ const docTemplate = `{
         },
         "/api/v1/requirements/{id}/assign": {
             "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Assign a requirement to a specific user by updating the assignee field. The assignee must be a valid user in the system.",
                 "consumes": [
                     "application/json"
@@ -4328,6 +5178,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "Requirement not found",
                         "schema": {
@@ -4347,7 +5204,12 @@ const docTemplate = `{
         },
         "/api/v1/requirements/{id}/comments/inline": {
             "post": {
-                "description": "Create an inline comment linked to specific text positions within a requirement's description or specification.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create an inline comment linked to specific text positions within a requirement's description or specification. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4395,6 +5257,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
                         "description": "Requirement not found",
                         "schema": {
@@ -4418,7 +5289,12 @@ const docTemplate = `{
         },
         "/api/v1/requirements/{id}/comments/inline/validate": {
             "post": {
-                "description": "Validate and update inline comment positions after a requirement's text content has been modified.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Validate and update inline comment positions after a requirement's text content has been modified. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4469,6 +5345,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "500": {
                         "description": "Internal server error during validation",
                         "schema": {
@@ -4483,7 +5368,12 @@ const docTemplate = `{
         },
         "/api/v1/requirements/{id}/comments/inline/visible": {
             "get": {
-                "description": "Retrieve all visible inline comments for a specific requirement, excluding those invalidated by text changes.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all visible inline comments for a specific requirement, excluding those invalidated by text changes. Requires authentication.",
                 "produces": [
                     "application/json"
                 ],
@@ -4520,6 +5410,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
                         "description": "Requirement not found",
                         "schema": {
@@ -4543,6 +5442,11 @@ const docTemplate = `{
         },
         "/api/v1/requirements/{id}/relationships": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve all incoming and outgoing relationships for a specific requirement by its UUID or reference ID. Returns both relationships where the requirement is the source and where it is the target.",
                 "consumes": [
                     "application/json"
@@ -4572,6 +5476,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "Requirement not found",
                         "schema": {
@@ -4591,6 +5502,11 @@ const docTemplate = `{
         },
         "/api/v1/requirements/{id}/status": {
             "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Update the status of a requirement. Status transitions are validated according to business rules to ensure proper workflow progression (e.g., draft → in_review → approved → implemented → tested).",
                 "consumes": [
                     "application/json"
@@ -4631,6 +5547,13 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid requirement ID format, request body, invalid requirement status, or invalid status transition",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -4760,7 +5683,7 @@ const docTemplate = `{
                         "type": "string",
                         "default": "created_at",
                         "example": "\"priority\"",
-                        "description": "Sort by field: priority, created_at, last_modified, title, relevance (relevance only available with query)",
+                        "description": "Sort by field: priority, created_at, updated_at, title, relevance (relevance only available with query)",
                         "name": "sort_by",
                         "in": "query"
                     },
@@ -4819,6 +5742,11 @@ const docTemplate = `{
         },
         "/api/v1/user-stories": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve a list of user stories with optional filtering by epic, creator, assignee, status, and priority. Supports pagination and custom sorting.",
                 "consumes": [
                     "application/json"
@@ -4913,6 +5841,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -4923,6 +5858,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Create a new user story with the provided details. The epic_id must be specified in the request body to establish the parent-child relationship. The user story description should follow the template format: 'As [role], I want [function], so that [goal]'.",
                 "consumes": [
                     "application/json"
@@ -4959,6 +5899,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -4971,6 +5918,11 @@ const docTemplate = `{
         },
         "/api/v1/user-stories/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve a specific user story by its UUID or human-readable reference ID (e.g., US-001). Returns the user story with basic information excluding related entities.",
                 "consumes": [
                     "application/json"
@@ -4999,6 +5951,13 @@ const docTemplate = `{
                             "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "User story not found",
                         "schema": {
@@ -5016,6 +5975,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Update an existing user story by its UUID. All fields in the request body are optional and will only update the provided fields. The user story description should follow the template format if provided.",
                 "consumes": [
                     "application/json"
@@ -5061,6 +6025,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "User story not found",
                         "schema": {
@@ -5078,6 +6049,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Delete a user story by its UUID. By default, deletion will fail if the user story has associated requirements or acceptance criteria. Use the force=true query parameter to delete with all dependencies.",
                 "consumes": [
                     "application/json"
@@ -5118,6 +6094,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "User story not found",
                         "schema": {
@@ -5144,6 +6127,11 @@ const docTemplate = `{
         },
         "/api/v1/user-stories/{id}/acceptance-criteria": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve a specific user story by its UUID or reference ID, including all associated acceptance criteria. This endpoint provides hierarchical data showing the user story and its testable conditions.",
                 "consumes": [
                     "application/json"
@@ -5172,6 +6160,13 @@ const docTemplate = `{
                             "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "User story not found",
                         "schema": {
@@ -5189,6 +6184,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Create new acceptance criteria that belongs to the specified user story. This is a nested resource creation that establishes the parent-child relationship between user story and acceptance criteria. The user story ID from the URL path will be used as the parent.",
                 "consumes": [
                     "application/json"
@@ -5234,6 +6234,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -5246,6 +6253,11 @@ const docTemplate = `{
         },
         "/api/v1/user-stories/{id}/assign": {
             "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Assign a user story to a specific user by updating the assignee_id. The assignee must be a valid user in the system.",
                 "consumes": [
                     "application/json"
@@ -5291,6 +6303,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "User story not found",
                         "schema": {
@@ -5310,7 +6329,12 @@ const docTemplate = `{
         },
         "/api/v1/user-stories/{id}/comments/inline": {
             "post": {
-                "description": "Create an inline comment linked to specific text positions within a user story's description or acceptance criteria.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create an inline comment linked to specific text positions within a user story's description or acceptance criteria. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -5358,6 +6382,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
                         "description": "User story not found",
                         "schema": {
@@ -5381,7 +6414,12 @@ const docTemplate = `{
         },
         "/api/v1/user-stories/{id}/comments/inline/validate": {
             "post": {
-                "description": "Validate and update inline comment positions after a user story's text content has been modified.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Validate and update inline comment positions after a user story's text content has been modified. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -5432,6 +6470,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "500": {
                         "description": "Internal server error during validation",
                         "schema": {
@@ -5446,7 +6493,12 @@ const docTemplate = `{
         },
         "/api/v1/user-stories/{id}/comments/inline/visible": {
             "get": {
-                "description": "Retrieve all visible inline comments for a specific user story, excluding those invalidated by text changes.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all visible inline comments for a specific user story, excluding those invalidated by text changes. Requires authentication.",
                 "produces": [
                     "application/json"
                 ],
@@ -5483,6 +6535,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
                         "description": "User story not found",
                         "schema": {
@@ -5506,6 +6567,11 @@ const docTemplate = `{
         },
         "/api/v1/user-stories/{id}/requirements": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve a specific user story by its UUID or reference ID, including all associated detailed requirements. This endpoint provides hierarchical data showing the user story and its technical requirements.",
                 "consumes": [
                     "application/json"
@@ -5534,6 +6600,13 @@ const docTemplate = `{
                             "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "User story not found",
                         "schema": {
@@ -5551,6 +6624,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Create a new detailed requirement that belongs to the specified user story. This is a nested resource creation that establishes the parent-child relationship between user story and requirement. The user story ID from the URL path will be used as the parent.",
                 "consumes": [
                     "application/json"
@@ -5596,6 +6674,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -5608,6 +6693,11 @@ const docTemplate = `{
         },
         "/api/v1/user-stories/{id}/status": {
             "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Update the status of a user story. All status transitions are allowed by default. Valid statuses are: Backlog, Draft, In Progress, Done, Cancelled.",
                 "consumes": [
                     "application/json"
@@ -5653,6 +6743,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "User story not found",
                         "schema": {
@@ -5672,6 +6769,11 @@ const docTemplate = `{
         },
         "/api/v1/users/{id}/acceptance-criteria": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve all acceptance criteria created by a specific user. This endpoint helps track which testable conditions were authored by each team member.",
                 "consumes": [
                     "application/json"
@@ -5709,6 +6811,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "Author not found",
                         "schema": {
@@ -5728,6 +6837,11 @@ const docTemplate = `{
         },
         "/api/v1/{entityType}/{id}/comments": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve all comments for a specific entity with optional filtering by status and threading. Supports both flat and threaded comment structures.",
                 "produces": [
                     "application/json"
@@ -5798,6 +6912,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
                         "description": "Entity not found",
                         "schema": {
@@ -5819,6 +6942,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Create a new comment (general or inline) on any entity type (epic, user_story, acceptance_criteria, requirement). Supports threaded discussions through parent_comment_id.",
                 "consumes": [
                     "application/json"
@@ -5878,6 +7006,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
                         "description": "Entity not found or parent comment not found",
                         "schema": {
@@ -5901,6 +7038,11 @@ const docTemplate = `{
         },
         "/api/v1/{entityType}/{id}/comments/inline": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Create an inline comment linked to specific text positions within an entity's content. Requires linked_text, text_position_start, and text_position_end fields.",
                 "consumes": [
                     "application/json"
@@ -5961,6 +7103,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
                         "description": "Entity not found",
                         "schema": {
@@ -5984,7 +7135,12 @@ const docTemplate = `{
         },
         "/api/v1/{entityType}/{id}/comments/inline/validate": {
             "post": {
-                "description": "Validate and update inline comment positions after entity text content has been modified. This ensures inline comments remain accurately positioned.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Validate and update inline comment positions after entity text content has been modified. This ensures inline comments remain accurately positioned. Requires authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -6047,6 +7203,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "500": {
                         "description": "Internal server error during validation",
                         "schema": {
@@ -6061,7 +7226,12 @@ const docTemplate = `{
         },
         "/api/v1/{entityType}/{id}/comments/inline/visible": {
             "get": {
-                "description": "Retrieve all inline comments that are still valid (visible) for an entity, excluding those that may have become invalid due to text changes.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all inline comments that are still valid (visible) for an entity, excluding those that may have become invalid due to text changes. Requires authentication.",
                 "produces": [
                     "application/json"
                 ],
@@ -6103,6 +7273,15 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid entity type or malformed entity ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -7053,11 +8232,6 @@ const docTemplate = `{
                     "type": "string",
                     "example": "123e4567-e89b-12d3-a456-426614174000"
                 },
-                "last_modified": {
-                    "description": "Timestamp when the acceptance criteria was last modified",
-                    "type": "string",
-                    "example": "2023-01-02T12:30:00Z"
-                },
                 "reference_id": {
                     "description": "Human-readable reference identifier",
                     "type": "string",
@@ -7069,6 +8243,11 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
                     }
+                },
+                "updated_at": {
+                    "description": "Timestamp when the acceptance criteria was last modified",
+                    "type": "string",
+                    "example": "2023-01-02T12:30:00Z"
                 },
                 "user_story": {
                     "description": "Relationships",
@@ -7247,10 +8426,6 @@ const docTemplate = `{
                     "description": "ID is the unique identifier for the epic\n@Description Unique UUID identifier for the epic\n@Example \"123e4567-e89b-12d3-a456-426614174000\"",
                     "type": "string"
                 },
-                "last_modified": {
-                    "description": "LastModified is the timestamp when the epic was last updated\n@Description Timestamp when the epic was last modified (RFC3339 format)\n@Example \"2023-01-16T14:45:30Z\"",
-                    "type": "string"
-                },
                 "priority": {
                     "description": "Priority indicates the importance level of the epic\n@Description Priority level of the epic (1=Critical, 2=High, 3=Medium, 4=Low)\n@Minimum 1\n@Maximum 4\n@Example 1",
                     "maximum": 4,
@@ -7277,6 +8452,10 @@ const docTemplate = `{
                     "description": "Title is the name/summary of the epic\n@Description Title or name of the epic (required, max 500 characters)\n@MaxLength 500\n@Example \"User Authentication System\"",
                     "type": "string",
                     "maxLength": 500
+                },
+                "updated_at": {
+                    "description": "UpdatedAt is the timestamp when the epic was last updated\n@Description Timestamp when the epic was last modified (RFC3339 format)\n@Example \"2023-01-16T14:45:30Z\"",
+                    "type": "string"
                 },
                 "user_stories": {
                     "description": "UserStories contains all user stories that belong to this epic\n@Description List of user stories that belong to this epic (populated when requested with ?include=user_stories)",
@@ -7444,11 +8623,6 @@ const docTemplate = `{
                     "type": "string",
                     "example": "123e4567-e89b-12d3-a456-426614174000"
                 },
-                "last_modified": {
-                    "description": "Timestamp when the requirement was last modified",
-                    "type": "string",
-                    "example": "2023-01-02T12:30:00Z"
-                },
                 "priority": {
                     "description": "Priority level (1=Critical, 2=High, 3=Medium, 4=Low)",
                     "maximum": 4,
@@ -7506,6 +8680,11 @@ const docTemplate = `{
                     "description": "ID of the requirement type (Functional, Non-Functional, etc.)",
                     "type": "string",
                     "example": "123e4567-e89b-12d3-a456-426614174005"
+                },
+                "updated_at": {
+                    "description": "Timestamp when the requirement was last updated",
+                    "type": "string",
+                    "example": "2023-01-02T12:30:00Z"
                 },
                 "user_story": {
                     "description": "Relationships",
@@ -7872,10 +9051,6 @@ const docTemplate = `{
                     "description": "ID is the unique identifier for the user story\n@Description Unique UUID identifier for the user story\n@Example \"123e4567-e89b-12d3-a456-426614174000\"",
                     "type": "string"
                 },
-                "last_modified": {
-                    "description": "LastModified is the timestamp when the user story was last updated\n@Description Timestamp when the user story was last modified (RFC3339 format)\n@Example \"2023-01-16T14:45:30Z\"",
-                    "type": "string"
-                },
                 "priority": {
                     "description": "Priority indicates the importance level of the user story\n@Description Priority level of the user story (1=Critical, 2=High, 3=Medium, 4=Low)\n@Minimum 1\n@Maximum 4\n@Example 2",
                     "maximum": 4,
@@ -7909,6 +9084,10 @@ const docTemplate = `{
                     "description": "Title is the name/summary of the user story\n@Description Title or name of the user story (required, max 500 characters)\n@MaxLength 500\n@Example \"User Login with Email and Password\"",
                     "type": "string",
                     "maxLength": 500
+                },
+                "updated_at": {
+                    "description": "UpdatedAt is the timestamp when the user story was last updated\n@Description Timestamp when the user story was last modified (RFC3339 format)\n@Example \"2023-01-16T14:45:30Z\"",
+                    "type": "string"
                 }
             }
         },
@@ -8115,7 +9294,6 @@ const docTemplate = `{
             "description": "Request payload for creating a new epic",
             "type": "object",
             "required": [
-                "creator_id",
                 "priority",
                 "title"
             ],
