@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
@@ -21,6 +22,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	"product-requirements-management/internal/auth"
 	"product-requirements-management/internal/config"
 	"product-requirements-management/internal/database"
 	"product-requirements-management/internal/handlers"
@@ -47,6 +49,8 @@ func TestSearchE2E(t *testing.T) {
 			// Test search through HTTP API
 			w := httptest.NewRecorder()
 			req, _ := http.NewRequest("GET", "/api/v1/search?query=authentication&limit=10&offset=0", nil)
+			authErr := env.addAuthHeader(req, testData.User.ID, testData.User.Username)
+			require.NoError(t, authErr)
 
 			env.Router.ServeHTTP(w, req)
 
@@ -72,6 +76,8 @@ func TestSearchE2E(t *testing.T) {
 			// Test search with filters through HTTP API
 			w := httptest.NewRecorder()
 			req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/search?query=user&priority=2&creator_id=%s", testData.User.ID), nil)
+			authErr := env.addAuthHeader(req, testData.User.ID, testData.User.Username)
+			require.NoError(t, authErr)
 
 			env.Router.ServeHTTP(w, req)
 
@@ -93,6 +99,8 @@ func TestSearchE2E(t *testing.T) {
 			// Test search with empty query (should return all results)
 			w := httptest.NewRecorder()
 			req, _ := http.NewRequest("GET", "/api/v1/search?limit=5", nil)
+			authErr := env.addAuthHeader(req, testData.User.ID, testData.User.Username)
+			require.NoError(t, authErr)
 
 			env.Router.ServeHTTP(w, req)
 
@@ -116,6 +124,11 @@ func TestSearchE2E(t *testing.T) {
 				go func(index int) {
 					w := httptest.NewRecorder()
 					req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/search?query=test%d", index), nil)
+					err := env.addAuthHeader(req, testData.User.ID, testData.User.Username)
+					if err != nil {
+						results <- fmt.Errorf("failed to add auth header for request %d: %v", index, err)
+						return
+					}
 
 					start := time.Now()
 					env.Router.ServeHTTP(w, req)
@@ -149,6 +162,8 @@ func TestSearchE2E(t *testing.T) {
 			// Test pagination with large result set
 			w := httptest.NewRecorder()
 			req, _ := http.NewRequest("GET", "/api/v1/search?query=&limit=20&offset=0", nil)
+			authErr := env.addAuthHeader(req, testData.User.ID, testData.User.Username)
+			require.NoError(t, authErr)
 
 			env.Router.ServeHTTP(w, req)
 
@@ -165,6 +180,8 @@ func TestSearchE2E(t *testing.T) {
 			// Test second page
 			w2 := httptest.NewRecorder()
 			req2, _ := http.NewRequest("GET", "/api/v1/search?query=&limit=20&offset=20", nil)
+			authErr = env.addAuthHeader(req2, testData.User.ID, testData.User.Username)
+			require.NoError(t, authErr)
 
 			env.Router.ServeHTTP(w2, req2)
 
@@ -202,6 +219,8 @@ func TestSearchE2E(t *testing.T) {
 				t.Run(tc.name, func(t *testing.T) {
 					w := httptest.NewRecorder()
 					req, _ := http.NewRequest("GET", tc.url, nil)
+					authErr := env.addAuthHeader(req, testData.User.ID, testData.User.Username)
+					require.NoError(t, authErr)
 
 					env.Router.ServeHTTP(w, req)
 
@@ -226,6 +245,8 @@ func TestSearchE2E(t *testing.T) {
 			// First request (cache miss)
 			w1 := httptest.NewRecorder()
 			req1, _ := http.NewRequest("GET", "/api/v1/search?query=authentication", nil)
+			authErr := env.addAuthHeader(req1, testData.User.ID, testData.User.Username)
+			require.NoError(t, authErr)
 
 			start1 := time.Now()
 			env.Router.ServeHTTP(w1, req1)
@@ -236,6 +257,8 @@ func TestSearchE2E(t *testing.T) {
 			// Second request (cache hit)
 			w2 := httptest.NewRecorder()
 			req2, _ := http.NewRequest("GET", "/api/v1/search?query=authentication", nil)
+			authErr = env.addAuthHeader(req2, testData.User.ID, testData.User.Username)
+			require.NoError(t, authErr)
 
 			start2 := time.Now()
 			env.Router.ServeHTTP(w2, req2)
@@ -278,6 +301,8 @@ func TestSearchE2E(t *testing.T) {
 				w := httptest.NewRecorder()
 				req, _ := http.NewRequest("POST", "/api/v1/epics", bytes.NewBuffer(body))
 				req.Header.Set("Content-Type", "application/json")
+				authErr := env.addAuthHeader(req, testData.User.ID, testData.User.Username)
+				require.NoError(t, authErr)
 
 				env.Router.ServeHTTP(w, req)
 
@@ -321,6 +346,8 @@ type E2EEnvironment struct {
 	Router         *gin.Engine
 	Container      testcontainers.Container
 	RedisContainer testcontainers.Container
+	AuthService    *auth.Service
+	JWTSecret      string
 }
 
 func (e *E2EEnvironment) Cleanup() {
@@ -360,6 +387,34 @@ type TestData struct {
 	Epics        []*models.Epic
 	UserStories  []*models.UserStory
 	Requirements []*models.Requirement
+}
+
+// generateTestJWT creates a JWT token for testing
+func (env *E2EEnvironment) generateTestJWT(userID uuid.UUID, username string) (string, error) {
+	claims := jwt.MapClaims{
+		"user_id":  userID.String(),
+		"username": username,
+		"exp":      time.Now().Add(time.Hour * 24).Unix(),
+		"iat":      time.Now().Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(env.JWTSecret))
+	if err != nil {
+		return "", fmt.Errorf("failed to sign JWT token: %w", err)
+	}
+
+	return tokenString, nil
+}
+
+// addAuthHeader adds authentication header to the request
+func (env *E2EEnvironment) addAuthHeader(req *http.Request, userID uuid.UUID, username string) error {
+	token, err := env.generateTestJWT(userID, username)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	return nil
 }
 
 func setupE2EEnvironment(t *testing.T) *E2EEnvironment {
@@ -459,6 +514,10 @@ func setupE2EEnvironment(t *testing.T) *E2EEnvironment {
 		repos.User,
 	)
 
+	// Setup auth service
+	jwtSecret := "test-jwt-secret-for-e2e"
+	authService := auth.NewService(jwtSecret, 24*time.Hour)
+
 	// Setup handlers
 	searchHandler := handlers.NewSearchHandler(searchService, logger)
 	epicHandler := handlers.NewEpicHandler(epicService)
@@ -469,13 +528,13 @@ func setupE2EEnvironment(t *testing.T) *E2EEnvironment {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 
-	// Setup routes manually for testing
+	// Setup routes manually for testing with authentication middleware
 	v1 := router.Group("/api/v1")
 	{
-		v1.GET("/search", searchHandler.Search)
-		v1.POST("/epics", epicHandler.CreateEpic)
-		v1.POST("/user-stories", userStoryHandler.CreateUserStory)
-		v1.POST("/requirements", requirementHandler.CreateRequirement)
+		v1.GET("/search", authService.Middleware(), searchHandler.Search)
+		v1.POST("/epics", authService.Middleware(), epicHandler.CreateEpic)
+		v1.POST("/user-stories", authService.Middleware(), userStoryHandler.CreateUserStory)
+		v1.POST("/requirements", authService.Middleware(), requirementHandler.CreateRequirement)
 	}
 
 	return &E2EEnvironment{
@@ -484,6 +543,8 @@ func setupE2EEnvironment(t *testing.T) *E2EEnvironment {
 		Router:         router,
 		Container:      postgresContainer,
 		RedisContainer: redisContainer,
+		AuthService:    authService,
+		JWTSecret:      jwtSecret,
 	}
 }
 
@@ -529,6 +590,8 @@ func createEpicViaAPI(t *testing.T, env *E2EEnvironment, user *models.User, titl
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/v1/epics", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
+	authErr := env.addAuthHeader(req, user.ID, user.Username)
+	require.NoError(t, authErr)
 
 	env.Router.ServeHTTP(w, req)
 	require.Equal(t, http.StatusCreated, w.Code)
@@ -554,6 +617,8 @@ func createUserStoryViaAPI(t *testing.T, env *E2EEnvironment, user *models.User,
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/v1/user-stories", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
+	authErr := env.addAuthHeader(req, user.ID, user.Username)
+	require.NoError(t, authErr)
 
 	env.Router.ServeHTTP(w, req)
 	require.Equal(t, http.StatusCreated, w.Code)
@@ -585,6 +650,8 @@ func createRequirementViaAPI(t *testing.T, env *E2EEnvironment, user *models.Use
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/v1/requirements", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
+	authErr := env.addAuthHeader(req, user.ID, user.Username)
+	require.NoError(t, authErr)
 
 	env.Router.ServeHTTP(w, req)
 	require.Equal(t, http.StatusCreated, w.Code)
