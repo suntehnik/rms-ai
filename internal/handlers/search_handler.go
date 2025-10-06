@@ -264,14 +264,16 @@ func (h *SearchHandler) parseSearchOptions(c *gin.Context) (service.SearchOption
 // SearchSuggestions handles search suggestion requests
 //
 //	@Summary		Get search suggestions
-//	@Description	Provides search suggestions based on partial query input. Returns matching titles, reference IDs, and available status values to help users construct effective search queries.
+//	@Description	Provides search suggestions based on partial query input. Returns matching titles, reference IDs, and available status values to help users construct effective search queries. Requires authentication.
 //	@Tags			search
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			query	query		string	true	"Partial search query for generating suggestions. Minimum 2 characters recommended."	example("auth")
 //	@Param			limit	query		int		false	"Maximum number of suggestions per category (1-50)"										default(10)	example(5)
 //	@Success		200		{object}	SearchSuggestionsResponse	"Search suggestions grouped by category"
 //	@Failure		400		{object}	ErrorResponse				"Invalid parameters (missing query, invalid limit)"
+//	@Failure		401		{object}	ErrorResponse				"Authentication required"
 //	@Failure		500		{object}	ErrorResponse				"Internal server error during suggestion generation"
 //	@Router			/api/search/suggestions [get]
 func (h *SearchHandler) SearchSuggestions(c *gin.Context) {

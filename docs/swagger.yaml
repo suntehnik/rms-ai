@@ -246,10 +246,6 @@ definitions:
         description: Unique identifier for the acceptance criteria
         example: 123e4567-e89b-12d3-a456-426614174000
         type: string
-      last_modified:
-        description: Timestamp when the acceptance criteria was last modified
-        example: "2023-01-02T12:30:00Z"
-        type: string
       reference_id:
         description: Human-readable reference identifier
         example: AC-001
@@ -259,6 +255,10 @@ definitions:
         items:
           $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
         type: array
+      updated_at:
+        description: Timestamp when the acceptance criteria was last modified
+        example: "2023-01-02T12:30:00Z"
+        type: string
       user_story:
         allOf:
         - $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
@@ -408,12 +408,6 @@ definitions:
           @Description Unique UUID identifier for the epic
           @Example "123e4567-e89b-12d3-a456-426614174000"
         type: string
-      last_modified:
-        description: |-
-          LastModified is the timestamp when the epic was last updated
-          @Description Timestamp when the epic was last modified (RFC3339 format)
-          @Example "2023-01-16T14:45:30Z"
-        type: string
       priority:
         allOf:
         - $ref: '#/definitions/product-requirements-management_internal_models.Priority'
@@ -446,6 +440,12 @@ definitions:
           @MaxLength 500
           @Example "User Authentication System"
         maxLength: 500
+        type: string
+      updated_at:
+        description: |-
+          UpdatedAt is the timestamp when the epic was last updated
+          @Description Timestamp when the epic was last modified (RFC3339 format)
+          @Example "2023-01-16T14:45:30Z"
         type: string
       user_stories:
         description: |-
@@ -574,10 +574,6 @@ definitions:
         description: Unique identifier for the requirement
         example: 123e4567-e89b-12d3-a456-426614174000
         type: string
-      last_modified:
-        description: Timestamp when the requirement was last modified
-        example: "2023-01-02T12:30:00Z"
-        type: string
       priority:
         allOf:
         - $ref: '#/definitions/product-requirements-management_internal_models.Priority'
@@ -616,6 +612,10 @@ definitions:
       type_id:
         description: ID of the requirement type (Functional, Non-Functional, etc.)
         example: 123e4567-e89b-12d3-a456-426614174005
+        type: string
+      updated_at:
+        description: Timestamp when the requirement was last updated
+        example: "2023-01-02T12:30:00Z"
         type: string
       user_story:
         allOf:
@@ -896,12 +896,6 @@ definitions:
           @Description Unique UUID identifier for the user story
           @Example "123e4567-e89b-12d3-a456-426614174000"
         type: string
-      last_modified:
-        description: |-
-          LastModified is the timestamp when the user story was last updated
-          @Description Timestamp when the user story was last modified (RFC3339 format)
-          @Example "2023-01-16T14:45:30Z"
-        type: string
       priority:
         allOf:
         - $ref: '#/definitions/product-requirements-management_internal_models.Priority'
@@ -941,6 +935,12 @@ definitions:
           @MaxLength 500
           @Example "User Login with Email and Password"
         maxLength: 500
+        type: string
+      updated_at:
+        description: |-
+          UpdatedAt is the timestamp when the user story was last updated
+          @Description Timestamp when the user story was last modified (RFC3339 format)
+          @Example "2023-01-16T14:45:30Z"
         type: string
     required:
     - priority
@@ -1133,7 +1133,6 @@ definitions:
         maxLength: 500
         type: string
     required:
-    - creator_id
     - priority
     - title
     type: object
@@ -1600,6 +1599,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
@@ -1612,6 +1615,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Delete acceptance criteria
       tags:
       - deletion
@@ -1638,6 +1643,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
@@ -1646,6 +1655,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Validate acceptance criteria deletion
       tags:
       - deletion
@@ -1676,6 +1687,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
@@ -1684,6 +1699,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get deletion confirmation
       tags:
       - deletion
@@ -1714,6 +1731,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
@@ -1726,6 +1747,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Delete epic
       tags:
       - deletion
@@ -1751,6 +1774,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
@@ -1759,6 +1786,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Validate epic deletion
       tags:
       - deletion
@@ -1790,6 +1819,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
@@ -1802,6 +1835,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Delete requirement
       tags:
       - deletion
@@ -1828,6 +1863,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
@@ -1836,6 +1875,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Validate requirement deletion
       tags:
       - deletion
@@ -1845,7 +1886,7 @@ paths:
       - application/json
       description: Provides search suggestions based on partial query input. Returns
         matching titles, reference IDs, and available status values to help users
-        construct effective search queries.
+        construct effective search queries. Requires authentication.
       parameters:
       - description: Partial search query for generating suggestions. Minimum 2 characters
           recommended.
@@ -1871,10 +1912,16 @@ paths:
           description: Invalid parameters (missing query, invalid limit)
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "500":
           description: Internal server error during suggestion generation
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get search suggestions
       tags:
       - search
@@ -1906,6 +1953,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
@@ -1918,6 +1969,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Delete user story
       tags:
       - deletion
@@ -1944,6 +1997,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
@@ -1952,6 +2009,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Validate user story deletion
       tags:
       - deletion
@@ -2007,6 +2066,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: Entity not found
           schema:
@@ -2019,6 +2084,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get all comments for an entity
       tags:
       - comments
@@ -2065,6 +2132,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: Entity not found or parent comment not found
           schema:
@@ -2077,6 +2150,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Create a new comment on an entity
       tags:
       - comments
@@ -2124,6 +2199,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: Entity not found
           schema:
@@ -2136,6 +2217,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Create an inline comment on specific text
       tags:
       - comments
@@ -2146,7 +2229,7 @@ paths:
       - application/json
       description: Validate and update inline comment positions after entity text
         content has been modified. This ensures inline comments remain accurately
-        positioned.
+        positioned. Requires authentication.
       parameters:
       - description: Entity type
         enum:
@@ -2186,12 +2269,20 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "500":
           description: Internal server error during validation
           schema:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Validate inline comments after text changes
       tags:
       - comments
@@ -2200,6 +2291,7 @@ paths:
     get:
       description: Retrieve all inline comments that are still valid (visible) for
         an entity, excluding those that may have become invalid due to text changes.
+        Requires authentication.
       parameters:
       - description: Entity type
         enum:
@@ -2234,6 +2326,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: Entity not found
           schema:
@@ -2246,6 +2344,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get visible inline comments for an entity
       tags:
       - comments
@@ -2297,11 +2397,18 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal server error
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: List acceptance criteria with filtering and pagination
       tags:
       - acceptance-criteria
@@ -2335,6 +2442,11 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: Acceptance criteria not found
           schema:
@@ -2351,6 +2463,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Delete acceptance criteria
       tags:
       - acceptance-criteria
@@ -2374,6 +2488,11 @@ paths:
           description: Successfully retrieved acceptance criteria
           schema:
             $ref: '#/definitions/product-requirements-management_internal_models.AcceptanceCriteria'
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: Acceptance criteria not found
           schema:
@@ -2384,6 +2503,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Get acceptance criteria by ID or reference ID
       tags:
       - acceptance-criteria
@@ -2419,6 +2540,11 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: Acceptance criteria not found
           schema:
@@ -2429,6 +2555,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Update existing acceptance criteria
       tags:
       - acceptance-criteria
@@ -2437,7 +2565,7 @@ paths:
       consumes:
       - application/json
       description: Create an inline comment linked to specific text positions within
-        acceptance criteria description or conditions.
+        acceptance criteria description or conditions. Requires authentication.
       parameters:
       - description: Acceptance Criteria ID
         format: uuid
@@ -2465,6 +2593,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: Acceptance criteria not found
           schema:
@@ -2477,6 +2611,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Create an inline comment on acceptance criteria text
       tags:
       - acceptance-criteria
@@ -2487,7 +2623,7 @@ paths:
       consumes:
       - application/json
       description: Validate and update inline comment positions after acceptance criteria
-        text content has been modified.
+        text content has been modified. Requires authentication.
       parameters:
       - description: Acceptance Criteria ID
         format: uuid
@@ -2516,12 +2652,20 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "500":
           description: Internal server error during validation
           schema:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Validate acceptance criteria inline comments after text changes
       tags:
       - acceptance-criteria
@@ -2530,7 +2674,7 @@ paths:
   /api/v1/acceptance-criteria/{id}/comments/inline/visible:
     get:
       description: Retrieve all visible inline comments for specific acceptance criteria,
-        excluding those invalidated by text changes.
+        excluding those invalidated by text changes. Requires authentication.
       parameters:
       - description: Acceptance Criteria ID
         format: uuid
@@ -2552,6 +2696,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: Acceptance criteria not found
           schema:
@@ -2564,6 +2714,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get visible inline comments for acceptance criteria
       tags:
       - acceptance-criteria
@@ -2589,6 +2741,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: Comment not found
           schema:
@@ -2607,6 +2765,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Delete a comment
       tags:
       - comments
@@ -2633,6 +2793,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: Comment not found
           schema:
@@ -2645,6 +2811,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get a specific comment by ID
       tags:
       - comments
@@ -2679,6 +2847,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: Comment not found
           schema:
@@ -2691,6 +2865,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Update an existing comment
       tags:
       - comments
@@ -2739,6 +2915,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: Parent comment not found
           schema:
@@ -2751,6 +2933,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get replies to a specific comment
       tags:
       - comments
@@ -2789,6 +2973,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: Parent comment not found
           schema:
@@ -2801,6 +2991,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Create a reply to a comment
       tags:
       - comments
@@ -2828,6 +3020,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: Comment not found
           schema:
@@ -2840,6 +3038,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Mark a comment as resolved
       tags:
       - comments
@@ -2867,6 +3067,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: Comment not found
           schema:
@@ -2879,6 +3085,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Mark a comment as unresolved
       tags:
       - comments
@@ -2911,12 +3119,20 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "500":
           description: Internal server error
           schema:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get comments by resolution status
       tags:
       - comments
@@ -2925,7 +3141,8 @@ paths:
       consumes:
       - application/json
       description: Retrieves a paginated list of all relationship types with optional
-        sorting. Supports ordering by name, created_at, or updated_at fields.
+        sorting. Supports ordering by name, created_at, or updated_at fields. Requires
+        authentication.
       parameters:
       - default: name
         description: Sort field (name, created_at, updated_at)
@@ -2952,10 +3169,16 @@ paths:
           description: Successfully retrieved relationship types
           schema:
             $ref: '#/definitions/internal_handlers.RelationshipTypeListResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "500":
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: List relationship types
       tags:
       - configuration
@@ -2964,7 +3187,7 @@ paths:
       - application/json
       description: Creates a new relationship type for defining how requirements relate
         to each other. Common types include depends_on, blocks, relates_to, conflicts_with,
-        and derives_from.
+        and derives_from. Requires Administrator role.
       parameters:
       - description: Relationship type creation request
         in: body
@@ -2983,6 +3206,14 @@ paths:
           description: Invalid request body or validation error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Administrator role required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "409":
           description: Relationship type name already exists
           schema:
@@ -2991,6 +3222,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Create a new relationship type
       tags:
       - configuration
@@ -3000,7 +3233,7 @@ paths:
       - application/json
       description: Deletes a relationship type. By default, deletion is prevented
         if there are requirement relationships using this type. Use force=true to
-        override this protection (use with caution).
+        override this protection (use with caution). Requires Administrator role.
       parameters:
       - description: Relationship type ID (UUID)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -3023,6 +3256,14 @@ paths:
           description: Invalid UUID format
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Administrator role required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Relationship type not found
           schema:
@@ -3036,6 +3277,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Delete relationship type
       tags:
       - configuration
@@ -3044,6 +3287,7 @@ paths:
       - application/json
       description: Retrieves a specific relationship type by its UUID. Returns complete
         relationship type information including name, description, and usage metadata.
+        Requires authentication.
       parameters:
       - description: Relationship type ID (UUID)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -3062,6 +3306,10 @@ paths:
           description: Invalid UUID format
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Relationship type not found
           schema:
@@ -3070,6 +3318,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get relationship type by ID
       tags:
       - configuration
@@ -3077,7 +3327,8 @@ paths:
       consumes:
       - application/json
       description: Updates an existing relationship type. Only provided fields will
-        be updated. Name must be unique across all relationship types.
+        be updated. Name must be unique across all relationship types. Requires Administrator
+        role.
       parameters:
       - description: Relationship type ID (UUID)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -3102,6 +3353,14 @@ paths:
           description: Invalid request body or UUID format
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Administrator role required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Relationship type not found
           schema:
@@ -3114,6 +3373,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Update relationship type
       tags:
       - configuration
@@ -3122,7 +3383,8 @@ paths:
       consumes:
       - application/json
       description: Retrieves a paginated list of all requirement types with optional
-        sorting. Supports ordering by name, created_at, or updated_at fields.
+        sorting. Supports ordering by name, created_at, or updated_at fields. Requires
+        authentication.
       parameters:
       - default: name
         description: Sort field (name, created_at, updated_at)
@@ -3149,10 +3411,16 @@ paths:
           description: Successfully retrieved requirement types
           schema:
             $ref: '#/definitions/internal_handlers.RequirementTypeListResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "500":
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: List requirement types
       tags:
       - configuration
@@ -3207,7 +3475,7 @@ paths:
       - application/json
       description: Deletes a requirement type. By default, deletion is prevented if
         there are requirements using this type. Use force=true to override this protection
-        (use with caution).
+        (use with caution). Requires Administrator role.
       parameters:
       - description: Requirement type ID (UUID)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -3230,6 +3498,14 @@ paths:
           description: Invalid UUID format
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Administrator role required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Requirement type not found
           schema:
@@ -3243,6 +3519,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Delete requirement type
       tags:
       - configuration
@@ -3250,7 +3528,8 @@ paths:
       consumes:
       - application/json
       description: Retrieves a specific requirement type by its UUID. Returns complete
-        requirement type information including name, description, and metadata.
+        requirement type information including name, description, and metadata. Requires
+        authentication.
       parameters:
       - description: Requirement type ID (UUID)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -3269,6 +3548,10 @@ paths:
           description: Invalid UUID format
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Requirement type not found
           schema:
@@ -3277,6 +3560,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get requirement type by ID
       tags:
       - configuration
@@ -3284,7 +3569,8 @@ paths:
       consumes:
       - application/json
       description: Updates an existing requirement type. Only provided fields will
-        be updated. Name must be unique across all requirement types.
+        be updated. Name must be unique across all requirement types. Requires Administrator
+        role.
       parameters:
       - description: Requirement type ID (UUID)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -3309,6 +3595,14 @@ paths:
           description: Invalid request body or UUID format
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Administrator role required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Requirement type not found
           schema:
@@ -3321,6 +3615,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Update requirement type
       tags:
       - configuration
@@ -3330,7 +3626,7 @@ paths:
       - application/json
       description: Retrieves a paginated list of status models with optional filtering
         by entity type and sorting. Supports ordering by entity_type, name, created_at,
-        or updated_at fields.
+        or updated_at fields. Requires authentication.
       parameters:
       - description: Filter by entity type (epic, user_story, requirement, acceptance_criteria)
         example: '"epic"'
@@ -3362,10 +3658,16 @@ paths:
           description: Successfully retrieved status models
           schema:
             $ref: '#/definitions/internal_handlers.StatusModelListResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "500":
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: List status models
       tags:
       - configuration
@@ -3374,7 +3676,8 @@ paths:
       - application/json
       description: Creates a new status model for defining status workflows for different
         entity types (epic, user_story, requirement, acceptance_criteria). Each entity
-        type can have multiple status models with one marked as default.
+        type can have multiple status models with one marked as default. Requires
+        Administrator role.
       parameters:
       - description: Status model creation request
         in: body
@@ -3393,6 +3696,14 @@ paths:
           description: Invalid request body, validation error, or invalid entity type
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Administrator role required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "409":
           description: Status model name already exists for this entity type
           schema:
@@ -3401,6 +3712,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Create a new status model
       tags:
       - configuration
@@ -3410,7 +3723,8 @@ paths:
       - application/json
       description: Deletes a status model and all its associated statuses and transitions.
         Use with caution as this will affect entities using this status model. Consider
-        setting a different default model before deletion.
+        setting a different default model before deletion. Requires Administrator
+        role.
       parameters:
       - description: Status model ID (UUID)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -3433,6 +3747,14 @@ paths:
           description: Invalid UUID format
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Administrator role required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Status model not found
           schema:
@@ -3441,6 +3763,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Delete status model
       tags:
       - configuration
@@ -3449,7 +3773,7 @@ paths:
       - application/json
       description: Retrieves a specific status model by its UUID. Returns complete
         status model information including entity type, name, description, and default
-        flag.
+        flag. Requires authentication.
       parameters:
       - description: Status model ID (UUID)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -3468,6 +3792,10 @@ paths:
           description: Invalid UUID format
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Status model not found
           schema:
@@ -3476,6 +3804,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get status model by ID
       tags:
       - configuration
@@ -3484,7 +3814,8 @@ paths:
       - application/json
       description: Updates an existing status model. Only provided fields will be
         updated. Name must be unique within the same entity type. Setting is_default=true
-        will make other models for the same entity type non-default.
+        will make other models for the same entity type non-default. Requires Administrator
+        role.
       parameters:
       - description: Status model ID (UUID)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -3509,6 +3840,14 @@ paths:
           description: Invalid request body or UUID format
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Administrator role required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Status model not found
           schema:
@@ -3521,6 +3860,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Update status model
       tags:
       - configuration
@@ -3530,7 +3871,7 @@ paths:
       - application/json
       description: Retrieves all statuses belonging to a specific status model, ordered
         by their display order. Includes initial and final status flags for workflow
-        understanding.
+        understanding. Requires authentication.
       parameters:
       - description: Status model ID (UUID)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -3549,10 +3890,16 @@ paths:
           description: Invalid UUID format
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "500":
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: List statuses by status model
       tags:
       - configuration
@@ -3562,7 +3909,7 @@ paths:
       - application/json
       description: Retrieves all status transitions belonging to a specific status
         model. Shows the complete workflow rules including allowed status changes
-        and transition metadata.
+        and transition metadata. Requires authentication.
       parameters:
       - description: Status model ID (UUID)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -3581,10 +3928,16 @@ paths:
           description: Invalid UUID format
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "500":
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: List status transitions by status model
       tags:
       - configuration
@@ -3594,6 +3947,7 @@ paths:
       - application/json
       description: Retrieves the default status model for a specific entity type.
         The default status model is used when creating new entities of that type.
+        Requires authentication.
       parameters:
       - description: Entity type (epic, user_story, requirement, acceptance_criteria)
         example: '"epic"'
@@ -3608,6 +3962,10 @@ paths:
           description: Successfully retrieved default status model
           schema:
             $ref: '#/definitions/product-requirements-management_internal_models.StatusModel'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Default status model not found for entity type
           schema:
@@ -3616,6 +3974,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get default status model for entity type
       tags:
       - configuration
@@ -3625,7 +3985,7 @@ paths:
       - application/json
       description: Creates a new status transition rule within a status model. Transitions
         define which status changes are allowed. Both from_status and to_status must
-        belong to the same status model.
+        belong to the same status model. Requires Administrator role.
       parameters:
       - description: Status transition creation request
         in: body
@@ -3645,6 +4005,14 @@ paths:
             or invalid status transition
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Administrator role required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "409":
           description: Status transition already exists
           schema:
@@ -3653,6 +4021,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Create a new status transition
       tags:
       - configuration
@@ -3662,7 +4032,7 @@ paths:
       - application/json
       description: Deletes a status transition rule. This will prevent the corresponding
         status change from being allowed in the future. Existing entities will not
-        be affected.
+        be affected. Requires Administrator role.
       parameters:
       - description: Status transition ID (UUID)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -3679,6 +4049,14 @@ paths:
           description: Invalid UUID format
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Administrator role required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Status transition not found
           schema:
@@ -3687,6 +4065,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Delete status transition
       tags:
       - configuration
@@ -3695,6 +4075,7 @@ paths:
       - application/json
       description: Retrieves a specific status transition by its UUID. Returns complete
         transition information including from/to statuses, name, and description.
+        Requires authentication.
       parameters:
       - description: Status transition ID (UUID)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -3713,6 +4094,10 @@ paths:
           description: Invalid UUID format
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Status transition not found
           schema:
@@ -3721,6 +4106,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get status transition by ID
       tags:
       - configuration
@@ -3729,6 +4116,7 @@ paths:
       - application/json
       description: Updates an existing status transition. Only provided fields will
         be updated. The from_status and to_status cannot be changed after creation.
+        Requires Administrator role.
       parameters:
       - description: Status transition ID (UUID)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -3753,6 +4141,14 @@ paths:
           description: Invalid request body or UUID format
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Administrator role required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Status transition not found
           schema:
@@ -3761,6 +4157,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Update status transition
       tags:
       - configuration
@@ -3770,7 +4168,8 @@ paths:
       - application/json
       description: Creates a new status within a status model. Statuses define the
         possible states for entities. Each status can be marked as initial (starting
-        state) or final (ending state) and has an order for display purposes.
+        state) or final (ending state) and has an order for display purposes. Requires
+        Administrator role.
       parameters:
       - description: Status creation request
         in: body
@@ -3790,6 +4189,14 @@ paths:
             found
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Administrator role required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "409":
           description: Status name already exists in this model
           schema:
@@ -3798,6 +4205,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Create a new status
       tags:
       - configuration
@@ -3807,7 +4216,7 @@ paths:
       - application/json
       description: Deletes a status from a status model. This will also remove any
         status transitions involving this status. Use with caution as entities using
-        this status may be affected.
+        this status may be affected. Requires Administrator role.
       parameters:
       - description: Status ID (UUID)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -3830,6 +4239,14 @@ paths:
           description: Invalid UUID format
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Administrator role required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Status not found
           schema:
@@ -3838,6 +4255,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Delete status
       tags:
       - configuration
@@ -3846,7 +4265,7 @@ paths:
       - application/json
       description: Retrieves a specific status by its UUID. Returns complete status
         information including name, description, color, flags, and order within the
-        status model.
+        status model. Requires authentication.
       parameters:
       - description: Status ID (UUID)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -3865,6 +4284,10 @@ paths:
           description: Invalid UUID format
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Status not found
           schema:
@@ -3873,6 +4296,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get status by ID
       tags:
       - configuration
@@ -3881,7 +4306,7 @@ paths:
       - application/json
       description: Updates an existing status. Only provided fields will be updated.
         Name must be unique within the same status model. Changing initial/final flags
-        may affect status transitions.
+        may affect status transitions. Requires Administrator role.
       parameters:
       - description: Status ID (UUID)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -3906,6 +4331,14 @@ paths:
           description: Invalid request body or UUID format
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Administrator role required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: Status not found
           schema:
@@ -3918,6 +4351,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Update status
       tags:
       - configuration
@@ -4237,6 +4672,11 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: Epic not found
           schema:
@@ -4247,6 +4687,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Assign an epic to a user
       tags:
       - epics
@@ -4283,6 +4725,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: Epic not found
           schema:
@@ -4295,6 +4743,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Create an inline comment on an epic's text
       tags:
       - epics
@@ -4305,7 +4755,7 @@ paths:
       consumes:
       - application/json
       description: Validate and update inline comment positions after an epic's text
-        content has been modified.
+        content has been modified. Requires authentication.
       parameters:
       - description: Epic ID
         format: uuid
@@ -4334,12 +4784,20 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "500":
           description: Internal server error during validation
           schema:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Validate epic inline comments after text changes
       tags:
       - epics
@@ -4348,7 +4806,7 @@ paths:
   /api/v1/epics/{id}/comments/inline/visible:
     get:
       description: Retrieve all visible inline comments for a specific epic, excluding
-        those invalidated by text changes.
+        those invalidated by text changes. Requires authentication.
       parameters:
       - description: Epic ID
         format: uuid
@@ -4370,6 +4828,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: Epic not found
           schema:
@@ -4382,6 +4846,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get visible inline comments for an epic
       tags:
       - epics
@@ -4421,6 +4887,11 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: Epic not found
           schema:
@@ -4431,6 +4902,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Change the status of an epic
       tags:
       - epics
@@ -4455,6 +4928,11 @@ paths:
           description: Epic with user stories retrieved successfully
           schema:
             $ref: '#/definitions/product-requirements-management_internal_models.Epic'
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: Epic not found
           schema:
@@ -4465,6 +4943,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Get an epic with its user stories
       tags:
       - epics
@@ -4503,11 +4983,18 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal server error
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Create a new user story within an epic
       tags:
       - epics
@@ -4535,6 +5022,11 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: Relationship not found
           schema:
@@ -4545,6 +5037,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Delete a requirement relationship
       tags:
       - requirements
@@ -4631,11 +5125,18 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal server error
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: List requirements with filtering and pagination
       tags:
       - requirements
@@ -4716,6 +5217,11 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: Requirement not found
           schema:
@@ -4732,6 +5238,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Delete a requirement
       tags:
       - requirements
@@ -4754,6 +5262,11 @@ paths:
           description: Successfully retrieved requirement
           schema:
             $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: Requirement not found
           schema:
@@ -4764,6 +5277,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Get a requirement by ID or reference ID
       tags:
       - requirements
@@ -4801,6 +5316,11 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: Requirement not found
           schema:
@@ -4811,6 +5331,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Update an existing requirement
       tags:
       - requirements
@@ -4847,6 +5369,11 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: Requirement not found
           schema:
@@ -4857,6 +5384,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Assign requirement to a user
       tags:
       - requirements
@@ -4865,7 +5394,7 @@ paths:
       consumes:
       - application/json
       description: Create an inline comment linked to specific text positions within
-        a requirement's description or specification.
+        a requirement's description or specification. Requires authentication.
       parameters:
       - description: Requirement ID
         format: uuid
@@ -4893,6 +5422,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: Requirement not found
           schema:
@@ -4905,6 +5440,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Create an inline comment on a requirement's text
       tags:
       - requirements
@@ -4915,7 +5452,7 @@ paths:
       consumes:
       - application/json
       description: Validate and update inline comment positions after a requirement's
-        text content has been modified.
+        text content has been modified. Requires authentication.
       parameters:
       - description: Requirement ID
         format: uuid
@@ -4944,12 +5481,20 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "500":
           description: Internal server error during validation
           schema:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Validate requirement inline comments after text changes
       tags:
       - requirements
@@ -4958,7 +5503,7 @@ paths:
   /api/v1/requirements/{id}/comments/inline/visible:
     get:
       description: Retrieve all visible inline comments for a specific requirement,
-        excluding those invalidated by text changes.
+        excluding those invalidated by text changes. Requires authentication.
       parameters:
       - description: Requirement ID
         format: uuid
@@ -4980,6 +5525,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: Requirement not found
           schema:
@@ -4992,6 +5543,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get visible inline comments for a requirement
       tags:
       - requirements
@@ -5019,6 +5572,11 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: Requirement not found
           schema:
@@ -5029,6 +5587,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Get all relationships for a requirement
       tags:
       - requirements
@@ -5066,6 +5626,11 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: Requirement not found
           schema:
@@ -5076,6 +5641,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Change requirement status
       tags:
       - requirements
@@ -5109,6 +5676,11 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "409":
           description: Relationship already exists
           schema:
@@ -5119,6 +5691,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Create a relationship between requirements
       tags:
       - requirements
@@ -5149,11 +5723,18 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal server error
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Search requirements by text
       tags:
       - requirements
@@ -5235,7 +5816,7 @@ paths:
         name: author_id
         type: string
       - default: created_at
-        description: 'Sort by field: priority, created_at, last_modified, title, relevance
+        description: 'Sort by field: priority, created_at, updated_at, title, relevance
           (relevance only available with query)'
         example: '"priority"'
         in: query
@@ -5356,11 +5937,18 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal server error
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: List user stories with filtering and pagination
       tags:
       - user-stories
@@ -5391,11 +5979,18 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal server error
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Create a new user story
       tags:
       - user-stories
@@ -5429,6 +6024,11 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: User story not found
           schema:
@@ -5445,6 +6045,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Delete a user story
       tags:
       - user-stories
@@ -5468,6 +6070,11 @@ paths:
           description: Successfully retrieved user story
           schema:
             $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: User story not found
           schema:
@@ -5478,6 +6085,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Get a user story by ID or reference ID
       tags:
       - user-stories
@@ -5515,6 +6124,11 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: User story not found
           schema:
@@ -5525,6 +6139,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Update a user story
       tags:
       - user-stories
@@ -5549,6 +6165,11 @@ paths:
           description: Successfully retrieved user story with acceptance criteria
           schema:
             $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: User story not found
           schema:
@@ -5559,6 +6180,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Get user story with acceptance criteria
       tags:
       - user-stories
@@ -5597,11 +6220,18 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal server error
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Create acceptance criteria within a user story
       tags:
       - user-stories
@@ -5638,6 +6268,11 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: User story not found
           schema:
@@ -5648,6 +6283,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Assign user story to a user
       tags:
       - user-stories
@@ -5656,7 +6293,7 @@ paths:
       consumes:
       - application/json
       description: Create an inline comment linked to specific text positions within
-        a user story's description or acceptance criteria.
+        a user story's description or acceptance criteria. Requires authentication.
       parameters:
       - description: User Story ID
         format: uuid
@@ -5684,6 +6321,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: User story not found
           schema:
@@ -5696,6 +6339,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Create an inline comment on a user story's text
       tags:
       - user-stories
@@ -5706,7 +6351,7 @@ paths:
       consumes:
       - application/json
       description: Validate and update inline comment positions after a user story's
-        text content has been modified.
+        text content has been modified. Requires authentication.
       parameters:
       - description: User Story ID
         format: uuid
@@ -5735,12 +6380,20 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "500":
           description: Internal server error during validation
           schema:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Validate user story inline comments after text changes
       tags:
       - user-stories
@@ -5749,7 +6402,7 @@ paths:
   /api/v1/user-stories/{id}/comments/inline/visible:
     get:
       description: Retrieve all visible inline comments for a specific user story,
-        excluding those invalidated by text changes.
+        excluding those invalidated by text changes. Requires authentication.
       parameters:
       - description: User Story ID
         format: uuid
@@ -5771,6 +6424,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: User story not found
           schema:
@@ -5783,6 +6442,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get visible inline comments for a user story
       tags:
       - user-stories
@@ -5809,6 +6470,11 @@ paths:
           description: Successfully retrieved user story with requirements
           schema:
             $ref: '#/definitions/product-requirements-management_internal_models.UserStory'
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: User story not found
           schema:
@@ -5819,6 +6485,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Get user story with requirements
       tags:
       - user-stories
@@ -5858,11 +6526,18 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal server error
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Create a requirement within a user story
       tags:
       - user-stories
@@ -5900,6 +6575,11 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: User story not found
           schema:
@@ -5910,6 +6590,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Change user story status
       tags:
       - user-stories
@@ -5941,6 +6623,11 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "404":
           description: Author not found
           schema:
@@ -5951,6 +6638,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Get acceptance criteria by author
       tags:
       - users

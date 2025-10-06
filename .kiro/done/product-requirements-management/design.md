@@ -10,67 +10,7 @@ The Product Requirements Management System is a web-based application designed t
 
 The system follows a monolithic three-tier architecture with well-defined components:
 
-```mermaid
-graph TB
-    subgraph "Presentation Layer"
-        UI[Web UI - React/TypeScript]
-    end
-    
-    subgraph "Monolithic Go Application"
-        API[REST API Layer - Gin Router]
-        
-        subgraph "Business Logic Components"
-            AUTH[Authentication Component]
-            REQ[Requirements Component]
-            COM[Comments Component]
-            SEARCH[Search Component]
-            CONFIG[Configuration Component]
-        end
-        
-        subgraph "Data Access Layer"
-            REPO[Repository Layer - GORM]
-        end
-        
-        subgraph "Observability Components"
-            LOGS[Logging Component]
-            METRICS[Metrics Component]
-            TRACES[Tracing Component]
-        end
-    end
-    
-    subgraph "External Dependencies"
-        DB[(PostgreSQL Database)]
-        CACHE[(Redis Cache)]
-    end
-    
-    UI --> API
-    API --> AUTH
-    API --> REQ
-    API --> COM
-    API --> SEARCH
-    API --> CONFIG
-    
-    AUTH --> REPO
-    REQ --> REPO
-    COM --> REPO
-    SEARCH --> REPO
-    CONFIG --> REPO
-    
-    REPO --> DB
-    SEARCH --> CACHE
-    
-    AUTH --> LOGS
-    REQ --> LOGS
-    COM --> LOGS
-    SEARCH --> LOGS
-    CONFIG --> LOGS
-    
-    AUTH --> METRICS
-    REQ --> METRICS
-    COM --> METRICS
-    SEARCH --> METRICS
-    CONFIG --> METRICS
-```
+и
 
 ### Technology Stack
 

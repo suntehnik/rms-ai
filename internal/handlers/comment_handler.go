@@ -30,11 +30,13 @@ func NewCommentHandler(commentService service.CommentService) *CommentHandler {
 // @Tags comments
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param entityType path string true "Entity type" Enums(epic,user_story,acceptance_criteria,requirement)
 // @Param id path string true "Entity ID" format(uuid)
 // @Param comment body service.CreateCommentRequest true "Comment creation request"
 // @Success 201 {object} service.CommentResponse "Successfully created comment"
 // @Failure 400 {object} map[string]string "Invalid request - malformed entity ID, invalid entity type, missing required fields, or invalid inline comment data"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Entity not found or parent comment not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/{entityType}/{id}/comments [post]
@@ -122,6 +124,7 @@ func (h *CommentHandler) CreateComment(c *gin.Context) {
 // @Description Retrieve all comments for a specific entity with optional filtering by status and threading. Supports both flat and threaded comment structures.
 // @Tags comments
 // @Produce json
+// @Security BearerAuth
 // @Param entityType path string true "Entity type" Enums(epic,user_story,acceptance_criteria,requirement)
 // @Param id path string true "Entity ID" format(uuid)
 // @Param threaded query boolean false "Return comments in threaded structure"
@@ -129,6 +132,7 @@ func (h *CommentHandler) CreateComment(c *gin.Context) {
 // @Param status query string false "Filter by resolution status" Enums(resolved,unresolved)
 // @Success 200 {object} map[string]interface{} "Successfully retrieved comments" example({"comments": [{"id": "123e4567-e89b-12d3-a456-426614174000", "content": "This needs clarification", "is_resolved": false}], "count": 1})
 // @Failure 400 {object} map[string]string "Invalid entity type or malformed entity ID"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Entity not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/{entityType}/{id}/comments [get]
@@ -218,9 +222,11 @@ func (h *CommentHandler) GetCommentsByEntity(c *gin.Context) {
 // @Description Retrieve a single comment by its unique identifier, including author information and thread context.
 // @Tags comments
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Comment ID" format(uuid)
 // @Success 200 {object} service.CommentResponse "Successfully retrieved comment"
 // @Failure 400 {object} map[string]string "Invalid comment ID format"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Comment not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/comments/{id} [get]
@@ -258,10 +264,12 @@ func (h *CommentHandler) GetComment(c *gin.Context) {
 // @Tags comments
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Comment ID" format(uuid)
 // @Param comment body service.UpdateCommentRequest true "Comment update request"
 // @Success 200 {object} service.CommentResponse "Successfully updated comment"
 // @Failure 400 {object} map[string]string "Invalid comment ID format, invalid request body, or empty content"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Comment not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/comments/{id} [put]
@@ -311,9 +319,11 @@ func (h *CommentHandler) UpdateComment(c *gin.Context) {
 // @Summary Delete a comment
 // @Description Delete a comment by ID. Comments with replies cannot be deleted to maintain thread integrity.
 // @Tags comments
+// @Security BearerAuth
 // @Param id path string true "Comment ID" format(uuid)
 // @Success 204 "Successfully deleted comment"
 // @Failure 400 {object} map[string]string "Invalid comment ID format"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Comment not found"
 // @Failure 409 {object} map[string]string "Comment has replies and cannot be deleted"
 // @Failure 500 {object} map[string]string "Internal server error"
@@ -356,9 +366,11 @@ func (h *CommentHandler) DeleteComment(c *gin.Context) {
 // @Description Mark a comment as resolved to indicate that the issue or question has been addressed.
 // @Tags comments
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Comment ID" format(uuid)
 // @Success 200 {object} service.CommentResponse "Successfully resolved comment"
 // @Failure 400 {object} map[string]string "Invalid comment ID format"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Comment not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/comments/{id}/resolve [post]
@@ -395,9 +407,11 @@ func (h *CommentHandler) ResolveComment(c *gin.Context) {
 // @Description Mark a previously resolved comment as unresolved to reopen the discussion or issue.
 // @Tags comments
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Comment ID" format(uuid)
 // @Success 200 {object} service.CommentResponse "Successfully unresolved comment"
 // @Failure 400 {object} map[string]string "Invalid comment ID format"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Comment not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/comments/{id}/unresolve [post]
@@ -434,9 +448,11 @@ func (h *CommentHandler) UnresolveComment(c *gin.Context) {
 // @Description Retrieve all comments filtered by their resolution status (resolved or unresolved) across all entities.
 // @Tags comments
 // @Produce json
+// @Security BearerAuth
 // @Param status path string true "Resolution status" Enums(resolved,unresolved)
 // @Success 200 {object} map[string]interface{} "Successfully retrieved comments by status" example({"comments": [{"id": "123e4567-e89b-12d3-a456-426614174000", "content": "This needs clarification", "is_resolved": false}], "count": 1, "status": "unresolved"})
 // @Failure 400 {object} map[string]string "Invalid status parameter"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/comments/status/{status} [get]
 func (h *CommentHandler) GetCommentsByStatus(c *gin.Context) {
@@ -475,11 +491,13 @@ func (h *CommentHandler) GetCommentsByStatus(c *gin.Context) {
 // @Description Retrieve all direct replies to a specific comment with pagination support. Returns replies in chronological order (oldest first) to maintain conversation flow. Each reply includes author information and metadata for building threaded comment interfaces.
 // @Tags comments
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Parent comment ID" format(uuid)
 // @Param limit query int false "Maximum number of replies to return (1-100)" minimum(1) maximum(100) default(50)
 // @Param offset query int false "Number of replies to skip for pagination" minimum(0) default(0)
 // @Success 200 {object} map[string]interface{} "Successfully retrieved comment replies" example({"data": [{"id": "123e4567-e89b-12d3-a456-426614174001", "content": "I agree with this point", "parent_comment_id": "123e4567-e89b-12d3-a456-426614174000", "author_id": "456e7890-e89b-12d3-a456-426614174002", "created_at": "2024-01-15T10:30:00Z", "is_resolved": false, "is_reply": true, "depth": 1}], "total_count": 1, "limit": 50, "offset": 0})
 // @Failure 400 {object} map[string]string "Invalid comment ID format"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Parent comment not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/comments/{id}/replies [get]
@@ -538,10 +556,12 @@ func (h *CommentHandler) GetCommentReplies(c *gin.Context) {
 // @Tags comments
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Parent comment ID" format(uuid)
 // @Param reply body service.CreateCommentRequest true "Reply creation request (only content and author_id required - entity context inherited from parent)"
 // @Success 201 {object} service.CommentResponse "Successfully created reply with parent-child relationship established"
 // @Failure 400 {object} map[string]string "Invalid parent comment ID format, invalid request body, empty content, or author not found"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Parent comment not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/comments/{id}/replies [post]
@@ -613,11 +633,13 @@ func (h *CommentHandler) CreateCommentReply(c *gin.Context) {
 // @Tags comments,inline-comments
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param entityType path string true "Entity type" Enums(epic,user_story,acceptance_criteria,requirement)
 // @Param id path string true "Entity ID" format(uuid)
 // @Param comment body service.CreateCommentRequest true "Inline comment creation request with text position data"
 // @Success 201 {object} service.CommentResponse "Successfully created inline comment"
 // @Failure 400 {object} map[string]string "Invalid request - missing inline comment data, invalid text positions, or empty linked text"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Entity not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/{entityType}/{id}/comments/inline [post]
@@ -707,10 +729,12 @@ func (h *CommentHandler) CreateInlineComment(c *gin.Context) {
 // @Tags epics,comments,inline-comments
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Epic ID" format(uuid)
 // @Param comment body service.CreateCommentRequest true "Inline comment creation request with text position data"
 // @Success 201 {object} service.CommentResponse "Successfully created epic inline comment"
 // @Failure 400 {object} map[string]string "Invalid request - missing inline comment data or invalid text positions"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Epic not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/epics/{id}/comments/inline [post]
@@ -720,14 +744,16 @@ func (h *CommentHandler) CreateEpicInlineComment(c *gin.Context) {
 
 // CreateUserStoryInlineComment handles POST /api/v1/user-stories/:id/comments/inline
 // @Summary Create an inline comment on a user story's text
-// @Description Create an inline comment linked to specific text positions within a user story's description or acceptance criteria.
+// @Description Create an inline comment linked to specific text positions within a user story's description or acceptance criteria. Requires authentication.
 // @Tags user-stories,comments,inline-comments
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User Story ID" format(uuid)
 // @Param comment body service.CreateCommentRequest true "Inline comment creation request with text position data"
 // @Success 201 {object} service.CommentResponse "Successfully created user story inline comment"
 // @Failure 400 {object} map[string]string "Invalid request - missing inline comment data or invalid text positions"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "User story not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/user-stories/{id}/comments/inline [post]
@@ -737,14 +763,16 @@ func (h *CommentHandler) CreateUserStoryInlineComment(c *gin.Context) {
 
 // CreateAcceptanceCriteriaInlineComment handles POST /api/v1/acceptance-criteria/:id/comments/inline
 // @Summary Create an inline comment on acceptance criteria text
-// @Description Create an inline comment linked to specific text positions within acceptance criteria description or conditions.
+// @Description Create an inline comment linked to specific text positions within acceptance criteria description or conditions. Requires authentication.
 // @Tags acceptance-criteria,comments,inline-comments
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Acceptance Criteria ID" format(uuid)
 // @Param comment body service.CreateCommentRequest true "Inline comment creation request with text position data"
 // @Success 201 {object} service.CommentResponse "Successfully created acceptance criteria inline comment"
 // @Failure 400 {object} map[string]string "Invalid request - missing inline comment data or invalid text positions"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Acceptance criteria not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/acceptance-criteria/{id}/comments/inline [post]
@@ -754,14 +782,16 @@ func (h *CommentHandler) CreateAcceptanceCriteriaInlineComment(c *gin.Context) {
 
 // CreateRequirementInlineComment handles POST /api/v1/requirements/:id/comments/inline
 // @Summary Create an inline comment on a requirement's text
-// @Description Create an inline comment linked to specific text positions within a requirement's description or specification.
+// @Description Create an inline comment linked to specific text positions within a requirement's description or specification. Requires authentication.
 // @Tags requirements,comments,inline-comments
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Requirement ID" format(uuid)
 // @Param comment body service.CreateCommentRequest true "Inline comment creation request with text position data"
 // @Success 201 {object} service.CommentResponse "Successfully created requirement inline comment"
 // @Failure 400 {object} map[string]string "Invalid request - missing inline comment data or invalid text positions"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Requirement not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/requirements/{id}/comments/inline [post]
@@ -858,13 +888,15 @@ func (h *CommentHandler) createInlineCommentForEntity(c *gin.Context, entityType
 
 // GetVisibleInlineComments handles GET /api/v1/:entityType/:id/comments/inline/visible
 // @Summary Get visible inline comments for an entity
-// @Description Retrieve all inline comments that are still valid (visible) for an entity, excluding those that may have become invalid due to text changes.
+// @Description Retrieve all inline comments that are still valid (visible) for an entity, excluding those that may have become invalid due to text changes. Requires authentication.
 // @Tags comments,inline-comments
 // @Produce json
+// @Security BearerAuth
 // @Param entityType path string true "Entity type" Enums(epic,user_story,acceptance_criteria,requirement)
 // @Param id path string true "Entity ID" format(uuid)
 // @Success 200 {object} map[string]interface{} "Successfully retrieved visible inline comments" example({"comments": [{"id": "123e4567-e89b-12d3-a456-426614174000", "linked_text": "OAuth 2.0 authentication", "text_position_start": 45, "text_position_end": 67, "content": "Need to clarify which OAuth flow to use"}], "count": 1})
 // @Failure 400 {object} map[string]string "Invalid entity type or malformed entity ID"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Entity not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/{entityType}/{id}/comments/inline/visible [get]
@@ -911,12 +943,14 @@ func (h *CommentHandler) GetVisibleInlineComments(c *gin.Context) {
 
 // GetEpicVisibleInlineComments handles GET /api/v1/epics/:id/comments/inline/visible
 // @Summary Get visible inline comments for an epic
-// @Description Retrieve all visible inline comments for a specific epic, excluding those invalidated by text changes.
+// @Description Retrieve all visible inline comments for a specific epic, excluding those invalidated by text changes. Requires authentication.
 // @Tags epics,comments,inline-comments
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Epic ID" format(uuid)
 // @Success 200 {object} map[string]interface{} "Successfully retrieved epic inline comments"
 // @Failure 400 {object} map[string]string "Invalid epic ID format"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Epic not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/epics/{id}/comments/inline/visible [get]
@@ -926,12 +960,14 @@ func (h *CommentHandler) GetEpicVisibleInlineComments(c *gin.Context) {
 
 // GetUserStoryVisibleInlineComments handles GET /api/v1/user-stories/:id/comments/inline/visible
 // @Summary Get visible inline comments for a user story
-// @Description Retrieve all visible inline comments for a specific user story, excluding those invalidated by text changes.
+// @Description Retrieve all visible inline comments for a specific user story, excluding those invalidated by text changes. Requires authentication.
 // @Tags user-stories,comments,inline-comments
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User Story ID" format(uuid)
 // @Success 200 {object} map[string]interface{} "Successfully retrieved user story inline comments"
 // @Failure 400 {object} map[string]string "Invalid user story ID format"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "User story not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/user-stories/{id}/comments/inline/visible [get]
@@ -941,12 +977,14 @@ func (h *CommentHandler) GetUserStoryVisibleInlineComments(c *gin.Context) {
 
 // GetAcceptanceCriteriaVisibleInlineComments handles GET /api/v1/acceptance-criteria/:id/comments/inline/visible
 // @Summary Get visible inline comments for acceptance criteria
-// @Description Retrieve all visible inline comments for specific acceptance criteria, excluding those invalidated by text changes.
+// @Description Retrieve all visible inline comments for specific acceptance criteria, excluding those invalidated by text changes. Requires authentication.
 // @Tags acceptance-criteria,comments,inline-comments
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Acceptance Criteria ID" format(uuid)
 // @Success 200 {object} map[string]interface{} "Successfully retrieved acceptance criteria inline comments"
 // @Failure 400 {object} map[string]string "Invalid acceptance criteria ID format"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Acceptance criteria not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/acceptance-criteria/{id}/comments/inline/visible [get]
@@ -956,12 +994,14 @@ func (h *CommentHandler) GetAcceptanceCriteriaVisibleInlineComments(c *gin.Conte
 
 // GetRequirementVisibleInlineComments handles GET /api/v1/requirements/:id/comments/inline/visible
 // @Summary Get visible inline comments for a requirement
-// @Description Retrieve all visible inline comments for a specific requirement, excluding those invalidated by text changes.
+// @Description Retrieve all visible inline comments for a specific requirement, excluding those invalidated by text changes. Requires authentication.
 // @Tags requirements,comments,inline-comments
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Requirement ID" format(uuid)
 // @Success 200 {object} map[string]interface{} "Successfully retrieved requirement inline comments"
 // @Failure 400 {object} map[string]string "Invalid requirement ID format"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Requirement not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/requirements/{id}/comments/inline/visible [get]
@@ -1009,15 +1049,17 @@ func (h *CommentHandler) getVisibleInlineCommentsForEntity(c *gin.Context, entit
 
 // ValidateInlineComments handles POST /api/v1/:entityType/:id/comments/inline/validate
 // @Summary Validate inline comments after text changes
-// @Description Validate and update inline comment positions after entity text content has been modified. This ensures inline comments remain accurately positioned.
+// @Description Validate and update inline comment positions after entity text content has been modified. This ensures inline comments remain accurately positioned. Requires authentication.
 // @Tags comments,inline-comments
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param entityType path string true "Entity type" Enums(epic,user_story,acceptance_criteria,requirement)
 // @Param id path string true "Entity ID" format(uuid)
 // @Param validation body object true "Text validation request" example({"new_description": "Updated entity description with modified text content"})
 // @Success 200 {object} map[string]string "Successfully validated inline comments" example({"message": "Inline comments validated successfully"})
 // @Failure 400 {object} map[string]string "Invalid entity ID format or missing new_description"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 500 {object} map[string]string "Internal server error during validation"
 // @Router /api/v1/{entityType}/{id}/comments/inline/validate [post]
 func (h *CommentHandler) ValidateInlineComments(c *gin.Context) {
@@ -1064,14 +1106,16 @@ func (h *CommentHandler) ValidateInlineComments(c *gin.Context) {
 
 // ValidateEpicInlineComments handles POST /api/v1/epics/:id/comments/inline/validate
 // @Summary Validate epic inline comments after text changes
-// @Description Validate and update inline comment positions after an epic's text content has been modified.
+// @Description Validate and update inline comment positions after an epic's text content has been modified. Requires authentication.
 // @Tags epics,comments,inline-comments
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Epic ID" format(uuid)
 // @Param validation body object true "Text validation request" example({"new_description": "Updated epic description with modified text content"})
 // @Success 200 {object} map[string]string "Successfully validated epic inline comments"
 // @Failure 400 {object} map[string]string "Invalid epic ID format or missing new_description"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 500 {object} map[string]string "Internal server error during validation"
 // @Router /api/v1/epics/{id}/comments/inline/validate [post]
 func (h *CommentHandler) ValidateEpicInlineComments(c *gin.Context) {
@@ -1080,14 +1124,16 @@ func (h *CommentHandler) ValidateEpicInlineComments(c *gin.Context) {
 
 // ValidateUserStoryInlineComments handles POST /api/v1/user-stories/:id/comments/inline/validate
 // @Summary Validate user story inline comments after text changes
-// @Description Validate and update inline comment positions after a user story's text content has been modified.
+// @Description Validate and update inline comment positions after a user story's text content has been modified. Requires authentication.
 // @Tags user-stories,comments,inline-comments
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User Story ID" format(uuid)
 // @Param validation body object true "Text validation request" example({"new_description": "Updated user story description with modified text content"})
 // @Success 200 {object} map[string]string "Successfully validated user story inline comments"
 // @Failure 400 {object} map[string]string "Invalid user story ID format or missing new_description"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 500 {object} map[string]string "Internal server error during validation"
 // @Router /api/v1/user-stories/{id}/comments/inline/validate [post]
 func (h *CommentHandler) ValidateUserStoryInlineComments(c *gin.Context) {
@@ -1096,14 +1142,16 @@ func (h *CommentHandler) ValidateUserStoryInlineComments(c *gin.Context) {
 
 // ValidateAcceptanceCriteriaInlineComments handles POST /api/v1/acceptance-criteria/:id/comments/inline/validate
 // @Summary Validate acceptance criteria inline comments after text changes
-// @Description Validate and update inline comment positions after acceptance criteria text content has been modified.
+// @Description Validate and update inline comment positions after acceptance criteria text content has been modified. Requires authentication.
 // @Tags acceptance-criteria,comments,inline-comments
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Acceptance Criteria ID" format(uuid)
 // @Param validation body object true "Text validation request" example({"new_description": "Updated acceptance criteria description with modified text content"})
 // @Success 200 {object} map[string]string "Successfully validated acceptance criteria inline comments"
 // @Failure 400 {object} map[string]string "Invalid acceptance criteria ID format or missing new_description"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 500 {object} map[string]string "Internal server error during validation"
 // @Router /api/v1/acceptance-criteria/{id}/comments/inline/validate [post]
 func (h *CommentHandler) ValidateAcceptanceCriteriaInlineComments(c *gin.Context) {
@@ -1112,14 +1160,16 @@ func (h *CommentHandler) ValidateAcceptanceCriteriaInlineComments(c *gin.Context
 
 // ValidateRequirementInlineComments handles POST /api/v1/requirements/:id/comments/inline/validate
 // @Summary Validate requirement inline comments after text changes
-// @Description Validate and update inline comment positions after a requirement's text content has been modified.
+// @Description Validate and update inline comment positions after a requirement's text content has been modified. Requires authentication.
 // @Tags requirements,comments,inline-comments
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Requirement ID" format(uuid)
 // @Param validation body object true "Text validation request" example({"new_description": "Updated requirement description with modified text content"})
 // @Success 200 {object} map[string]string "Successfully validated requirement inline comments"
 // @Failure 400 {object} map[string]string "Invalid requirement ID format or missing new_description"
+// @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 500 {object} map[string]string "Internal server error during validation"
 // @Router /api/v1/requirements/{id}/comments/inline/validate [post]
 func (h *CommentHandler) ValidateRequirementInlineComments(c *gin.Context) {

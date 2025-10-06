@@ -101,10 +101,12 @@ func (h *RequirementHandler) CreateRequirement(c *gin.Context) {
 // @Tags user-stories
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param requirement body object true "Requirement creation request (user_story_id will be set from path parameter)" example({"creator_id":"123e4567-e89b-12d3-a456-426614174001","priority":2,"type_id":"123e4567-e89b-12d3-a456-426614174002","title":"User authentication validation","description":"The system must validate user credentials against the database"})
 // @Success 201 {object} models.Requirement "Successfully created requirement within user story"
 // @Failure 400 {object} map[string]interface{} "Invalid user story ID format, request body, creator/assignee not found, user story not found, requirement type not found, acceptance criteria not found, or invalid priority"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/user-stories/{id}/requirements [post]
 func (h *RequirementHandler) CreateRequirementInUserStory(c *gin.Context) {
@@ -202,8 +204,10 @@ func (h *RequirementHandler) CreateRequirementInUserStory(c *gin.Context) {
 // @Tags requirements
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Requirement UUID or reference ID" example("123e4567-e89b-12d3-a456-426614174000")
 // @Success 200 {object} models.Requirement "Successfully retrieved requirement"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Requirement not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/requirements/{id} [get]
@@ -242,10 +246,12 @@ func (h *RequirementHandler) GetRequirement(c *gin.Context) {
 // @Tags requirements
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Requirement UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param requirement body service.UpdateRequirementRequest true "Requirement update request with optional fields"
 // @Success 200 {object} models.Requirement "Successfully updated requirement"
 // @Failure 400 {object} map[string]interface{} "Invalid requirement ID format, request body, assignee not found, requirement type not found, acceptance criteria not found, invalid priority, invalid requirement status, or invalid status transition"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Requirement not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/requirements/{id} [put]
@@ -318,10 +324,12 @@ func (h *RequirementHandler) UpdateRequirement(c *gin.Context) {
 // @Tags requirements
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Requirement UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param force query boolean false "Force delete with dependencies" example(false)
 // @Success 204 "Successfully deleted requirement"
 // @Failure 400 {object} map[string]interface{} "Invalid requirement ID format"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Requirement not found"
 // @Failure 409 {object} map[string]interface{} "Requirement has associated relationships and cannot be deleted (use force=true)"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
@@ -370,6 +378,7 @@ func (h *RequirementHandler) DeleteRequirement(c *gin.Context) {
 // @Tags requirements
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param user_story_id query string false "Filter by user story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param acceptance_criteria_id query string false "Filter by acceptance criteria UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174001")
 // @Param creator_id query string false "Filter by creator UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174002")
@@ -381,6 +390,7 @@ func (h *RequirementHandler) DeleteRequirement(c *gin.Context) {
 // @Param limit query integer false "Maximum number of results" minimum(1) maximum(100) example(50)
 // @Param offset query integer false "Number of results to skip" minimum(0) example(0)
 // @Success 200 {object} map[string]interface{} "Successfully retrieved requirements list with pagination info"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/requirements [get]
 func (h *RequirementHandler) ListRequirements(c *gin.Context) {
@@ -476,8 +486,10 @@ func (h *RequirementHandler) ListRequirements(c *gin.Context) {
 // @Tags requirements
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Requirement UUID or reference ID" example("123e4567-e89b-12d3-a456-426614174000")
 // @Success 200 {object} models.Requirement "Successfully retrieved requirement with relationships"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Requirement not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/requirements/{id}/relationships [get]
@@ -521,10 +533,12 @@ func (h *RequirementHandler) GetRequirementWithRelationships(c *gin.Context) {
 // @Tags requirements
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Requirement UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param status body object true "Status change request" example({"status":"in_review"})
 // @Success 200 {object} models.Requirement "Successfully changed requirement status"
 // @Failure 400 {object} map[string]interface{} "Invalid requirement ID format, request body, invalid requirement status, or invalid status transition"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Requirement not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/requirements/{id}/status [patch]
@@ -584,10 +598,12 @@ func (h *RequirementHandler) ChangeRequirementStatus(c *gin.Context) {
 // @Tags requirements
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Requirement UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param assignment body object true "Assignment request" example({"assignee_id":"123e4567-e89b-12d3-a456-426614174001"})
 // @Success 200 {object} models.Requirement "Successfully assigned requirement"
 // @Failure 400 {object} map[string]interface{} "Invalid requirement ID format, request body, or assignee not found"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Requirement not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/requirements/{id}/assign [patch]
@@ -643,9 +659,11 @@ func (h *RequirementHandler) AssignRequirement(c *gin.Context) {
 // @Tags requirements
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param relationship body service.CreateRelationshipRequest true "Relationship creation request with source, target, type, and creator"
 // @Success 201 {object} models.RequirementRelationship "Successfully created requirement relationship"
 // @Failure 400 {object} map[string]interface{} "Invalid request body, source/target requirement not found, relationship type not found, creator not found, or circular relationship detected"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 409 {object} map[string]interface{} "Relationship already exists"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/requirements/relationships [post]
@@ -699,9 +717,11 @@ func (h *RequirementHandler) CreateRelationship(c *gin.Context) {
 // @Tags requirements
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Relationship UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Success 204 "Successfully deleted relationship"
 // @Failure 400 {object} map[string]interface{} "Invalid relationship ID format"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Relationship not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/requirement-relationships/{id} [delete]
@@ -740,8 +760,10 @@ func (h *RequirementHandler) DeleteRelationship(c *gin.Context) {
 // @Tags requirements
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Requirement UUID or reference ID" example("123e4567-e89b-12d3-a456-426614174000")
 // @Success 200 {object} map[string]interface{} "Successfully retrieved relationships list with count"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Requirement not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/requirements/{id}/relationships [get]
@@ -796,9 +818,11 @@ func (h *RequirementHandler) GetRelationshipsByRequirement(c *gin.Context) {
 // @Tags requirements
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param q query string true "Search query text" example("authentication validation")
 // @Success 200 {object} map[string]interface{} "Successfully retrieved search results with count and query"
 // @Failure 400 {object} map[string]interface{} "Search query parameter 'q' is required"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/requirements/search [get]
 func (h *RequirementHandler) SearchRequirements(c *gin.Context) {

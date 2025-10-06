@@ -31,9 +31,11 @@ func NewUserStoryHandler(userStoryService service.UserStoryService) *UserStoryHa
 // @Tags user-stories
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param user_story body service.CreateUserStoryRequest true "User story creation request"
 // @Success 201 {object} models.UserStory "Successfully created user story"
 // @Failure 400 {object} map[string]interface{} "Invalid request body, epic_id required, creator/assignee not found, epic not found, invalid priority, or invalid user story template"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/user-stories [post]
 func (h *UserStoryHandler) CreateUserStory(c *gin.Context) {
@@ -102,10 +104,12 @@ func (h *UserStoryHandler) CreateUserStory(c *gin.Context) {
 // @Tags epics
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Epic UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param user_story body service.CreateUserStoryRequest true "User story creation request (epic_id will be overridden by path parameter)"
 // @Success 201 {object} models.UserStory "Successfully created user story within epic"
 // @Failure 400 {object} map[string]interface{} "Invalid epic ID format, request body, creator/assignee not found, epic not found, invalid priority, or invalid user story template"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/epics/{id}/user-stories [post]
 func (h *UserStoryHandler) CreateUserStoryInEpic(c *gin.Context) {
@@ -182,8 +186,10 @@ func (h *UserStoryHandler) CreateUserStoryInEpic(c *gin.Context) {
 // @Tags user-stories
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User story UUID or reference ID" example("123e4567-e89b-12d3-a456-426614174000") example("US-001")
 // @Success 200 {object} models.UserStory "Successfully retrieved user story"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "User story not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/user-stories/{id} [get]
@@ -222,10 +228,12 @@ func (h *UserStoryHandler) GetUserStory(c *gin.Context) {
 // @Tags user-stories
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param user_story body service.UpdateUserStoryRequest true "User story update request"
 // @Success 200 {object} models.UserStory "Successfully updated user story"
 // @Failure 400 {object} map[string]interface{} "Invalid user story ID format, request body, assignee not found, invalid priority, invalid status, invalid status transition, or invalid user story template"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "User story not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/user-stories/{id} [put]
@@ -294,10 +302,12 @@ func (h *UserStoryHandler) UpdateUserStory(c *gin.Context) {
 // @Tags user-stories
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param force query boolean false "Force delete with all dependencies" example(false)
 // @Success 204 "Successfully deleted user story"
 // @Failure 400 {object} map[string]interface{} "Invalid user story ID format"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "User story not found"
 // @Failure 409 {object} map[string]interface{} "User story has associated requirements and cannot be deleted (use force=true)"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
@@ -346,6 +356,7 @@ func (h *UserStoryHandler) DeleteUserStory(c *gin.Context) {
 // @Tags user-stories
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param epic_id query string false "Filter by epic UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param creator_id query string false "Filter by creator UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174001")
 // @Param assignee_id query string false "Filter by assignee UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174002")
@@ -355,6 +366,7 @@ func (h *UserStoryHandler) DeleteUserStory(c *gin.Context) {
 // @Param limit query integer false "Maximum number of results to return" minimum(1) maximum(100) default(50) example(20)
 // @Param offset query integer false "Number of results to skip for pagination" minimum(0) default(0) example(0)
 // @Success 200 {object} map[string]interface{} "Successfully retrieved user stories list with pagination info"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/user-stories [get]
 func (h *UserStoryHandler) ListUserStories(c *gin.Context) {
@@ -438,8 +450,10 @@ func (h *UserStoryHandler) ListUserStories(c *gin.Context) {
 // @Tags user-stories
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User story UUID or reference ID" example("123e4567-e89b-12d3-a456-426614174000") example("US-001")
 // @Success 200 {object} models.UserStory "Successfully retrieved user story with acceptance criteria"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "User story not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/user-stories/{id}/acceptance-criteria [get]
@@ -483,8 +497,10 @@ func (h *UserStoryHandler) GetUserStoryWithAcceptanceCriteria(c *gin.Context) {
 // @Tags user-stories
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User story UUID or reference ID" example("123e4567-e89b-12d3-a456-426614174000") example("US-001")
 // @Success 200 {object} models.UserStory "Successfully retrieved user story with requirements"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "User story not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/user-stories/{id}/requirements [get]
@@ -528,10 +544,12 @@ func (h *UserStoryHandler) GetUserStoryWithRequirements(c *gin.Context) {
 // @Tags user-stories
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param status body object true "Status change request" example({"status": "In Progress"})
 // @Success 200 {object} models.UserStory "Successfully changed user story status"
 // @Failure 400 {object} map[string]interface{} "Invalid user story ID format, request body, invalid status, or invalid status transition"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "User story not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/user-stories/{id}/status [patch]
@@ -591,10 +609,12 @@ func (h *UserStoryHandler) ChangeUserStoryStatus(c *gin.Context) {
 // @Tags user-stories
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param assignment body object true "Assignment request" example({"assignee_id": "123e4567-e89b-12d3-a456-426614174003"})
 // @Success 200 {object} models.UserStory "Successfully assigned user story"
 // @Failure 400 {object} map[string]interface{} "Invalid user story ID format, request body, or assignee not found"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "User story not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/user-stories/{id}/assign [patch]
