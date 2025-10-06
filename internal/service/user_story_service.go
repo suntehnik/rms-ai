@@ -65,8 +65,8 @@ type CreateUserStoryRequest struct {
 	Title string `json:"title" binding:"required,max=500"`
 
 	// Description provides detailed information about the user story
-	// @Description Detailed description following the template 'As [role], I want [function], so that [goal]' (optional, max 2000 characters)
-	// @MaxLength 2000
+	// @Description Detailed description following the template 'As [role], I want [function], so that [goal]' (optional, max 50000 characters)
+	// @MaxLength 50000
 	// @Example "As a registered user, I want to log in with my email and password, so that I can access my personalized dashboard and account features."
 	Description *string `json:"description,omitempty"`
 }
@@ -99,8 +99,8 @@ type UpdateUserStoryRequest struct {
 	Title *string `json:"title,omitempty"`
 
 	// Description provides detailed information about the user story
-	// @Description Detailed description following the template 'As [role], I want [function], so that [goal]' (optional, max 2000 characters)
-	// @MaxLength 2000
+	// @Description Detailed description following the template 'As [role], I want [function], so that [goal]' (optional, max 50000 characters)
+	// @MaxLength 50000
 	// @Example "As a security-conscious user, I want to enable two-factor authentication on my account, so that I can protect my personal information from unauthorized access."
 	Description *string `json:"description,omitempty"`
 }

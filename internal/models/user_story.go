@@ -92,10 +92,10 @@ type UserStory struct {
 	Title string `gorm:"not null" json:"title" validate:"required,max=500"`
 
 	// Description provides detailed information about the user story
-	// @Description Detailed description of the user story, preferably in the format 'As [role], I want [function], so that [goal]' (optional, max 2000 characters)
-	// @MaxLength 2000
+	// @Description Detailed description of the user story, preferably in the format 'As [role], I want [function], so that [goal]' (optional, max 50000 characters)
+	// @MaxLength 50000
 	// @Example "As a registered user, I want to log in with my email and password, so that I can access my personalized dashboard and account features."
-	Description *string `json:"description,omitempty" validate:"omitempty,max=2000"`
+	Description *string `json:"description,omitempty" validate:"omitempty,max=50000"`
 
 	// Relationships
 	// Epic contains the epic information this user story belongs to

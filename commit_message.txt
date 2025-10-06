@@ -1,0 +1,18 @@
+feat: increase description field validation limit to 50000 characters
+
+- Updated Epic model description validation from max=5000 to max=50000
+- Updated UserStory model description validation from max=2000 to max=50000  
+- Added validation to Requirement model description field (max=50000)
+- Updated service layer request structures with new limits:
+  - CreateEpicRequest and UpdateEpicRequest
+  - CreateUserStoryRequest and UpdateUserStoryRequest
+- Updated documentation comments and @MaxLength annotations
+- All tests pass successfully
+
+This change addresses the issue where existing records in the database 
+exceeded the previous validation limits (e.g., EP-176 with 10,471 characters).
+The new 50,000 character limit provides sufficient space for detailed 
+descriptions while maintaining reasonable constraints.
+
+Database schema remains unchanged as PostgreSQL TEXT fields already 
+support unlimited length. Only application-level validation was updated.

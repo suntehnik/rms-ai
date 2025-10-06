@@ -58,8 +58,8 @@ type CreateEpicRequest struct {
 	Title string `json:"title" binding:"required,max=500"`
 
 	// Description provides detailed information about the epic
-	// @Description Detailed description of the epic's purpose and scope (optional, max 5000 characters)
-	// @MaxLength 5000
+	// @Description Detailed description of the epic's purpose and scope (optional, max 50000 characters)
+	// @MaxLength 50000
 	// @Example "Implement a comprehensive user authentication and authorization system with JWT tokens, role-based access control, and secure password management."
 	Description *string `json:"description,omitempty"`
 }
@@ -92,8 +92,8 @@ type UpdateEpicRequest struct {
 	Title *string `json:"title,omitempty"`
 
 	// Description provides detailed information about the epic
-	// @Description Detailed description of the epic's purpose and scope (optional, max 5000 characters)
-	// @MaxLength 5000
+	// @Description Detailed description of the epic's purpose and scope (optional, max 50000 characters)
+	// @MaxLength 50000
 	// @Example "Enhanced implementation with multi-factor authentication and advanced security features."
 	Description *string `json:"description,omitempty"`
 }

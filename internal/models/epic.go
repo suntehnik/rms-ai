@@ -98,10 +98,10 @@ type Epic struct {
 	Title string `gorm:"not null" json:"title" validate:"required,max=500"`
 
 	// Description provides detailed information about the epic
-	// @Description Detailed description of the epic's purpose and scope (optional, max 5000 characters)
-	// @MaxLength 5000
+	// @Description Detailed description of the epic's purpose and scope (optional, max 50000 characters)
+	// @MaxLength 50000
 	// @Example "Implement a comprehensive user authentication and authorization system with JWT tokens, role-based access control, and secure password management."
-	Description *string `json:"description,omitempty" validate:"omitempty,max=5000"`
+	Description *string `json:"description,omitempty" validate:"omitempty,max=50000"`
 
 	// Relationships - These fields are populated when explicitly requested and contain related entities
 
