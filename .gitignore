@@ -9,6 +9,9 @@ migrate
 bin/
 dist/
 
+commit_message.txt
+pr_description.txt
+
 # Test binary, built with `go test -c`
 *.test
 
