@@ -397,10 +397,10 @@ definitions:
       description:
         description: |-
           Description provides detailed information about the epic
-          @Description Detailed description of the epic's purpose and scope (optional, max 5000 characters)
-          @MaxLength 5000
+          @Description Detailed description of the epic's purpose and scope (optional, max 50000 characters)
+          @MaxLength 50000
           @Example "Implement a comprehensive user authentication and authorization system with JWT tokens, role-based access control, and secure password management."
-        maxLength: 5000
+        maxLength: 50000
         type: string
       id:
         description: |-
@@ -569,6 +569,7 @@ definitions:
         example: The system shall support OAuth 2.0 authentication flow with support
           for Google, GitHub, and Microsoft providers. The implementation must handle
           token refresh and provide secure session management.
+        maxLength: 50000
         type: string
       id:
         description: Unique identifier for the requirement
@@ -879,10 +880,10 @@ definitions:
       description:
         description: |-
           Description provides detailed information about the user story
-          @Description Detailed description of the user story, preferably in the format 'As [role], I want [function], so that [goal]' (optional, max 2000 characters)
-          @MaxLength 2000
+          @Description Detailed description of the user story, preferably in the format 'As [role], I want [function], so that [goal]' (optional, max 50000 characters)
+          @MaxLength 50000
           @Example "As a registered user, I want to log in with my email and password, so that I can access my personalized dashboard and account features."
-        maxLength: 2000
+        maxLength: 50000
         type: string
       epic_id:
         description: |-
@@ -1109,8 +1110,8 @@ definitions:
       description:
         description: |-
           Description provides detailed information about the epic
-          @Description Detailed description of the epic's purpose and scope (optional, max 5000 characters)
-          @MaxLength 5000
+          @Description Detailed description of the epic's purpose and scope (optional, max 50000 characters)
+          @MaxLength 50000
           @Example "Implement a comprehensive user authentication and authorization system with JWT tokens, role-based access control, and secure password management."
         type: string
       priority:
@@ -1272,8 +1273,8 @@ definitions:
       description:
         description: |-
           Description provides detailed information about the user story
-          @Description Detailed description following the template 'As [role], I want [function], so that [goal]' (optional, max 2000 characters)
-          @MaxLength 2000
+          @Description Detailed description following the template 'As [role], I want [function], so that [goal]' (optional, max 50000 characters)
+          @MaxLength 50000
           @Example "As a registered user, I want to log in with my email and password, so that I can access my personalized dashboard and account features."
         type: string
       epic_id:
@@ -1418,8 +1419,8 @@ definitions:
       description:
         description: |-
           Description provides detailed information about the epic
-          @Description Detailed description of the epic's purpose and scope (optional, max 5000 characters)
-          @MaxLength 5000
+          @Description Detailed description of the epic's purpose and scope (optional, max 50000 characters)
+          @MaxLength 50000
           @Example "Enhanced implementation with multi-factor authentication and advanced security features."
         type: string
       priority:
@@ -1526,8 +1527,8 @@ definitions:
       description:
         description: |-
           Description provides detailed information about the user story
-          @Description Detailed description following the template 'As [role], I want [function], so that [goal]' (optional, max 2000 characters)
-          @MaxLength 2000
+          @Description Detailed description following the template 'As [role], I want [function], so that [goal]' (optional, max 50000 characters)
+          @MaxLength 50000
           @Example "As a security-conscious user, I want to enable two-factor authentication on my account, so that I can protect my personal information from unauthorized access."
         type: string
       priority:
@@ -2560,6 +2561,129 @@ paths:
       summary: Update existing acceptance criteria
       tags:
       - acceptance-criteria
+  /api/v1/acceptance-criteria/{id}/comments:
+    get:
+      description: Retrieve all comments for specific acceptance criteria with optional
+        filtering by status and threading. Supports both flat and threaded comment
+        structures.
+      parameters:
+      - description: Acceptance Criteria ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Return comments in threaded structure
+        in: query
+        name: threaded
+        type: boolean
+      - description: Return only inline comments
+        in: query
+        name: inline
+        type: boolean
+      - description: Filter by resolution status
+        enum:
+        - resolved
+        - unresolved
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Successfully retrieved acceptance criteria comments" example({"comments":
+            [{"id": "123e4567-e89b-12d3-a456-426614174000", "content": "This needs
+            clarification", "is_resolved": false}], "count": 1})'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid acceptance criteria ID format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Acceptance criteria not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all comments for acceptance criteria
+      tags:
+      - acceptance-criteria
+      - comments
+    post:
+      consumes:
+      - application/json
+      description: Create a new comment (general or inline) on specific acceptance
+        criteria. Supports threaded discussions through parent_comment_id.
+      parameters:
+      - description: Acceptance Criteria ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Comment creation request
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.CreateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created acceptance criteria comment
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+        "400":
+          description: Invalid request - malformed acceptance criteria ID, missing
+            required fields, or invalid inline comment data
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Acceptance criteria not found or parent comment not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new comment on acceptance criteria
+      tags:
+      - acceptance-criteria
+      - comments
   /api/v1/acceptance-criteria/{id}/comments/inline:
     post:
       consumes:
@@ -4692,6 +4816,128 @@ paths:
       summary: Assign an epic to a user
       tags:
       - epics
+  /api/v1/epics/{id}/comments:
+    get:
+      description: Retrieve all comments for a specific epic with optional filtering
+        by status and threading. Supports both flat and threaded comment structures.
+      parameters:
+      - description: Epic ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Return comments in threaded structure
+        in: query
+        name: threaded
+        type: boolean
+      - description: Return only inline comments
+        in: query
+        name: inline
+        type: boolean
+      - description: Filter by resolution status
+        enum:
+        - resolved
+        - unresolved
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Successfully retrieved epic comments" example({"comments":
+            [{"id": "123e4567-e89b-12d3-a456-426614174000", "content": "This needs
+            clarification", "is_resolved": false}], "count": 1})'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid epic ID format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Epic not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all comments for an epic
+      tags:
+      - epics
+      - comments
+    post:
+      consumes:
+      - application/json
+      description: Create a new comment (general or inline) on a specific epic. Supports
+        threaded discussions through parent_comment_id.
+      parameters:
+      - description: Epic ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Comment creation request
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.CreateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created epic comment
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+        "400":
+          description: Invalid request - malformed epic ID, missing required fields,
+            or invalid inline comment data
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Epic not found or parent comment not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new comment on an epic
+      tags:
+      - epics
+      - comments
   /api/v1/epics/{id}/comments/inline:
     post:
       consumes:
@@ -5389,6 +5635,129 @@ paths:
       summary: Assign requirement to a user
       tags:
       - requirements
+  /api/v1/requirements/{id}/comments:
+    get:
+      description: Retrieve all comments for a specific requirement with optional
+        filtering by status and threading. Supports both flat and threaded comment
+        structures.
+      parameters:
+      - description: Requirement ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Return comments in threaded structure
+        in: query
+        name: threaded
+        type: boolean
+      - description: Return only inline comments
+        in: query
+        name: inline
+        type: boolean
+      - description: Filter by resolution status
+        enum:
+        - resolved
+        - unresolved
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Successfully retrieved requirement comments" example({"comments":
+            [{"id": "123e4567-e89b-12d3-a456-426614174000", "content": "This needs
+            clarification", "is_resolved": false}], "count": 1})'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid requirement ID format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Requirement not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all comments for a requirement
+      tags:
+      - requirements
+      - comments
+    post:
+      consumes:
+      - application/json
+      description: Create a new comment (general or inline) on a specific requirement.
+        Supports threaded discussions through parent_comment_id.
+      parameters:
+      - description: Requirement ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Comment creation request
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.CreateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created requirement comment
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+        "400":
+          description: Invalid request - malformed requirement ID, missing required
+            fields, or invalid inline comment data
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Requirement not found or parent comment not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new comment on a requirement
+      tags:
+      - requirements
+      - comments
   /api/v1/requirements/{id}/comments/inline:
     post:
       consumes:
@@ -6288,6 +6657,128 @@ paths:
       summary: Assign user story to a user
       tags:
       - user-stories
+  /api/v1/user-stories/{id}/comments:
+    get:
+      description: Retrieve all comments for a specific user story with optional filtering
+        by status and threading. Supports both flat and threaded comment structures.
+      parameters:
+      - description: User Story ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Return comments in threaded structure
+        in: query
+        name: threaded
+        type: boolean
+      - description: Return only inline comments
+        in: query
+        name: inline
+        type: boolean
+      - description: Filter by resolution status
+        enum:
+        - resolved
+        - unresolved
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Successfully retrieved user story comments" example({"comments":
+            [{"id": "123e4567-e89b-12d3-a456-426614174000", "content": "This needs
+            clarification", "is_resolved": false}], "count": 1})'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid user story ID format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User story not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all comments for a user story
+      tags:
+      - user-stories
+      - comments
+    post:
+      consumes:
+      - application/json
+      description: Create a new comment (general or inline) on a specific user story.
+        Supports threaded discussions through parent_comment_id.
+      parameters:
+      - description: User Story ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Comment creation request
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.CreateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created user story comment
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
+        "400":
+          description: Invalid request - malformed user story ID, missing required
+            fields, or invalid inline comment data
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User story not found or parent comment not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new comment on a user story
+      tags:
+      - user-stories
+      - comments
   /api/v1/user-stories/{id}/comments/inline:
     post:
       consumes:
