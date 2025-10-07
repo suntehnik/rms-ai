@@ -317,7 +317,7 @@ func (g *MockDataGenerator) createUserStory(epicID uuid.UUID, epicTitle string) 
 	assignee := g.getRandomUser()
 
 	title := g.generateUserStoryTitle(epicTitle)
-	description := g.generateUserStoryDescription(title)
+	description := g.generateUserStoryDescription(epicTitle)
 
 	userStory := &models.UserStory{
 		ID:          uuid.New(),
@@ -473,7 +473,7 @@ func (g *MockDataGenerator) generateEpicDescription(title string) string {
 	return fmt.Sprintf(template, title)
 }
 
-func (g *MockDataGenerator) generateUserStoryTitle(epicTitle string) string {
+func (g *MockDataGenerator) generateUserStoryDescription(title string) string {
 	actions := []string{
 		"Login", "Register", "View", "Edit", "Delete", "Create", "Search", "Filter", "Sort", "Export",
 		"Import", "Configure", "Manage", "Monitor", "Analyze", "Report", "Integrate", "Sync", "Backup", "Restore",
@@ -487,10 +487,10 @@ func (g *MockDataGenerator) generateUserStoryTitle(epicTitle string) string {
 	action := actions[g.rng.Intn(len(actions))]
 	object := objects[g.rng.Intn(len(objects))]
 
-	return fmt.Sprintf("%s %s", action, object)
+	return fmt.Sprintf("%s.\n\n %s %s.", title, action, object)
 }
 
-func (g *MockDataGenerator) generateUserStoryDescription(title string) string {
+func (g *MockDataGenerator) generateUserStoryTitle(title string) string {
 	roles := []string{
 		"registered user", "administrator", "manager", "analyst", "customer", "developer", "tester", "support agent",
 	}
@@ -504,7 +504,7 @@ func (g *MockDataGenerator) generateUserStoryDescription(title string) string {
 	role := roles[g.rng.Intn(len(roles))]
 	goal := goals[g.rng.Intn(len(goals))]
 
-	return fmt.Sprintf("As a %s, I want to %s, so that I can %s.", role, title, goal)
+	return fmt.Sprintf("As a %s, I want to %s, so that I can %s", role, title, goal)
 }
 
 func (g *MockDataGenerator) generateAcceptanceCriteriaDescription() string {
