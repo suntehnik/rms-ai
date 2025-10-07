@@ -22,7 +22,7 @@ func NewCommentRepository(db *gorm.DB) CommentRepository {
 // GetByEntity retrieves comments by entity type and ID
 func (r *commentRepository) GetByEntity(entityType models.EntityType, entityID uuid.UUID) ([]models.Comment, error) {
 	var comments []models.Comment
-	if err := r.GetDB().Where("entity_type = ? AND entity_id = ?", entityType, entityID).
+	if err := r.GetDB().Preload("Author").Where("entity_type = ? AND entity_id = ?", entityType, entityID).
 		Order("created_at ASC").Find(&comments).Error; err != nil {
 		return nil, r.handleDBError(err)
 	}
@@ -32,7 +32,7 @@ func (r *commentRepository) GetByEntity(entityType models.EntityType, entityID u
 // GetByAuthor retrieves comments by author ID
 func (r *commentRepository) GetByAuthor(authorID uuid.UUID) ([]models.Comment, error) {
 	var comments []models.Comment
-	if err := r.GetDB().Where("author_id = ?", authorID).
+	if err := r.GetDB().Preload("Author").Where("author_id = ?", authorID).
 		Order("created_at DESC").Find(&comments).Error; err != nil {
 		return nil, r.handleDBError(err)
 	}
@@ -42,7 +42,7 @@ func (r *commentRepository) GetByAuthor(authorID uuid.UUID) ([]models.Comment, e
 // GetByParent retrieves replies to a parent comment
 func (r *commentRepository) GetByParent(parentID uuid.UUID) ([]models.Comment, error) {
 	var comments []models.Comment
-	if err := r.GetDB().Where("parent_comment_id = ?", parentID).
+	if err := r.GetDB().Preload("Author").Where("parent_comment_id = ?", parentID).
 		Order("created_at ASC").Find(&comments).Error; err != nil {
 		return nil, r.handleDBError(err)
 	}
@@ -52,7 +52,7 @@ func (r *commentRepository) GetByParent(parentID uuid.UUID) ([]models.Comment, e
 // GetThreaded retrieves comments in threaded format for an entity
 func (r *commentRepository) GetThreaded(entityType models.EntityType, entityID uuid.UUID) ([]models.Comment, error) {
 	var comments []models.Comment
-	if err := r.GetDB().Preload("Replies").
+	if err := r.GetDB().Preload("Author").Preload("Replies").Preload("Replies.Author").
 		Where("entity_type = ? AND entity_id = ? AND parent_comment_id IS NULL", entityType, entityID).
 		Order("created_at ASC").Find(&comments).Error; err != nil {
 		return nil, r.handleDBError(err)
@@ -63,7 +63,7 @@ func (r *commentRepository) GetThreaded(entityType models.EntityType, entityID u
 // GetByStatus retrieves comments by resolution status
 func (r *commentRepository) GetByStatus(isResolved bool) ([]models.Comment, error) {
 	var comments []models.Comment
-	if err := r.GetDB().Where("is_resolved = ?", isResolved).
+	if err := r.GetDB().Preload("Author").Where("is_resolved = ?", isResolved).
 		Order("created_at DESC").Find(&comments).Error; err != nil {
 		return nil, r.handleDBError(err)
 	}
@@ -73,9 +73,18 @@ func (r *commentRepository) GetByStatus(isResolved bool) ([]models.Comment, erro
 // GetInlineComments retrieves inline comments for an entity
 func (r *commentRepository) GetInlineComments(entityType models.EntityType, entityID uuid.UUID) ([]models.Comment, error) {
 	var comments []models.Comment
-	if err := r.GetDB().Where("entity_type = ? AND entity_id = ? AND linked_text IS NOT NULL",
+	if err := r.GetDB().Preload("Author").Where("entity_type = ? AND entity_id = ? AND linked_text IS NOT NULL",
 		entityType, entityID).Order("text_position_start ASC").Find(&comments).Error; err != nil {
 		return nil, r.handleDBError(err)
 	}
 	return comments, nil
+}
+
+// GetByID retrieves a comment by ID with author information
+func (r *commentRepository) GetByID(id uuid.UUID) (*models.Comment, error) {
+	var comment models.Comment
+	if err := r.GetDB().Preload("Author").Where("id = ?", id).First(&comment).Error; err != nil {
+		return nil, r.handleDBError(err)
+	}
+	return &comment, nil
 }
