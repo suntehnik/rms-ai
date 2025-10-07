@@ -988,6 +988,183 @@
                 }
             }
         },
+        "/api/v1/acceptance-criteria/{id}/comments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all comments for specific acceptance criteria with optional filtering by status and threading. Supports both flat and threaded comment structures.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "acceptance-criteria",
+                    "comments"
+                ],
+                "summary": "Get all comments for acceptance criteria",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Acceptance Criteria ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Return comments in threaded structure",
+                        "name": "threaded",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Return only inline comments",
+                        "name": "inline",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "resolved",
+                            "unresolved"
+                        ],
+                        "type": "string",
+                        "description": "Filter by resolution status",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved acceptance criteria comments\" example({\"comments\": [{\"id\": \"123e4567-e89b-12d3-a456-426614174000\", \"content\": \"This needs clarification\", \"is_resolved\": false}], \"count\": 1})",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid acceptance criteria ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Acceptance criteria not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new comment (general or inline) on specific acceptance criteria. Supports threaded discussions through parent_comment_id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "acceptance-criteria",
+                    "comments"
+                ],
+                "summary": "Create a new comment on acceptance criteria",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Acceptance Criteria ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Comment creation request",
+                        "name": "comment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateCommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created acceptance criteria comment",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request - malformed acceptance criteria ID, missing required fields, or invalid inline comment data",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Acceptance criteria not found or parent comment not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/acceptance-criteria/{id}/comments/inline": {
             "post": {
                 "security": [
@@ -4082,6 +4259,183 @@
                 }
             }
         },
+        "/api/v1/epics/{id}/comments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all comments for a specific epic with optional filtering by status and threading. Supports both flat and threaded comment structures.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "epics",
+                    "comments"
+                ],
+                "summary": "Get all comments for an epic",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Epic ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Return comments in threaded structure",
+                        "name": "threaded",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Return only inline comments",
+                        "name": "inline",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "resolved",
+                            "unresolved"
+                        ],
+                        "type": "string",
+                        "description": "Filter by resolution status",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved epic comments\" example({\"comments\": [{\"id\": \"123e4567-e89b-12d3-a456-426614174000\", \"content\": \"This needs clarification\", \"is_resolved\": false}], \"count\": 1})",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid epic ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Epic not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new comment (general or inline) on a specific epic. Supports threaded discussions through parent_comment_id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "epics",
+                    "comments"
+                ],
+                "summary": "Create a new comment on an epic",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Epic ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Comment creation request",
+                        "name": "comment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateCommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created epic comment",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request - malformed epic ID, missing required fields, or invalid inline comment data",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Epic not found or parent comment not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/epics/{id}/comments/inline": {
             "post": {
                 "security": [
@@ -5191,6 +5545,183 @@
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/requirements/{id}/comments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all comments for a specific requirement with optional filtering by status and threading. Supports both flat and threaded comment structures.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requirements",
+                    "comments"
+                ],
+                "summary": "Get all comments for a requirement",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Requirement ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Return comments in threaded structure",
+                        "name": "threaded",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Return only inline comments",
+                        "name": "inline",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "resolved",
+                            "unresolved"
+                        ],
+                        "type": "string",
+                        "description": "Filter by resolution status",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved requirement comments\" example({\"comments\": [{\"id\": \"123e4567-e89b-12d3-a456-426614174000\", \"content\": \"This needs clarification\", \"is_resolved\": false}], \"count\": 1})",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid requirement ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Requirement not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new comment (general or inline) on a specific requirement. Supports threaded discussions through parent_comment_id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requirements",
+                    "comments"
+                ],
+                "summary": "Create a new comment on a requirement",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Requirement ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Comment creation request",
+                        "name": "comment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateCommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created requirement comment",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request - malformed requirement ID, missing required fields, or invalid inline comment data",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Requirement not found or parent comment not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -6316,6 +6847,183 @@
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user-stories/{id}/comments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all comments for a specific user story with optional filtering by status and threading. Supports both flat and threaded comment structures.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user-stories",
+                    "comments"
+                ],
+                "summary": "Get all comments for a user story",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "User Story ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Return comments in threaded structure",
+                        "name": "threaded",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Return only inline comments",
+                        "name": "inline",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "resolved",
+                            "unresolved"
+                        ],
+                        "type": "string",
+                        "description": "Filter by resolution status",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved user story comments\" example({\"comments\": [{\"id\": \"123e4567-e89b-12d3-a456-426614174000\", \"content\": \"This needs clarification\", \"is_resolved\": false}], \"count\": 1})",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user story ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User story not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new comment (general or inline) on a specific user story. Supports threaded discussions through parent_comment_id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user-stories",
+                    "comments"
+                ],
+                "summary": "Create a new comment on a user story",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "User Story ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Comment creation request",
+                        "name": "comment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateCommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created user story comment",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request - malformed user story ID, missing required fields, or invalid inline comment data",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User story not found or parent comment not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -8412,9 +9120,9 @@
                     "type": "string"
                 },
                 "description": {
-                    "description": "Description provides detailed information about the epic\n@Description Detailed description of the epic's purpose and scope (optional, max 5000 characters)\n@MaxLength 5000\n@Example \"Implement a comprehensive user authentication and authorization system with JWT tokens, role-based access control, and secure password management.\"",
+                    "description": "Description provides detailed information about the epic\n@Description Detailed description of the epic's purpose and scope (optional, max 50000 characters)\n@MaxLength 50000\n@Example \"Implement a comprehensive user authentication and authorization system with JWT tokens, role-based access control, and secure password management.\"",
                     "type": "string",
-                    "maxLength": 5000
+                    "maxLength": 50000
                 },
                 "id": {
                     "description": "ID is the unique identifier for the epic\n@Description Unique UUID identifier for the epic\n@Example \"123e4567-e89b-12d3-a456-426614174000\"",
@@ -8610,6 +9318,7 @@
                 "description": {
                     "description": "Detailed description of the requirement",
                     "type": "string",
+                    "maxLength": 50000,
                     "example": "The system shall support OAuth 2.0 authentication flow with support for Google, GitHub, and Microsoft providers. The implementation must handle token refresh and provide secure session management."
                 },
                 "id": {
@@ -9033,9 +9742,9 @@
                     "type": "string"
                 },
                 "description": {
-                    "description": "Description provides detailed information about the user story\n@Description Detailed description of the user story, preferably in the format 'As [role], I want [function], so that [goal]' (optional, max 2000 characters)\n@MaxLength 2000\n@Example \"As a registered user, I want to log in with my email and password, so that I can access my personalized dashboard and account features.\"",
+                    "description": "Description provides detailed information about the user story\n@Description Detailed description of the user story, preferably in the format 'As [role], I want [function], so that [goal]' (optional, max 50000 characters)\n@MaxLength 50000\n@Example \"As a registered user, I want to log in with my email and password, so that I can access my personalized dashboard and account features.\"",
                     "type": "string",
-                    "maxLength": 2000
+                    "maxLength": 50000
                 },
                 "epic_id": {
                     "description": "EpicID is the UUID of the epic this user story belongs to\n@Description UUID of the epic that contains this user story\n@Example \"123e4567-e89b-12d3-a456-426614174001\"",
@@ -9301,7 +10010,7 @@
                     "type": "string"
                 },
                 "description": {
-                    "description": "Description provides detailed information about the epic\n@Description Detailed description of the epic's purpose and scope (optional, max 5000 characters)\n@MaxLength 5000\n@Example \"Implement a comprehensive user authentication and authorization system with JWT tokens, role-based access control, and secure password management.\"",
+                    "description": "Description provides detailed information about the epic\n@Description Detailed description of the epic's purpose and scope (optional, max 50000 characters)\n@MaxLength 50000\n@Example \"Implement a comprehensive user authentication and authorization system with JWT tokens, role-based access control, and secure password management.\"",
                     "type": "string"
                 },
                 "priority": {
@@ -9513,7 +10222,7 @@
                     "type": "string"
                 },
                 "description": {
-                    "description": "Description provides detailed information about the user story\n@Description Detailed description following the template 'As [role], I want [function], so that [goal]' (optional, max 2000 characters)\n@MaxLength 2000\n@Example \"As a registered user, I want to log in with my email and password, so that I can access my personalized dashboard and account features.\"",
+                    "description": "Description provides detailed information about the user story\n@Description Detailed description following the template 'As [role], I want [function], so that [goal]' (optional, max 50000 characters)\n@MaxLength 50000\n@Example \"As a registered user, I want to log in with my email and password, so that I can access my personalized dashboard and account features.\"",
                     "type": "string"
                 },
                 "epic_id": {
@@ -9699,7 +10408,7 @@
                     "type": "string"
                 },
                 "description": {
-                    "description": "Description provides detailed information about the epic\n@Description Detailed description of the epic's purpose and scope (optional, max 5000 characters)\n@MaxLength 5000\n@Example \"Enhanced implementation with multi-factor authentication and advanced security features.\"",
+                    "description": "Description provides detailed information about the epic\n@Description Detailed description of the epic's purpose and scope (optional, max 50000 characters)\n@MaxLength 50000\n@Example \"Enhanced implementation with multi-factor authentication and advanced security features.\"",
                     "type": "string"
                 },
                 "priority": {
@@ -9833,7 +10542,7 @@
                     "type": "string"
                 },
                 "description": {
-                    "description": "Description provides detailed information about the user story\n@Description Detailed description following the template 'As [role], I want [function], so that [goal]' (optional, max 2000 characters)\n@MaxLength 2000\n@Example \"As a security-conscious user, I want to enable two-factor authentication on my account, so that I can protect my personal information from unauthorized access.\"",
+                    "description": "Description provides detailed information about the user story\n@Description Detailed description following the template 'As [role], I want [function], so that [goal]' (optional, max 50000 characters)\n@MaxLength 50000\n@Example \"As a security-conscious user, I want to enable two-factor authentication on my account, so that I can protect my personal information from unauthorized access.\"",
                     "type": "string"
                 },
                 "priority": {

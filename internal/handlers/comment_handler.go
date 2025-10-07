@@ -1218,21 +1218,77 @@ func (h *CommentHandler) validateInlineCommentsForEntity(c *gin.Context, entityT
 // Entity-specific comment handlers that determine entity type from route context
 
 // CreateEpicComment handles POST /api/v1/epics/:id/comments
+// @Summary Create a new comment on an epic
+// @Description Create a new comment (general or inline) on a specific epic. Supports threaded discussions through parent_comment_id.
+// @Tags epics,comments
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Epic ID" format(uuid)
+// @Param comment body service.CreateCommentRequest true "Comment creation request"
+// @Success 201 {object} service.CommentResponse "Successfully created epic comment"
+// @Failure 400 {object} map[string]string "Invalid request - malformed epic ID, missing required fields, or invalid inline comment data"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 404 {object} map[string]string "Epic not found or parent comment not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/v1/epics/{id}/comments [post]
 func (h *CommentHandler) CreateEpicComment(c *gin.Context) {
 	h.createCommentForEntity(c, models.EntityTypeEpic)
 }
 
 // CreateUserStoryComment handles POST /api/v1/user-stories/:id/comments
+// @Summary Create a new comment on a user story
+// @Description Create a new comment (general or inline) on a specific user story. Supports threaded discussions through parent_comment_id.
+// @Tags user-stories,comments
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "User Story ID" format(uuid)
+// @Param comment body service.CreateCommentRequest true "Comment creation request"
+// @Success 201 {object} service.CommentResponse "Successfully created user story comment"
+// @Failure 400 {object} map[string]string "Invalid request - malformed user story ID, missing required fields, or invalid inline comment data"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 404 {object} map[string]string "User story not found or parent comment not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/v1/user-stories/{id}/comments [post]
 func (h *CommentHandler) CreateUserStoryComment(c *gin.Context) {
 	h.createCommentForEntity(c, models.EntityTypeUserStory)
 }
 
 // CreateAcceptanceCriteriaComment handles POST /api/v1/acceptance-criteria/:id/comments
+// @Summary Create a new comment on acceptance criteria
+// @Description Create a new comment (general or inline) on specific acceptance criteria. Supports threaded discussions through parent_comment_id.
+// @Tags acceptance-criteria,comments
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Acceptance Criteria ID" format(uuid)
+// @Param comment body service.CreateCommentRequest true "Comment creation request"
+// @Success 201 {object} service.CommentResponse "Successfully created acceptance criteria comment"
+// @Failure 400 {object} map[string]string "Invalid request - malformed acceptance criteria ID, missing required fields, or invalid inline comment data"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 404 {object} map[string]string "Acceptance criteria not found or parent comment not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/v1/acceptance-criteria/{id}/comments [post]
 func (h *CommentHandler) CreateAcceptanceCriteriaComment(c *gin.Context) {
 	h.createCommentForEntity(c, models.EntityTypeAcceptanceCriteria)
 }
 
 // CreateRequirementComment handles POST /api/v1/requirements/:id/comments
+// @Summary Create a new comment on a requirement
+// @Description Create a new comment (general or inline) on a specific requirement. Supports threaded discussions through parent_comment_id.
+// @Tags requirements,comments
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Requirement ID" format(uuid)
+// @Param comment body service.CreateCommentRequest true "Comment creation request"
+// @Success 201 {object} service.CommentResponse "Successfully created requirement comment"
+// @Failure 400 {object} map[string]string "Invalid request - malformed requirement ID, missing required fields, or invalid inline comment data"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 404 {object} map[string]string "Requirement not found or parent comment not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/v1/requirements/{id}/comments [post]
 func (h *CommentHandler) CreateRequirementComment(c *gin.Context) {
 	h.createCommentForEntity(c, models.EntityTypeRequirement)
 }
@@ -1324,21 +1380,81 @@ func (h *CommentHandler) createCommentForEntity(c *gin.Context, entityType model
 }
 
 // GetEpicComments handles GET /api/v1/epics/:id/comments
+// @Summary Get all comments for an epic
+// @Description Retrieve all comments for a specific epic with optional filtering by status and threading. Supports both flat and threaded comment structures.
+// @Tags epics,comments
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Epic ID" format(uuid)
+// @Param threaded query boolean false "Return comments in threaded structure"
+// @Param inline query boolean false "Return only inline comments"
+// @Param status query string false "Filter by resolution status" Enums(resolved,unresolved)
+// @Success 200 {object} map[string]interface{} "Successfully retrieved epic comments" example({"comments": [{"id": "123e4567-e89b-12d3-a456-426614174000", "content": "This needs clarification", "is_resolved": false}], "count": 1})
+// @Failure 400 {object} map[string]string "Invalid epic ID format"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 404 {object} map[string]string "Epic not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/v1/epics/{id}/comments [get]
 func (h *CommentHandler) GetEpicComments(c *gin.Context) {
 	h.getCommentsForEntity(c, models.EntityTypeEpic)
 }
 
 // GetUserStoryComments handles GET /api/v1/user-stories/:id/comments
+// @Summary Get all comments for a user story
+// @Description Retrieve all comments for a specific user story with optional filtering by status and threading. Supports both flat and threaded comment structures.
+// @Tags user-stories,comments
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "User Story ID" format(uuid)
+// @Param threaded query boolean false "Return comments in threaded structure"
+// @Param inline query boolean false "Return only inline comments"
+// @Param status query string false "Filter by resolution status" Enums(resolved,unresolved)
+// @Success 200 {object} map[string]interface{} "Successfully retrieved user story comments" example({"comments": [{"id": "123e4567-e89b-12d3-a456-426614174000", "content": "This needs clarification", "is_resolved": false}], "count": 1})
+// @Failure 400 {object} map[string]string "Invalid user story ID format"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 404 {object} map[string]string "User story not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/v1/user-stories/{id}/comments [get]
 func (h *CommentHandler) GetUserStoryComments(c *gin.Context) {
 	h.getCommentsForEntity(c, models.EntityTypeUserStory)
 }
 
 // GetAcceptanceCriteriaComments handles GET /api/v1/acceptance-criteria/:id/comments
+// @Summary Get all comments for acceptance criteria
+// @Description Retrieve all comments for specific acceptance criteria with optional filtering by status and threading. Supports both flat and threaded comment structures.
+// @Tags acceptance-criteria,comments
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Acceptance Criteria ID" format(uuid)
+// @Param threaded query boolean false "Return comments in threaded structure"
+// @Param inline query boolean false "Return only inline comments"
+// @Param status query string false "Filter by resolution status" Enums(resolved,unresolved)
+// @Success 200 {object} map[string]interface{} "Successfully retrieved acceptance criteria comments" example({"comments": [{"id": "123e4567-e89b-12d3-a456-426614174000", "content": "This needs clarification", "is_resolved": false}], "count": 1})
+// @Failure 400 {object} map[string]string "Invalid acceptance criteria ID format"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 404 {object} map[string]string "Acceptance criteria not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/v1/acceptance-criteria/{id}/comments [get]
 func (h *CommentHandler) GetAcceptanceCriteriaComments(c *gin.Context) {
 	h.getCommentsForEntity(c, models.EntityTypeAcceptanceCriteria)
 }
 
 // GetRequirementComments handles GET /api/v1/requirements/:id/comments
+// @Summary Get all comments for a requirement
+// @Description Retrieve all comments for a specific requirement with optional filtering by status and threading. Supports both flat and threaded comment structures.
+// @Tags requirements,comments
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Requirement ID" format(uuid)
+// @Param threaded query boolean false "Return comments in threaded structure"
+// @Param inline query boolean false "Return only inline comments"
+// @Param status query string false "Filter by resolution status" Enums(resolved,unresolved)
+// @Success 200 {object} map[string]interface{} "Successfully retrieved requirement comments" example({"comments": [{"id": "123e4567-e89b-12d3-a456-426614174000", "content": "This needs clarification", "is_resolved": false}], "count": 1})
+// @Failure 400 {object} map[string]string "Invalid requirement ID format"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 404 {object} map[string]string "Requirement not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/v1/requirements/{id}/comments [get]
 func (h *CommentHandler) GetRequirementComments(c *gin.Context) {
 	h.getCommentsForEntity(c, models.EntityTypeRequirement)
 }
