@@ -126,6 +126,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	commentHandler := handlers.NewCommentHandler(commentService)
 	searchHandler := handlers.NewSearchHandler(searchService, logger.Logger)
 	navigationHandler := handlers.NewNavigationHandler(navigationService)
+	mcpHandler := handlers.NewMCPHandler()
 
 	// Authentication routes (no /api/v1 prefix for auth)
 	authGroup := router.Group("/auth")
@@ -147,13 +148,17 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	{
 		// Personal Access Token routes
 		pats := v1.Group("/pats")
-		pats.Use(auth.PATMiddleware(authService, patService)) // Support both PAT and JWT authentication
-		pats.Use(middleware.PATRateLimit())                   // Apply rate limiting for PAT endpoints
+		pats.Use(authService.Middleware())  // Support both PAT and JWT authentication
+		pats.Use(middleware.PATRateLimit()) // Apply rate limiting for PAT endpoints
 		{
 			pats.POST("", patHandler.CreatePAT)       // Create new PAT
 			pats.GET("", patHandler.ListPATs)         // List user's PATs
 			pats.DELETE("/:id", patHandler.RevokePAT) // Revoke PAT by ID
 		}
+
+		// MCP (Model Context Protocol) routes
+		v1.POST("/mcp", auth.PATMiddleware(authService, patService), mcpHandler.Process)
+
 		// Search routes
 		v1.GET("/search", authService.Middleware(), searchHandler.Search)
 		v1.GET("/search/suggestions", authService.Middleware(), searchHandler.SearchSuggestions)

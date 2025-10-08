@@ -66,11 +66,41 @@ func PATMiddleware(authService *Service, patService service.PATService) gin.Hand
 
 // authenticateWithPAT handles PAT token authentication
 func authenticateWithPAT(c *gin.Context, patService service.PATService, token string) error {
+	// Create a context with client information for security logging
+	clientIP := c.ClientIP()
+	userAgent := c.GetHeader("User-Agent")
+	ctx := WithClientInfo(c.Request.Context(), clientIP, userAgent)
+
 	// Validate PAT token and get associated user
-	user, err := patService.ValidateToken(c.Request.Context(), token)
+	user, err := patService.ValidateToken(ctx, token)
 	if err != nil {
+		// Log authentication failure with client info
+		securityLogger := NewSecurityLogger()
+		clientIP := c.ClientIP()
+		userAgent := c.GetHeader("User-Agent")
+
+		// Determine failure reason from error type
+		reason := "unknown_error"
+		switch err {
+		case service.ErrPATInvalidToken:
+			reason = "invalid_token"
+		case service.ErrPATInvalidPrefix:
+			reason = "invalid_prefix"
+		case service.ErrPATExpired:
+			reason = "token_expired"
+		case service.ErrPATTokenHashMismatch:
+			reason = "token_mismatch"
+		case service.ErrPATUserNotFound:
+			reason = "user_not_found"
+		}
+
+		securityLogger.LogPATAuthFailure(ctx, reason, "mcp_pat_", clientIP, userAgent)
 		return err
 	}
+
+	// Log successful authentication with client info
+	securityLogger := NewSecurityLogger()
+	securityLogger.LogAuthSuccess(ctx, user.ID, user.Username, "pat", clientIP, userAgent)
 
 	// Create claims-like structure for PAT authentication
 	patClaims := &Claims{
