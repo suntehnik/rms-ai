@@ -110,6 +110,12 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	authService := auth.NewService(cfg.JWT.Secret, 24*time.Hour) // 24 hours token duration
 	authHandler := auth.NewHandlers(authService, db.Postgres)
 
+	// Initialize PAT service and handler
+	tokenGenerator := service.NewSecureTokenGenerator()
+	hashService := service.NewDefaultBcryptHashService()
+	patService := service.NewPATService(repos.PersonalAccessToken, repos.User, tokenGenerator, hashService)
+	patHandler := handlers.NewPATHandler(patService)
+
 	// Initialize handlers
 	epicHandler := handlers.NewEpicHandler(epicService)
 	userStoryHandler := handlers.NewUserStoryHandler(userStoryService)
@@ -139,6 +145,15 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	// API v1 routes
 	v1 := router.Group("/api/v1")
 	{
+		// Personal Access Token routes
+		pats := v1.Group("/pats")
+		pats.Use(auth.PATMiddleware(authService, patService)) // Support both PAT and JWT authentication
+		pats.Use(middleware.PATRateLimit())                   // Apply rate limiting for PAT endpoints
+		{
+			pats.POST("", patHandler.CreatePAT)       // Create new PAT
+			pats.GET("", patHandler.ListPATs)         // List user's PATs
+			pats.DELETE("/:id", patHandler.RevokePAT) // Revoke PAT by ID
+		}
 		// Search routes
 		v1.GET("/search", authService.Middleware(), searchHandler.Search)
 		v1.GET("/search/suggestions", authService.Middleware(), searchHandler.SearchSuggestions)

@@ -1,62 +1,22 @@
-feat: Complete comment system improvements - Swagger docs + author info
+feat: register PAT routes in server configuration with middleware chain and rate limiting
 
-This PR combines two major improvements to the comment system:
+- Add PAT routes to /api/v1/pats endpoint group with proper authentication
+- Implement rate limiting middleware for PAT endpoints (10 requests/minute)
+- Configure PAT middleware to support both PAT and JWT authentication
+- Initialize PAT service and handler with secure token generator and bcrypt hash service
+- Add PersonalAccessToken repository to repositories struct
+- Create rate limiting middleware with configurable limits and time windows
+- Support PAT creation, listing, and revocation endpoints with proper middleware chain
 
-## 1. Comprehensive Swagger Documentation
-- Added detailed Swagger annotations to all entity-specific comment handler methods
-- Documented GET/POST endpoints for epics, user stories, acceptance criteria, and requirements
-- Added proper parameter documentation with types, formats, and validation rules
-- Included comprehensive response documentation with success and error scenarios
-- Added appropriate tags for better API documentation organization
-- Updated generated Swagger documentation files (docs.go, swagger.json, swagger.yaml)
+Requirements addressed:
+- 4.1: POST /api/v1/pats endpoint for token creation
+- 4.2: GET /api/v1/pats endpoint for listing user tokens  
+- 4.3: DELETE /api/v1/pats/{id} endpoint for token revocation
+- 4.6: Proper authentication middleware chain for PAT endpoints
+- 5.6: Rate limiting protection for PAT endpoints (10 requests/minute)
 
-## 2. Enhanced Comment Responses with Author Information
-- Updated all comment repository methods to eagerly load author information using Preload("Author")
-- Enhanced GetByEntity, GetByParent, GetThreaded, GetByStatus, GetInlineComments, and GetByAuthor methods
-- Added GetByID override in comment repository to include author information
-- Enhanced GetThreaded to also preload author information for replies (Preload("Replies.Author"))
-
-## API Response Enhancement
-Comments now include complete author information instead of just author_id:
-
-### Before:
-```json
-{
-  "id": "123...",
-  "content": "Comment text",
-  "author_id": "456...",
-  "created_at": "2024-01-15T10:30:00Z"
-}
-```
-
-### After:
-```json
-{
-  "id": "123...",
-  "content": "Comment text", 
-  "author_id": "456...",
-  "author": {
-    "id": "456...",
-    "username": "john.doe",
-    "email": "john.doe@example.com",
-    "role": "User"
-  },
-  "created_at": "2024-01-15T10:30:00Z"
-}
-```
-
-## Benefits
-- Improved user experience with immediate author information display
-- Reduced API calls by eliminating need for separate author lookups
-- Better performance through eager loading and prevention of N+1 queries
-- Complete API documentation for all comment endpoints
-- Consistent documentation patterns across all comment operations
-- Backward compatible - author_id field still present
-
-## Testing
-- ✅ All unit tests pass
-- ✅ All integration tests pass  
-- ✅ All E2E tests pass
-- ✅ Code compiles successfully
-- ✅ Swagger documentation generates without errors
-- ✅ No breaking changes to existing functionality
+Technical implementation:
+- Created PATRateLimit middleware with in-memory rate limiter
+- Integrated PAT middleware for dual authentication support (PAT + JWT)
+- Added repository initialization in dependency injection
+- Configured proper middleware chain: authentication -> rate limiting -> handlers
