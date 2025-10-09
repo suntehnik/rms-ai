@@ -135,7 +135,7 @@ func (h *MCPHandler) Process(c *gin.Context) {
 func handleInitialize(ctx context.Context, params interface{}) (interface{}, error) {
 	// Basic MCP initialization response
 	return map[string]interface{}{
-		"protocolVersion": "2025-06-18",
+		"protocolVersion": "2025-03-26",
 		"capabilities": map[string]interface{}{
 			"tools": map[string]interface{}{
 				"listChanged": true,

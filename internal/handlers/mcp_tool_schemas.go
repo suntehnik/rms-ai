@@ -76,6 +76,11 @@ func GetSupportedTools() []ToolDefinition {
 						"description": "UUID of the user to assign the epic to (empty string to unassign)",
 						"format":      "uuid",
 					},
+					"status": map[string]interface{}{
+						"type":        "string",
+						"description": "New status of the epic (Backlog, Draft, In Progress, Done, Cancelled)",
+						"enum":        []string{"Backlog", "Draft", "In Progress", "Done", "Cancelled"},
+					},
 				},
 				"required": []string{"epic_id"},
 			},
