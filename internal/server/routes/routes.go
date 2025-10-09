@@ -148,8 +148,8 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	{
 		// Personal Access Token routes
 		pats := v1.Group("/pats")
-		pats.Use(authService.Middleware())  // Support both PAT and JWT authentication
-		pats.Use(middleware.PATRateLimit()) // Apply rate limiting for PAT endpoints
+		pats.Use(authService.Middleware()) // Support both PAT and JWT authentication
+		// pats.Use(middleware.PATRateLimit()) // Apply rate limiting for PAT endpoints
 		{
 			pats.POST("", patHandler.CreatePAT)       // Create new PAT
 			pats.GET("", patHandler.ListPATs)         // List user's PATs
