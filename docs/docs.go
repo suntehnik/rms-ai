@@ -4889,7 +4889,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Process a Model Context Protocol request",
+                "description": "Process a Model Context Protocol request using JSON-RPC 2.0",
                 "consumes": [
                     "application/json"
                 ],

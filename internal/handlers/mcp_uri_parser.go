@@ -48,6 +48,15 @@ func (p *URIParser) Parse(uri string) (*ParsedURI, error) {
 		return nil, fmt.Errorf("URI cannot be empty")
 	}
 
+	// Check for case sensitivity issues before parsing
+	// Go's url.Parse automatically converts scheme to lowercase, but we want to reject non-lowercase schemes
+	if schemeEnd := strings.Index(uri, "://"); schemeEnd != -1 {
+		originalScheme := uri[:schemeEnd]
+		if originalScheme != strings.ToLower(originalScheme) {
+			return nil, fmt.Errorf("scheme must be lowercase: %s", originalScheme)
+		}
+	}
+
 	// Parse the URI using Go's url package
 	parsedURL, err := url.Parse(uri)
 	if err != nil {

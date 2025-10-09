@@ -5342,7 +5342,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Process a Model Context Protocol request
+      description: Process a Model Context Protocol request using JSON-RPC 2.0
       produces:
       - application/json
       responses:
