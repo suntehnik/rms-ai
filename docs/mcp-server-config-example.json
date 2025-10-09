@@ -1,0 +1,6 @@
+{
+  "backend_api_url": "http://localhost:8080",
+  "pat_token": "mcp_pat_lQBATXwErMweZ0BVyR19QZHuq-ECgCCBG_Td7F9Dkqc",
+  "request_timeout": "30s",
+  "log_level": "info"
+}

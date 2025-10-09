@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "requirements-mcp": {
+      "command": "/Users/divaletin/development/product-requirements/bin/requirements-mcp-server",
+      "disabled": false,
+      "autoApprove": [
+        "update_epic",
+        "search_global"
+      ]
+    }
+  }
+}
