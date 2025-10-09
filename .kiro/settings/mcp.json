@@ -5,7 +5,13 @@
       "disabled": false,
       "autoApprove": [
         "update_epic",
-        "search_global"
+        "search_global",
+        "create_epic",
+        "create_user_story",
+        "create_user_story",
+        "search_requirements",
+        "create_requirement",
+        "update_requirement"
       ]
     }
   }

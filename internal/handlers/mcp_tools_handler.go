@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
@@ -49,9 +50,8 @@ type ToolResponse struct {
 
 // ContentItem represents a single content item in a tool response
 type ContentItem struct {
-	Type string      `json:"type"`
-	Text string      `json:"text,omitempty"`
-	Data interface{} `json:"data,omitempty"`
+	Type string `json:"type"`
+	Text string `json:"text"`
 }
 
 // getUserFromContext extracts user information from the context
@@ -163,8 +163,8 @@ func (h *ToolsHandler) handleCreateEpic(ctx context.Context, args map[string]int
 				Text: fmt.Sprintf("Successfully created epic %s: %s", epic.ReferenceID, epic.Title),
 			},
 			{
-				Type: "data",
-				Data: epic,
+				Type: "text",
+				Text: fmt.Sprintf("Epic data: %+v", epic),
 			},
 		},
 	}, nil
@@ -220,6 +220,11 @@ func (h *ToolsHandler) handleUpdateEpic(ctx context.Context, args map[string]int
 		}
 	}
 
+	if status, ok := args["status"].(string); ok && status != "" {
+		epicStatus := models.EpicStatus(status)
+		req.Status = &epicStatus
+	}
+
 	// Update the epic
 	epic, err := h.epicService.UpdateEpic(epicID, req)
 	if err != nil {
@@ -233,8 +238,8 @@ func (h *ToolsHandler) handleUpdateEpic(ctx context.Context, args map[string]int
 				Text: fmt.Sprintf("Successfully updated epic %s: %s", epic.ReferenceID, epic.Title),
 			},
 			{
-				Type: "data",
-				Data: epic,
+				Type: "text",
+				Text: fmt.Sprintf("Epic data: %+v", epic),
 			},
 		},
 	}, nil
@@ -310,8 +315,8 @@ func (h *ToolsHandler) handleCreateUserStory(ctx context.Context, args map[strin
 				Text: fmt.Sprintf("Successfully created user story %s: %s", userStory.ReferenceID, userStory.Title),
 			},
 			{
-				Type: "data",
-				Data: userStory,
+				Type: "text",
+				Text: fmt.Sprintf("User story data: %+v", userStory),
 			},
 		},
 	}, nil
@@ -380,8 +385,8 @@ func (h *ToolsHandler) handleUpdateUserStory(ctx context.Context, args map[strin
 				Text: fmt.Sprintf("Successfully updated user story %s: %s", userStory.ReferenceID, userStory.Title),
 			},
 			{
-				Type: "data",
-				Data: userStory,
+				Type: "text",
+				Text: fmt.Sprintf("User story data: %+v", userStory),
 			},
 		},
 	}, nil
@@ -478,8 +483,8 @@ func (h *ToolsHandler) handleCreateRequirement(ctx context.Context, args map[str
 				Text: fmt.Sprintf("Successfully created requirement %s: %s", requirement.ReferenceID, requirement.Title),
 			},
 			{
-				Type: "data",
-				Data: requirement,
+				Type: "text",
+				Text: fmt.Sprintf("Requirement data: %+v", requirement),
 			},
 		},
 	}, nil
@@ -548,8 +553,8 @@ func (h *ToolsHandler) handleUpdateRequirement(ctx context.Context, args map[str
 				Text: fmt.Sprintf("Successfully updated requirement %s: %s", requirement.ReferenceID, requirement.Title),
 			},
 			{
-				Type: "data",
-				Data: requirement,
+				Type: "text",
+				Text: fmt.Sprintf("Requirement data: %+v", requirement),
 			},
 		},
 	}, nil
@@ -631,8 +636,8 @@ func (h *ToolsHandler) handleCreateRelationship(ctx context.Context, args map[st
 				Text: fmt.Sprintf("Successfully created relationship between requirements %s and %s", sourceIDStr, targetIDStr),
 			},
 			{
-				Type: "data",
-				Data: relationship,
+				Type: "text",
+				Text: fmt.Sprintf("Relationship data: %+v", relationship),
 			},
 		},
 	}, nil
@@ -679,6 +684,21 @@ func (h *ToolsHandler) handleSearchGlobal(ctx context.Context, args map[string]i
 		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Search failed: %v", err))
 	}
 
+	// Convert search results to JSON string for MCP compatibility
+	searchData := map[string]interface{}{
+		"results":      response.Results,
+		"total_count":  response.Total,
+		"query":        query,
+		"entity_types": entityTypes,
+		"limit":        limit,
+		"offset":       offset,
+	}
+
+	jsonData, err := json.MarshalIndent(searchData, "", "  ")
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to marshal search results: %v", err))
+	}
+
 	return &ToolResponse{
 		Content: []ContentItem{
 			{
@@ -686,15 +706,8 @@ func (h *ToolsHandler) handleSearchGlobal(ctx context.Context, args map[string]i
 				Text: fmt.Sprintf("Found %d results for query '%s'", response.Total, query),
 			},
 			{
-				Type: "data",
-				Data: map[string]interface{}{
-					"results":      response.Results,
-					"total_count":  response.Total,
-					"query":        query,
-					"entity_types": entityTypes,
-					"limit":        limit,
-					"offset":       offset,
-				},
+				Type: "text",
+				Text: string(jsonData),
 			},
 		},
 	}, nil
@@ -714,6 +727,18 @@ func (h *ToolsHandler) handleSearchRequirements(ctx context.Context, args map[st
 		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Requirements search failed: %v", err))
 	}
 
+	// Convert requirements search results to JSON string for MCP compatibility
+	searchData := map[string]interface{}{
+		"requirements": requirements,
+		"query":        query,
+		"count":        len(requirements),
+	}
+
+	jsonData, err := json.MarshalIndent(searchData, "", "  ")
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to marshal requirements search results: %v", err))
+	}
+
 	return &ToolResponse{
 		Content: []ContentItem{
 			{
@@ -721,12 +746,8 @@ func (h *ToolsHandler) handleSearchRequirements(ctx context.Context, args map[st
 				Text: fmt.Sprintf("Found %d requirements matching query '%s'", len(requirements), query),
 			},
 			{
-				Type: "data",
-				Data: map[string]interface{}{
-					"requirements": requirements,
-					"query":        query,
-					"count":        len(requirements),
-				},
+				Type: "text",
+				Text: string(jsonData),
 			},
 		},
 	}, nil
