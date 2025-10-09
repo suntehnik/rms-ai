@@ -126,7 +126,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	commentHandler := handlers.NewCommentHandler(commentService)
 	searchHandler := handlers.NewSearchHandler(searchService, logger.Logger)
 	navigationHandler := handlers.NewNavigationHandler(navigationService)
-	mcpHandler := handlers.NewMCPHandler()
+	mcpHandler := handlers.NewMCPHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService, searchService)
 
 	// Authentication routes (no /api/v1 prefix for auth)
 	authGroup := router.Group("/auth")
