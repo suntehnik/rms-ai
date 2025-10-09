@@ -31,6 +31,13 @@ type Metrics struct {
 	SearchQueries   *prometheus.CounterVec
 	SearchDuration  *prometheus.HistogramVec
 
+	// PAT (Personal Access Token) metrics
+	PATOperations    *prometheus.CounterVec
+	PATAuthAttempts  *prometheus.CounterVec
+	PATAuthDuration  *prometheus.HistogramVec
+	PATTokensActive  *prometheus.GaugeVec
+	PATTokensExpired *prometheus.CounterVec
+
 	// System metrics
 	ApplicationInfo   *prometheus.GaugeVec
 	ApplicationUptime *prometheus.CounterVec
@@ -152,6 +159,44 @@ func Init(serviceName, version string) *Metrics {
 			[]string{"search_type"},
 		),
 
+		// PAT (Personal Access Token) metrics
+		PATOperations: promauto.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "pat_operations_total",
+				Help: "Total number of PAT operations",
+			},
+			[]string{"operation", "status", "user_id"},
+		),
+		PATAuthAttempts: promauto.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "pat_auth_attempts_total",
+				Help: "Total number of PAT authentication attempts",
+			},
+			[]string{"status", "reason"},
+		),
+		PATAuthDuration: promauto.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "pat_auth_duration_seconds",
+				Help:    "Duration of PAT authentication attempts in seconds",
+				Buckets: []float64{0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0},
+			},
+			[]string{"status"},
+		),
+		PATTokensActive: promauto.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "pat_tokens_active",
+				Help: "Number of active PAT tokens",
+			},
+			[]string{"user_id"},
+		),
+		PATTokensExpired: promauto.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "pat_tokens_expired_total",
+				Help: "Total number of expired PAT tokens",
+			},
+			[]string{},
+		),
+
 		// System metrics
 		ApplicationInfo: promauto.NewGaugeVec(
 			prometheus.GaugeOpts{
@@ -239,4 +284,25 @@ func (m *Metrics) RecordSearch(searchType, userID string, duration time.Duration
 // RecordUptime records application uptime
 func (m *Metrics) RecordUptime(serviceName string, uptime time.Duration) {
 	m.ApplicationUptime.WithLabelValues(serviceName).Add(uptime.Seconds())
+}
+
+// RecordPATOperation records PAT operation metrics
+func (m *Metrics) RecordPATOperation(operation, status, userID string) {
+	m.PATOperations.WithLabelValues(operation, status, userID).Inc()
+}
+
+// RecordPATAuthAttempt records PAT authentication attempt metrics
+func (m *Metrics) RecordPATAuthAttempt(status, reason string, duration time.Duration) {
+	m.PATAuthAttempts.WithLabelValues(status, reason).Inc()
+	m.PATAuthDuration.WithLabelValues(status).Observe(duration.Seconds())
+}
+
+// SetPATTokensActive sets the number of active PAT tokens for a user
+func (m *Metrics) SetPATTokensActive(userID string, count float64) {
+	m.PATTokensActive.WithLabelValues(userID).Set(count)
+}
+
+// RecordPATTokenExpired records expired PAT token metrics
+func (m *Metrics) RecordPATTokenExpired(count int) {
+	m.PATTokensExpired.WithLabelValues().Add(float64(count))
 }

@@ -56,6 +56,12 @@ type SearchResult struct {
 	Relevance   float64   `json:"relevance,omitempty"`
 }
 
+// SearchServiceInterface defines the interface for search operations
+type SearchServiceInterface interface {
+	Search(ctx context.Context, options SearchOptions) (*SearchResponse, error)
+	InvalidateCache(ctx context.Context) error
+}
+
 // SearchResponse represents the complete search response
 type SearchResponse struct {
 	Results    []SearchResult `json:"results"`

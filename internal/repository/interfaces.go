@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
@@ -21,6 +23,7 @@ type (
 	StatusModel             = models.StatusModel
 	Status                  = models.Status
 	StatusTransition        = models.StatusTransition
+	PersonalAccessToken     = models.PersonalAccessToken
 	EpicStatus              = models.EpicStatus
 	UserStoryStatus         = models.UserStoryStatus
 	RequirementStatus       = models.RequirementStatus
@@ -178,4 +181,15 @@ type StatusTransitionRepository interface {
 	List(filters map[string]interface{}, orderBy string, limit, offset int) ([]StatusTransition, error)
 	Exists(id uuid.UUID) (bool, error)
 	ExistsByTransition(statusModelID, fromStatusID, toStatusID uuid.UUID) (bool, error)
+}
+
+// PersonalAccessTokenRepository defines personal access token-specific repository operations
+type PersonalAccessTokenRepository interface {
+	Repository[PersonalAccessToken]
+	GetByUserID(userID uuid.UUID) ([]PersonalAccessToken, error)
+	GetByUserIDWithPagination(userID uuid.UUID, limit, offset int) ([]PersonalAccessToken, int64, error)
+	GetHashesByPrefix(prefix string) ([]PersonalAccessToken, error)
+	UpdateLastUsed(id uuid.UUID, lastUsedAt *time.Time) error
+	DeleteExpired() (int64, error)
+	ExistsByUserIDAndName(userID uuid.UUID, name string) (bool, error)
 }
