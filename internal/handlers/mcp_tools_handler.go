@@ -171,7 +171,7 @@ func (h *ToolsHandler) handleCreateEpic(ctx context.Context, args map[string]int
 }
 
 // handleUpdateEpic handles the update_epic tool
-func (h *ToolsHandler) handleUpdateEpic(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+func (h *ToolsHandler) handleUpdateEpic(_ context.Context, args map[string]interface{}) (interface{}, error) {
 	// Validate required arguments
 	epicIDStr, ok := args["epic_id"].(string)
 	if !ok || epicIDStr == "" {
@@ -323,7 +323,7 @@ func (h *ToolsHandler) handleCreateUserStory(ctx context.Context, args map[strin
 }
 
 // handleUpdateUserStory handles the update_user_story tool
-func (h *ToolsHandler) handleUpdateUserStory(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+func (h *ToolsHandler) handleUpdateUserStory(_ context.Context, args map[string]interface{}) (interface{}, error) {
 	// Validate required arguments
 	userStoryIDStr, ok := args["user_story_id"].(string)
 	if !ok || userStoryIDStr == "" {
@@ -491,7 +491,7 @@ func (h *ToolsHandler) handleCreateRequirement(ctx context.Context, args map[str
 }
 
 // handleUpdateRequirement handles the update_requirement tool
-func (h *ToolsHandler) handleUpdateRequirement(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+func (h *ToolsHandler) handleUpdateRequirement(_ context.Context, args map[string]interface{}) (interface{}, error) {
 	// Validate required arguments
 	requirementIDStr, ok := args["requirement_id"].(string)
 	if !ok || requirementIDStr == "" {
@@ -714,7 +714,7 @@ func (h *ToolsHandler) handleSearchGlobal(ctx context.Context, args map[string]i
 }
 
 // handleSearchRequirements handles the search_requirements tool
-func (h *ToolsHandler) handleSearchRequirements(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+func (h *ToolsHandler) handleSearchRequirements(_ context.Context, args map[string]interface{}) (interface{}, error) {
 	// Validate required arguments
 	query, ok := args["query"].(string)
 	if !ok || query == "" {

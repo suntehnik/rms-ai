@@ -36,7 +36,6 @@ func (ml *MCPLogger) LogRequest(ctx context.Context, method string, params inter
 	correlationID := logger.GetCorrelationID(ctx)
 	if correlationID == "" {
 		correlationID = logger.NewCorrelationID()
-		ctx = logger.WithCorrelationID(ctx, correlationID)
 	}
 
 	fields := logrus.Fields{

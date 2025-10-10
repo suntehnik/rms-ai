@@ -235,7 +235,7 @@ func (h *MCPHandler) logAuditEventForOperation(ctx context.Context, method strin
 }
 
 // logToolCallAuditEvent logs audit events for tool calls
-func (h *MCPHandler) logToolCallAuditEvent(ctx context.Context, params interface{}, result interface{}, user *models.User) {
+func (h *MCPHandler) logToolCallAuditEvent(ctx context.Context, params any, _ any, user *models.User) {
 	if paramsMap, ok := params.(map[string]interface{}); ok {
 		if toolName, ok := paramsMap["name"].(string); ok {
 			details := map[string]interface{}{

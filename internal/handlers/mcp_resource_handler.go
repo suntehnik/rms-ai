@@ -88,7 +88,7 @@ func (rh *ResourceHandler) handleResourceByScheme(ctx context.Context, parsedURI
 }
 
 // handleEpicResource handles epic:// URIs
-func (rh *ResourceHandler) handleEpicResource(ctx context.Context, parsedURI *ParsedURI) (interface{}, error) {
+func (rh *ResourceHandler) handleEpicResource(_ context.Context, parsedURI *ParsedURI) (interface{}, error) {
 	// Get the epic by reference ID
 	epic, err := rh.epicService.GetEpicByReferenceID(parsedURI.ReferenceID)
 	if err != nil {
@@ -123,7 +123,7 @@ func (rh *ResourceHandler) handleEpicResource(ctx context.Context, parsedURI *Pa
 }
 
 // handleUserStoryResource handles user-story:// URIs
-func (rh *ResourceHandler) handleUserStoryResource(ctx context.Context, parsedURI *ParsedURI) (interface{}, error) {
+func (rh *ResourceHandler) handleUserStoryResource(_ context.Context, parsedURI *ParsedURI) (interface{}, error) {
 	// Get the user story by reference ID
 	userStory, err := rh.userStoryService.GetUserStoryByReferenceID(parsedURI.ReferenceID)
 	if err != nil {
@@ -158,7 +158,7 @@ func (rh *ResourceHandler) handleUserStoryResource(ctx context.Context, parsedUR
 }
 
 // handleRequirementResource handles requirement:// URIs
-func (rh *ResourceHandler) handleRequirementResource(ctx context.Context, parsedURI *ParsedURI) (interface{}, error) {
+func (rh *ResourceHandler) handleRequirementResource(_ context.Context, parsedURI *ParsedURI) (interface{}, error) {
 	// Get the requirement by reference ID
 	requirement, err := rh.requirementService.GetRequirementByReferenceID(parsedURI.ReferenceID)
 	if err != nil {
@@ -186,7 +186,7 @@ func (rh *ResourceHandler) handleRequirementResource(ctx context.Context, parsed
 }
 
 // handleAcceptanceCriteriaResource handles acceptance-criteria:// URIs
-func (rh *ResourceHandler) handleAcceptanceCriteriaResource(ctx context.Context, parsedURI *ParsedURI) (interface{}, error) {
+func (rh *ResourceHandler) handleAcceptanceCriteriaResource(_ context.Context, parsedURI *ParsedURI) (interface{}, error) {
 	// Get the acceptance criteria by reference ID
 	acceptanceCriteria, err := rh.acceptanceCriteriaService.GetAcceptanceCriteriaByReferenceID(parsedURI.ReferenceID)
 	if err != nil {
