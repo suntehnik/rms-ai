@@ -19,6 +19,7 @@ func AllModels() []interface{} {
 		&StatusModel{},
 		&Status{},
 		&StatusTransition{},
+		&PersonalAccessToken{},
 	}
 }
 

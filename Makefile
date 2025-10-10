@@ -1,4 +1,4 @@
-.PHONY: build build-init run init test test-unit test-integration test-e2e test-fast test-coverage test-unit-coverage test-integration-coverage test-e2e-coverage test-bench test-bench-api test-bench-results test-bench-api-results test-parallel test-race test-run test-debug test-compile test-ci clean deps dev fmt lint migrate-up migrate-down migrate-version build-migrate docker-up docker-down docker-logs docker-clean dev-setup mocks swagger swagger-fmt swagger-validate swagger-clean swagger-dev swagger-staging swagger-prod swagger-config swagger-env-dev swagger-env-staging swagger-env-prod swagger-deploy swagger-test swagger-serve help
+.PHONY: build build-init build-mcp-server install-mcp-server run init test test-unit test-integration test-e2e test-fast test-coverage test-unit-coverage test-integration-coverage test-e2e-coverage test-bench test-bench-api test-bench-results test-bench-api-results test-parallel test-race test-run test-debug test-compile test-ci clean deps dev fmt lint migrate-up migrate-down migrate-version build-migrate docker-up docker-down docker-logs docker-clean dev-setup mocks swagger swagger-fmt swagger-validate swagger-clean swagger-dev swagger-staging swagger-prod swagger-config swagger-env-dev swagger-env-staging swagger-env-prod swagger-deploy swagger-test swagger-serve help
 
 # Build the application
 build:
@@ -11,6 +11,19 @@ build-init:
 # Build mock data generator
 build-gen-mock-data:
 	go build -o bin/gen-mock-data cmd/gen-mock-data/main.go
+
+# Build MCP server
+build-mcp-server:
+	@echo "🔧 Building MCP Server..."
+	go build -o bin/requirements-mcp-server cmd/mcp-server/main.go
+	@echo "✅ MCP Server built: bin/requirements-mcp-server"
+
+# Install MCP server to system
+install-mcp-server: build-mcp-server
+	@echo "📦 Installing MCP Server to /usr/local/bin..."
+	@sudo cp bin/requirements-mcp-server /usr/local/bin/
+	@echo "✅ MCP Server installed: /usr/local/bin/requirements-mcp-server"
+	@echo "💡 Configure Claude Desktop to use: /usr/local/bin/requirements-mcp-server"
 
 # Run the application
 run:
@@ -471,6 +484,8 @@ help:
 	@echo "  build              - Build the application binary"
 	@echo "  build-init         - Build initialization binary"
 	@echo "  build-gen-mock-data - Build mock data generator"
+	@echo "  build-mcp-server   - Build MCP Server console application"
+	@echo "  install-mcp-server - Install MCP Server to /usr/local/bin"
 	@echo "  run                - Run the application directly"
 	@echo "  init               - Run initialization service"
 	@echo "  gen-mock-data      - Generate mock data for development"

@@ -1,0 +1,500 @@
+package handlers
+
+import (
+	"context"
+	"fmt"
+
+	"product-requirements-management/internal/jsonrpc"
+	"product-requirements-management/internal/models"
+	"product-requirements-management/internal/service"
+)
+
+// ResourceHandler handles MCP resources/read requests
+type ResourceHandler struct {
+	epicService               service.EpicService
+	userStoryService          service.UserStoryService
+	requirementService        service.RequirementService
+	acceptanceCriteriaService service.AcceptanceCriteriaService
+	uriParser                 *URIParser
+}
+
+// NewResourceHandler creates a new resource handler instance
+func NewResourceHandler(
+	epicService service.EpicService,
+	userStoryService service.UserStoryService,
+	requirementService service.RequirementService,
+	acceptanceCriteriaService service.AcceptanceCriteriaService,
+) *ResourceHandler {
+	return &ResourceHandler{
+		epicService:               epicService,
+		userStoryService:          userStoryService,
+		requirementService:        requirementService,
+		acceptanceCriteriaService: acceptanceCriteriaService,
+		uriParser:                 NewURIParser(),
+	}
+}
+
+// ResourceReadRequest represents the parameters for resources/read method
+type ResourceReadRequest struct {
+	URI string `json:"uri" validate:"required"`
+}
+
+// ResourceResponse represents the response for resources/read method
+type ResourceResponse struct {
+	URI         string      `json:"uri"`
+	Name        string      `json:"name"`
+	Description string      `json:"description"`
+	MimeType    string      `json:"mimeType"`
+	Contents    interface{} `json:"contents"`
+}
+
+// HandleResourcesRead handles the resources/read method
+func (rh *ResourceHandler) HandleResourcesRead(ctx context.Context, params interface{}) (interface{}, error) {
+	// Parse parameters
+	paramsMap, ok := params.(map[string]interface{})
+	if !ok {
+		return nil, jsonrpc.NewInvalidParamsError("Invalid parameters format")
+	}
+
+	uri, ok := paramsMap["uri"].(string)
+	if !ok || uri == "" {
+		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid URI parameter")
+	}
+
+	// Parse the URI
+	parsedURI, err := rh.uriParser.Parse(uri)
+	if err != nil {
+		return nil, jsonrpc.NewInvalidParamsError(fmt.Sprintf("Invalid URI: %v", err))
+	}
+
+	// Handle the resource based on scheme and sub-path
+	return rh.handleResourceByScheme(ctx, parsedURI)
+}
+
+// handleResourceByScheme routes the request based on URI scheme
+func (rh *ResourceHandler) handleResourceByScheme(ctx context.Context, parsedURI *ParsedURI) (interface{}, error) {
+	switch parsedURI.Scheme {
+	case EpicURIScheme:
+		return rh.handleEpicResource(ctx, parsedURI)
+	case UserStoryURIScheme:
+		return rh.handleUserStoryResource(ctx, parsedURI)
+	case RequirementURIScheme:
+		return rh.handleRequirementResource(ctx, parsedURI)
+	case AcceptanceCriteriaURIScheme:
+		return rh.handleAcceptanceCriteriaResource(ctx, parsedURI)
+	default:
+		return nil, jsonrpc.NewInvalidParamsError(fmt.Sprintf("Unsupported URI scheme: %s", parsedURI.Scheme))
+	}
+}
+
+// handleEpicResource handles epic:// URIs
+func (rh *ResourceHandler) handleEpicResource(ctx context.Context, parsedURI *ParsedURI) (interface{}, error) {
+	// Get the epic by reference ID
+	epic, err := rh.epicService.GetEpicByReferenceID(parsedURI.ReferenceID)
+	if err != nil {
+		if err == service.ErrEpicNotFound {
+			return nil, jsonrpc.NewJSONRPCError(-32002, "Epic not found", nil)
+		}
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get epic: %v", err))
+	}
+
+	// Handle sub-paths
+	switch parsedURI.SubPath {
+	case "":
+		// Return the epic itself
+		return rh.formatEpicResource(parsedURI, epic), nil
+	case "hierarchy":
+		// Return epic with full hierarchy
+		epicWithUserStories, err := rh.epicService.GetEpicWithUserStories(epic.ID)
+		if err != nil {
+			return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get epic hierarchy: %v", err))
+		}
+		return rh.formatEpicHierarchyResource(parsedURI, epicWithUserStories), nil
+	case "user-stories":
+		// Return just the user stories
+		userStories, err := rh.userStoryService.GetUserStoriesByEpic(epic.ID)
+		if err != nil {
+			return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get user stories: %v", err))
+		}
+		return rh.formatUserStoriesResource(parsedURI, userStories), nil
+	default:
+		return nil, jsonrpc.NewInvalidParamsError(fmt.Sprintf("Unsupported sub-path for epic: %s", parsedURI.SubPath))
+	}
+}
+
+// handleUserStoryResource handles user-story:// URIs
+func (rh *ResourceHandler) handleUserStoryResource(ctx context.Context, parsedURI *ParsedURI) (interface{}, error) {
+	// Get the user story by reference ID
+	userStory, err := rh.userStoryService.GetUserStoryByReferenceID(parsedURI.ReferenceID)
+	if err != nil {
+		if err == service.ErrUserStoryNotFound {
+			return nil, jsonrpc.NewJSONRPCError(-32002, "User story not found", nil)
+		}
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get user story: %v", err))
+	}
+
+	// Handle sub-paths
+	switch parsedURI.SubPath {
+	case "":
+		// Return the user story itself
+		return rh.formatUserStoryResource(parsedURI, userStory), nil
+	case "requirements":
+		// Return requirements for this user story
+		requirements, err := rh.requirementService.GetRequirementsByUserStory(userStory.ID)
+		if err != nil {
+			return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get requirements: %v", err))
+		}
+		return rh.formatRequirementsResource(parsedURI, requirements), nil
+	case "acceptance-criteria":
+		// Return acceptance criteria for this user story
+		acceptanceCriteria, err := rh.acceptanceCriteriaService.GetAcceptanceCriteriaByUserStory(userStory.ID)
+		if err != nil {
+			return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get acceptance criteria: %v", err))
+		}
+		return rh.formatAcceptanceCriteriaListResource(parsedURI, acceptanceCriteria), nil
+	default:
+		return nil, jsonrpc.NewInvalidParamsError(fmt.Sprintf("Unsupported sub-path for user story: %s", parsedURI.SubPath))
+	}
+}
+
+// handleRequirementResource handles requirement:// URIs
+func (rh *ResourceHandler) handleRequirementResource(ctx context.Context, parsedURI *ParsedURI) (interface{}, error) {
+	// Get the requirement by reference ID
+	requirement, err := rh.requirementService.GetRequirementByReferenceID(parsedURI.ReferenceID)
+	if err != nil {
+		if err == service.ErrRequirementNotFound {
+			return nil, jsonrpc.NewJSONRPCError(-32002, "Requirement not found", nil)
+		}
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get requirement: %v", err))
+	}
+
+	// Handle sub-paths
+	switch parsedURI.SubPath {
+	case "":
+		// Return the requirement itself
+		return rh.formatRequirementResource(parsedURI, requirement), nil
+	case "relationships":
+		// Return requirement with relationships
+		requirementWithRelationships, err := rh.requirementService.GetRequirementWithRelationships(requirement.ID)
+		if err != nil {
+			return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get requirement relationships: %v", err))
+		}
+		return rh.formatRequirementRelationshipsResource(parsedURI, requirementWithRelationships), nil
+	default:
+		return nil, jsonrpc.NewInvalidParamsError(fmt.Sprintf("Unsupported sub-path for requirement: %s", parsedURI.SubPath))
+	}
+}
+
+// handleAcceptanceCriteriaResource handles acceptance-criteria:// URIs
+func (rh *ResourceHandler) handleAcceptanceCriteriaResource(ctx context.Context, parsedURI *ParsedURI) (interface{}, error) {
+	// Get the acceptance criteria by reference ID
+	acceptanceCriteria, err := rh.acceptanceCriteriaService.GetAcceptanceCriteriaByReferenceID(parsedURI.ReferenceID)
+	if err != nil {
+		if err == service.ErrAcceptanceCriteriaNotFound {
+			return nil, jsonrpc.NewJSONRPCError(-32002, "Acceptance criteria not found", nil)
+		}
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get acceptance criteria: %v", err))
+	}
+
+	// Handle sub-paths (currently no sub-paths supported for acceptance criteria)
+	switch parsedURI.SubPath {
+	case "":
+		// Return the acceptance criteria itself
+		return rh.formatAcceptanceCriteriaResource(parsedURI, acceptanceCriteria), nil
+	default:
+		return nil, jsonrpc.NewInvalidParamsError(fmt.Sprintf("Unsupported sub-path for acceptance criteria: %s", parsedURI.SubPath))
+	}
+}
+
+// Resource formatting methods
+
+// formatEpicResource formats an epic as a resource response
+func (rh *ResourceHandler) formatEpicResource(parsedURI *ParsedURI, epic *models.Epic) *ResourceResponse {
+	return &ResourceResponse{
+		URI:         rh.buildURIFromParsed(parsedURI),
+		Name:        fmt.Sprintf("Epic %s: %s", epic.ReferenceID, epic.Title),
+		Description: fmt.Sprintf("Epic %s with status %s and priority %d", epic.ReferenceID, epic.Status, epic.Priority),
+		MimeType:    "application/json",
+		Contents: map[string]interface{}{
+			"id":           epic.ID,
+			"reference_id": epic.ReferenceID,
+			"title":        epic.Title,
+			"description":  epic.Description,
+			"status":       epic.Status,
+			"priority":     epic.Priority,
+			"creator_id":   epic.CreatorID,
+			"assignee_id":  epic.AssigneeID,
+			"created_at":   epic.CreatedAt,
+			"updated_at":   epic.UpdatedAt,
+		},
+	}
+}
+
+// formatEpicHierarchyResource formats an epic with its hierarchy as a resource response
+func (rh *ResourceHandler) formatEpicHierarchyResource(parsedURI *ParsedURI, epic *models.Epic) *ResourceResponse {
+	contents := map[string]interface{}{
+		"id":           epic.ID,
+		"reference_id": epic.ReferenceID,
+		"title":        epic.Title,
+		"description":  epic.Description,
+		"status":       epic.Status,
+		"priority":     epic.Priority,
+		"creator_id":   epic.CreatorID,
+		"assignee_id":  epic.AssigneeID,
+		"created_at":   epic.CreatedAt,
+		"updated_at":   epic.UpdatedAt,
+		"user_stories": []interface{}{},
+	}
+
+	// Add user stories if they exist
+	if epic.UserStories != nil {
+		userStories := make([]interface{}, len(epic.UserStories))
+		for i, us := range epic.UserStories {
+			userStories[i] = map[string]interface{}{
+				"id":           us.ID,
+				"reference_id": us.ReferenceID,
+				"title":        us.Title,
+				"description":  us.Description,
+				"status":       us.Status,
+				"priority":     us.Priority,
+				"creator_id":   us.CreatorID,
+				"assignee_id":  us.AssigneeID,
+				"created_at":   us.CreatedAt,
+				"updated_at":   us.UpdatedAt,
+			}
+		}
+		contents["user_stories"] = userStories
+	}
+
+	return &ResourceResponse{
+		URI:         rh.buildURIFromParsed(parsedURI),
+		Name:        fmt.Sprintf("Epic %s Hierarchy: %s", epic.ReferenceID, epic.Title),
+		Description: fmt.Sprintf("Epic %s with all its user stories", epic.ReferenceID),
+		MimeType:    "application/json",
+		Contents:    contents,
+	}
+}
+
+// formatUserStoriesResource formats a list of user stories as a resource response
+func (rh *ResourceHandler) formatUserStoriesResource(parsedURI *ParsedURI, userStories []models.UserStory) *ResourceResponse {
+	userStoriesData := make([]interface{}, len(userStories))
+	for i, us := range userStories {
+		userStoriesData[i] = map[string]interface{}{
+			"id":           us.ID,
+			"reference_id": us.ReferenceID,
+			"title":        us.Title,
+			"description":  us.Description,
+			"status":       us.Status,
+			"priority":     us.Priority,
+			"creator_id":   us.CreatorID,
+			"assignee_id":  us.AssigneeID,
+			"created_at":   us.CreatedAt,
+			"updated_at":   us.UpdatedAt,
+		}
+	}
+
+	return &ResourceResponse{
+		URI:         rh.buildURIFromParsed(parsedURI),
+		Name:        "User Stories",
+		Description: fmt.Sprintf("List of %d user stories", len(userStories)),
+		MimeType:    "application/json",
+		Contents: map[string]interface{}{
+			"user_stories": userStoriesData,
+			"count":        len(userStories),
+		},
+	}
+}
+
+// formatUserStoryResource formats a user story as a resource response
+func (rh *ResourceHandler) formatUserStoryResource(parsedURI *ParsedURI, userStory *models.UserStory) *ResourceResponse {
+	return &ResourceResponse{
+		URI:         rh.buildURIFromParsed(parsedURI),
+		Name:        fmt.Sprintf("User Story %s: %s", userStory.ReferenceID, userStory.Title),
+		Description: fmt.Sprintf("User Story %s with status %s and priority %d", userStory.ReferenceID, userStory.Status, userStory.Priority),
+		MimeType:    "application/json",
+		Contents: map[string]interface{}{
+			"id":           userStory.ID,
+			"reference_id": userStory.ReferenceID,
+			"title":        userStory.Title,
+			"description":  userStory.Description,
+			"status":       userStory.Status,
+			"priority":     userStory.Priority,
+			"epic_id":      userStory.EpicID,
+			"creator_id":   userStory.CreatorID,
+			"assignee_id":  userStory.AssigneeID,
+			"created_at":   userStory.CreatedAt,
+			"updated_at":   userStory.UpdatedAt,
+		},
+	}
+}
+
+// formatRequirementsResource formats a list of requirements as a resource response
+func (rh *ResourceHandler) formatRequirementsResource(parsedURI *ParsedURI, requirements []models.Requirement) *ResourceResponse {
+	requirementsData := make([]interface{}, len(requirements))
+	for i, req := range requirements {
+		requirementsData[i] = map[string]interface{}{
+			"id":                     req.ID,
+			"reference_id":           req.ReferenceID,
+			"title":                  req.Title,
+			"description":            req.Description,
+			"status":                 req.Status,
+			"priority":               req.Priority,
+			"user_story_id":          req.UserStoryID,
+			"acceptance_criteria_id": req.AcceptanceCriteriaID,
+			"type_id":                req.TypeID,
+			"creator_id":             req.CreatorID,
+			"assignee_id":            req.AssigneeID,
+			"created_at":             req.CreatedAt,
+			"updated_at":             req.UpdatedAt,
+		}
+	}
+
+	return &ResourceResponse{
+		URI:         rh.buildURIFromParsed(parsedURI),
+		Name:        "Requirements",
+		Description: fmt.Sprintf("List of %d requirements", len(requirements)),
+		MimeType:    "application/json",
+		Contents: map[string]interface{}{
+			"requirements": requirementsData,
+			"count":        len(requirements),
+		},
+	}
+}
+
+// formatRequirementResource formats a requirement as a resource response
+func (rh *ResourceHandler) formatRequirementResource(parsedURI *ParsedURI, requirement *models.Requirement) *ResourceResponse {
+	return &ResourceResponse{
+		URI:         rh.buildURIFromParsed(parsedURI),
+		Name:        fmt.Sprintf("Requirement %s: %s", requirement.ReferenceID, requirement.Title),
+		Description: fmt.Sprintf("Requirement %s with status %s and priority %d", requirement.ReferenceID, requirement.Status, requirement.Priority),
+		MimeType:    "application/json",
+		Contents: map[string]interface{}{
+			"id":                     requirement.ID,
+			"reference_id":           requirement.ReferenceID,
+			"title":                  requirement.Title,
+			"description":            requirement.Description,
+			"status":                 requirement.Status,
+			"priority":               requirement.Priority,
+			"user_story_id":          requirement.UserStoryID,
+			"acceptance_criteria_id": requirement.AcceptanceCriteriaID,
+			"type_id":                requirement.TypeID,
+			"creator_id":             requirement.CreatorID,
+			"assignee_id":            requirement.AssigneeID,
+			"created_at":             requirement.CreatedAt,
+			"updated_at":             requirement.UpdatedAt,
+		},
+	}
+}
+
+// formatRequirementRelationshipsResource formats a requirement with relationships as a resource response
+func (rh *ResourceHandler) formatRequirementRelationshipsResource(parsedURI *ParsedURI, requirement *models.Requirement) *ResourceResponse {
+	contents := map[string]interface{}{
+		"id":                     requirement.ID,
+		"reference_id":           requirement.ReferenceID,
+		"title":                  requirement.Title,
+		"description":            requirement.Description,
+		"status":                 requirement.Status,
+		"priority":               requirement.Priority,
+		"user_story_id":          requirement.UserStoryID,
+		"acceptance_criteria_id": requirement.AcceptanceCriteriaID,
+		"type_id":                requirement.TypeID,
+		"creator_id":             requirement.CreatorID,
+		"assignee_id":            requirement.AssigneeID,
+		"created_at":             requirement.CreatedAt,
+		"updated_at":             requirement.UpdatedAt,
+		"source_relationships":   []interface{}{},
+		"target_relationships":   []interface{}{},
+	}
+
+	// Add source relationships if they exist
+	if requirement.SourceRelationships != nil {
+		sourceRels := make([]interface{}, len(requirement.SourceRelationships))
+		for i, rel := range requirement.SourceRelationships {
+			sourceRels[i] = map[string]interface{}{
+				"id":                    rel.ID,
+				"source_requirement_id": rel.SourceRequirementID,
+				"target_requirement_id": rel.TargetRequirementID,
+				"relationship_type_id":  rel.RelationshipTypeID,
+				"created_by":            rel.CreatedBy,
+				"created_at":            rel.CreatedAt,
+			}
+		}
+		contents["source_relationships"] = sourceRels
+	}
+
+	// Add target relationships if they exist
+	if requirement.TargetRelationships != nil {
+		targetRels := make([]interface{}, len(requirement.TargetRelationships))
+		for i, rel := range requirement.TargetRelationships {
+			targetRels[i] = map[string]interface{}{
+				"id":                    rel.ID,
+				"source_requirement_id": rel.SourceRequirementID,
+				"target_requirement_id": rel.TargetRequirementID,
+				"relationship_type_id":  rel.RelationshipTypeID,
+				"created_by":            rel.CreatedBy,
+				"created_at":            rel.CreatedAt,
+			}
+		}
+		contents["target_relationships"] = targetRels
+	}
+
+	return &ResourceResponse{
+		URI:         rh.buildURIFromParsed(parsedURI),
+		Name:        fmt.Sprintf("Requirement %s Relationships: %s", requirement.ReferenceID, requirement.Title),
+		Description: fmt.Sprintf("Requirement %s with all its relationships", requirement.ReferenceID),
+		MimeType:    "application/json",
+		Contents:    contents,
+	}
+}
+
+// formatAcceptanceCriteriaResource formats acceptance criteria as a resource response
+func (rh *ResourceHandler) formatAcceptanceCriteriaResource(parsedURI *ParsedURI, acceptanceCriteria *models.AcceptanceCriteria) *ResourceResponse {
+	return &ResourceResponse{
+		URI:         rh.buildURIFromParsed(parsedURI),
+		Name:        fmt.Sprintf("Acceptance Criteria %s", acceptanceCriteria.ReferenceID),
+		Description: fmt.Sprintf("Acceptance Criteria %s for user story", acceptanceCriteria.ReferenceID),
+		MimeType:    "application/json",
+		Contents: map[string]interface{}{
+			"id":            acceptanceCriteria.ID,
+			"reference_id":  acceptanceCriteria.ReferenceID,
+			"description":   acceptanceCriteria.Description,
+			"user_story_id": acceptanceCriteria.UserStoryID,
+			"author_id":     acceptanceCriteria.AuthorID,
+			"created_at":    acceptanceCriteria.CreatedAt,
+			"updated_at":    acceptanceCriteria.UpdatedAt,
+		},
+	}
+}
+
+// formatAcceptanceCriteriaListResource formats a list of acceptance criteria as a resource response
+func (rh *ResourceHandler) formatAcceptanceCriteriaListResource(parsedURI *ParsedURI, acceptanceCriteriaList []models.AcceptanceCriteria) *ResourceResponse {
+	acceptanceCriteriaData := make([]interface{}, len(acceptanceCriteriaList))
+	for i, ac := range acceptanceCriteriaList {
+		acceptanceCriteriaData[i] = map[string]interface{}{
+			"id":            ac.ID,
+			"reference_id":  ac.ReferenceID,
+			"description":   ac.Description,
+			"user_story_id": ac.UserStoryID,
+			"author_id":     ac.AuthorID,
+			"created_at":    ac.CreatedAt,
+			"updated_at":    ac.UpdatedAt,
+		}
+	}
+
+	return &ResourceResponse{
+		URI:         rh.buildURIFromParsed(parsedURI),
+		Name:        "Acceptance Criteria",
+		Description: fmt.Sprintf("List of %d acceptance criteria", len(acceptanceCriteriaList)),
+		MimeType:    "application/json",
+		Contents: map[string]interface{}{
+			"acceptance_criteria": acceptanceCriteriaData,
+			"count":               len(acceptanceCriteriaList),
+		},
+	}
+}
+
+// buildURIFromParsed rebuilds a URI string from a ParsedURI
+func (rh *ResourceHandler) buildURIFromParsed(parsedURI *ParsedURI) string {
+	uri, _ := rh.uriParser.BuildURI(parsedURI.Scheme, parsedURI.ReferenceID, parsedURI.SubPath, parsedURI.Parameters)
+	return uri
+}
