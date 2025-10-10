@@ -48,6 +48,7 @@ func NewMCPHandler(
 
 	// Register MCP methods with enhanced error handling
 	processor.RegisterHandler("initialize", handler.wrapHandler("initialize", handleInitialize))
+	processor.RegisterHandler("ping", handler.wrapHandler("ping", handlePing))
 	processor.RegisterHandler("tools/list", handler.wrapHandler("tools/list", handleToolsList))
 	processor.RegisterHandler("tools/call", handler.wrapHandler("tools/call", toolsHandler.HandleToolsCall))
 	processor.RegisterHandler("resources/read", handler.wrapHandler("resources/read", resourceHandler.HandleResourcesRead))
@@ -118,8 +119,8 @@ func (h *MCPHandler) Process(c *gin.Context) {
 		"response_size_bytes": len(responseData),
 	})
 
-	// If responseData is nil, it was a notification (no response expected)
-	if responseData == nil {
+	// If responseData is nil or empty, it was a notification (no response expected)
+	if responseData == nil || len(responseData) == 0 {
 		c.Status(http.StatusNoContent)
 		return
 	}
@@ -147,6 +148,13 @@ func handleInitialize(ctx context.Context, params interface{}) (interface{}, err
 			"version": "1.0.0",
 		},
 	}, nil
+}
+
+// handlePing handles the MCP ping method for connectivity testing
+func handlePing(ctx context.Context, params interface{}) (interface{}, error) {
+	// Ping method can optionally accept parameters but typically returns empty object
+	// According to MCP spec, ping is used to test connectivity and server responsiveness
+	return map[string]interface{}{}, nil
 }
 
 // handleToolsList handles the tools/list method
