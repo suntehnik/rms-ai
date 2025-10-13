@@ -6,12 +6,14 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"product-requirements-management/internal/auth"
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/service"
 )
@@ -100,11 +102,15 @@ func (m *MockUserStoryService) AssignUserStory(id uuid.UUID, assigneeID uuid.UUI
 	return args.Get(0).(*models.UserStory), args.Error(1)
 }
 
-func setupUserStoryRouter(handler *UserStoryHandler) *gin.Engine {
+func setupUserStoryRouter(handler *UserStoryHandler) (*gin.Engine, *auth.Service) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 
+	// Create auth service for testing
+	authService := auth.NewService("test-secret", time.Hour)
+
 	v1 := router.Group("/api/v1")
+	v1.Use(authService.Middleware()) // Add auth middleware
 	{
 		v1.POST("/user-stories", handler.CreateUserStory)
 		v1.POST("/epics/:id/user-stories", handler.CreateUserStoryInEpic)
@@ -118,22 +124,30 @@ func setupUserStoryRouter(handler *UserStoryHandler) *gin.Engine {
 		v1.PATCH("/user-stories/:id/assign", handler.AssignUserStory)
 	}
 
-	return router
+	return router, authService
 }
 
 func TestUserStoryHandler_CreateUserStory(t *testing.T) {
 	mockService := new(MockUserStoryService)
 	handler := NewUserStoryHandler(mockService)
-	router := setupUserStoryRouter(handler)
+	router, authService := setupUserStoryRouter(handler)
 
 	t.Run("successful creation", func(t *testing.T) {
 		epicID := uuid.New()
 		creatorID := uuid.New()
 		description := "As a user, I want to login, so that I can access my account"
 
+		// Create test user and token
+		testUser := &models.User{
+			ID:       creatorID,
+			Username: "testuser",
+			Role:     models.RoleUser,
+		}
+		token, err := authService.GenerateToken(testUser)
+		assert.NoError(t, err)
+
 		reqBody := service.CreateUserStoryRequest{
 			EpicID:      epicID,
-			CreatorID:   creatorID,
 			Priority:    models.PriorityHigh,
 			Title:       "User Login",
 			Description: &description,
@@ -150,11 +164,15 @@ func TestUserStoryHandler_CreateUserStory(t *testing.T) {
 			Description: &description,
 		}
 
-		mockService.On("CreateUserStory", reqBody).Return(expectedUserStory, nil)
+		// Mock expects CreatorID to be set from JWT token
+		mockService.On("CreateUserStory", mock.MatchedBy(func(req service.CreateUserStoryRequest) bool {
+			return req.EpicID == epicID && req.CreatorID == creatorID && req.Title == "User Login"
+		})).Return(expectedUserStory, nil)
 
 		jsonBody, _ := json.Marshal(reqBody)
 		req, _ := http.NewRequest("POST", "/api/v1/user-stories", bytes.NewBuffer(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+token)
 
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
@@ -162,7 +180,7 @@ func TestUserStoryHandler_CreateUserStory(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, w.Code)
 
 		var response models.UserStory
-		err := json.Unmarshal(w.Body.Bytes(), &response)
+		err = json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedUserStory.ID, response.ID)
 		assert.Equal(t, expectedUserStory.Title, response.Title)
@@ -177,22 +195,35 @@ func TestUserStoryHandler_CreateUserStory(t *testing.T) {
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Equal(t, http.StatusUnauthorized, w.Code) // No auth token provided
 	})
 
 	t.Run("epic not found", func(t *testing.T) {
+		creatorID := uuid.New()
+
+		// Create test user and token
+		testUser := &models.User{
+			ID:       creatorID,
+			Username: "testuser",
+			Role:     models.RoleUser,
+		}
+		token, err := authService.GenerateToken(testUser)
+		assert.NoError(t, err)
+
 		reqBody := service.CreateUserStoryRequest{
-			EpicID:    uuid.New(),
-			CreatorID: uuid.New(),
-			Priority:  models.PriorityMedium,
-			Title:     "Test User Story",
+			EpicID:   uuid.New(),
+			Priority: models.PriorityMedium,
+			Title:    "Test User Story",
 		}
 
-		mockService.On("CreateUserStory", reqBody).Return(nil, service.ErrEpicNotFound)
+		mockService.On("CreateUserStory", mock.MatchedBy(func(req service.CreateUserStoryRequest) bool {
+			return req.CreatorID == creatorID
+		})).Return(nil, service.ErrEpicNotFound)
 
 		jsonBody, _ := json.Marshal(reqBody)
 		req, _ := http.NewRequest("POST", "/api/v1/user-stories", bytes.NewBuffer(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+token)
 
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
@@ -203,18 +234,31 @@ func TestUserStoryHandler_CreateUserStory(t *testing.T) {
 	})
 
 	t.Run("invalid user story template", func(t *testing.T) {
+		creatorID := uuid.New()
+
+		// Create test user and token
+		testUser := &models.User{
+			ID:       creatorID,
+			Username: "testuser",
+			Role:     models.RoleUser,
+		}
+		token, err := authService.GenerateToken(testUser)
+		assert.NoError(t, err)
+
 		reqBody := service.CreateUserStoryRequest{
-			EpicID:    uuid.New(),
-			CreatorID: uuid.New(),
-			Priority:  models.PriorityMedium,
-			Title:     "Test User Story",
+			EpicID:   uuid.New(),
+			Priority: models.PriorityMedium,
+			Title:    "Test User Story",
 		}
 
-		mockService.On("CreateUserStory", reqBody).Return(nil, service.ErrInvalidUserStoryTemplate)
+		mockService.On("CreateUserStory", mock.MatchedBy(func(req service.CreateUserStoryRequest) bool {
+			return req.CreatorID == creatorID
+		})).Return(nil, service.ErrInvalidUserStoryTemplate)
 
 		jsonBody, _ := json.Marshal(reqBody)
 		req, _ := http.NewRequest("POST", "/api/v1/user-stories", bytes.NewBuffer(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+token)
 
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
@@ -222,7 +266,7 @@ func TestUserStoryHandler_CreateUserStory(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 
 		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
+		err = json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Contains(t, response["error"], "template")
 
@@ -233,15 +277,23 @@ func TestUserStoryHandler_CreateUserStory(t *testing.T) {
 func TestUserStoryHandler_CreateUserStoryInEpic(t *testing.T) {
 	mockService := new(MockUserStoryService)
 	handler := NewUserStoryHandler(mockService)
-	router := setupUserStoryRouter(handler)
+	router, authService := setupUserStoryRouter(handler)
 
 	t.Run("successful creation in epic", func(t *testing.T) {
 		epicID := uuid.New()
 		creatorID := uuid.New()
 		description := "As a user, I want to login, so that I can access my account"
 
+		// Create test user and token
+		testUser := &models.User{
+			ID:       creatorID,
+			Username: "testuser",
+			Role:     models.RoleUser,
+		}
+		token, err := authService.GenerateToken(testUser)
+		assert.NoError(t, err)
+
 		reqBody := service.CreateUserStoryRequest{
-			CreatorID:   creatorID,
 			Priority:    models.PriorityHigh,
 			Title:       "User Login",
 			Description: &description,
@@ -265,6 +317,7 @@ func TestUserStoryHandler_CreateUserStoryInEpic(t *testing.T) {
 		jsonBody, _ := json.Marshal(reqBody)
 		req, _ := http.NewRequest("POST", "/api/v1/epics/"+epicID.String()+"/user-stories", bytes.NewBuffer(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+token)
 
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
@@ -291,14 +344,14 @@ func TestUserStoryHandler_CreateUserStoryInEpic(t *testing.T) {
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Equal(t, http.StatusUnauthorized, w.Code) // No auth token provided
 	})
 }
 
 func TestUserStoryHandler_GetUserStory(t *testing.T) {
 	mockService := new(MockUserStoryService)
 	handler := NewUserStoryHandler(mockService)
-	router := setupUserStoryRouter(handler)
+	router, _ := setupUserStoryRouter(handler)
 
 	t.Run("successful retrieval by UUID", func(t *testing.T) {
 		userStoryID := uuid.New()
@@ -359,7 +412,7 @@ func TestUserStoryHandler_GetUserStory(t *testing.T) {
 func TestUserStoryHandler_UpdateUserStory(t *testing.T) {
 	mockService := new(MockUserStoryService)
 	handler := NewUserStoryHandler(mockService)
-	router := setupUserStoryRouter(handler)
+	router, _ := setupUserStoryRouter(handler)
 
 	t.Run("successful update", func(t *testing.T) {
 		userStoryID := uuid.New()
@@ -429,7 +482,7 @@ func TestUserStoryHandler_UpdateUserStory(t *testing.T) {
 func TestUserStoryHandler_DeleteUserStory(t *testing.T) {
 	mockService := new(MockUserStoryService)
 	handler := NewUserStoryHandler(mockService)
-	router := setupUserStoryRouter(handler)
+	router, _ := setupUserStoryRouter(handler)
 
 	t.Run("successful deletion", func(t *testing.T) {
 		userStoryID := uuid.New()
@@ -490,7 +543,7 @@ func TestUserStoryHandler_DeleteUserStory(t *testing.T) {
 func TestUserStoryHandler_ListUserStories(t *testing.T) {
 	mockService := new(MockUserStoryService)
 	handler := NewUserStoryHandler(mockService)
-	router := setupUserStoryRouter(handler)
+	router, _ := setupUserStoryRouter(handler)
 
 	t.Run("successful listing with filters", func(t *testing.T) {
 		epicID := uuid.New()
@@ -548,7 +601,7 @@ func TestUserStoryHandler_ListUserStories(t *testing.T) {
 func TestUserStoryHandler_ChangeUserStoryStatus(t *testing.T) {
 	mockService := new(MockUserStoryService)
 	handler := NewUserStoryHandler(mockService)
-	router := setupUserStoryRouter(handler)
+	router, _ := setupUserStoryRouter(handler)
 
 	t.Run("successful status change", func(t *testing.T) {
 		userStoryID := uuid.New()
