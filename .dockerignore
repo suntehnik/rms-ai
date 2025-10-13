@@ -1,0 +1,98 @@
+# Git
+.git
+.gitignore
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+*.key
+*_key*
+*.pub
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Build artifacts
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Test files and coverage reports
+*.test
+coverage*.out
+coverage*.html
+benchmark-results/
+reports/
+
+# Environment files (keep .env.example)
+.env
+.env.local
+.env.dev.local
+.env.prod.local
+.env.staging
+.env.production
+.env.development
+.env.mock-data
+
+# Docker files
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Documentation build artifacts
+docs/docs.go
+docs/swagger.json
+docs/swagger.yaml
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Logs
+*.log
+logs/
+
+# Node modules (if any)
+node_modules/
+
+# Go vendor (if using)
+vendor/
+
+# Development tools
+.kiro/
+
+# GitHub workflows
+.github/
+
+# Makefile and scripts (keep essential ones)
+Makefile
+
+# README and documentation (keep essential ones)
+README*.md
+*.md
+!README.md
+
+# Test data and mocks
+testdata/
+mocks/
+
+# Backup files
+*.bak
+*.backup

@@ -103,6 +103,8 @@ WORKDIR /app
 # Copy binaries from builder
 COPY --from=builder --chown=appuser:appgroup /app/server ./
 COPY --from=builder --chown=appuser:appgroup /app/migrate ./
+COPY --from=builder --chown=appuser:appgroup /app/init ./
+
 
 # Copy migrations
 COPY --from=builder --chown=appuser:appgroup /app/migrations/ ./migrations/

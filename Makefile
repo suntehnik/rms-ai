@@ -196,6 +196,114 @@ docker-logs:
 docker-clean:
 	docker-compose -f docker-compose.dev.yml down -v
 
+# Production Docker commands
+docker-prod-build:
+	docker-compose -f docker-compose.prod.yml build --no-cache
+
+docker-prod-up:
+	docker-compose -f docker-compose.prod.yml up -d
+
+docker-prod-down:
+	docker-compose -f docker-compose.prod.yml down
+
+docker-prod-logs:
+	docker-compose -f docker-compose.prod.yml logs -f
+
+docker-prod-clean:
+	docker-compose -f docker-compose.prod.yml down -v
+
+# Build and Push to GitHub Registry
+build-push:
+	@echo "🏗️ Building and pushing multi-platform to GitHub Container Registry..."
+	./scripts/build-and-push.sh
+
+build-push-x86:
+	@echo "🏗️ Building and pushing x86_64 only to GitHub Container Registry..."
+	PLATFORMS=linux/amd64 ./scripts/build-and-push.sh
+
+build-push-arm:
+	@echo "🏗️ Building and pushing ARM64 only to GitHub Container Registry..."
+	PLATFORMS=linux/arm64 ./scripts/build-and-push.sh
+
+build-push-single:
+	@echo "🏗️ Building and pushing single-platform to GitHub Container Registry..."
+	USE_BUILDX=false ./scripts/build-and-push.sh
+
+build-push-info:
+	@echo "ℹ️ Showing build information..."
+	./scripts/build-and-push.sh info
+
+build-push-auth:
+	@echo "🔐 Authenticating with GitHub Registry..."
+	./scripts/build-and-push.sh auth
+
+build-push-setup:
+	@echo "🔧 Setting up buildx for multi-platform builds..."
+	./scripts/build-and-push.sh setup-buildx
+
+build-push-cleanup:
+	@echo "🧹 Cleaning up build artifacts..."
+	./scripts/build-and-push.sh cleanup
+
+build-push-cleanup-buildx:
+	@echo "🧹 Cleaning up buildx builder..."
+	./scripts/build-and-push.sh cleanup-buildx
+
+# Production deployment from Registry
+deploy-prod:
+	@echo "🚀 Starting production deployment from registry..."
+	./scripts/deploy-from-registry.sh
+
+deploy-prod-backup:
+	@echo "💾 Creating production backup..."
+	./scripts/deploy-from-registry.sh backup
+
+deploy-prod-init:
+	@echo "🔧 Running database initialization..."
+	./scripts/deploy-from-registry.sh init
+
+deploy-prod-migrate:
+	@echo "📊 Running database migrations..."
+	./scripts/deploy-from-registry.sh migrate
+
+deploy-prod-update:
+	@echo "🔄 Updating production services..."
+	./scripts/deploy-from-registry.sh update
+
+deploy-prod-restart:
+	@echo "🔄 Restarting production services..."
+	./scripts/deploy-from-registry.sh restart
+
+deploy-prod-status:
+	@echo "📊 Checking production status..."
+	./scripts/deploy-from-registry.sh status
+
+deploy-prod-stop:
+	@echo "🛑 Stopping production services..."
+	./scripts/deploy-from-registry.sh stop
+
+deploy-prod-pull:
+	@echo "📥 Pulling image from registry..."
+	./scripts/deploy-from-registry.sh pull
+
+# Environment management
+env-check:
+	@echo "🔍 Checking environment variables..."
+	./scripts/check-env.sh
+
+env-generate:
+	@echo "🔐 Generating secure environment values..."
+	./scripts/check-env.sh generate
+
+env-test-compose:
+	@echo "🧪 Testing Docker Compose configuration..."
+	./scripts/check-env.sh test-compose
+
+# Legacy deployment (local build)
+deploy-prod-local:
+	@echo "🚀 Starting local production deployment..."
+	./scripts/deploy-prod.sh
+
 # Full development setup
 dev-setup: docker-up
 	@echo "Waiting for databases to be ready..."
@@ -558,10 +666,45 @@ help:
 	@echo "  docs-run-all-validation - Run all validation tests"
 	@echo "  docs-validate-all  - Run all documentation validation tests"
 	@echo ""
-	@echo "🐳 Docker:"
+	@echo "🐳 Docker Development:"
 	@echo "  docker-up          - Start development containers"
 	@echo "  docker-down        - Stop development containers"
 	@echo "  dev-setup          - Full development environment setup"
+	@echo ""
+	@echo "🏗️ Build & Push to Registry:"
+	@echo "  build-push         - Build and push multi-platform (amd64+arm64)"
+	@echo "  build-push-x86     - Build and push x86_64/amd64 only"
+	@echo "  build-push-arm     - Build and push ARM64 only"
+	@echo "  build-push-single  - Build and push single-platform (current)"
+	@echo "  build-push-info    - Show build information"
+	@echo "  build-push-auth    - Authenticate with GitHub Registry"
+	@echo "  build-push-setup   - Setup buildx for multi-platform builds"
+	@echo "  build-push-cleanup - Clean up build artifacts"
+	@echo "  build-push-cleanup-buildx - Clean up buildx builder"
+	@echo ""
+	@echo "🚀 Production Deployment (from Registry):"
+	@echo "  deploy-prod        - Full production deployment from registry"
+	@echo "  deploy-prod-backup - Create production backup"
+	@echo "  deploy-prod-init   - Run database initialization"
+	@echo "  deploy-prod-migrate - Run database migrations"
+	@echo "  deploy-prod-update - Update services with new image"
+	@echo "  deploy-prod-restart - Restart production services"
+	@echo "  deploy-prod-status - Check production status"
+	@echo "  deploy-prod-stop   - Stop production services"
+	@echo "  deploy-prod-pull   - Pull image from registry"
+	@echo "  deploy-prod-local  - Legacy local build deployment"
+	@echo ""
+	@echo "🔧 Environment Management:"
+	@echo "  env-check          - Check environment variables"
+	@echo "  env-generate       - Generate secure environment values"
+	@echo "  env-test-compose   - Test Docker Compose configuration"
+	@echo ""
+	@echo "🐳 Docker Production (Manual):"
+	@echo "  docker-prod-build  - Build production images"
+	@echo "  docker-prod-up     - Start production containers"
+	@echo "  docker-prod-down   - Stop production containers"
+	@echo "  docker-prod-logs   - View production logs"
+	@echo "  docker-prod-clean  - Clean production containers and volumes"
 	@echo ""
 	@echo "🧹 Maintenance:"
 	@echo "  clean              - Clean build artifacts"
