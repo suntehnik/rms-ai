@@ -42,9 +42,9 @@ type CreateUserStoryRequest struct {
 	EpicID uuid.UUID `json:"epic_id,omitempty"`
 
 	// CreatorID is the UUID of the user creating the user story
-	// @Description UUID of the user who is creating this user story (required)
+	// @Description UUID of the user who is creating this user story (set automatically from JWT token)
 	// @Example "123e4567-e89b-12d3-a456-426614174001"
-	CreatorID uuid.UUID `json:"creator_id" binding:"required"`
+	CreatorID uuid.UUID `json:"creator_id,omitempty"`
 
 	// AssigneeID is the UUID of the user assigned to the user story
 	// @Description UUID of the user to assign this user story to (optional, defaults to creator)
