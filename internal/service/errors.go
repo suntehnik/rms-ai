@@ -12,4 +12,9 @@ var (
 
 	// Status transition errors
 	ErrInvalidStatusTransition = errors.New("invalid status transition")
+
+	// Steering Document errors
+	ErrSteeringDocumentNotFound = errors.New("steering document not found")
+	ErrLinkAlreadyExists        = errors.New("link already exists")
+	ErrUnauthorizedAccess       = errors.New("unauthorized access")
 )

@@ -318,6 +318,157 @@ func GetSupportedTools() []ToolDefinition {
 				"required": []string{"query"},
 			},
 		},
+		{
+			Name:        "list_steering_documents",
+			Title:       "List Steering Documents",
+			Description: "List steering documents with optional filtering and pagination",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"creator_id": map[string]interface{}{
+						"type":        "string",
+						"description": "Filter by creator UUID (optional)",
+						"format":      "uuid",
+					},
+					"search": map[string]interface{}{
+						"type":        "string",
+						"description": "Search query for full-text search in title and description (optional)",
+					},
+					"order_by": map[string]interface{}{
+						"type":        "string",
+						"description": "Order results by field and direction (optional, default: 'created_at DESC')",
+					},
+					"limit": map[string]interface{}{
+						"type":        "integer",
+						"description": "Maximum number of results to return (optional, default: 50, max: 100)",
+						"minimum":     1,
+						"maximum":     100,
+						"default":     50,
+					},
+					"offset": map[string]interface{}{
+						"type":        "integer",
+						"description": "Number of results to skip for pagination (optional, default: 0)",
+						"minimum":     0,
+						"default":     0,
+					},
+				},
+				"required": []string{},
+			},
+		},
+		{
+			Name:        "create_steering_document",
+			Title:       "Create Steering Document",
+			Description: "Create a new steering document in the requirements management system. The creator is automatically set to the authenticated user.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"title": map[string]interface{}{
+						"type":        "string",
+						"description": "Title of the steering document (required, max 500 characters)",
+						"maxLength":   500,
+					},
+					"description": map[string]interface{}{
+						"type":        "string",
+						"description": "Detailed description of the steering document content (optional, max 50000 characters)",
+						"maxLength":   50000,
+					},
+				},
+				"required": []string{"title"},
+			},
+		},
+		{
+			Name:        "get_steering_document",
+			Title:       "Get Steering Document",
+			Description: "Get a steering document by UUID or reference ID (STD-XXX)",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"steering_document_id": map[string]interface{}{
+						"type":        "string",
+						"description": "UUID or reference ID (STD-XXX) of the steering document to retrieve",
+					},
+				},
+				"required": []string{"steering_document_id"},
+			},
+		},
+		{
+			Name:        "update_steering_document",
+			Title:       "Update Steering Document",
+			Description: "Update an existing steering document",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"steering_document_id": map[string]interface{}{
+						"type":        "string",
+						"description": "UUID or reference ID (STD-XXX) of the steering document to update",
+					},
+					"title": map[string]interface{}{
+						"type":        "string",
+						"description": "New title of the steering document (optional, max 500 characters)",
+						"maxLength":   500,
+					},
+					"description": map[string]interface{}{
+						"type":        "string",
+						"description": "New description of the steering document (optional, max 50000 characters)",
+						"maxLength":   50000,
+					},
+				},
+				"required": []string{"steering_document_id"},
+			},
+		},
+		{
+			Name:        "link_steering_to_epic",
+			Title:       "Link Steering Document to Epic",
+			Description: "Create a link between a steering document and an epic. Both entities can be specified by UUID or reference ID.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"steering_document_id": map[string]interface{}{
+						"type":        "string",
+						"description": "UUID or reference ID (STD-XXX) of the steering document",
+					},
+					"epic_id": map[string]interface{}{
+						"type":        "string",
+						"description": "UUID or reference ID (EP-XXX) of the epic",
+					},
+				},
+				"required": []string{"steering_document_id", "epic_id"},
+			},
+		},
+		{
+			Name:        "unlink_steering_from_epic",
+			Title:       "Unlink Steering Document from Epic",
+			Description: "Remove the link between a steering document and an epic. Both entities can be specified by UUID or reference ID.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"steering_document_id": map[string]interface{}{
+						"type":        "string",
+						"description": "UUID or reference ID (STD-XXX) of the steering document",
+					},
+					"epic_id": map[string]interface{}{
+						"type":        "string",
+						"description": "UUID or reference ID (EP-XXX) of the epic",
+					},
+				},
+				"required": []string{"steering_document_id", "epic_id"},
+			},
+		},
+		{
+			Name:        "get_epic_steering_documents",
+			Title:       "Get Epic Steering Documents",
+			Description: "Get all steering documents linked to a specific epic. Epic can be specified by UUID or reference ID.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"epic_id": map[string]interface{}{
+						"type":        "string",
+						"description": "UUID or reference ID (EP-XXX) of the epic",
+					},
+				},
+				"required": []string{"epic_id"},
+			},
+		},
 	}
 }
 

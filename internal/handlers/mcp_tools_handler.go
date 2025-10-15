@@ -16,10 +16,11 @@ import (
 
 // ToolsHandler handles MCP tools/call requests for CRUD operations
 type ToolsHandler struct {
-	epicService        service.EpicService
-	userStoryService   service.UserStoryService
-	requirementService service.RequirementService
-	searchService      service.SearchServiceInterface
+	epicService             service.EpicService
+	userStoryService        service.UserStoryService
+	requirementService      service.RequirementService
+	searchService           service.SearchServiceInterface
+	steeringDocumentService service.SteeringDocumentService
 }
 
 // NewToolsHandler creates a new tools handler instance
@@ -28,12 +29,14 @@ func NewToolsHandler(
 	userStoryService service.UserStoryService,
 	requirementService service.RequirementService,
 	searchService service.SearchServiceInterface,
+	steeringDocumentService service.SteeringDocumentService,
 ) *ToolsHandler {
 	return &ToolsHandler{
-		epicService:        epicService,
-		userStoryService:   userStoryService,
-		requirementService: requirementService,
-		searchService:      searchService,
+		epicService:             epicService,
+		userStoryService:        userStoryService,
+		requirementService:      requirementService,
+		searchService:           searchService,
+		steeringDocumentService: steeringDocumentService,
 	}
 }
 
@@ -106,6 +109,20 @@ func (h *ToolsHandler) HandleToolsCall(ctx context.Context, params interface{}) 
 		return h.handleSearchGlobal(ctx, arguments)
 	case "search_requirements":
 		return h.handleSearchRequirements(ctx, arguments)
+	case "list_steering_documents":
+		return h.handleListSteeringDocuments(ctx, arguments)
+	case "create_steering_document":
+		return h.handleCreateSteeringDocument(ctx, arguments)
+	case "get_steering_document":
+		return h.handleGetSteeringDocument(ctx, arguments)
+	case "update_steering_document":
+		return h.handleUpdateSteeringDocument(ctx, arguments)
+	case "link_steering_to_epic":
+		return h.handleLinkSteeringToEpic(ctx, arguments)
+	case "unlink_steering_from_epic":
+		return h.handleUnlinkSteeringFromEpic(ctx, arguments)
+	case "get_epic_steering_documents":
+		return h.handleGetEpicSteeringDocuments(ctx, arguments)
 	default:
 		return nil, jsonrpc.NewMethodNotFoundError(fmt.Sprintf("Unknown tool: %s", toolName))
 	}
@@ -744,6 +761,410 @@ func (h *ToolsHandler) handleSearchRequirements(_ context.Context, args map[stri
 			{
 				Type: "text",
 				Text: fmt.Sprintf("Found %d requirements matching query '%s'", len(requirements), query),
+			},
+			{
+				Type: "text",
+				Text: string(jsonData),
+			},
+		},
+	}, nil
+}
+
+// handleListSteeringDocuments handles the list_steering_documents tool
+func (h *ToolsHandler) handleListSteeringDocuments(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+	// Get current user from context
+	user, err := getUserFromContext(ctx)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get user from context: %v", err))
+	}
+
+	// Build filters from optional arguments
+	filters := service.SteeringDocumentFilters{}
+
+	if creatorIDStr, ok := args["creator_id"].(string); ok && creatorIDStr != "" {
+		creatorID, err := uuid.Parse(creatorIDStr)
+		if err != nil {
+			return nil, jsonrpc.NewInvalidParamsError("Invalid 'creator_id' format")
+		}
+		filters.CreatorID = &creatorID
+	}
+
+	if search, ok := args["search"].(string); ok {
+		filters.Search = search
+	}
+
+	if orderBy, ok := args["order_by"].(string); ok {
+		filters.OrderBy = orderBy
+	}
+
+	if limitFloat, ok := args["limit"].(float64); ok {
+		filters.Limit = int(limitFloat)
+	}
+
+	if offsetFloat, ok := args["offset"].(float64); ok {
+		filters.Offset = int(offsetFloat)
+	}
+
+	// List steering documents
+	docs, total, err := h.steeringDocumentService.ListSteeringDocuments(filters, user)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to list steering documents: %v", err))
+	}
+
+	// Convert results to JSON string for MCP compatibility
+	listData := map[string]interface{}{
+		"steering_documents": docs,
+		"total_count":        total,
+		"limit":              filters.Limit,
+		"offset":             filters.Offset,
+	}
+
+	jsonData, err := json.MarshalIndent(listData, "", "  ")
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to marshal steering documents list: %v", err))
+	}
+
+	return &ToolResponse{
+		Content: []ContentItem{
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Found %d steering documents (total: %d)", len(docs), total),
+			},
+			{
+				Type: "text",
+				Text: string(jsonData),
+			},
+		},
+	}, nil
+}
+
+// handleCreateSteeringDocument handles the create_steering_document tool
+func (h *ToolsHandler) handleCreateSteeringDocument(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+	// Get current user from context
+	user, err := getUserFromContext(ctx)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get user from context: %v", err))
+	}
+
+	// Validate required arguments
+	title, ok := args["title"].(string)
+	if !ok || title == "" {
+		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid 'title' argument")
+	}
+
+	// Optional arguments
+	var description *string
+	if desc, ok := args["description"].(string); ok && desc != "" {
+		description = &desc
+	}
+
+	// Create the steering document
+	req := service.CreateSteeringDocumentRequest{
+		Title:       title,
+		Description: description,
+	}
+
+	doc, err := h.steeringDocumentService.CreateSteeringDocument(req, user)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to create steering document: %v", err))
+	}
+
+	return &ToolResponse{
+		Content: []ContentItem{
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Successfully created steering document %s: %s", doc.ReferenceID, doc.Title),
+			},
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Steering document data: %+v", doc),
+			},
+		},
+	}, nil
+}
+
+// handleGetSteeringDocument handles the get_steering_document tool
+func (h *ToolsHandler) handleGetSteeringDocument(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+	// Get current user from context
+	user, err := getUserFromContext(ctx)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get user from context: %v", err))
+	}
+
+	// Validate required arguments
+	steeringDocIDStr, ok := args["steering_document_id"].(string)
+	if !ok || steeringDocIDStr == "" {
+		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid 'steering_document_id' argument")
+	}
+
+	var doc *models.SteeringDocument
+
+	// Try to parse as UUID first, then as reference ID
+	if steeringDocID, err := uuid.Parse(steeringDocIDStr); err == nil {
+		doc, err = h.steeringDocumentService.GetSteeringDocumentByID(steeringDocID, user)
+		if err != nil {
+			return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get steering document by ID: %v", err))
+		}
+	} else {
+		// Try to get by reference ID
+		doc, err = h.steeringDocumentService.GetSteeringDocumentByReferenceID(steeringDocIDStr, user)
+		if err != nil {
+			return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get steering document by reference ID: %v", err))
+		}
+	}
+
+	// Convert document to JSON string for MCP compatibility
+	jsonData, err := json.MarshalIndent(doc, "", "  ")
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to marshal steering document: %v", err))
+	}
+
+	return &ToolResponse{
+		Content: []ContentItem{
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Retrieved steering document %s: %s", doc.ReferenceID, doc.Title),
+			},
+			{
+				Type: "text",
+				Text: string(jsonData),
+			},
+		},
+	}, nil
+}
+
+// handleUpdateSteeringDocument handles the update_steering_document tool
+func (h *ToolsHandler) handleUpdateSteeringDocument(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+	// Get current user from context
+	user, err := getUserFromContext(ctx)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get user from context: %v", err))
+	}
+
+	// Validate required arguments
+	steeringDocIDStr, ok := args["steering_document_id"].(string)
+	if !ok || steeringDocIDStr == "" {
+		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid 'steering_document_id' argument")
+	}
+
+	var steeringDocID uuid.UUID
+
+	// Try to parse as UUID first, then as reference ID
+	if parsedID, err := uuid.Parse(steeringDocIDStr); err == nil {
+		steeringDocID = parsedID
+	} else {
+		// Try to get by reference ID
+		doc, err := h.steeringDocumentService.GetSteeringDocumentByReferenceID(steeringDocIDStr, user)
+		if err != nil {
+			return nil, jsonrpc.NewInvalidParamsError("Invalid 'steering_document_id': not a valid UUID or reference ID")
+		}
+		steeringDocID = doc.ID
+	}
+
+	// Build update request from optional arguments
+	req := service.UpdateSteeringDocumentRequest{}
+
+	if title, ok := args["title"].(string); ok && title != "" {
+		req.Title = &title
+	}
+
+	if description, ok := args["description"].(string); ok {
+		req.Description = &description
+	}
+
+	// Update the steering document
+	doc, err := h.steeringDocumentService.UpdateSteeringDocument(steeringDocID, req, user)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to update steering document: %v", err))
+	}
+
+	return &ToolResponse{
+		Content: []ContentItem{
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Successfully updated steering document %s: %s", doc.ReferenceID, doc.Title),
+			},
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Steering document data: %+v", doc),
+			},
+		},
+	}, nil
+}
+
+// handleLinkSteeringToEpic handles the link_steering_to_epic tool
+func (h *ToolsHandler) handleLinkSteeringToEpic(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+	// Get current user from context
+	user, err := getUserFromContext(ctx)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get user from context: %v", err))
+	}
+
+	// Validate required arguments
+	steeringDocIDStr, ok := args["steering_document_id"].(string)
+	if !ok || steeringDocIDStr == "" {
+		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid 'steering_document_id' argument")
+	}
+
+	epicIDStr, ok := args["epic_id"].(string)
+	if !ok || epicIDStr == "" {
+		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid 'epic_id' argument")
+	}
+
+	// Parse steering document ID
+	var steeringDocID uuid.UUID
+	if parsedID, err := uuid.Parse(steeringDocIDStr); err == nil {
+		steeringDocID = parsedID
+	} else {
+		// Try to get by reference ID
+		doc, err := h.steeringDocumentService.GetSteeringDocumentByReferenceID(steeringDocIDStr, user)
+		if err != nil {
+			return nil, jsonrpc.NewInvalidParamsError("Invalid 'steering_document_id': not a valid UUID or reference ID")
+		}
+		steeringDocID = doc.ID
+	}
+
+	// Parse epic ID
+	var epicID uuid.UUID
+	if parsedID, err := uuid.Parse(epicIDStr); err == nil {
+		epicID = parsedID
+	} else {
+		// Try to get by reference ID
+		epic, err := h.epicService.GetEpicByReferenceID(epicIDStr)
+		if err != nil {
+			return nil, jsonrpc.NewInvalidParamsError("Invalid 'epic_id': not a valid UUID or reference ID")
+		}
+		epicID = epic.ID
+	}
+
+	// Create the link
+	err = h.steeringDocumentService.LinkSteeringDocumentToEpic(steeringDocID, epicID, user)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to link steering document to epic: %v", err))
+	}
+
+	return &ToolResponse{
+		Content: []ContentItem{
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Successfully linked steering document %s to epic %s", steeringDocIDStr, epicIDStr),
+			},
+		},
+	}, nil
+}
+
+// handleUnlinkSteeringFromEpic handles the unlink_steering_from_epic tool
+func (h *ToolsHandler) handleUnlinkSteeringFromEpic(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+	// Get current user from context
+	user, err := getUserFromContext(ctx)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get user from context: %v", err))
+	}
+
+	// Validate required arguments
+	steeringDocIDStr, ok := args["steering_document_id"].(string)
+	if !ok || steeringDocIDStr == "" {
+		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid 'steering_document_id' argument")
+	}
+
+	epicIDStr, ok := args["epic_id"].(string)
+	if !ok || epicIDStr == "" {
+		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid 'epic_id' argument")
+	}
+
+	// Parse steering document ID
+	var steeringDocID uuid.UUID
+	if parsedID, err := uuid.Parse(steeringDocIDStr); err == nil {
+		steeringDocID = parsedID
+	} else {
+		// Try to get by reference ID
+		doc, err := h.steeringDocumentService.GetSteeringDocumentByReferenceID(steeringDocIDStr, user)
+		if err != nil {
+			return nil, jsonrpc.NewInvalidParamsError("Invalid 'steering_document_id': not a valid UUID or reference ID")
+		}
+		steeringDocID = doc.ID
+	}
+
+	// Parse epic ID
+	var epicID uuid.UUID
+	if parsedID, err := uuid.Parse(epicIDStr); err == nil {
+		epicID = parsedID
+	} else {
+		// Try to get by reference ID
+		epic, err := h.epicService.GetEpicByReferenceID(epicIDStr)
+		if err != nil {
+			return nil, jsonrpc.NewInvalidParamsError("Invalid 'epic_id': not a valid UUID or reference ID")
+		}
+		epicID = epic.ID
+	}
+
+	// Remove the link
+	err = h.steeringDocumentService.UnlinkSteeringDocumentFromEpic(steeringDocID, epicID, user)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to unlink steering document from epic: %v", err))
+	}
+
+	return &ToolResponse{
+		Content: []ContentItem{
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Successfully unlinked steering document %s from epic %s", steeringDocIDStr, epicIDStr),
+			},
+		},
+	}, nil
+}
+
+// handleGetEpicSteeringDocuments handles the get_epic_steering_documents tool
+func (h *ToolsHandler) handleGetEpicSteeringDocuments(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+	// Get current user from context
+	user, err := getUserFromContext(ctx)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get user from context: %v", err))
+	}
+
+	// Validate required arguments
+	epicIDStr, ok := args["epic_id"].(string)
+	if !ok || epicIDStr == "" {
+		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid 'epic_id' argument")
+	}
+
+	var epicID uuid.UUID
+
+	// Try to parse as UUID first, then as reference ID
+	if parsedID, err := uuid.Parse(epicIDStr); err == nil {
+		epicID = parsedID
+	} else {
+		// Try to get by reference ID
+		epic, err := h.epicService.GetEpicByReferenceID(epicIDStr)
+		if err != nil {
+			return nil, jsonrpc.NewInvalidParamsError("Invalid 'epic_id': not a valid UUID or reference ID")
+		}
+		epicID = epic.ID
+	}
+
+	// Get steering documents for the epic
+	docs, err := h.steeringDocumentService.GetSteeringDocumentsByEpicID(epicID, user)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get steering documents for epic: %v", err))
+	}
+
+	// Convert results to JSON string for MCP compatibility
+	epicData := map[string]interface{}{
+		"epic_id":            epicIDStr,
+		"steering_documents": docs,
+		"count":              len(docs),
+	}
+
+	jsonData, err := json.MarshalIndent(epicData, "", "  ")
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to marshal epic steering documents: %v", err))
+	}
+
+	return &ToolResponse{
+		Content: []ContentItem{
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Found %d steering documents linked to epic %s", len(docs), epicIDStr),
 			},
 			{
 				Type: "text",

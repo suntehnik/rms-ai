@@ -70,6 +70,11 @@ func (u *User) IsCommenter() bool {
 	return u.Role == RoleCommenter
 }
 
+// CanRead checks if the user can read entities (Administrator or User roles)
+func (u *User) CanRead() bool {
+	return u.Role == RoleAdministrator || u.Role == RoleUser
+}
+
 // CanEdit checks if the user can edit entities (Administrator or User roles)
 func (u *User) CanEdit() bool {
 	return u.Role == RoleAdministrator || u.Role == RoleUser

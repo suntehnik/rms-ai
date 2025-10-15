@@ -792,6 +792,39 @@ export interface RelationshipType {
   updated_at: string;
 }
 
+// Steering Document types
+export interface SteeringDocument {
+  id: string;
+  reference_id: string;
+  title: string;
+  description?: string;
+  creator_id: string;
+  created_at: string;
+  updated_at: string;
+  
+  // Optional populated fields
+  creator?: User;
+  epics?: Epic[];
+}
+
+export interface CreateSteeringDocumentRequest {
+  title: string;
+  description?: string;
+}
+
+export interface UpdateSteeringDocumentRequest {
+  title?: string;
+  description?: string;
+}
+
+export interface SteeringDocumentFilters {
+  creator_id?: string;
+  search?: string;
+  order_by?: string;
+  limit?: number;
+  offset?: number;
+}
+
 export interface RequirementRelationship {
   id: string;
   source_requirement_id: string;
@@ -907,6 +940,7 @@ export interface RequirementListResponse extends ListResponse<Requirement> {}
 export interface CommentListResponse extends ListResponse<Comment> {}
 export interface RequirementTypeListResponse extends ListResponse<RequirementType> {}
 export interface RelationshipTypeListResponse extends ListResponse<RelationshipType> {}
+export interface SteeringDocumentListResponse extends ListResponse<SteeringDocument> {}
 
 // API Client interface
 export interface ApiClient {
@@ -987,6 +1021,16 @@ export interface ApiClient {
   resolveComment(id: string): Promise<Comment>;
   unresolveComment(id: string): Promise<Comment>;
   
+  // Steering Documents
+  createSteeringDocument(doc: CreateSteeringDocumentRequest): Promise<SteeringDocument>;
+  getSteeringDocuments(params?: SteeringDocumentFilters): Promise<SteeringDocumentListResponse>;
+  getSteeringDocument(id: string): Promise<SteeringDocument>;
+  updateSteeringDocument(id: string, doc: UpdateSteeringDocumentRequest): Promise<SteeringDocument>;
+  deleteSteeringDocument(id: string): Promise<void>;
+  getEpicSteeringDocuments(epicId: string): Promise<SteeringDocument[]>;
+  linkSteeringDocumentToEpic(epicId: string, docId: string): Promise<void>;
+  unlinkSteeringDocumentFromEpic(epicId: string, docId: string): Promise<void>;
+  
   // Search
   search(params: {
     q: string;
@@ -1060,6 +1104,12 @@ export const API_ENDPOINTS = {
   // Search
   SEARCH: '/api/v1/search',
   SEARCH_SUGGESTIONS: '/api/v1/search/suggestions',
+  
+  // Steering Documents
+  STEERING_DOCUMENTS: '/api/v1/steering-documents',
+  STEERING_DOCUMENT: '/api/v1/steering-documents/{id}',
+  EPIC_STEERING_DOCUMENTS: '/api/v1/epics/{id}/steering-documents',
+  EPIC_STEERING_DOCUMENT_LINK: '/api/v1/epics/{epic_id}/steering-documents/{doc_id}',
   
   // Health
   READY: '/ready',

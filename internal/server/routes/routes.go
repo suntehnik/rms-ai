@@ -106,6 +106,13 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 		repos.User,
 	)
 
+	// Initialize steering document service
+	steeringDocumentService := service.NewSteeringDocumentService(
+		repos.SteeringDocument,
+		repos.Epic,
+		repos.User,
+	)
+
 	// Initialize auth service and handlers
 	authService := auth.NewService(cfg.JWT.Secret, 24*time.Hour) // 24 hours token duration
 	authHandler := auth.NewHandlers(authService, db.Postgres)
@@ -126,7 +133,8 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	commentHandler := handlers.NewCommentHandler(commentService)
 	searchHandler := handlers.NewSearchHandler(searchService, logger.Logger)
 	navigationHandler := handlers.NewNavigationHandler(navigationService)
-	mcpHandler := handlers.NewMCPHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService, searchService)
+	steeringDocumentHandler := handlers.NewSteeringDocumentHandler(steeringDocumentService, repos.User)
+	mcpHandler := handlers.NewMCPHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService, searchService, steeringDocumentService)
 
 	// Authentication routes (no /api/v1 prefix for auth)
 	authGroup := router.Group("/auth")
@@ -244,6 +252,22 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 
 		// Requirement Relationship routes
 		v1.DELETE("/requirement-relationships/:id", requirementHandler.DeleteRelationship)
+
+		// Steering Document routes
+		steeringDocuments := v1.Group("/steering-documents")
+		steeringDocuments.Use(authService.Middleware()) // Add authentication middleware
+		{
+			steeringDocuments.POST("", steeringDocumentHandler.CreateSteeringDocument)
+			steeringDocuments.GET("", steeringDocumentHandler.ListSteeringDocuments)
+			steeringDocuments.GET("/:id", steeringDocumentHandler.GetSteeringDocument)
+			steeringDocuments.PUT("/:id", steeringDocumentHandler.UpdateSteeringDocument)
+			steeringDocuments.DELETE("/:id", steeringDocumentHandler.DeleteSteeringDocument)
+		}
+
+		// Epic-Steering Document relationship routes
+		epics.GET("/:id/steering-documents", steeringDocumentHandler.GetEpicSteeringDocuments)
+		epics.POST("/:id/steering-documents/:doc_id", steeringDocumentHandler.LinkSteeringDocumentToEpic)
+		epics.DELETE("/:id/steering-documents/:doc_id", steeringDocumentHandler.UnlinkSteeringDocumentFromEpic)
 
 		// Configuration routes (admin only)
 		config := v1.Group("/config")
