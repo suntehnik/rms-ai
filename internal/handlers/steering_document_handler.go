@@ -98,6 +98,13 @@ func (h *SteeringDocumentHandler) CreateSteeringDocument(c *gin.Context) {
 					"message": "Creator not found",
 				},
 			})
+		case errors.Is(err, service.ErrEpicNotFound):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": gin.H{
+					"code":    "ENTITY_NOT_FOUND",
+					"message": "Epic not found",
+				},
+			})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": gin.H{

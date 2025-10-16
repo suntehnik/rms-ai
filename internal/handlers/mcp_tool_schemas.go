@@ -358,7 +358,7 @@ func GetSupportedTools() []ToolDefinition {
 		{
 			Name:        "create_steering_document",
 			Title:       "Create Steering Document",
-			Description: "Create a new steering document in the requirements management system. The creator is automatically set to the authenticated user.",
+			Description: "Create a new steering document in the requirements management system. The creator is automatically set to the authenticated user. Optionally link to an epic during creation.",
 			InputSchema: map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
@@ -371,6 +371,10 @@ func GetSupportedTools() []ToolDefinition {
 						"type":        "string",
 						"description": "Detailed description of the steering document content (optional, max 50000 characters)",
 						"maxLength":   50000,
+					},
+					"epic_id": map[string]interface{}{
+						"type":        "string",
+						"description": "UUID or reference ID (EP-XXX) of the epic to link this steering document to (optional)",
 					},
 				},
 				"required": []string{"title"},

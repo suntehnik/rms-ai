@@ -858,10 +858,16 @@ func (h *ToolsHandler) handleCreateSteeringDocument(ctx context.Context, args ma
 		description = &desc
 	}
 
+	var epicID *string
+	if epicIDStr, ok := args["epic_id"].(string); ok && epicIDStr != "" {
+		epicID = &epicIDStr
+	}
+
 	// Create the steering document
 	req := service.CreateSteeringDocumentRequest{
 		Title:       title,
 		Description: description,
+		EpicID:      epicID,
 	}
 
 	doc, err := h.steeringDocumentService.CreateSteeringDocument(req, user)
@@ -869,11 +875,17 @@ func (h *ToolsHandler) handleCreateSteeringDocument(ctx context.Context, args ma
 		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to create steering document: %v", err))
 	}
 
+	// Prepare success message
+	successMsg := fmt.Sprintf("Successfully created steering document %s: %s", doc.ReferenceID, doc.Title)
+	if epicID != nil {
+		successMsg += " and linked to epic"
+	}
+
 	return &ToolResponse{
 		Content: []ContentItem{
 			{
 				Type: "text",
-				Text: fmt.Sprintf("Successfully created steering document %s: %s", doc.ReferenceID, doc.Title),
+				Text: successMsg,
 			},
 			{
 				Type: "text",

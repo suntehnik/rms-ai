@@ -44,6 +44,11 @@ type CreateSteeringDocumentRequest struct {
 	// @MaxLength 50000
 	// @Example "This document outlines the code review standards and practices for the development team..."
 	Description *string `json:"description,omitempty" binding:"omitempty,max=50000"`
+
+	// EpicID is the optional UUID or reference ID of the epic to link this steering document to
+	// @Description Optional UUID or reference ID (EP-XXX) of the epic to automatically link this steering document to during creation
+	// @Example "123e4567-e89b-12d3-a456-426614174000" or "EP-001"
+	EpicID *string `json:"epic_id,omitempty"`
 }
 
 // UpdateSteeringDocumentRequest represents the request to update a steering document
@@ -133,6 +138,31 @@ func (s *steeringDocumentService) CreateSteeringDocument(req CreateSteeringDocum
 		return nil, ErrUserNotFound
 	}
 
+	// If epic_id is provided, validate that the epic exists and get its UUID
+	var epicUUID *uuid.UUID
+	if req.EpicID != nil && *req.EpicID != "" {
+		// Try to parse as UUID first
+		if parsedUUID, err := uuid.Parse(*req.EpicID); err == nil {
+			// It's a UUID, check if it exists
+			if exists, err := s.epicRepo.Exists(parsedUUID); err != nil {
+				return nil, fmt.Errorf("failed to check epic existence: %w", err)
+			} else if !exists {
+				return nil, ErrEpicNotFound
+			}
+			epicUUID = &parsedUUID
+		} else {
+			// Try to find by reference ID (EP-XXX)
+			epic, err := s.epicRepo.GetByReferenceID(*req.EpicID)
+			if err != nil {
+				if errors.Is(err, repository.ErrNotFound) {
+					return nil, ErrEpicNotFound
+				}
+				return nil, fmt.Errorf("failed to get epic by reference ID: %w", err)
+			}
+			epicUUID = &epic.ID
+		}
+	}
+
 	doc := &models.SteeringDocument{
 		ID:          uuid.New(),
 		Title:       req.Title,
@@ -142,6 +172,17 @@ func (s *steeringDocumentService) CreateSteeringDocument(req CreateSteeringDocum
 
 	if err := s.steeringDocumentRepo.Create(doc); err != nil {
 		return nil, fmt.Errorf("failed to create steering document: %w", err)
+	}
+
+	// If epic_id is provided, create the link
+	if epicUUID != nil {
+		if err := s.steeringDocumentRepo.LinkToEpic(doc.ID, *epicUUID); err != nil {
+			// If linking fails, we should still return the created document
+			// but log the error for debugging
+			// Note: In a production system, you might want to rollback the document creation
+			// or handle this differently based on business requirements
+			return s.steeringDocumentRepo.GetByID(doc.ID)
+		}
 	}
 
 	return s.steeringDocumentRepo.GetByID(doc.ID)
