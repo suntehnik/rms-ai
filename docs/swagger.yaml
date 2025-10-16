@@ -1184,7 +1184,6 @@ definitions:
       user_story_id:
         type: string
     required:
-    - author_id
     - description
     type: object
   product-requirements-management_internal_service.CreateCommentRequest:
@@ -1205,8 +1204,6 @@ definitions:
         type: integer
       text_position_start:
         type: integer
-    required:
-    - author_id
     type: object
   product-requirements-management_internal_service.CreateEpicRequest:
     description: Request payload for creating a new epic

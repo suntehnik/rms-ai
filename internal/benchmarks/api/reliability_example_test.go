@@ -53,7 +53,7 @@ func BenchmarkEpicCRUDWithReliability(b *testing.B) {
 
 	// Create HTTP client with enhanced error handling
 	client := helpers.NewBenchmarkClient(server.BaseURL)
-	
+
 	// Setup authentication with retry logic
 	authHelper := helpers.NewAuthHelper(server.Config.JWT.Secret)
 	testUser := helpers.GetDefaultTestUser()
@@ -120,7 +120,7 @@ func BenchmarkEpicCRUDWithReliability(b *testing.B) {
 
 	// Collect and validate performance metrics
 	metrics := metricsCollector.EndMeasurement()
-	
+
 	// Validate performance meets requirements
 	err = validator.ValidatePerformanceMetrics(metrics)
 	if err != nil {
@@ -135,7 +135,7 @@ func BenchmarkEpicCRUDWithReliability(b *testing.B) {
 
 	// Report detailed metrics
 	metricsCollector.ReportMetrics(b, metrics)
-	
+
 	// Generate validation report
 	report := validator.CreateValidationReport(metrics)
 	b.Logf("Benchmark Validation Report:\n%s", report)
@@ -178,7 +178,7 @@ func BenchmarkConcurrentOperationsWithReliability(b *testing.B) {
 		// Adjust concurrency based on resource constraints
 		requestedConcurrency := 10
 		actualConcurrency := reliabilityMgr.AdjustConcurrencyForConstraints(requestedConcurrency)
-		
+
 		b.Logf("Using concurrency level: %d (requested: %d)", actualConcurrency, requestedConcurrency)
 
 		// Create requests for parallel execution
@@ -242,7 +242,7 @@ func BenchmarkResourceConstrainedOperations(b *testing.B) {
 
 	// Configure for resource-constrained environment
 	reliabilityMgr := testRunner.GetReliabilityManager()
-	
+
 	// Note: In a full implementation, you would configure resource monitoring here
 	// For this example, we'll rely on the default resource monitoring
 
@@ -274,7 +274,7 @@ func BenchmarkResourceConstrainedOperations(b *testing.B) {
 
 			// Adjust operation complexity based on constraints
 			degradationConfig := reliabilityMgr.GetGracefulDegradationConfig()
-			
+
 			var title string
 			if degradationConfig.UseSimplifiedData {
 				title = fmt.Sprintf("Simple Epic %d", i)
@@ -330,7 +330,7 @@ func BenchmarkErrorRecoveryScenarios(b *testing.B) {
 
 	// Configure retry behavior for error scenarios
 	reliabilityMgr := testRunner.GetReliabilityManager()
-	
+
 	// Setup environment
 	require.NoError(b, testRunner.ExecuteWithReliability("server_start", server.Start))
 	require.NoError(b, testRunner.SetupBenchmarkEnvironment(server.DB, server.BaseURL))

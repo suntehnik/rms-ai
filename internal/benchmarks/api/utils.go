@@ -20,52 +20,12 @@ func intPtr(i int) *int {
 	return &i
 }
 
-// boolPtr creates a pointer to a bool value
-func boolPtr(b bool) *bool {
-	return &b
-}
-
-// validateTestData ensures that test data arrays have sufficient elements for benchmark operations
-func validateTestData(b *testing.B, dataName string, dataLength, requiredLength int) {
-	if dataLength == 0 {
-		b.Fatalf("No %s available for benchmark testing", dataName)
-	}
-	if requiredLength > 0 && dataLength < requiredLength {
-		b.Logf("Warning: Only %d %s available, but %d required. Will cycle through available data.",
-			dataLength, dataName, requiredLength)
-	}
-}
-
 // safeIndex returns a safe index for accessing arrays with bounds checking
 func safeIndex(index, arrayLength int) int {
 	if arrayLength == 0 {
 		return 0
 	}
 	return index % arrayLength
-}
-
-// validateUUIDArray ensures UUID array has valid elements and returns safe index
-func validateUUIDArray(b *testing.B, ids []uuid.UUID, index int, arrayName string) int {
-	if len(ids) == 0 {
-		b.Fatalf("No %s available for benchmark testing", arrayName)
-	}
-
-	safeIdx := safeIndex(index, len(ids))
-	if ids[safeIdx] == uuid.Nil {
-		b.Fatalf("Invalid UUID at index %d in %s array", safeIdx, arrayName)
-	}
-
-	return safeIdx
-}
-
-// ensureMinimumTestData checks if we have minimum required test data for benchmarks
-func ensureMinimumTestData(b *testing.B, counts map[string]int, minimums map[string]int) {
-	for dataType, minimum := range minimums {
-		if actual, exists := counts[dataType]; !exists || actual < minimum {
-			b.Fatalf("Insufficient %s for benchmark: need at least %d, got %d",
-				dataType, minimum, actual)
-		}
-	}
 }
 
 // BenchmarkDataRequirements defines minimum data requirements for different benchmark types

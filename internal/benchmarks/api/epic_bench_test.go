@@ -251,7 +251,7 @@ func BenchmarkEpicStatusChange(b *testing.B) {
 	}
 
 	epicIDs := make([]uuid.UUID, 0, numEpics) // Use slice with capacity for better memory management
-	
+
 	// Create epics with proper error handling and validation
 	for i := 0; i < numEpics; i++ {
 		createReq := service.CreateEpicRequest{
@@ -318,7 +318,7 @@ func BenchmarkEpicStatusChange(b *testing.B) {
 			// Use safe indexing with bounds checking to cycle through available epics
 			epicIndex := safeIndex(i, len(epicIDs))
 			statusIndex := safeIndex(i, len(statuses))
-			
+
 			// Additional bounds checking as defensive programming
 			if epicIndex < 0 || epicIndex >= len(epicIDs) {
 				b.Fatalf("Epic index out of bounds: %d (available: %d)", epicIndex, len(epicIDs))
@@ -341,13 +341,13 @@ func BenchmarkEpicStatusChange(b *testing.B) {
 			if err != nil {
 				b.Fatalf("Failed to change epic status (iteration %d, epic %s): %v", i, epicID, err)
 			}
-			
+
 			if resp.StatusCode != http.StatusOK {
 				resp.Body.Close()
-				b.Fatalf("Epic status change failed (iteration %d, epic %s): expected status %d, got %d", 
+				b.Fatalf("Epic status change failed (iteration %d, epic %s): expected status %d, got %d",
 					i, epicID, http.StatusOK, resp.StatusCode)
 			}
-			
+
 			resp.Body.Close()
 		}
 	})
@@ -398,7 +398,7 @@ func BenchmarkEpicAssignment(b *testing.B) {
 	}
 
 	epicIDs := make([]uuid.UUID, 0, numEpics) // Use slice with capacity for better memory management
-	
+
 	// Create epics with proper error handling and validation
 	for i := 0; i < numEpics; i++ {
 		createReq := service.CreateEpicRequest{
@@ -488,13 +488,13 @@ func BenchmarkEpicAssignment(b *testing.B) {
 			if err != nil {
 				b.Fatalf("Failed to assign epic (iteration %d, epic %s): %v", i, epicID, err)
 			}
-			
+
 			if resp.StatusCode != http.StatusOK {
 				resp.Body.Close()
-				b.Fatalf("Epic assignment failed (iteration %d, epic %s): expected status %d, got %d", 
+				b.Fatalf("Epic assignment failed (iteration %d, epic %s): expected status %d, got %d",
 					i, epicID, http.StatusOK, resp.StatusCode)
 			}
-			
+
 			resp.Body.Close()
 		}
 	})
@@ -642,4 +642,3 @@ func BenchmarkEpicConcurrentOperations(b *testing.B) {
 		}
 	})
 }
-

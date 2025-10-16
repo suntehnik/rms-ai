@@ -49,7 +49,7 @@ func TestNewPostgreSQLReferenceIDGenerator(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			generator := NewPostgreSQLReferenceIDGenerator(tt.lockKey, tt.prefix)
-			
+
 			assert.NotNil(t, generator)
 			assert.Equal(t, tt.lockKey, generator.lockKey)
 			assert.Equal(t, tt.prefix, generator.prefix)
@@ -62,7 +62,7 @@ func TestPostgreSQLReferenceIDGenerator_SQLiteMode(t *testing.T) {
 	// Setup in-memory SQLite database
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(t, err)
-	
+
 	// Create tables for testing
 	err = db.AutoMigrate(&Epic{}, &UserStory{}, &Requirement{}, &AcceptanceCriteria{})
 	require.NoError(t, err)
@@ -112,7 +112,7 @@ func TestPostgreSQLReferenceIDGenerator_SQLiteMode(t *testing.T) {
 func TestPostgreSQLReferenceIDGenerator_SequentialGeneration(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(t, err)
-	
+
 	err = db.AutoMigrate(&Epic{})
 	require.NoError(t, err)
 
@@ -124,7 +124,7 @@ func TestPostgreSQLReferenceIDGenerator_SequentialGeneration(t *testing.T) {
 		{ReferenceID: "EP-002", Title: "Existing Epic 2"},
 		{ReferenceID: "EP-003", Title: "Existing Epic 3"},
 	}
-	
+
 	for _, epic := range existingEpics {
 		err = db.Create(&epic).Error
 		require.NoError(t, err)
@@ -139,7 +139,7 @@ func TestPostgreSQLReferenceIDGenerator_SequentialGeneration(t *testing.T) {
 	id2, err := generator.Generate(db, &Epic{})
 	require.NoError(t, err)
 	assert.Equal(t, "EP-004", id2)
-	
+
 	// Test with actual saving to demonstrate true sequential behavior
 	t.Run("With actual record creation", func(t *testing.T) {
 		// Create a new epic with the generated ID
@@ -147,11 +147,11 @@ func TestPostgreSQLReferenceIDGenerator_SequentialGeneration(t *testing.T) {
 		newEpic.ReferenceID, err = generator.Generate(db, &Epic{})
 		require.NoError(t, err)
 		assert.Equal(t, "EP-004", newEpic.ReferenceID)
-		
+
 		// Save it to the database
 		err = db.Create(&newEpic).Error
 		require.NoError(t, err)
-		
+
 		// Now the next ID should be EP-005
 		nextID, err := generator.Generate(db, &Epic{})
 		require.NoError(t, err)
@@ -165,10 +165,10 @@ func TestPostgreSQLReferenceIDGenerator_ErrorHandling(t *testing.T) {
 		// Create a database that will fail on count operations
 		db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 		require.NoError(t, err)
-		
+
 		// Don't migrate the table, so count will fail
 		generator := NewPostgreSQLReferenceIDGenerator(2147483647, "EP")
-		
+
 		_, err = generator.Generate(db, &Epic{})
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to count records")
@@ -177,9 +177,9 @@ func TestPostgreSQLReferenceIDGenerator_ErrorHandling(t *testing.T) {
 	t.Run("Invalid model type", func(t *testing.T) {
 		db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 		require.NoError(t, err)
-		
+
 		generator := NewPostgreSQLReferenceIDGenerator(2147483647, "EP")
-		
+
 		// Pass an invalid model type
 		_, err = generator.Generate(db, "invalid_model")
 		assert.Error(t, err)
@@ -193,21 +193,21 @@ func TestPostgreSQLReferenceIDGenerator_ConcurrentGeneration(t *testing.T) {
 	t.Run("Using TestReferenceIDGenerator for thread-safe concurrent testing", func(t *testing.T) {
 		db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 		require.NoError(t, err)
-		
+
 		generator := NewTestReferenceIDGenerator("EP")
-		
+
 		const numGoroutines = 10
 		const idsPerGoroutine = 5
-		
+
 		var wg sync.WaitGroup
 		results := make([][]string, numGoroutines)
-		
+
 		// Launch multiple goroutines to generate IDs concurrently
 		for i := 0; i < numGoroutines; i++ {
 			wg.Add(1)
 			go func(goroutineIndex int) {
 				defer wg.Done()
-				
+
 				ids := make([]string, idsPerGoroutine)
 				for j := 0; j < idsPerGoroutine; j++ {
 					id, err := generator.Generate(db, &Epic{})
@@ -217,47 +217,47 @@ func TestPostgreSQLReferenceIDGenerator_ConcurrentGeneration(t *testing.T) {
 				results[goroutineIndex] = ids
 			}(i)
 		}
-		
+
 		wg.Wait()
-		
+
 		// Collect all generated IDs
 		allIDs := make([]string, 0, numGoroutines*idsPerGoroutine)
 		for _, goroutineResults := range results {
 			allIDs = append(allIDs, goroutineResults...)
 		}
-		
+
 		// Verify all IDs are unique
 		idSet := make(map[string]bool)
 		for _, id := range allIDs {
 			assert.False(t, idSet[id], "Duplicate ID found: %s", id)
 			idSet[id] = true
 		}
-		
+
 		assert.Equal(t, numGoroutines*idsPerGoroutine, len(idSet))
 	})
-	
+
 	t.Run("PostgreSQL generator race condition demonstration", func(t *testing.T) {
 		db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 		require.NoError(t, err)
-		
+
 		err = db.AutoMigrate(&Epic{})
 		require.NoError(t, err)
 
 		generator := NewPostgreSQLReferenceIDGenerator(2147483647, "EP")
-		
+
 		// This test demonstrates that the PostgreSQL generator in SQLite mode
 		// can have race conditions, which is expected behavior
 		const numGoroutines = 5
 		const idsPerGoroutine = 2
-		
+
 		var wg sync.WaitGroup
 		results := make([][]string, numGoroutines)
-		
+
 		for i := 0; i < numGoroutines; i++ {
 			wg.Add(1)
 			go func(goroutineIndex int) {
 				defer wg.Done()
-				
+
 				ids := make([]string, idsPerGoroutine)
 				for j := 0; j < idsPerGoroutine; j++ {
 					id, err := generator.Generate(db, &Epic{})
@@ -272,9 +272,9 @@ func TestPostgreSQLReferenceIDGenerator_ConcurrentGeneration(t *testing.T) {
 				results[goroutineIndex] = ids
 			}(i)
 		}
-		
+
 		wg.Wait()
-		
+
 		// Collect all generated IDs (excluding empty ones from errors)
 		allIDs := make([]string, 0)
 		for _, goroutineResults := range results {
@@ -284,7 +284,7 @@ func TestPostgreSQLReferenceIDGenerator_ConcurrentGeneration(t *testing.T) {
 				}
 			}
 		}
-		
+
 		// Count duplicates - this is expected in SQLite mode
 		idSet := make(map[string]bool)
 		duplicates := 0
@@ -294,8 +294,8 @@ func TestPostgreSQLReferenceIDGenerator_ConcurrentGeneration(t *testing.T) {
 			}
 			idSet[id] = true
 		}
-		
-		t.Logf("Generated %d IDs, %d unique, %d duplicates (expected in SQLite mode)", 
+
+		t.Logf("Generated %d IDs, %d unique, %d duplicates (expected in SQLite mode)",
 			len(allIDs), len(idSet), duplicates)
 	})
 }
@@ -305,9 +305,9 @@ func TestTestReferenceIDGenerator_ComprehensiveBehavior(t *testing.T) {
 	t.Run("Basic functionality", func(t *testing.T) {
 		db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 		require.NoError(t, err)
-		
+
 		generator := NewTestReferenceIDGenerator("TEST")
-		
+
 		// Test sequential generation
 		for i := 1; i <= 5; i++ {
 			id, err := generator.Generate(db, &Epic{})
@@ -320,22 +320,22 @@ func TestTestReferenceIDGenerator_ComprehensiveBehavior(t *testing.T) {
 	t.Run("Counter manipulation", func(t *testing.T) {
 		db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 		require.NoError(t, err)
-		
+
 		generator := NewTestReferenceIDGenerator("TEST")
-		
+
 		// Test SetCounter
 		generator.SetCounter(100)
 		assert.Equal(t, int64(100), generator.GetCounter())
-		
+
 		id, err := generator.Generate(db, &Epic{})
 		require.NoError(t, err)
 		assert.Equal(t, "TEST-101", id)
 		assert.Equal(t, int64(101), generator.GetCounter())
-		
+
 		// Test Reset
 		generator.Reset()
 		assert.Equal(t, int64(0), generator.GetCounter())
-		
+
 		id, err = generator.Generate(db, &Epic{})
 		require.NoError(t, err)
 		assert.Equal(t, "TEST-001", id)
@@ -344,20 +344,20 @@ func TestTestReferenceIDGenerator_ComprehensiveBehavior(t *testing.T) {
 	t.Run("Thread safety", func(t *testing.T) {
 		db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 		require.NoError(t, err)
-		
+
 		generator := NewTestReferenceIDGenerator("TEST")
-		
+
 		const numGoroutines = 20
 		const idsPerGoroutine = 10
-		
+
 		var wg sync.WaitGroup
 		results := make([][]string, numGoroutines)
-		
+
 		for i := 0; i < numGoroutines; i++ {
 			wg.Add(1)
 			go func(goroutineIndex int) {
 				defer wg.Done()
-				
+
 				ids := make([]string, idsPerGoroutine)
 				for j := 0; j < idsPerGoroutine; j++ {
 					id, err := generator.Generate(db, &Epic{})
@@ -367,22 +367,22 @@ func TestTestReferenceIDGenerator_ComprehensiveBehavior(t *testing.T) {
 				results[goroutineIndex] = ids
 			}(i)
 		}
-		
+
 		wg.Wait()
-		
+
 		// Collect all IDs and verify uniqueness
 		allIDs := make([]string, 0, numGoroutines*idsPerGoroutine)
 		for _, goroutineResults := range results {
 			allIDs = append(allIDs, goroutineResults...)
 		}
-		
+
 		// Verify all IDs are unique
 		idSet := make(map[string]bool)
 		for _, id := range allIDs {
 			assert.False(t, idSet[id], "Duplicate ID found: %s", id)
 			idSet[id] = true
 		}
-		
+
 		assert.Equal(t, numGoroutines*idsPerGoroutine, len(idSet))
 		assert.Equal(t, int64(numGoroutines*idsPerGoroutine), generator.GetCounter())
 	})
@@ -392,7 +392,7 @@ func TestTestReferenceIDGenerator_ComprehensiveBehavior(t *testing.T) {
 func TestGeneratorComparison(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(t, err)
-	
+
 	err = db.AutoMigrate(&Epic{})
 	require.NoError(t, err)
 
@@ -404,16 +404,16 @@ func TestGeneratorComparison(t *testing.T) {
 		testID1, err := testGen.Generate(db, &Epic{})
 		require.NoError(t, err)
 		assert.Equal(t, "TEST-001", testID1)
-		
+
 		testID2, err := testGen.Generate(db, &Epic{})
 		require.NoError(t, err)
 		assert.Equal(t, "TEST-002", testID2)
-		
+
 		// Production generator (in SQLite mode) - counts existing epics in DB
 		prodID1, err := prodGen.Generate(db, &Epic{})
 		require.NoError(t, err)
 		assert.Equal(t, "PROD-001", prodID1)
-		
+
 		// Second call will still return PROD-001 since we didn't save the first epic
 		// This demonstrates the difference: test generator uses internal counter,
 		// production generator counts database records
@@ -426,10 +426,10 @@ func TestGeneratorComparison(t *testing.T) {
 		// Test generator has additional methods for testing
 		testGen.Reset()
 		assert.Equal(t, int64(0), testGen.GetCounter())
-		
+
 		testGen.SetCounter(50)
 		assert.Equal(t, int64(50), testGen.GetCounter())
-		
+
 		id, err := testGen.Generate(db, &Epic{})
 		require.NoError(t, err)
 		assert.Equal(t, "TEST-051", id)
@@ -441,15 +441,15 @@ func TestUUIDFallbackScenarios(t *testing.T) {
 	t.Run("UUID fallback format validation", func(t *testing.T) {
 		// Since we can't easily simulate PostgreSQL advisory lock failure in unit tests,
 		// we test the UUID format that would be generated
-		
+
 		// This test documents the expected UUID fallback format
 		// In real PostgreSQL mode, when advisory lock fails, the format should be:
 		// PREFIX-{8-char-uuid}
-		
+
 		// We can test this by examining the code logic and ensuring the format is correct
 		generator := NewPostgreSQLReferenceIDGenerator(2147483647, "EP")
 		assert.NotNil(t, generator)
-		
+
 		// The actual UUID fallback is tested in integration tests with real PostgreSQL
 		// Here we just verify the generator is properly configured
 		assert.Equal(t, int64(2147483647), generator.lockKey)
@@ -461,7 +461,7 @@ func TestUUIDFallbackScenarios(t *testing.T) {
 func TestErrorScenarios(t *testing.T) {
 	t.Run("Nil database transaction", func(t *testing.T) {
 		generator := NewPostgreSQLReferenceIDGenerator(2147483647, "EP")
-		
+
 		// This should panic or return an error when tx is nil
 		assert.Panics(t, func() {
 			generator.Generate(nil, &Epic{})
@@ -471,13 +471,13 @@ func TestErrorScenarios(t *testing.T) {
 	t.Run("Invalid model parameter", func(t *testing.T) {
 		db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 		require.NoError(t, err)
-		
+
 		generator := NewPostgreSQLReferenceIDGenerator(2147483647, "EP")
-		
+
 		// Test with nil model
 		_, err = generator.Generate(db, nil)
 		assert.Error(t, err)
-		
+
 		// Test with invalid model type
 		_, err = generator.Generate(db, "not_a_model")
 		assert.Error(t, err)
@@ -522,12 +522,12 @@ func TestGeneratorConfiguration(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 			require.NoError(t, err)
-			
+
 			err = db.AutoMigrate(&Epic{})
 			require.NoError(t, err)
-			
+
 			generator := NewPostgreSQLReferenceIDGenerator(tt.lockKey, tt.prefix)
-			
+
 			id, err := generator.Generate(db, &Epic{})
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, id)
@@ -539,14 +539,14 @@ func TestGeneratorConfiguration(t *testing.T) {
 func BenchmarkReferenceIDGeneration(b *testing.B) {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(b, err)
-	
+
 	err = db.AutoMigrate(&Epic{})
 	require.NoError(b, err)
 
 	b.Run("TestReferenceIDGenerator", func(b *testing.B) {
 		generator := NewTestReferenceIDGenerator("TEST")
 		b.ResetTimer()
-		
+
 		for i := 0; i < b.N; i++ {
 			_, err := generator.Generate(db, &Epic{})
 			if err != nil {
@@ -558,7 +558,7 @@ func BenchmarkReferenceIDGeneration(b *testing.B) {
 	b.Run("PostgreSQLReferenceIDGenerator_SQLiteMode", func(b *testing.B) {
 		generator := NewPostgreSQLReferenceIDGenerator(2147483647, "EP")
 		b.ResetTimer()
-		
+
 		for i := 0; i < b.N; i++ {
 			_, err := generator.Generate(db, &Epic{})
 			if err != nil {

@@ -411,7 +411,7 @@ func BenchmarkAcceptanceCriteriaRelationshipOperations(b *testing.B) {
 		})
 	}
 
-	// Note: GetAcceptanceCriteriaByAuthor endpoint (/api/v1/users/:id/acceptance-criteria) 
+	// Note: GetAcceptanceCriteriaByAuthor endpoint (/api/v1/users/:id/acceptance-criteria)
 	// is not implemented in routes, so we skip this benchmark
 
 	// Test acceptance criteria with requirements relationships

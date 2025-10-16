@@ -473,4 +473,3 @@ func TestGetDefaultStatusModel(t *testing.T) {
 		mockService.AssertExpectations(t)
 	})
 }
-

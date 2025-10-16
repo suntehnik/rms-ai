@@ -4,15 +4,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"product-requirements-management/internal/auth"
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/service"
 )
@@ -88,15 +91,48 @@ func (m *MockEpicService) AssignEpic(id uuid.UUID, assigneeID *uuid.UUID) (*mode
 	return args.Get(0).(*models.Epic), args.Error(1)
 }
 
-func setupTestRouter() *gin.Engine {
+func setupEpicTestRouter() (*gin.Engine, *auth.Service) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	return router
+
+	// Create auth service for testing
+	authService := auth.NewService("test-secret", time.Hour)
+
+	return router, authService
 }
 
 // Helper function to create string pointers
 func stringPtr(s string) *string {
 	return &s
+}
+
+// Helper function to create authenticated request
+func createAuthenticatedEpicRequest(method, url string, body *bytes.Buffer, authService *auth.Service) (*http.Request, error) {
+	var bodyReader io.Reader
+	if body != nil {
+		bodyReader = body
+	}
+	req, err := http.NewRequest(method, url, bodyReader)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create test user and token
+	testUser := &models.User{
+		ID:       uuid.New(),
+		Username: "testuser",
+		Role:     models.RoleUser,
+	}
+	token, err := authService.GenerateToken(testUser)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	return req, nil
 }
 func TestEpicHandler_CreateEpic(t *testing.T) {
 	tests := []struct {
@@ -133,12 +169,13 @@ func TestEpicHandler_CreateEpic(t *testing.T) {
 			tt.setupMock(mockService)
 
 			handler := NewEpicHandler(mockService)
-			router := setupTestRouter()
+			router, authService := setupEpicTestRouter()
+			router.Use(authService.Middleware())
 			router.POST("/epics", handler.CreateEpic)
 
 			body, _ := json.Marshal(tt.requestBody)
-			req, _ := http.NewRequest("POST", "/epics", bytes.NewBuffer(body))
-			req.Header.Set("Content-Type", "application/json")
+			req, err := createAuthenticatedEpicRequest("POST", "/epics", bytes.NewBuffer(body), authService)
+			assert.NoError(t, err)
 
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -197,10 +234,12 @@ func TestEpicHandler_GetEpic(t *testing.T) {
 			tt.setupMock(mockService)
 
 			handler := NewEpicHandler(mockService)
-			router := setupTestRouter()
+			router, authService := setupEpicTestRouter()
+			router.Use(authService.Middleware())
 			router.GET("/epics/:id", handler.GetEpic)
 
-			req, _ := http.NewRequest("GET", fmt.Sprintf("/epics/%s", tt.epicID), nil)
+			req, err := createAuthenticatedEpicRequest("GET", fmt.Sprintf("/epics/%s", tt.epicID), nil, authService)
+			assert.NoError(t, err)
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
@@ -245,11 +284,13 @@ func TestEpicHandler_ListEpics(t *testing.T) {
 			tt.setupMock(mockService)
 
 			handler := NewEpicHandler(mockService)
-			router := setupTestRouter()
+			router, authService := setupEpicTestRouter()
+			router.Use(authService.Middleware())
 			router.GET("/epics", handler.ListEpics)
 
 			url := "/epics" + tt.queryParams
-			req, _ := http.NewRequest("GET", url, nil)
+			req, err := createAuthenticatedEpicRequest("GET", url, nil, authService)
+			assert.NoError(t, err)
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
@@ -287,11 +328,13 @@ func TestEpicHandler_ListEpics_JSONResponse(t *testing.T) {
 		mockService.On("ListEpics", mock.AnythingOfType("service.EpicFilters")).Return(epics, int64(1), nil)
 
 		handler := NewEpicHandler(mockService)
-		router := setupTestRouter()
+		router, authService := setupEpicTestRouter()
+		router.Use(authService.Middleware())
 		router.GET("/epics", handler.ListEpics)
 
 		// Execute
-		req, _ := http.NewRequest("GET", "/epics", nil)
+		req, err := createAuthenticatedEpicRequest("GET", "/epics", nil, authService)
+		assert.NoError(t, err)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -300,7 +343,7 @@ func TestEpicHandler_ListEpics_JSONResponse(t *testing.T) {
 
 		// Parse JSON response
 		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
+		err = json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 
 		// Verify response structure
@@ -381,11 +424,13 @@ func TestEpicHandler_ListEpics_JSONResponse(t *testing.T) {
 		mockService.On("ListEpics", mock.AnythingOfType("service.EpicFilters")).Return(epics, int64(2), nil)
 
 		handler := NewEpicHandler(mockService)
-		router := setupTestRouter()
+		router, authService := setupEpicTestRouter()
+		router.Use(authService.Middleware())
 		router.GET("/epics", handler.ListEpics)
 
 		// Execute
-		req, _ := http.NewRequest("GET", "/epics", nil)
+		req, err := createAuthenticatedEpicRequest("GET", "/epics", nil, authService)
+		assert.NoError(t, err)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -394,7 +439,7 @@ func TestEpicHandler_ListEpics_JSONResponse(t *testing.T) {
 
 		// Parse JSON response
 		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
+		err = json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 
 		// Get the epics data
@@ -454,7 +499,8 @@ func TestEpicHandler_DeleteEpic(t *testing.T) {
 			tt.setupMock(mockService)
 
 			handler := NewEpicHandler(mockService)
-			router := setupTestRouter()
+			router, authService := setupEpicTestRouter()
+			router.Use(authService.Middleware())
 			router.DELETE("/epics/:id", handler.DeleteEpic)
 
 			url := fmt.Sprintf("/epics/%s", tt.epicID)
@@ -462,7 +508,8 @@ func TestEpicHandler_DeleteEpic(t *testing.T) {
 				url += fmt.Sprintf("?force=%s", tt.force)
 			}
 
-			req, _ := http.NewRequest("DELETE", url, nil)
+			req, err := createAuthenticatedEpicRequest("DELETE", url, nil, authService)
+			assert.NoError(t, err)
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
@@ -503,12 +550,13 @@ func TestEpicHandler_ChangeEpicStatus(t *testing.T) {
 			tt.setupMock(mockService)
 
 			handler := NewEpicHandler(mockService)
-			router := setupTestRouter()
+			router, authService := setupEpicTestRouter()
+			router.Use(authService.Middleware())
 			router.PATCH("/epics/:id/status", handler.ChangeEpicStatus)
 
 			body, _ := json.Marshal(tt.requestBody)
-			req, _ := http.NewRequest("PATCH", fmt.Sprintf("/epics/%s/status", tt.epicID), bytes.NewBuffer(body))
-			req.Header.Set("Content-Type", "application/json")
+			req, err := createAuthenticatedEpicRequest("PATCH", fmt.Sprintf("/epics/%s/status", tt.epicID), bytes.NewBuffer(body), authService)
+			assert.NoError(t, err)
 
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)

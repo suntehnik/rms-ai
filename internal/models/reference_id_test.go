@@ -9,8 +9,8 @@ import (
 
 // TestReferenceIDGenerator implements a simple reference ID generator for unit tests.
 // It uses simple counting without advisory locks for fast test execution.
-// 
-// This generator is only available in test files (files ending with _test.go) and 
+//
+// This generator is only available in test files (files ending with _test.go) and
 // is not included in production builds. It provides predictable, sequential IDs
 // for unit testing scenarios where you need consistent, fast reference ID generation.
 //
@@ -21,12 +21,13 @@ import (
 // - Provides helper methods for test setup (Reset, SetCounter, GetCounter)
 //
 // Usage:
-//   generator := NewTestReferenceIDGenerator("EP")
-//   id, err := generator.Generate(db, &Epic{})
-//   // id will be "EP-001"
+//
+//	generator := NewTestReferenceIDGenerator("EP")
+//	id, err := generator.Generate(db, &Epic{})
+//	// id will be "EP-001"
 type TestReferenceIDGenerator struct {
-	prefix  string    // Entity prefix (EP, US, REQ, AC)
-	counter int64     // Internal counter for generating sequential IDs
+	prefix  string     // Entity prefix (EP, US, REQ, AC)
+	counter int64      // Internal counter for generating sequential IDs
 	mutex   sync.Mutex // Mutex to ensure thread-safety in tests
 }
 
@@ -44,7 +45,7 @@ func NewTestReferenceIDGenerator(prefix string) *TestReferenceIDGenerator {
 func (g *TestReferenceIDGenerator) Generate(tx *gorm.DB, model interface{}) (string, error) {
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
-	
+
 	// Increment counter and generate sequential ID
 	g.counter++
 	return fmt.Sprintf("%s-%03d", g.prefix, g.counter), nil

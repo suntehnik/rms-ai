@@ -10910,7 +10910,6 @@ const docTemplate = `{
         "product-requirements-management_internal_service.CreateAcceptanceCriteriaRequest": {
             "type": "object",
             "required": [
-                "author_id",
                 "description"
             ],
             "properties": {
@@ -10927,9 +10926,6 @@ const docTemplate = `{
         },
         "product-requirements-management_internal_service.CreateCommentRequest": {
             "type": "object",
-            "required": [
-                "author_id"
-            ],
             "properties": {
                 "author_id": {
                     "type": "string"

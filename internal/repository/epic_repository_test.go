@@ -7,18 +7,18 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	
+
 	"product-requirements-management/internal/models"
 )
 
 func setupEpicTestDB(t *testing.T) *gorm.DB {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(t, err)
-	
+
 	// Auto-migrate models
 	err = db.AutoMigrate(&models.User{}, &models.Epic{}, &models.UserStory{})
 	require.NoError(t, err)
-	
+
 	return db
 }
 
@@ -34,7 +34,7 @@ func createTestEpic(t *testing.T, repo EpicRepository, userRepo UserRepository, 
 	}
 	err := userRepo.Create(user)
 	require.NoError(t, err)
-	
+
 	epic := &models.Epic{
 		ReferenceID: "EP-" + title,
 		CreatorID:   user.ID,
@@ -43,10 +43,10 @@ func createTestEpic(t *testing.T, repo EpicRepository, userRepo UserRepository, 
 		Status:      status,
 		Title:       title,
 	}
-	
+
 	err = repo.Create(epic)
 	require.NoError(t, err)
-	
+
 	return epic, user
 }
 
@@ -54,9 +54,9 @@ func TestEpicRepository_Create(t *testing.T) {
 	db := setupEpicTestDB(t)
 	epicRepo := NewEpicRepository(db)
 	userRepo := NewUserRepository(db)
-	
+
 	epic, _ := createTestEpic(t, epicRepo, userRepo, "Test Epic", models.EpicStatusBacklog, models.PriorityHigh)
-	
+
 	assert.NotNil(t, epic.ID)
 	assert.Equal(t, "Test Epic", epic.Title)
 	assert.Equal(t, models.EpicStatusBacklog, epic.Status)
@@ -67,9 +67,9 @@ func TestEpicRepository_GetWithUserStories(t *testing.T) {
 	epicRepo := NewEpicRepository(db)
 	userRepo := NewUserRepository(db)
 	userStoryRepo := NewUserStoryRepository(db)
-	
+
 	epic, user := createTestEpic(t, epicRepo, userRepo, "Test Epic", models.EpicStatusBacklog, models.PriorityHigh)
-	
+
 	// Create a user story for the epic
 	userStory := &models.UserStory{
 		ReferenceID: "US-001",
@@ -82,7 +82,7 @@ func TestEpicRepository_GetWithUserStories(t *testing.T) {
 	}
 	err := userStoryRepo.Create(userStory)
 	require.NoError(t, err)
-	
+
 	// Get epic with user stories
 	retrieved, err := epicRepo.GetWithUserStories(epic.ID)
 	assert.NoError(t, err)
@@ -95,9 +95,9 @@ func TestEpicRepository_GetByCreator(t *testing.T) {
 	db := setupEpicTestDB(t)
 	epicRepo := NewEpicRepository(db)
 	userRepo := NewUserRepository(db)
-	
+
 	epic, user := createTestEpic(t, epicRepo, userRepo, "Test Epic", models.EpicStatusBacklog, models.PriorityHigh)
-	
+
 	// Get epics by creator
 	epics, err := epicRepo.GetByCreator(user.ID)
 	assert.NoError(t, err)
@@ -109,9 +109,9 @@ func TestEpicRepository_GetByAssignee(t *testing.T) {
 	db := setupEpicTestDB(t)
 	epicRepo := NewEpicRepository(db)
 	userRepo := NewUserRepository(db)
-	
+
 	epic, user := createTestEpic(t, epicRepo, userRepo, "Test Epic", models.EpicStatusBacklog, models.PriorityHigh)
-	
+
 	// Get epics by assignee
 	epics, err := epicRepo.GetByAssignee(user.ID)
 	assert.NoError(t, err)
@@ -123,11 +123,11 @@ func TestEpicRepository_GetByStatus(t *testing.T) {
 	db := setupEpicTestDB(t)
 	epicRepo := NewEpicRepository(db)
 	userRepo := NewUserRepository(db)
-	
+
 	// Create epics with different statuses
 	createTestEpic(t, epicRepo, userRepo, "Epic 1", models.EpicStatusBacklog, models.PriorityHigh)
 	createTestEpic(t, epicRepo, userRepo, "Epic 2", models.EpicStatusInProgress, models.PriorityMedium)
-	
+
 	// Get epics by status
 	epics, err := epicRepo.GetByStatus(models.EpicStatusBacklog)
 	assert.NoError(t, err)
@@ -139,11 +139,11 @@ func TestEpicRepository_GetByPriority(t *testing.T) {
 	db := setupEpicTestDB(t)
 	epicRepo := NewEpicRepository(db)
 	userRepo := NewUserRepository(db)
-	
+
 	// Create epics with different priorities
 	createTestEpic(t, epicRepo, userRepo, "Epic 1", models.EpicStatusBacklog, models.PriorityHigh)
 	createTestEpic(t, epicRepo, userRepo, "Epic 2", models.EpicStatusBacklog, models.PriorityLow)
-	
+
 	// Get epics by priority
 	epics, err := epicRepo.GetByPriority(models.PriorityHigh)
 	assert.NoError(t, err)
@@ -156,14 +156,14 @@ func TestEpicRepository_HasUserStories(t *testing.T) {
 	epicRepo := NewEpicRepository(db)
 	userRepo := NewUserRepository(db)
 	userStoryRepo := NewUserStoryRepository(db)
-	
+
 	epic, user := createTestEpic(t, epicRepo, userRepo, "Test Epic", models.EpicStatusBacklog, models.PriorityHigh)
-	
+
 	// Initially should have no user stories
 	hasUserStories, err := epicRepo.HasUserStories(epic.ID)
 	assert.NoError(t, err)
 	assert.False(t, hasUserStories)
-	
+
 	// Create a user story for the epic
 	userStory := &models.UserStory{
 		ReferenceID: "US-001",
@@ -176,7 +176,7 @@ func TestEpicRepository_HasUserStories(t *testing.T) {
 	}
 	err = userStoryRepo.Create(userStory)
 	require.NoError(t, err)
-	
+
 	// Now should have user stories
 	hasUserStories, err = epicRepo.HasUserStories(epic.ID)
 	assert.NoError(t, err)
@@ -187,9 +187,9 @@ func TestEpicRepository_GetByReferenceID(t *testing.T) {
 	db := setupEpicTestDB(t)
 	epicRepo := NewEpicRepository(db)
 	userRepo := NewUserRepository(db)
-	
+
 	epic, _ := createTestEpic(t, epicRepo, userRepo, "Test Epic", models.EpicStatusBacklog, models.PriorityHigh)
-	
+
 	// Get by reference ID
 	retrieved, err := epicRepo.GetByReferenceID(epic.ReferenceID)
 	assert.NoError(t, err)
@@ -201,15 +201,15 @@ func TestEpicRepository_Update(t *testing.T) {
 	db := setupEpicTestDB(t)
 	epicRepo := NewEpicRepository(db)
 	userRepo := NewUserRepository(db)
-	
+
 	epic, _ := createTestEpic(t, epicRepo, userRepo, "Test Epic", models.EpicStatusBacklog, models.PriorityHigh)
-	
+
 	// Update epic
 	epic.Status = models.EpicStatusInProgress
 	epic.Title = "Updated Epic"
 	err := epicRepo.Update(epic)
 	assert.NoError(t, err)
-	
+
 	// Verify update
 	retrieved, err := epicRepo.GetByID(epic.ID)
 	assert.NoError(t, err)
@@ -221,13 +221,13 @@ func TestEpicRepository_Delete(t *testing.T) {
 	db := setupEpicTestDB(t)
 	epicRepo := NewEpicRepository(db)
 	userRepo := NewUserRepository(db)
-	
+
 	epic, _ := createTestEpic(t, epicRepo, userRepo, "Test Epic", models.EpicStatusBacklog, models.PriorityHigh)
-	
+
 	// Delete epic
 	err := epicRepo.Delete(epic.ID)
 	assert.NoError(t, err)
-	
+
 	// Verify deletion
 	retrieved, err := epicRepo.GetByID(epic.ID)
 	assert.Error(t, err)

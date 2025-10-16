@@ -121,7 +121,7 @@ func (h *MCPHandler) Process(c *gin.Context) {
 	})
 
 	// If responseData is nil or empty, it was a notification (no response expected)
-	if responseData == nil || len(responseData) == 0 {
+	if len(responseData) == 0 {
 		c.Status(http.StatusNoContent)
 		return
 	}

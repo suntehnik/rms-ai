@@ -162,25 +162,55 @@ func (m *MockConfigRequirementRepository) GetByType(typeID uuid.UUID) ([]models.
 
 // Add other required methods (simplified for brevity)
 func (m *MockConfigRequirementRepository) Create(entity *models.Requirement) error { return nil }
-func (m *MockConfigRequirementRepository) GetByID(id uuid.UUID) (*models.Requirement, error) { return nil, nil }
-func (m *MockConfigRequirementRepository) GetByReferenceID(referenceID string) (*models.Requirement, error) { return nil, nil }
+func (m *MockConfigRequirementRepository) GetByID(id uuid.UUID) (*models.Requirement, error) {
+	return nil, nil
+}
+func (m *MockConfigRequirementRepository) GetByReferenceID(referenceID string) (*models.Requirement, error) {
+	return nil, nil
+}
 func (m *MockConfigRequirementRepository) Update(entity *models.Requirement) error { return nil }
-func (m *MockConfigRequirementRepository) Delete(id uuid.UUID) error { return nil }
-func (m *MockConfigRequirementRepository) List(filters map[string]interface{}, orderBy string, limit, offset int) ([]models.Requirement, error) { return nil, nil }
-func (m *MockConfigRequirementRepository) Count(filters map[string]interface{}) (int64, error) { return 0, nil }
+func (m *MockConfigRequirementRepository) Delete(id uuid.UUID) error               { return nil }
+func (m *MockConfigRequirementRepository) List(filters map[string]interface{}, orderBy string, limit, offset int) ([]models.Requirement, error) {
+	return nil, nil
+}
+func (m *MockConfigRequirementRepository) Count(filters map[string]interface{}) (int64, error) {
+	return 0, nil
+}
 func (m *MockConfigRequirementRepository) Exists(id uuid.UUID) (bool, error) { return false, nil }
-func (m *MockConfigRequirementRepository) ExistsByReferenceID(referenceID string) (bool, error) { return false, nil }
-func (m *MockConfigRequirementRepository) WithTransaction(fn func(db *gorm.DB) error) error { return nil }
+func (m *MockConfigRequirementRepository) ExistsByReferenceID(referenceID string) (bool, error) {
+	return false, nil
+}
+func (m *MockConfigRequirementRepository) WithTransaction(fn func(db *gorm.DB) error) error {
+	return nil
+}
 func (m *MockConfigRequirementRepository) GetDB() *gorm.DB { return nil }
-func (m *MockConfigRequirementRepository) GetWithRelationships(id uuid.UUID) (*models.Requirement, error) { return nil, nil }
-func (m *MockConfigRequirementRepository) GetByUserStory(userStoryID uuid.UUID) ([]models.Requirement, error) { return nil, nil }
-func (m *MockConfigRequirementRepository) GetByAcceptanceCriteria(acceptanceCriteriaID uuid.UUID) ([]models.Requirement, error) { return nil, nil }
-func (m *MockConfigRequirementRepository) GetByCreator(creatorID uuid.UUID) ([]models.Requirement, error) { return nil, nil }
-func (m *MockConfigRequirementRepository) GetByAssignee(assigneeID uuid.UUID) ([]models.Requirement, error) { return nil, nil }
-func (m *MockConfigRequirementRepository) GetByStatus(status models.RequirementStatus) ([]models.Requirement, error) { return nil, nil }
-func (m *MockConfigRequirementRepository) GetByPriority(priority models.Priority) ([]models.Requirement, error) { return nil, nil }
-func (m *MockConfigRequirementRepository) HasRelationships(id uuid.UUID) (bool, error) { return false, nil }
-func (m *MockConfigRequirementRepository) SearchByText(searchText string) ([]models.Requirement, error) { return nil, nil }
+func (m *MockConfigRequirementRepository) GetWithRelationships(id uuid.UUID) (*models.Requirement, error) {
+	return nil, nil
+}
+func (m *MockConfigRequirementRepository) GetByUserStory(userStoryID uuid.UUID) ([]models.Requirement, error) {
+	return nil, nil
+}
+func (m *MockConfigRequirementRepository) GetByAcceptanceCriteria(acceptanceCriteriaID uuid.UUID) ([]models.Requirement, error) {
+	return nil, nil
+}
+func (m *MockConfigRequirementRepository) GetByCreator(creatorID uuid.UUID) ([]models.Requirement, error) {
+	return nil, nil
+}
+func (m *MockConfigRequirementRepository) GetByAssignee(assigneeID uuid.UUID) ([]models.Requirement, error) {
+	return nil, nil
+}
+func (m *MockConfigRequirementRepository) GetByStatus(status models.RequirementStatus) ([]models.Requirement, error) {
+	return nil, nil
+}
+func (m *MockConfigRequirementRepository) GetByPriority(priority models.Priority) ([]models.Requirement, error) {
+	return nil, nil
+}
+func (m *MockConfigRequirementRepository) HasRelationships(id uuid.UUID) (bool, error) {
+	return false, nil
+}
+func (m *MockConfigRequirementRepository) SearchByText(searchText string) ([]models.Requirement, error) {
+	return nil, nil
+}
 
 type MockConfigRequirementRelationshipRepository struct {
 	mock.Mock
@@ -192,21 +222,47 @@ func (m *MockConfigRequirementRelationshipRepository) GetByType(typeID uuid.UUID
 }
 
 // Add other required methods (simplified for brevity)
-func (m *MockConfigRequirementRelationshipRepository) Create(entity *models.RequirementRelationship) error { return nil }
-func (m *MockConfigRequirementRelationshipRepository) GetByID(id uuid.UUID) (*models.RequirementRelationship, error) { return nil, nil }
-func (m *MockConfigRequirementRelationshipRepository) GetByReferenceID(referenceID string) (*models.RequirementRelationship, error) { return nil, nil }
-func (m *MockConfigRequirementRelationshipRepository) Update(entity *models.RequirementRelationship) error { return nil }
+func (m *MockConfigRequirementRelationshipRepository) Create(entity *models.RequirementRelationship) error {
+	return nil
+}
+func (m *MockConfigRequirementRelationshipRepository) GetByID(id uuid.UUID) (*models.RequirementRelationship, error) {
+	return nil, nil
+}
+func (m *MockConfigRequirementRelationshipRepository) GetByReferenceID(referenceID string) (*models.RequirementRelationship, error) {
+	return nil, nil
+}
+func (m *MockConfigRequirementRelationshipRepository) Update(entity *models.RequirementRelationship) error {
+	return nil
+}
 func (m *MockConfigRequirementRelationshipRepository) Delete(id uuid.UUID) error { return nil }
-func (m *MockConfigRequirementRelationshipRepository) List(filters map[string]interface{}, orderBy string, limit, offset int) ([]models.RequirementRelationship, error) { return nil, nil }
-func (m *MockConfigRequirementRelationshipRepository) Count(filters map[string]interface{}) (int64, error) { return 0, nil }
-func (m *MockConfigRequirementRelationshipRepository) Exists(id uuid.UUID) (bool, error) { return false, nil }
-func (m *MockConfigRequirementRelationshipRepository) ExistsByReferenceID(referenceID string) (bool, error) { return false, nil }
-func (m *MockConfigRequirementRelationshipRepository) WithTransaction(fn func(db *gorm.DB) error) error { return nil }
+func (m *MockConfigRequirementRelationshipRepository) List(filters map[string]interface{}, orderBy string, limit, offset int) ([]models.RequirementRelationship, error) {
+	return nil, nil
+}
+func (m *MockConfigRequirementRelationshipRepository) Count(filters map[string]interface{}) (int64, error) {
+	return 0, nil
+}
+func (m *MockConfigRequirementRelationshipRepository) Exists(id uuid.UUID) (bool, error) {
+	return false, nil
+}
+func (m *MockConfigRequirementRelationshipRepository) ExistsByReferenceID(referenceID string) (bool, error) {
+	return false, nil
+}
+func (m *MockConfigRequirementRelationshipRepository) WithTransaction(fn func(db *gorm.DB) error) error {
+	return nil
+}
 func (m *MockConfigRequirementRelationshipRepository) GetDB() *gorm.DB { return nil }
-func (m *MockConfigRequirementRelationshipRepository) GetBySourceRequirement(sourceID uuid.UUID) ([]models.RequirementRelationship, error) { return nil, nil }
-func (m *MockConfigRequirementRelationshipRepository) GetByTargetRequirement(targetID uuid.UUID) ([]models.RequirementRelationship, error) { return nil, nil }
-func (m *MockConfigRequirementRelationshipRepository) GetByRequirement(requirementID uuid.UUID) ([]models.RequirementRelationship, error) { return nil, nil }
-func (m *MockConfigRequirementRelationshipRepository) ExistsRelationship(sourceID, targetID, typeID uuid.UUID) (bool, error) { return false, nil }
+func (m *MockConfigRequirementRelationshipRepository) GetBySourceRequirement(sourceID uuid.UUID) ([]models.RequirementRelationship, error) {
+	return nil, nil
+}
+func (m *MockConfigRequirementRelationshipRepository) GetByTargetRequirement(targetID uuid.UUID) ([]models.RequirementRelationship, error) {
+	return nil, nil
+}
+func (m *MockConfigRequirementRelationshipRepository) GetByRequirement(requirementID uuid.UUID) ([]models.RequirementRelationship, error) {
+	return nil, nil
+}
+func (m *MockConfigRequirementRelationshipRepository) ExistsRelationship(sourceID, targetID, typeID uuid.UUID) (bool, error) {
+	return false, nil
+}
 
 func TestConfigService_CreateRequirementType(t *testing.T) {
 	mockRequirementTypeRepo := &MockConfigRequirementTypeRepository{}

@@ -65,9 +65,19 @@ func (h *CommentHandler) CreateComment(c *gin.Context) {
 		return
 	}
 
-	// Set entity type and ID from URL parameters
+	// Get current user ID from JWT token context
+	authorID, ok := auth.GetCurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User authentication required",
+		})
+		return
+	}
+
+	// Set entity type, ID, and author ID from context
 	req.EntityType = entityType
 	req.EntityID = entityID
+	req.AuthorID = uuid.MustParse(authorID)
 
 	comment, err := h.commentService.CreateComment(req)
 	if err != nil {
@@ -600,10 +610,20 @@ func (h *CommentHandler) CreateCommentReply(c *gin.Context) {
 		return
 	}
 
+	// Get current user ID from JWT token context
+	authorID, ok := auth.GetCurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User authentication required",
+		})
+		return
+	}
+
 	// Set entity information from parent comment
 	req.EntityType = parentComment.EntityType
 	req.EntityID = parentComment.EntityID
 	req.ParentCommentID = &parentID
+	req.AuthorID = uuid.MustParse(authorID)
 
 	comment, err := h.commentService.CreateComment(req)
 	if err != nil {

@@ -43,8 +43,6 @@ func (m *MockCommentRepository) Delete(id uuid.UUID) error {
 	return args.Error(0)
 }
 
-
-
 func (m *MockCommentRepository) GetByEntity(entityType models.EntityType, entityID uuid.UUID) ([]models.Comment, error) {
 	args := m.Called(entityType, entityID)
 	return args.Get(0).([]models.Comment), args.Error(1)
@@ -180,7 +178,7 @@ func TestDeletionScenarios_EpicValidation_WithDependencies(t *testing.T) {
 	depInfo, err := service.ValidateEpicDeletion(epicID)
 	assert.NoError(t, err)
 	assert.NotNil(t, depInfo)
-	
+
 	// Should not be able to delete without force due to dependencies
 	assert.False(t, depInfo.CanDelete)
 	assert.Len(t, depInfo.Dependencies, 1)
@@ -188,14 +186,14 @@ func TestDeletionScenarios_EpicValidation_WithDependencies(t *testing.T) {
 	assert.Equal(t, userStoryID, depInfo.Dependencies[0].EntityID)
 	assert.Equal(t, "US-001", depInfo.Dependencies[0].ReferenceID)
 	assert.Equal(t, "Epic contains user stories", depInfo.Dependencies[0].Reason)
-	
+
 	// Should show cascade delete count
 	assert.Equal(t, 3, depInfo.CascadeDeleteCount) // user story + acceptance criteria + requirement
 	assert.True(t, depInfo.RequiresConfirmation)
-	
+
 	// Verify cascade entities
 	assert.Len(t, depInfo.CascadeDeleteEntities, 3)
-	
+
 	// Find user story in cascade entities
 	var foundUserStory, foundAC, foundReq bool
 	for _, entity := range depInfo.CascadeDeleteEntities {
@@ -265,7 +263,7 @@ func TestDeletionScenarios_EpicValidation_NoDependencies(t *testing.T) {
 	depInfo, err := service.ValidateEpicDeletion(epicID)
 	assert.NoError(t, err)
 	assert.NotNil(t, depInfo)
-	
+
 	// Should be able to delete without force
 	assert.True(t, depInfo.CanDelete)
 	assert.Empty(t, depInfo.Dependencies)
@@ -335,7 +333,7 @@ func TestDeletionScenarios_UserStoryValidation_WithDependencies(t *testing.T) {
 	depInfo, err := service.ValidateUserStoryDeletion(userStoryID)
 	assert.NoError(t, err)
 	assert.NotNil(t, depInfo)
-	
+
 	// Should not be able to delete without force due to dependencies
 	assert.False(t, depInfo.CanDelete)
 	assert.Len(t, depInfo.Dependencies, 2) // acceptance criteria + requirement
@@ -391,7 +389,7 @@ func TestDeletionScenarios_AcceptanceCriteriaValidation_LastOne(t *testing.T) {
 	depInfo, err := service.ValidateAcceptanceCriteriaDeletion(acceptanceCriteriaID)
 	assert.NoError(t, err)
 	assert.NotNil(t, depInfo)
-	
+
 	// Should not be able to delete the last acceptance criteria
 	assert.False(t, depInfo.CanDelete)
 	assert.Len(t, depInfo.Dependencies, 1)
@@ -457,13 +455,13 @@ func TestDeletionScenarios_AcceptanceCriteriaValidation_WithLinkedRequirements(t
 	depInfo, err := service.ValidateAcceptanceCriteriaDeletion(acceptanceCriteriaID)
 	assert.NoError(t, err)
 	assert.NotNil(t, depInfo)
-	
+
 	// Should be able to delete (requirements will be unlinked)
 	assert.True(t, depInfo.CanDelete)
 	assert.Empty(t, depInfo.Dependencies)
 	assert.Equal(t, 1, depInfo.CascadeDeleteCount) // requirement will be unlinked
 	assert.True(t, depInfo.RequiresConfirmation)
-	
+
 	// Verify cascade entities show unlinking
 	assert.Len(t, depInfo.CascadeDeleteEntities, 1)
 	assert.Equal(t, "requirement_unlink", depInfo.CascadeDeleteEntities[0].EntityType)
@@ -531,7 +529,7 @@ func TestDeletionScenarios_RequirementValidation_WithRelationships(t *testing.T)
 	depInfo, err := service.ValidateRequirementDeletion(requirementID)
 	assert.NoError(t, err)
 	assert.NotNil(t, depInfo)
-	
+
 	// Should not be able to delete without force due to relationships
 	assert.False(t, depInfo.CanDelete)
 	assert.Len(t, depInfo.Dependencies, 1)
@@ -539,7 +537,7 @@ func TestDeletionScenarios_RequirementValidation_WithRelationships(t *testing.T)
 	assert.Equal(t, relationshipID, depInfo.Dependencies[0].EntityID)
 	assert.Equal(t, "Requirement has active relationships", depInfo.Dependencies[0].Reason)
 	assert.Contains(t, depInfo.Dependencies[0].Title, "outgoing relationship with REQ-005")
-	
+
 	assert.Equal(t, 1, depInfo.CascadeDeleteCount)
 	assert.True(t, depInfo.RequiresConfirmation)
 
@@ -588,7 +586,7 @@ func TestDeletionScenarios_RequirementValidation_NoRelationships(t *testing.T) {
 	depInfo, err := service.ValidateRequirementDeletion(requirementID)
 	assert.NoError(t, err)
 	assert.NotNil(t, depInfo)
-	
+
 	// Should be able to delete without force
 	assert.True(t, depInfo.CanDelete)
 	assert.Empty(t, depInfo.Dependencies)

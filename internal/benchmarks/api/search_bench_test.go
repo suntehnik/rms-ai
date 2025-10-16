@@ -236,7 +236,7 @@ func BenchmarkSearchFiltering(b *testing.B) {
 
 		for i := 0; i < b.N; i++ {
 			dateRange := dateRanges[i%len(dateRanges)]
-			resp, err := client.GET(fmt.Sprintf("/api/v1/search?created_from=%s&created_to=%s", 
+			resp, err := client.GET(fmt.Sprintf("/api/v1/search?created_from=%s&created_to=%s",
 				url.QueryEscape(dateRange.from), url.QueryEscape(dateRange.to)))
 			require.NoError(b, err)
 			require.Equal(b, http.StatusOK, resp.StatusCode)
@@ -247,10 +247,10 @@ func BenchmarkSearchFiltering(b *testing.B) {
 	b.Run("CombinedFilters", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			user := users[i%len(users)]
-			priority := (i%4) + 1
+			priority := (i % 4) + 1
 			status := []string{"Backlog", "Draft", "In Progress", "Done"}[i%4]
-			
-			resp, err := client.GET(fmt.Sprintf("/api/v1/search?creator_id=%s&priority=%d&status=%s", 
+
+			resp, err := client.GET(fmt.Sprintf("/api/v1/search?creator_id=%s&priority=%d&status=%s",
 				user.ID, priority, url.QueryEscape(status)))
 			require.NoError(b, err)
 			require.Equal(b, http.StatusOK, resp.StatusCode)
@@ -319,7 +319,7 @@ func BenchmarkSearchPagination(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			sort := sortOptions[i%len(sortOptions)]
 			offset := (i % 5) * 10
-			resp, err := client.GET(fmt.Sprintf("/api/v1/search?limit=10&offset=%d&sort_by=%s&sort_order=%s", 
+			resp, err := client.GET(fmt.Sprintf("/api/v1/search?limit=10&offset=%d&sort_by=%s&sort_order=%s",
 				offset, sort.sortBy, sort.sortOrder))
 			require.NoError(b, err)
 			require.Equal(b, http.StatusOK, resp.StatusCode)
@@ -468,7 +468,7 @@ func BenchmarkSearchResultRanking(b *testing.B) {
 
 		for i := 0; i < b.N; i++ {
 			query := complexQueries[i%len(complexQueries)]
-			resp, err := client.GET(fmt.Sprintf("/api/v1/search?query=%s&sort_by=title&sort_order=asc&limit=25", 
+			resp, err := client.GET(fmt.Sprintf("/api/v1/search?query=%s&sort_by=title&sort_order=asc&limit=25",
 				url.QueryEscape(query)))
 			require.NoError(b, err)
 			require.Equal(b, http.StatusOK, resp.StatusCode)
@@ -484,9 +484,9 @@ func BenchmarkSearchResultRanking(b *testing.B) {
 
 		for i := 0; i < b.N; i++ {
 			user := users[i%len(users)]
-			priority := (i%4) + 1
-			
-			resp, err := client.GET(fmt.Sprintf("/api/v1/search?query=epic&creator_id=%s&priority=%d&sort_by=created_at&sort_order=desc&limit=20", 
+			priority := (i % 4) + 1
+
+			resp, err := client.GET(fmt.Sprintf("/api/v1/search?query=epic&creator_id=%s&priority=%d&sort_by=created_at&sort_order=desc&limit=20",
 				user.ID, priority))
 			require.NoError(b, err)
 			require.Equal(b, http.StatusOK, resp.StatusCode)
@@ -648,12 +648,12 @@ func BenchmarkSearchConcurrentOperations(b *testing.B) {
 		requests := make([]helpers.Request, b.N)
 		for i := 0; i < b.N; i++ {
 			user := users[i%len(users)]
-			priority := (i%4) + 1
+			priority := (i % 4) + 1
 			status := []string{"Backlog", "Draft", "In Progress", "Done"}[i%4]
-			
+
 			requests[i] = helpers.Request{
 				Method: "GET",
-				Path: fmt.Sprintf("/api/v1/search?query=epic&creator_id=%s&priority=%d&status=%s&limit=10", 
+				Path: fmt.Sprintf("/api/v1/search?query=epic&creator_id=%s&priority=%d&status=%s&limit=10",
 					user.ID, priority, url.QueryEscape(status)),
 			}
 		}
