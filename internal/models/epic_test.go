@@ -167,10 +167,10 @@ func TestEpicReferenceIDGeneration(t *testing.T) {
 
 		// Verify format: EP- followed by exactly 3 digits
 		assert.Regexp(t, `^EP-\d{3}$`, epic.ReferenceID)
-		
+
 		// Verify it starts with EP-
 		assert.Contains(t, epic.ReferenceID, "EP-")
-		
+
 		// Verify the numeric part is 3 digits
 		assert.Len(t, epic.ReferenceID, 6) // "EP-" (3) + "001" (3) = 6
 	})
@@ -217,7 +217,7 @@ func TestEpicReferenceIDConcurrency(t *testing.T) {
 
 				// Use the shared database connection but with proper synchronization
 				err := db.Create(&epic).Error
-				
+
 				mu.Lock()
 				if err != nil {
 					errors = append(errors, err)
@@ -244,9 +244,9 @@ func TestEpicReferenceIDConcurrency(t *testing.T) {
 		for _, epic := range createdEpics {
 			assert.NotEmpty(t, epic.ReferenceID)
 			assert.Regexp(t, `^EP-\d{3}$`, epic.ReferenceID)
-			
+
 			// Check for uniqueness among successfully created epics
-			assert.False(t, referenceIDs[epic.ReferenceID], 
+			assert.False(t, referenceIDs[epic.ReferenceID],
 				"Reference ID %s should be unique", epic.ReferenceID)
 			referenceIDs[epic.ReferenceID] = true
 		}
@@ -363,7 +363,7 @@ func TestEpicReferenceIDSQLiteCompatibility(t *testing.T) {
 		// Check uniqueness
 		referenceIDs := make(map[string]bool)
 		for _, epic := range epics {
-			assert.False(t, referenceIDs[epic.ReferenceID], 
+			assert.False(t, referenceIDs[epic.ReferenceID],
 				"Reference ID %s should be unique", epic.ReferenceID)
 			referenceIDs[epic.ReferenceID] = true
 		}
@@ -467,7 +467,7 @@ func TestEpicReferenceIDEdgeCases(t *testing.T) {
 
 		// Create many epics to test large numbers
 		// Note: In a real scenario, this would be much larger, but for testing we'll simulate
-		
+
 		// First, let's create a few epics normally
 		for i := 0; i < 999; i++ {
 			epic := Epic{
@@ -491,7 +491,7 @@ func TestEpicReferenceIDEdgeCases(t *testing.T) {
 		}
 		err := db.Create(&epic).Error
 		assert.NoError(t, err)
-		
+
 		// The format should still work (though it will be EP-1000, not EP-001000)
 		assert.NotEmpty(t, epic.ReferenceID)
 		assert.Contains(t, epic.ReferenceID, "EP-")

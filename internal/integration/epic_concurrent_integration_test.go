@@ -30,7 +30,7 @@ func TestEpicConcurrentCreation_PostgreSQL(t *testing.T) {
 	t.Run("concurrent_epic_creation_with_advisory_locks", func(t *testing.T) {
 		const numGoroutines = 10
 		const numEpicsPerGoroutine = 5
-		
+
 		var wg sync.WaitGroup
 		var mu sync.Mutex
 		var createdEpics []models.Epic
@@ -102,7 +102,7 @@ func TestEpicConcurrentCreation_PostgreSQL(t *testing.T) {
 
 		// Verify results
 		t.Logf("Created %d epics, encountered %d errors", len(createdEpics), len(errors))
-		
+
 		// All epics should be created successfully
 		assert.Empty(t, errors, "No errors should occur during concurrent creation")
 		assert.Len(t, createdEpics, numGoroutines*numEpicsPerGoroutine, "All epics should be created")
@@ -126,11 +126,11 @@ func TestEpicConcurrentCreation_PostgreSQL(t *testing.T) {
 		}
 
 		t.Logf("Sequential reference IDs: %d, UUID-based reference IDs: %d", sequentialCount, uuidBasedCount)
-		
+
 		// We expect most to be sequential (when advisory lock is acquired)
 		// Some might be UUID-based (when lock is not acquired due to contention)
 		assert.True(t, sequentialCount > 0, "Should have some sequential reference IDs")
-		
+
 		// Verify database consistency
 		var dbCount int64
 		err = testDB.DB.Model(&models.Epic{}).Count(&dbCount).Error
@@ -148,7 +148,7 @@ func TestEpicConcurrentCreation_PostgreSQL(t *testing.T) {
 
 		const numGoroutines = 20
 		const numEpicsPerGoroutine = 3
-		
+
 		var wg sync.WaitGroup
 		var mu sync.Mutex
 		var allErrors []error
@@ -198,7 +198,7 @@ func TestEpicConcurrentCreation_PostgreSQL(t *testing.T) {
 		wg.Wait()
 
 		t.Logf("Stress test completed: %d successes, %d errors", successCount, len(allErrors))
-		
+
 		// Log errors for debugging
 		for _, err := range allErrors {
 			t.Logf("Error: %v", err)
@@ -224,7 +224,7 @@ func TestEpicConcurrentCreation_PostgreSQL(t *testing.T) {
 		user := testDB.CreateTestUser(t)
 
 		const numGoroutines = 5
-		
+
 		var wg sync.WaitGroup
 		var mu sync.Mutex
 		var results []struct {
@@ -308,7 +308,7 @@ func TestEpicConcurrentCreation_PostgreSQL(t *testing.T) {
 		}
 
 		t.Logf("Transaction test: %d successes out of %d attempts", successCount, len(results))
-		
+
 		// All transactions should succeed
 		assert.Equal(t, numGoroutines, successCount, "All transactions should succeed")
 
@@ -335,7 +335,7 @@ func TestEpicConcurrentCreation_ReferenceIDGeneration(t *testing.T) {
 	t.Run("reference_id_uniqueness_under_high_concurrency", func(t *testing.T) {
 		const numGoroutines = 15
 		const numEpicsPerGoroutine = 2
-		
+
 		var wg sync.WaitGroup
 		referenceIDs := make(chan string, numGoroutines*numEpicsPerGoroutine)
 
@@ -430,13 +430,13 @@ func TestEpicConcurrentCreation_ReferenceIDGeneration(t *testing.T) {
 		// Verify reference ID formats
 		for i, epic := range createdEpics {
 			assert.NotEmpty(t, epic.ReferenceID, "Reference ID should not be empty")
-			assert.True(t, 
-				len(epic.ReferenceID) == 6 || len(epic.ReferenceID) == 11, 
-				"Reference ID should be either EP-XXX (6 chars) or EP-XXXXXXXX (11 chars), got: %s", 
+			assert.True(t,
+				len(epic.ReferenceID) == 6 || len(epic.ReferenceID) == 11,
+				"Reference ID should be either EP-XXX (6 chars) or EP-XXXXXXXX (11 chars), got: %s",
 				epic.ReferenceID)
-			assert.True(t, 
-				epic.ReferenceID[:3] == "EP-", 
-				"Reference ID should start with 'EP-', got: %s", 
+			assert.True(t,
+				epic.ReferenceID[:3] == "EP-",
+				"Reference ID should start with 'EP-', got: %s",
 				epic.ReferenceID)
 
 			t.Logf("Epic %d: ID=%s, ReferenceID=%s", i+1, epic.ID, epic.ReferenceID)
@@ -459,11 +459,11 @@ func TestEpicConcurrentCreation_ErrorHandling(t *testing.T) {
 	t.Run("database_connection_failure_handling", func(t *testing.T) {
 		// Test with invalid DSN to simulate connection failures
 		invalidDSN := "postgres://invalid:invalid@localhost:9999/invalid?sslmode=disable"
-		
+
 		db, err := gorm.Open(postgres.Open(invalidDSN), &gorm.Config{
 			Logger: logger.Default.LogMode(logger.Silent),
 		})
-		
+
 		// Connection might be established but queries will fail
 		if err == nil {
 			epic := models.Epic{
@@ -517,4 +517,3 @@ func TestEpicConcurrentCreation_ErrorHandling(t *testing.T) {
 		assert.Equal(t, int64(1), count, "Only one epic should exist with the duplicate reference ID")
 	})
 }
-

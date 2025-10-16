@@ -128,7 +128,7 @@ func TestSearchIntegration_FilterValidation(t *testing.T) {
 	// Test with various filter combinations
 	priority := 1
 	status := "Backlog"
-	
+
 	options := service.SearchOptions{
 		Filters: service.SearchFilters{
 			Priority: &priority,

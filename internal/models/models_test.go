@@ -103,11 +103,11 @@ func TestUserStoryModel(t *testing.T) {
 	assert.NoError(t, err)
 
 	epic := Epic{
-		CreatorID:   user.ID,
-		AssigneeID:  user.ID,
-		Priority:    PriorityHigh,
-		Status:      EpicStatusBacklog,
-		Title:       "Test Epic",
+		CreatorID:  user.ID,
+		AssigneeID: user.ID,
+		Priority:   PriorityHigh,
+		Status:     EpicStatusBacklog,
+		Title:      "Test Epic",
 	}
 	err = db.Create(&epic).Error
 	assert.NoError(t, err)

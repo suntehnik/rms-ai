@@ -46,7 +46,7 @@ test: test-unit test-integration test-e2e
 # Run unit tests only (fast, SQLite)
 test-unit:
 	@echo "🧪 Running unit tests..."
-	go test -v ./internal/models/... ./internal/repository/... ./internal/service/... ./tests/unit/...
+	go test -v ./internal/models/... ./internal/repository/... ./internal/service/... ./internal/handlers/... ./tests/unit/...
 	@echo "✅ Unit tests completed"
 
 # Run integration tests (requires database setup)
@@ -64,7 +64,7 @@ test-e2e:
 # Run only fast tests (unit tests with short flag)
 test-fast:
 	@echo "⚡ Running fast tests only..."
-	go test -short -v ./internal/models/... ./internal/repository/... ./internal/service/... ./tests/unit/...
+	go test -short -v ./internal/models/... ./internal/repository/... ./internal/service/... ./internal/handlers/... ./tests/unit/...
 
 # Run tests with coverage (all types)
 test-coverage: test-unit-coverage test-integration-coverage
@@ -74,7 +74,7 @@ test-coverage: test-unit-coverage test-integration-coverage
 # Run unit tests with coverage
 test-unit-coverage:
 	@echo "📊 Running unit tests with coverage..."
-	go test -v -coverprofile=coverage-unit.out ./internal/models/... ./internal/repository/... ./internal/service/... ./tests/unit/...
+	go test -v -coverprofile=coverage-unit.out ./internal/models/... ./internal/repository/... ./internal/service/... ./internal/handlers/... ./tests/unit/...
 	go tool cover -html=coverage-unit.out -o coverage-unit.html
 	@echo "✅ Unit test coverage report: coverage-unit.html"
 
@@ -121,12 +121,12 @@ test-bench-api-results:
 # Run tests in parallel (for CI/CD)
 test-parallel:
 	@echo "⚡ Running tests in parallel..."
-	go test -v -parallel 4 ./internal/models/... ./internal/repository/... ./internal/service/...
+	go test -v -parallel 4 ./internal/models/... ./internal/repository/... ./internal/service/... ./internal/handlers/...
 
 # Run tests with race detection
 test-race:
 	@echo "🏁 Running tests with race detection..."
-	go test -race -v ./internal/models/... ./internal/repository/... ./internal/service/...
+	go test -race -v ./internal/models/... ./internal/repository/... ./internal/service/... ./internal/handlers/...
 
 # Run specific test by name (usage: make test-run TEST=TestName)
 test-run:
@@ -136,12 +136,12 @@ test-run:
 # Run tests and generate verbose output for debugging
 test-debug:
 	@echo "🐛 Running tests in debug mode..."
-	go test -v -count=1 ./internal/models/... ./internal/repository/... ./internal/service/...
+	go test -v -count=1 ./internal/models/... ./internal/repository/... ./internal/service/... ./internal/handlers/...
 
 # Check if tests compile without running them
 test-compile:
 	@echo "🔍 Checking if all tests compile..."
-	go test -c ./internal/models/... ./internal/repository/... ./internal/service/... ./internal/integration/... ./tests/unit/... ./tests/e2e/...
+	go test -c ./internal/models/... ./internal/repository/... ./internal/service/... ./internal/handlers/... ./internal/integration/... ./tests/unit/... ./tests/e2e/...
 	@echo "✅ All tests compile successfully"
 
 # Run tests suitable for CI/CD (no interactive components)

@@ -84,7 +84,7 @@ func testSequentialReferenceIDGeneration(t *testing.T, db *gorm.DB, testUser *Us
 
 		// Verify reference ID format
 		assert.Regexp(t, `^REQ-\d{3}$`, req.ReferenceID, "Reference ID should match REQ-XXX format")
-		
+
 		// Verify sequential numbering
 		expectedRefID := fmt.Sprintf("REQ-%03d", i+1)
 		assert.Equal(t, expectedRefID, req.ReferenceID, "Reference ID should be sequential")
@@ -104,7 +104,7 @@ func testConcurrentReferenceIDGeneration(t *testing.T, db *gorm.DB, testUser *Us
 
 	const numGoroutines = 10
 	const requirementsPerGoroutine = 5
-	
+
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	var allRequirements []Requirement
@@ -115,7 +115,7 @@ func testConcurrentReferenceIDGeneration(t *testing.T, db *gorm.DB, testUser *Us
 		wg.Add(1)
 		go func(goroutineID int) {
 			defer wg.Done()
-			
+
 			var localRequirements []Requirement
 			for j := 0; j < requirementsPerGoroutine; j++ {
 				req := Requirement{
@@ -158,7 +158,7 @@ func testConcurrentReferenceIDGeneration(t *testing.T, db *gorm.DB, testUser *Us
 	for _, req := range allRequirements {
 		assert.False(t, refIDs[req.ReferenceID], "Reference ID %s should be unique", req.ReferenceID)
 		refIDs[req.ReferenceID] = true
-		
+
 		// Verify format
 		assert.Regexp(t, `^REQ-(\d{3}|[a-f0-9]{8})$`, req.ReferenceID, "Reference ID should match REQ-XXX or REQ-xxxxxxxx format")
 	}
@@ -230,7 +230,7 @@ func testReferenceIDUnderLoad(t *testing.T, db *gorm.DB, testUser *User, testUse
 
 	const numWorkers = 20
 	const requirementsPerWorker = 10
-	
+
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	var allRefIDs []string
@@ -241,7 +241,7 @@ func testReferenceIDUnderLoad(t *testing.T, db *gorm.DB, testUser *User, testUse
 		wg.Add(1)
 		go func(workerID int) {
 			defer wg.Done()
-			
+
 			var localRefIDs []string
 			for j := 0; j < requirementsPerWorker; j++ {
 				req := Requirement{
@@ -289,7 +289,7 @@ func testReferenceIDUnderLoad(t *testing.T, db *gorm.DB, testUser *User, testUse
 func testProductionGeneratorDirectly(t *testing.T, db *gorm.DB) {
 	// Test the production generator directly
 	generator := NewPostgreSQLReferenceIDGenerator(2147483645, "REQ")
-	
+
 	// Clean requirements table
 	db.Exec("DELETE FROM requirements")
 
@@ -334,15 +334,15 @@ func testProductionGeneratorDirectly(t *testing.T, db *gorm.DB) {
 	}
 	err = db.Create(testRequirementType).Error
 	require.NoError(t, err)
-	
+
 	for i := 0; i < 3; i++ {
 		// Generate reference ID
 		refID, err := generator.Generate(db, &Requirement{})
 		require.NoError(t, err)
-		
+
 		expectedRefID := fmt.Sprintf("REQ-%03d", i+1)
 		assert.Equal(t, expectedRefID, refID, "Generator should produce sequential IDs")
-		
+
 		// Create a requirement with this reference ID to maintain count for next iteration
 		req := Requirement{
 			ReferenceID: refID,
@@ -403,16 +403,16 @@ func setupPostgreSQLForReferenceIDTest(t *testing.T) *gorm.DB {
 	require.NoError(t, err)
 
 	// Create database connection
-	dsn := fmt.Sprintf("host=%s port=%s user=testuser password=testpass dbname=requirement_ref_test sslmode=disable", 
+	dsn := fmt.Sprintf("host=%s port=%s user=testuser password=testpass dbname=requirement_ref_test sslmode=disable",
 		host, port.Port())
-	
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	require.NoError(t, err)
 
 	// Verify connection
 	sqlDB, err := db.DB()
 	require.NoError(t, err)
-	
+
 	err = sqlDB.Ping()
 	require.NoError(t, err)
 
@@ -472,7 +472,7 @@ func cleanupPostgreSQLTest(t *testing.T, db *gorm.DB) {
 	// Clean up test data
 	tables := []string{
 		"requirements",
-		"requirement_types", 
+		"requirement_types",
 		"user_stories",
 		"epics",
 		"users",
@@ -485,4 +485,3 @@ func cleanupPostgreSQLTest(t *testing.T, db *gorm.DB) {
 		}
 	}
 }
-

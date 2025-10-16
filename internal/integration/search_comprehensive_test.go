@@ -100,7 +100,7 @@ func TestSearchIntegration_ComprehensiveSearch(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotNil(t, response)
 		assert.Equal(t, "authentication", response.Query)
-		
+
 		// Should find the epic with "authentication" in title
 		found := false
 		for _, result := range response.Results {
@@ -124,7 +124,7 @@ func TestSearchIntegration_ComprehensiveSearch(t *testing.T) {
 		response, err := searchService.Search(context.Background(), options)
 		require.NoError(t, err)
 		assert.NotNil(t, response)
-		
+
 		// Should find both epic (password reset) and requirement (password validation)
 		epicFound := false
 		requirementFound := false
@@ -152,7 +152,7 @@ func TestSearchIntegration_ComprehensiveSearch(t *testing.T) {
 		response, err := searchService.Search(context.Background(), options)
 		require.NoError(t, err)
 		assert.NotNil(t, response)
-		
+
 		// Should find the epic by its reference ID
 		found := false
 		for _, result := range response.Results {
@@ -179,7 +179,7 @@ func TestSearchIntegration_ComprehensiveSearch(t *testing.T) {
 		response, err := searchService.Search(context.Background(), options)
 		require.NoError(t, err)
 		assert.NotNil(t, response)
-		
+
 		// Should find epic and requirement with high priority
 		for _, result := range response.Results {
 			if result.Priority != nil {
@@ -203,7 +203,7 @@ func TestSearchIntegration_ComprehensiveSearch(t *testing.T) {
 		response, err := searchService.Search(context.Background(), options)
 		require.NoError(t, err)
 		assert.NotNil(t, response)
-		
+
 		// Should find epic with backlog status
 		found := false
 		for _, result := range response.Results {
@@ -229,7 +229,7 @@ func TestSearchIntegration_ComprehensiveSearch(t *testing.T) {
 		response, err := searchService.Search(context.Background(), options)
 		require.NoError(t, err)
 		assert.NotNil(t, response)
-		
+
 		// Should find all entities created by the user
 		assert.True(t, response.Total >= 3, "Should find at least epic, user story, and requirement")
 	})
@@ -251,7 +251,7 @@ func TestSearchIntegration_ComprehensiveSearch(t *testing.T) {
 		response, err := searchService.Search(context.Background(), options)
 		require.NoError(t, err)
 		assert.NotNil(t, response)
-		
+
 		// Should find entities that match both search query and filters
 		for _, result := range response.Results {
 			// Should contain "user" in title or description
@@ -263,7 +263,7 @@ func TestSearchIntegration_ComprehensiveSearch(t *testing.T) {
 				containsUser = containsUser || contains(result.Description, "user")
 			}
 			assert.True(t, containsUser, "Result should contain 'user' in title or description")
-			
+
 			// Should have high priority (if priority field exists)
 			if result.Priority != nil {
 				assert.Equal(t, int(models.PriorityHigh), *result.Priority)
@@ -311,12 +311,12 @@ func TestSearchIntegration_ComprehensiveSearch(t *testing.T) {
 
 // Helper function to check if a string contains a substring (case-insensitive)
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && 
-		   (s == substr || 
-		    (len(s) > len(substr) && 
-		     (s[:len(substr)] == substr || 
-		      s[len(s)-len(substr):] == substr ||
-		      containsInMiddle(s, substr))))
+	return len(s) >= len(substr) &&
+		(s == substr ||
+			(len(s) > len(substr) &&
+				(s[:len(substr)] == substr ||
+					s[len(s)-len(substr):] == substr ||
+					containsInMiddle(s, substr))))
 }
 
 func containsInMiddle(s, substr string) bool {

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -14,13 +15,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
+	"product-requirements-management/internal/auth"
 	"product-requirements-management/internal/handlers"
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/repository"
 	"product-requirements-management/internal/service"
 )
 
-func setupCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, func()) {
+func setupCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, *auth.Service, func()) {
 	// Create in-memory SQLite database
 	testDatabase := SetupTestDatabase(t)
 	db := testDatabase.DB
@@ -38,6 +40,7 @@ func setupCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, func()) {
 
 	// Initialize services
 	commentService := service.NewCommentService(repos)
+	authService := auth.NewService("test-secret-key", 24*time.Hour)
 
 	// Initialize handlers
 	commentHandler := handlers.NewCommentHandler(commentService)
@@ -46,22 +49,28 @@ func setupCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, func()) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 
-	// Setup routes
+	// Setup routes with authentication
 	v1 := router.Group("/api/v1")
 	{
-		// Entity comment routes
-		v1.POST("/:entityType/:id/comments", commentHandler.CreateComment)
-		v1.GET("/:entityType/:id/comments", commentHandler.GetCommentsByEntity)
+		// Apply authentication middleware to all comment routes
+		authenticated := v1.Group("")
+		authenticated.Use(authService.Middleware())
+		authenticated.Use(authService.RequireCommenter())
+		{
+			// Entity comment routes
+			authenticated.POST("/:entityType/:id/comments", commentHandler.CreateComment)
+			authenticated.GET("/:entityType/:id/comments", commentHandler.GetCommentsByEntity)
 
-		// Direct comment routes
-		v1.GET("/comments/:id", commentHandler.GetComment)
-		v1.PUT("/comments/:id", commentHandler.UpdateComment)
-		v1.DELETE("/comments/:id", commentHandler.DeleteComment)
-		v1.POST("/comments/:id/resolve", commentHandler.ResolveComment)
-		v1.POST("/comments/:id/unresolve", commentHandler.UnresolveComment)
-		v1.GET("/comments/status/:status", commentHandler.GetCommentsByStatus)
-		v1.GET("/comments/:id/replies", commentHandler.GetCommentReplies)
-		v1.POST("/comments/:id/replies", commentHandler.CreateCommentReply)
+			// Direct comment routes
+			authenticated.GET("/comments/:id", commentHandler.GetComment)
+			authenticated.PUT("/comments/:id", commentHandler.UpdateComment)
+			authenticated.DELETE("/comments/:id", commentHandler.DeleteComment)
+			authenticated.POST("/comments/:id/resolve", commentHandler.ResolveComment)
+			authenticated.POST("/comments/:id/unresolve", commentHandler.UnresolveComment)
+			authenticated.GET("/comments/status/:status", commentHandler.GetCommentsByStatus)
+			authenticated.GET("/comments/:id/replies", commentHandler.GetCommentReplies)
+			authenticated.POST("/comments/:id/replies", commentHandler.CreateCommentReply)
+		}
 	}
 
 	cleanup := func() {
@@ -72,7 +81,7 @@ func setupCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, func()) {
 		}
 	}
 
-	return router, db, cleanup
+	return router, db, authService, cleanup
 }
 
 func createTestUserForComment(t *testing.T, db *gorm.DB) *models.User {
@@ -87,6 +96,18 @@ func createTestUserForComment(t *testing.T, db *gorm.DB) *models.User {
 	require.NoError(t, err)
 
 	return user
+}
+
+// createTestToken creates a JWT token for testing
+func createTestToken(t *testing.T, authService *auth.Service, user *models.User) string {
+	token, err := authService.GenerateToken(user)
+	require.NoError(t, err)
+	return token
+}
+
+// addAuthHeader adds authentication header to request
+func addAuthHeader(req *http.Request, token string) {
+	req.Header.Set("Authorization", "Bearer "+token)
 }
 
 func createTestEpicForComment(t *testing.T, db *gorm.DB, creator *models.User) *models.Epic {
@@ -109,12 +130,13 @@ func createTestEpicForComment(t *testing.T, db *gorm.DB, creator *models.User) *
 }
 
 func TestCommentIntegration_CreateComment(t *testing.T) {
-	router, db, cleanup := setupCommentIntegrationTest(t)
+	router, db, authService, cleanup := setupCommentIntegrationTest(t)
 	defer cleanup()
 
 	// Create test data
 	user := createTestUserForComment(t, db)
 	epic := createTestEpicForComment(t, db, user)
+	token := createTestToken(t, authService, user)
 
 	tests := []struct {
 		name           string
@@ -123,73 +145,74 @@ func TestCommentIntegration_CreateComment(t *testing.T) {
 		requestBody    map[string]interface{}
 		expectedStatus int
 		expectedError  string
+		useAuth        bool
 	}{
 		{
 			name:       "create general comment",
 			entityType: "epic",
 			entityID:   epic.ID.String(),
 			requestBody: map[string]interface{}{
-				"author_id": user.ID.String(),
-				"content":   "This is a test comment",
+				"content": "This is a test comment",
 			},
 			expectedStatus: http.StatusCreated,
+			useAuth:        true,
 		},
 		{
 			name:       "create inline comment",
 			entityType: "epic",
 			entityID:   epic.ID.String(),
 			requestBody: map[string]interface{}{
-				"author_id":           user.ID.String(),
 				"content":             "This is an inline comment",
 				"linked_text":         "epic",
 				"text_position_start": 5,
 				"text_position_end":   9,
 			},
 			expectedStatus: http.StatusCreated,
+			useAuth:        true,
+		},
+		{
+			name:       "unauthorized - no token",
+			entityType: "epic",
+			entityID:   epic.ID.String(),
+			requestBody: map[string]interface{}{
+				"content": "This is a test comment",
+			},
+			expectedStatus: http.StatusUnauthorized,
+			expectedError:  "Authorization header required",
+			useAuth:        false,
 		},
 		{
 			name:       "invalid entity type",
 			entityType: "invalid",
 			entityID:   epic.ID.String(),
 			requestBody: map[string]interface{}{
-				"author_id": user.ID.String(),
-				"content":   "This is a test comment",
+				"content": "This is a test comment",
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "Invalid entity type",
+			useAuth:        true,
 		},
 		{
 			name:       "entity not found",
 			entityType: "epic",
 			entityID:   uuid.New().String(),
 			requestBody: map[string]interface{}{
-				"author_id": user.ID.String(),
-				"content":   "This is a test comment",
+				"content": "This is a test comment",
 			},
 			expectedStatus: http.StatusNotFound,
 			expectedError:  "Entity not found",
-		},
-		{
-			name:       "author not found",
-			entityType: "epic",
-			entityID:   epic.ID.String(),
-			requestBody: map[string]interface{}{
-				"author_id": uuid.New().String(),
-				"content":   "This is a test comment",
-			},
-			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Author not found",
+			useAuth:        true,
 		},
 		{
 			name:       "empty content",
 			entityType: "epic",
 			entityID:   epic.ID.String(),
 			requestBody: map[string]interface{}{
-				"author_id": user.ID.String(),
-				"content":   "",
+				"content": "",
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "Content cannot be empty",
+			useAuth:        true,
 		},
 	}
 
@@ -201,6 +224,11 @@ func TestCommentIntegration_CreateComment(t *testing.T) {
 				fmt.Sprintf("/api/v1/%s/%s/comments", tt.entityType, tt.entityID),
 				bytes.NewBuffer(body))
 			req.Header.Set("Content-Type", "application/json")
+
+			// Add auth header if needed
+			if tt.useAuth {
+				addAuthHeader(req, token)
+			}
 
 			// Create response recorder
 			w := httptest.NewRecorder()
@@ -238,12 +266,13 @@ func TestCommentIntegration_CreateComment(t *testing.T) {
 }
 
 func TestCommentIntegration_GetCommentsByEntity(t *testing.T) {
-	router, db, cleanup := setupCommentIntegrationTest(t)
+	router, db, authService, cleanup := setupCommentIntegrationTest(t)
 	defer cleanup()
 
 	// Create test data
 	user := createTestUserForComment(t, db)
 	epic := createTestEpicForComment(t, db, user)
+	token := createTestToken(t, authService, user)
 
 	// Create test comments
 	generalComment := &models.Comment{
@@ -283,6 +312,7 @@ func TestCommentIntegration_GetCommentsByEntity(t *testing.T) {
 		queryParams    string
 		expectedStatus int
 		expectedCount  int
+		useAuth        bool
 	}{
 		{
 			name:           "get all comments",
@@ -290,6 +320,7 @@ func TestCommentIntegration_GetCommentsByEntity(t *testing.T) {
 			entityID:       epic.ID.String(),
 			expectedStatus: http.StatusOK,
 			expectedCount:  2,
+			useAuth:        true,
 		},
 		{
 			name:           "get inline comments only",
@@ -298,6 +329,7 @@ func TestCommentIntegration_GetCommentsByEntity(t *testing.T) {
 			queryParams:    "?inline=true",
 			expectedStatus: http.StatusOK,
 			expectedCount:  1,
+			useAuth:        true,
 		},
 		{
 			name:           "get threaded comments",
@@ -306,6 +338,7 @@ func TestCommentIntegration_GetCommentsByEntity(t *testing.T) {
 			queryParams:    "?threaded=true",
 			expectedStatus: http.StatusOK,
 			expectedCount:  2,
+			useAuth:        true,
 		},
 		{
 			name:           "filter by unresolved status",
@@ -314,6 +347,7 @@ func TestCommentIntegration_GetCommentsByEntity(t *testing.T) {
 			queryParams:    "?status=unresolved",
 			expectedStatus: http.StatusOK,
 			expectedCount:  2,
+			useAuth:        true,
 		},
 		{
 			name:           "filter by resolved status",
@@ -322,18 +356,28 @@ func TestCommentIntegration_GetCommentsByEntity(t *testing.T) {
 			queryParams:    "?status=resolved",
 			expectedStatus: http.StatusOK,
 			expectedCount:  0,
+			useAuth:        true,
+		},
+		{
+			name:           "unauthorized - no token",
+			entityType:     "epic",
+			entityID:       epic.ID.String(),
+			expectedStatus: http.StatusUnauthorized,
+			useAuth:        false,
 		},
 		{
 			name:           "invalid entity type",
 			entityType:     "invalid",
 			entityID:       epic.ID.String(),
 			expectedStatus: http.StatusBadRequest,
+			useAuth:        true,
 		},
 		{
 			name:           "entity not found",
 			entityType:     "epic",
 			entityID:       uuid.New().String(),
 			expectedStatus: http.StatusNotFound,
+			useAuth:        true,
 		},
 	}
 
@@ -342,6 +386,11 @@ func TestCommentIntegration_GetCommentsByEntity(t *testing.T) {
 			// Create request
 			url := fmt.Sprintf("/api/v1/%s/%s/comments%s", tt.entityType, tt.entityID, tt.queryParams)
 			req := httptest.NewRequest(http.MethodGet, url, nil)
+
+			// Add auth header if needed
+			if tt.useAuth {
+				addAuthHeader(req, token)
+			}
 
 			// Create response recorder
 			w := httptest.NewRecorder()
@@ -366,12 +415,13 @@ func TestCommentIntegration_GetCommentsByEntity(t *testing.T) {
 }
 
 func TestCommentIntegration_UpdateComment(t *testing.T) {
-	router, db, cleanup := setupCommentIntegrationTest(t)
+	router, db, authService, cleanup := setupCommentIntegrationTest(t)
 	defer cleanup()
 
 	// Create test data
 	user := createTestUserForComment(t, db)
 	epic := createTestEpicForComment(t, db, user)
+	token := createTestToken(t, authService, user)
 
 	// Create test comment
 	comment := &models.Comment{
@@ -392,6 +442,7 @@ func TestCommentIntegration_UpdateComment(t *testing.T) {
 		requestBody    map[string]interface{}
 		expectedStatus int
 		expectedError  string
+		useAuth        bool
 	}{
 		{
 			name:      "successful update",
@@ -400,6 +451,17 @@ func TestCommentIntegration_UpdateComment(t *testing.T) {
 				"content": "Updated content",
 			},
 			expectedStatus: http.StatusOK,
+			useAuth:        true,
+		},
+		{
+			name:      "unauthorized - no token",
+			commentID: comment.ID.String(),
+			requestBody: map[string]interface{}{
+				"content": "Updated content",
+			},
+			expectedStatus: http.StatusUnauthorized,
+			expectedError:  "Authorization header required",
+			useAuth:        false,
 		},
 		{
 			name:      "empty content",
@@ -409,6 +471,7 @@ func TestCommentIntegration_UpdateComment(t *testing.T) {
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "Content cannot be empty",
+			useAuth:        true,
 		},
 		{
 			name:      "comment not found",
@@ -418,6 +481,7 @@ func TestCommentIntegration_UpdateComment(t *testing.T) {
 			},
 			expectedStatus: http.StatusNotFound,
 			expectedError:  "Comment not found",
+			useAuth:        true,
 		},
 	}
 
@@ -429,6 +493,11 @@ func TestCommentIntegration_UpdateComment(t *testing.T) {
 				fmt.Sprintf("/api/v1/comments/%s", tt.commentID),
 				bytes.NewBuffer(body))
 			req.Header.Set("Content-Type", "application/json")
+
+			// Add auth header if needed
+			if tt.useAuth {
+				addAuthHeader(req, token)
+			}
 
 			// Create response recorder
 			w := httptest.NewRecorder()
@@ -455,12 +524,13 @@ func TestCommentIntegration_UpdateComment(t *testing.T) {
 }
 
 func TestCommentIntegration_ResolveComment(t *testing.T) {
-	router, db, cleanup := setupCommentIntegrationTest(t)
+	router, db, authService, cleanup := setupCommentIntegrationTest(t)
 	defer cleanup()
 
 	// Create test data
 	user := createTestUserForComment(t, db)
 	epic := createTestEpicForComment(t, db, user)
+	token := createTestToken(t, authService, user)
 
 	// Create test comment
 	comment := &models.Comment{
@@ -478,6 +548,7 @@ func TestCommentIntegration_ResolveComment(t *testing.T) {
 	// Test resolve comment
 	req := httptest.NewRequest(http.MethodPost,
 		fmt.Sprintf("/api/v1/comments/%s/resolve", comment.ID.String()), nil)
+	addAuthHeader(req, token)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
@@ -491,6 +562,7 @@ func TestCommentIntegration_ResolveComment(t *testing.T) {
 	// Test unresolve comment
 	req = httptest.NewRequest(http.MethodPost,
 		fmt.Sprintf("/api/v1/comments/%s/unresolve", comment.ID.String()), nil)
+	addAuthHeader(req, token)
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
@@ -502,12 +574,13 @@ func TestCommentIntegration_ResolveComment(t *testing.T) {
 }
 
 func TestCommentIntegration_DeleteComment(t *testing.T) {
-	router, db, cleanup := setupCommentIntegrationTest(t)
+	router, db, authService, cleanup := setupCommentIntegrationTest(t)
 	defer cleanup()
 
 	// Create test data
 	user := createTestUserForComment(t, db)
 	epic := createTestEpicForComment(t, db, user)
+	token := createTestToken(t, authService, user)
 
 	// Create test comment
 	comment := &models.Comment{
@@ -525,6 +598,7 @@ func TestCommentIntegration_DeleteComment(t *testing.T) {
 	// Test delete comment
 	req := httptest.NewRequest(http.MethodDelete,
 		fmt.Sprintf("/api/v1/comments/%s", comment.ID.String()), nil)
+	addAuthHeader(req, token)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
@@ -538,12 +612,13 @@ func TestCommentIntegration_DeleteComment(t *testing.T) {
 }
 
 func TestCommentIntegration_GetCommentsByStatus(t *testing.T) {
-	router, db, cleanup := setupCommentIntegrationTest(t)
+	router, db, authService, cleanup := setupCommentIntegrationTest(t)
 	defer cleanup()
 
 	// Create test data
 	user := createTestUserForComment(t, db)
 	epic := createTestEpicForComment(t, db, user)
+	token := createTestToken(t, authService, user)
 
 	// Create resolved comment
 	resolvedComment := &models.Comment{
@@ -576,23 +651,33 @@ func TestCommentIntegration_GetCommentsByStatus(t *testing.T) {
 		status         string
 		expectedStatus int
 		expectedCount  int
+		useAuth        bool
 	}{
 		{
 			name:           "get resolved comments",
 			status:         "resolved",
 			expectedStatus: http.StatusOK,
 			expectedCount:  1,
+			useAuth:        true,
 		},
 		{
 			name:           "get unresolved comments",
 			status:         "unresolved",
 			expectedStatus: http.StatusOK,
 			expectedCount:  1,
+			useAuth:        true,
+		},
+		{
+			name:           "unauthorized - no token",
+			status:         "resolved",
+			expectedStatus: http.StatusUnauthorized,
+			useAuth:        false,
 		},
 		{
 			name:           "invalid status",
 			status:         "invalid",
 			expectedStatus: http.StatusBadRequest,
+			useAuth:        true,
 		},
 	}
 
@@ -601,6 +686,11 @@ func TestCommentIntegration_GetCommentsByStatus(t *testing.T) {
 			// Create request
 			req := httptest.NewRequest(http.MethodGet,
 				fmt.Sprintf("/api/v1/comments/status/%s", tt.status), nil)
+
+			// Add auth header if needed
+			if tt.useAuth {
+				addAuthHeader(req, token)
+			}
 
 			// Create response recorder
 			w := httptest.NewRecorder()
@@ -626,12 +716,13 @@ func TestCommentIntegration_GetCommentsByStatus(t *testing.T) {
 }
 
 func TestCommentIntegration_CommentThreading(t *testing.T) {
-	router, db, cleanup := setupCommentIntegrationTest(t)
+	router, db, authService, cleanup := setupCommentIntegrationTest(t)
 	defer cleanup()
 
 	// Create test data
 	user := createTestUserForComment(t, db)
 	epic := createTestEpicForComment(t, db, user)
+	token := createTestToken(t, authService, user)
 
 	// Create parent comment
 	parentComment := &models.Comment{
@@ -648,8 +739,7 @@ func TestCommentIntegration_CommentThreading(t *testing.T) {
 
 	// Create reply using API
 	replyBody := map[string]interface{}{
-		"author_id": user.ID.String(),
-		"content":   "Reply to parent comment",
+		"content": "Reply to parent comment",
 	}
 
 	body, _ := json.Marshal(replyBody)
@@ -657,6 +747,7 @@ func TestCommentIntegration_CommentThreading(t *testing.T) {
 		fmt.Sprintf("/api/v1/comments/%s/replies", parentComment.ID.String()),
 		bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
+	addAuthHeader(req, token)
 
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)

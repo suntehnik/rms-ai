@@ -32,7 +32,7 @@ type AcceptanceCriteriaService interface {
 // CreateAcceptanceCriteriaRequest represents the request to create acceptance criteria
 type CreateAcceptanceCriteriaRequest struct {
 	UserStoryID uuid.UUID `json:"user_story_id,omitempty"`
-	AuthorID    uuid.UUID `json:"author_id" binding:"required"`
+	AuthorID    uuid.UUID `json:"author_id"`
 	Description string    `json:"description" binding:"required"`
 }
 

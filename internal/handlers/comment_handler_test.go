@@ -7,12 +7,14 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"product-requirements-management/internal/auth"
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/service"
 )
@@ -120,64 +122,94 @@ func (m *MockCommentService) GetCommentReplies(parentID uuid.UUID) ([]service.Co
 	return args.Get(0).([]service.CommentResponse), args.Error(1)
 }
 
-func setupCommentHandler() (*CommentHandler, *MockCommentService) {
+func setupCommentHandler() (*CommentHandler, *MockCommentService, *auth.Service) {
 	mockService := &MockCommentService{}
 	handler := NewCommentHandler(mockService)
-	return handler, mockService
+	authService := auth.NewService("test-secret-key", 24*time.Hour)
+	return handler, mockService, authService
 }
 
-func setupGinRouter(handler *CommentHandler) *gin.Engine {
+func setupGinRouter(handler *CommentHandler, authService *auth.Service) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 
 	// Comment routes
 	v1 := router.Group("/api/v1")
 	{
-		// Direct comment routes
-		v1.GET("/comments/:id", handler.GetComment)
-		v1.PUT("/comments/:id", handler.UpdateComment)
-		v1.DELETE("/comments/:id", handler.DeleteComment)
-		v1.POST("/comments/:id/resolve", handler.ResolveComment)
-		v1.POST("/comments/:id/unresolve", handler.UnresolveComment)
-		v1.GET("/comments/status/:status", handler.GetCommentsByStatus)
-		v1.GET("/comments/:id/replies", handler.GetCommentReplies)
-		v1.POST("/comments/:id/replies", handler.CreateCommentReply)
-
-		// Entity-specific comment routes (matching actual application routes)
-		epics := v1.Group("/epics")
+		// Direct comment routes (require authentication)
+		authenticated := v1.Group("")
+		authenticated.Use(authService.Middleware())
+		authenticated.Use(authService.RequireCommenter())
 		{
-			epics.GET("/:id/comments", handler.GetEpicComments)
-			epics.POST("/:id/comments", handler.CreateEpicComment)
-		}
+			authenticated.GET("/comments/:id", handler.GetComment)
+			authenticated.PUT("/comments/:id", handler.UpdateComment)
+			authenticated.DELETE("/comments/:id", handler.DeleteComment)
+			authenticated.POST("/comments/:id/resolve", handler.ResolveComment)
+			authenticated.POST("/comments/:id/unresolve", handler.UnresolveComment)
+			authenticated.GET("/comments/status/:status", handler.GetCommentsByStatus)
+			authenticated.GET("/comments/:id/replies", handler.GetCommentReplies)
+			authenticated.POST("/comments/:id/replies", handler.CreateCommentReply)
 
-		userStories := v1.Group("/user-stories")
-		{
-			userStories.GET("/:id/comments", handler.GetUserStoryComments)
-			userStories.POST("/:id/comments", handler.CreateUserStoryComment)
-		}
+			// Entity-specific comment routes (matching actual application routes)
+			epics := authenticated.Group("/epics")
+			{
+				epics.GET("/:id/comments", handler.GetEpicComments)
+				epics.POST("/:id/comments", handler.CreateEpicComment)
+			}
 
-		acceptanceCriteria := v1.Group("/acceptance-criteria")
-		{
-			acceptanceCriteria.GET("/:id/comments", handler.GetAcceptanceCriteriaComments)
-			acceptanceCriteria.POST("/:id/comments", handler.CreateAcceptanceCriteriaComment)
-		}
+			userStories := authenticated.Group("/user-stories")
+			{
+				userStories.GET("/:id/comments", handler.GetUserStoryComments)
+				userStories.POST("/:id/comments", handler.CreateUserStoryComment)
+			}
 
-		requirements := v1.Group("/requirements")
-		{
-			requirements.GET("/:id/comments", handler.GetRequirementComments)
-			requirements.POST("/:id/comments", handler.CreateRequirementComment)
+			acceptanceCriteria := authenticated.Group("/acceptance-criteria")
+			{
+				acceptanceCriteria.GET("/:id/comments", handler.GetAcceptanceCriteriaComments)
+				acceptanceCriteria.POST("/:id/comments", handler.CreateAcceptanceCriteriaComment)
+			}
+
+			requirements := authenticated.Group("/requirements")
+			{
+				requirements.GET("/:id/comments", handler.GetRequirementComments)
+				requirements.POST("/:id/comments", handler.CreateRequirementComment)
+			}
 		}
 	}
 
 	return router
 }
 
+// createTestUser creates a test user for authentication
+func createTestUser() *models.User {
+	return &models.User{
+		ID:       uuid.New(),
+		Username: "testuser",
+		Email:    "test@example.com",
+		Role:     models.RoleUser,
+	}
+}
+
+// createTestToken creates a JWT token for testing
+func createTestToken(authService *auth.Service, user *models.User) (string, error) {
+	return authService.GenerateToken(user)
+}
+
+// addAuthHeader adds authentication header to request
+func addAuthHeader(req *http.Request, token string) {
+	req.Header.Set("Authorization", "Bearer "+token)
+}
+
 func TestCreateComment(t *testing.T) {
-	handler, mockService := setupCommentHandler()
-	router := setupGinRouter(handler)
+	handler, mockService, authService := setupCommentHandler()
+	router := setupGinRouter(handler, authService)
+
+	// Create test user and token
+	testUser := createTestUser()
+	token, err := createTestToken(authService, testUser)
+	assert.NoError(t, err)
 
 	entityID := uuid.New()
-	authorID := uuid.New()
 	commentID := uuid.New()
 
 	tests := []struct {
@@ -188,53 +220,65 @@ func TestCreateComment(t *testing.T) {
 		mockSetup      func()
 		expectedStatus int
 		expectedError  string
+		useAuth        bool
 	}{
 		{
 			name:       "successful comment creation",
 			entityType: "epics",
 			entityID:   entityID.String(),
 			requestBody: map[string]interface{}{
-				"author_id": authorID.String(),
-				"content":   "This is a test comment",
+				"content": "This is a test comment",
 			},
 			mockSetup: func() {
 				expectedReq := service.CreateCommentRequest{
 					EntityType: models.EntityTypeEpic,
 					EntityID:   entityID,
-					AuthorID:   authorID,
+					AuthorID:   testUser.ID,
 					Content:    "This is a test comment",
 				}
 				expectedResponse := &service.CommentResponse{
 					ID:         commentID,
 					EntityType: models.EntityTypeEpic,
 					EntityID:   entityID,
-					AuthorID:   authorID,
+					AuthorID:   testUser.ID,
 					Content:    "This is a test comment",
 					IsResolved: false,
 				}
 				mockService.On("CreateComment", expectedReq).Return(expectedResponse, nil)
 			},
 			expectedStatus: http.StatusCreated,
+			useAuth:        true,
+		},
+		{
+			name:       "unauthorized - no token",
+			entityType: "epics",
+			entityID:   entityID.String(),
+			requestBody: map[string]interface{}{
+				"content": "This is a test comment",
+			},
+			mockSetup:      func() {},
+			expectedStatus: http.StatusUnauthorized,
+			expectedError:  "Authorization header required",
+			useAuth:        false,
 		},
 		{
 			name:       "invalid entity ID",
 			entityType: "epics",
 			entityID:   "invalid-uuid",
 			requestBody: map[string]interface{}{
-				"author_id": authorID.String(),
-				"content":   "This is a test comment",
+				"content": "This is a test comment",
 			},
 			mockSetup:      func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "Invalid entity ID format",
+			useAuth:        true,
 		},
 		{
 			name:       "empty content",
 			entityType: "epics",
 			entityID:   entityID.String(),
 			requestBody: map[string]interface{}{
-				"author_id": authorID.String(),
-				"content":   "",
+				"content": "",
 			},
 			mockSetup: func() {
 				mockService.On("CreateComment", mock.AnythingOfType("service.CreateCommentRequest")).
@@ -242,14 +286,14 @@ func TestCreateComment(t *testing.T) {
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "Content cannot be empty",
+			useAuth:        true,
 		},
 		{
 			name:       "author not found",
 			entityType: "epics",
 			entityID:   entityID.String(),
 			requestBody: map[string]interface{}{
-				"author_id": authorID.String(),
-				"content":   "This is a test comment",
+				"content": "This is a test comment",
 			},
 			mockSetup: func() {
 				mockService.On("CreateComment", mock.AnythingOfType("service.CreateCommentRequest")).
@@ -257,6 +301,7 @@ func TestCreateComment(t *testing.T) {
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "Author not found",
+			useAuth:        true,
 		},
 	}
 
@@ -274,6 +319,11 @@ func TestCreateComment(t *testing.T) {
 				fmt.Sprintf("/api/v1/%s/%s/comments", tt.entityType, tt.entityID),
 				bytes.NewBuffer(body))
 			req.Header.Set("Content-Type", "application/json")
+
+			// Add auth header if needed
+			if tt.useAuth {
+				addAuthHeader(req, token)
+			}
 
 			// Create response recorder
 			w := httptest.NewRecorder()
@@ -299,8 +349,13 @@ func TestCreateComment(t *testing.T) {
 }
 
 func TestGetCommentsByEntity(t *testing.T) {
-	handler, mockService := setupCommentHandler()
-	router := setupGinRouter(handler)
+	handler, mockService, authService := setupCommentHandler()
+	router := setupGinRouter(handler, authService)
+
+	// Create test user and token
+	testUser := createTestUser()
+	token, err := createTestToken(authService, testUser)
+	assert.NoError(t, err)
 
 	entityID := uuid.New()
 	commentID := uuid.New()
@@ -314,6 +369,7 @@ func TestGetCommentsByEntity(t *testing.T) {
 		mockSetup      func()
 		expectedStatus int
 		expectedError  string
+		useAuth        bool
 	}{
 		{
 			name:       "successful get comments",
@@ -334,6 +390,16 @@ func TestGetCommentsByEntity(t *testing.T) {
 					Return(expectedComments, nil)
 			},
 			expectedStatus: http.StatusOK,
+			useAuth:        true,
+		},
+		{
+			name:           "unauthorized - no token",
+			entityType:     "epics",
+			entityID:       entityID.String(),
+			mockSetup:      func() {},
+			expectedStatus: http.StatusUnauthorized,
+			expectedError:  "Authorization header required",
+			useAuth:        false,
 		},
 		{
 			name:        "get threaded comments",
@@ -356,6 +422,7 @@ func TestGetCommentsByEntity(t *testing.T) {
 					Return(expectedComments, nil)
 			},
 			expectedStatus: http.StatusOK,
+			useAuth:        true,
 		},
 		{
 			name:        "get inline comments",
@@ -384,6 +451,7 @@ func TestGetCommentsByEntity(t *testing.T) {
 					Return(expectedComments, nil)
 			},
 			expectedStatus: http.StatusOK,
+			useAuth:        true,
 		},
 		{
 			name:           "invalid entity ID",
@@ -392,6 +460,7 @@ func TestGetCommentsByEntity(t *testing.T) {
 			mockSetup:      func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "Invalid entity ID format",
+			useAuth:        true,
 		},
 		{
 			name:       "entity not found",
@@ -403,6 +472,7 @@ func TestGetCommentsByEntity(t *testing.T) {
 			},
 			expectedStatus: http.StatusNotFound,
 			expectedError:  "Entity not found",
+			useAuth:        true,
 		},
 	}
 
@@ -417,6 +487,11 @@ func TestGetCommentsByEntity(t *testing.T) {
 			// Create request
 			url := fmt.Sprintf("/api/v1/%s/%s/comments%s", tt.entityType, tt.entityID, tt.queryParams)
 			req := httptest.NewRequest(http.MethodGet, url, nil)
+
+			// Add auth header if needed
+			if tt.useAuth {
+				addAuthHeader(req, token)
+			}
 
 			// Create response recorder
 			w := httptest.NewRecorder()
@@ -442,8 +517,13 @@ func TestGetCommentsByEntity(t *testing.T) {
 }
 
 func TestGetComment(t *testing.T) {
-	handler, mockService := setupCommentHandler()
-	router := setupGinRouter(handler)
+	handler, mockService, authService := setupCommentHandler()
+	router := setupGinRouter(handler, authService)
+
+	// Create test user and token
+	testUser := createTestUser()
+	token, err := createTestToken(authService, testUser)
+	assert.NoError(t, err)
 
 	commentID := uuid.New()
 	entityID := uuid.New()
@@ -455,6 +535,7 @@ func TestGetComment(t *testing.T) {
 		mockSetup      func()
 		expectedStatus int
 		expectedError  string
+		useAuth        bool
 	}{
 		{
 			name:      "successful get comment",
@@ -471,6 +552,15 @@ func TestGetComment(t *testing.T) {
 				mockService.On("GetComment", commentID).Return(expectedComment, nil)
 			},
 			expectedStatus: http.StatusOK,
+			useAuth:        true,
+		},
+		{
+			name:           "unauthorized - no token",
+			commentID:      commentID.String(),
+			mockSetup:      func() {},
+			expectedStatus: http.StatusUnauthorized,
+			expectedError:  "Authorization header required",
+			useAuth:        false,
 		},
 		{
 			name:           "invalid comment ID",
@@ -478,6 +568,7 @@ func TestGetComment(t *testing.T) {
 			mockSetup:      func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "Invalid comment ID format",
+			useAuth:        true,
 		},
 		{
 			name:      "comment not found",
@@ -487,6 +578,7 @@ func TestGetComment(t *testing.T) {
 			},
 			expectedStatus: http.StatusNotFound,
 			expectedError:  "Comment not found",
+			useAuth:        true,
 		},
 	}
 
@@ -501,6 +593,11 @@ func TestGetComment(t *testing.T) {
 			// Create request
 			req := httptest.NewRequest(http.MethodGet,
 				fmt.Sprintf("/api/v1/comments/%s", tt.commentID), nil)
+
+			// Add auth header if needed
+			if tt.useAuth {
+				addAuthHeader(req, token)
+			}
 
 			// Create response recorder
 			w := httptest.NewRecorder()
@@ -526,8 +623,13 @@ func TestGetComment(t *testing.T) {
 }
 
 func TestUpdateComment(t *testing.T) {
-	handler, mockService := setupCommentHandler()
-	router := setupGinRouter(handler)
+	handler, mockService, authService := setupCommentHandler()
+	router := setupGinRouter(handler, authService)
+
+	// Create test user and token
+	testUser := createTestUser()
+	token, err := createTestToken(authService, testUser)
+	assert.NoError(t, err)
 
 	commentID := uuid.New()
 	entityID := uuid.New()
@@ -540,6 +642,7 @@ func TestUpdateComment(t *testing.T) {
 		mockSetup      func()
 		expectedStatus int
 		expectedError  string
+		useAuth        bool
 	}{
 		{
 			name:      "successful update comment",
@@ -562,6 +665,18 @@ func TestUpdateComment(t *testing.T) {
 				mockService.On("UpdateComment", commentID, expectedReq).Return(expectedResponse, nil)
 			},
 			expectedStatus: http.StatusOK,
+			useAuth:        true,
+		},
+		{
+			name:      "unauthorized - no token",
+			commentID: commentID.String(),
+			requestBody: map[string]interface{}{
+				"content": "Updated comment content",
+			},
+			mockSetup:      func() {},
+			expectedStatus: http.StatusUnauthorized,
+			expectedError:  "Authorization header required",
+			useAuth:        false,
 		},
 		{
 			name:      "empty content",
@@ -575,6 +690,7 @@ func TestUpdateComment(t *testing.T) {
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "Content cannot be empty",
+			useAuth:        true,
 		},
 		{
 			name:      "comment not found",
@@ -588,6 +704,7 @@ func TestUpdateComment(t *testing.T) {
 			},
 			expectedStatus: http.StatusNotFound,
 			expectedError:  "Comment not found",
+			useAuth:        true,
 		},
 	}
 
@@ -605,6 +722,11 @@ func TestUpdateComment(t *testing.T) {
 				fmt.Sprintf("/api/v1/comments/%s", tt.commentID),
 				bytes.NewBuffer(body))
 			req.Header.Set("Content-Type", "application/json")
+
+			// Add auth header if needed
+			if tt.useAuth {
+				addAuthHeader(req, token)
+			}
 
 			// Create response recorder
 			w := httptest.NewRecorder()
@@ -630,8 +752,13 @@ func TestUpdateComment(t *testing.T) {
 }
 
 func TestDeleteComment(t *testing.T) {
-	handler, mockService := setupCommentHandler()
-	router := setupGinRouter(handler)
+	handler, mockService, authService := setupCommentHandler()
+	router := setupGinRouter(handler, authService)
+
+	// Create test user and token
+	testUser := createTestUser()
+	token, err := createTestToken(authService, testUser)
+	assert.NoError(t, err)
 
 	commentID := uuid.New()
 
@@ -641,6 +768,7 @@ func TestDeleteComment(t *testing.T) {
 		mockSetup      func()
 		expectedStatus int
 		expectedError  string
+		useAuth        bool
 	}{
 		{
 			name:      "successful delete comment",
@@ -649,6 +777,15 @@ func TestDeleteComment(t *testing.T) {
 				mockService.On("DeleteComment", commentID).Return(nil)
 			},
 			expectedStatus: http.StatusNoContent,
+			useAuth:        true,
+		},
+		{
+			name:           "unauthorized - no token",
+			commentID:      commentID.String(),
+			mockSetup:      func() {},
+			expectedStatus: http.StatusUnauthorized,
+			expectedError:  "Authorization header required",
+			useAuth:        false,
 		},
 		{
 			name:           "invalid comment ID",
@@ -656,6 +793,7 @@ func TestDeleteComment(t *testing.T) {
 			mockSetup:      func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "Invalid comment ID format",
+			useAuth:        true,
 		},
 		{
 			name:      "comment not found",
@@ -665,6 +803,7 @@ func TestDeleteComment(t *testing.T) {
 			},
 			expectedStatus: http.StatusNotFound,
 			expectedError:  "Comment not found",
+			useAuth:        true,
 		},
 		{
 			name:      "comment has replies",
@@ -674,6 +813,7 @@ func TestDeleteComment(t *testing.T) {
 			},
 			expectedStatus: http.StatusConflict,
 			expectedError:  "Comment has replies and cannot be deleted",
+			useAuth:        true,
 		},
 	}
 
@@ -688,6 +828,11 @@ func TestDeleteComment(t *testing.T) {
 			// Create request
 			req := httptest.NewRequest(http.MethodDelete,
 				fmt.Sprintf("/api/v1/comments/%s", tt.commentID), nil)
+
+			// Add auth header if needed
+			if tt.useAuth {
+				addAuthHeader(req, token)
+			}
 
 			// Create response recorder
 			w := httptest.NewRecorder()
@@ -713,8 +858,13 @@ func TestDeleteComment(t *testing.T) {
 }
 
 func TestResolveComment(t *testing.T) {
-	handler, mockService := setupCommentHandler()
-	router := setupGinRouter(handler)
+	handler, mockService, authService := setupCommentHandler()
+	router := setupGinRouter(handler, authService)
+
+	// Create test user and token
+	testUser := createTestUser()
+	token, err := createTestToken(authService, testUser)
+	assert.NoError(t, err)
 
 	commentID := uuid.New()
 	entityID := uuid.New()
@@ -726,6 +876,7 @@ func TestResolveComment(t *testing.T) {
 		mockSetup      func()
 		expectedStatus int
 		expectedError  string
+		useAuth        bool
 	}{
 		{
 			name:      "successful resolve comment",
@@ -742,6 +893,15 @@ func TestResolveComment(t *testing.T) {
 				mockService.On("ResolveComment", commentID).Return(expectedResponse, nil)
 			},
 			expectedStatus: http.StatusOK,
+			useAuth:        true,
+		},
+		{
+			name:           "unauthorized - no token",
+			commentID:      commentID.String(),
+			mockSetup:      func() {},
+			expectedStatus: http.StatusUnauthorized,
+			expectedError:  "Authorization header required",
+			useAuth:        false,
 		},
 		{
 			name:           "invalid comment ID",
@@ -749,6 +909,7 @@ func TestResolveComment(t *testing.T) {
 			mockSetup:      func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "Invalid comment ID format",
+			useAuth:        true,
 		},
 		{
 			name:      "comment not found",
@@ -758,6 +919,7 @@ func TestResolveComment(t *testing.T) {
 			},
 			expectedStatus: http.StatusNotFound,
 			expectedError:  "Comment not found",
+			useAuth:        true,
 		},
 	}
 
@@ -772,6 +934,11 @@ func TestResolveComment(t *testing.T) {
 			// Create request
 			req := httptest.NewRequest(http.MethodPost,
 				fmt.Sprintf("/api/v1/comments/%s/resolve", tt.commentID), nil)
+
+			// Add auth header if needed
+			if tt.useAuth {
+				addAuthHeader(req, token)
+			}
 
 			// Create response recorder
 			w := httptest.NewRecorder()
@@ -797,8 +964,13 @@ func TestResolveComment(t *testing.T) {
 }
 
 func TestGetCommentsByStatus(t *testing.T) {
-	handler, mockService := setupCommentHandler()
-	router := setupGinRouter(handler)
+	handler, mockService, authService := setupCommentHandler()
+	router := setupGinRouter(handler, authService)
+
+	// Create test user and token
+	testUser := createTestUser()
+	token, err := createTestToken(authService, testUser)
+	assert.NoError(t, err)
 
 	commentID := uuid.New()
 	entityID := uuid.New()
@@ -810,6 +982,7 @@ func TestGetCommentsByStatus(t *testing.T) {
 		mockSetup      func()
 		expectedStatus int
 		expectedError  string
+		useAuth        bool
 	}{
 		{
 			name:   "get resolved comments",
@@ -828,6 +1001,7 @@ func TestGetCommentsByStatus(t *testing.T) {
 				mockService.On("GetCommentsByStatus", true).Return(expectedComments, nil)
 			},
 			expectedStatus: http.StatusOK,
+			useAuth:        true,
 		},
 		{
 			name:   "get unresolved comments",
@@ -846,6 +1020,15 @@ func TestGetCommentsByStatus(t *testing.T) {
 				mockService.On("GetCommentsByStatus", false).Return(expectedComments, nil)
 			},
 			expectedStatus: http.StatusOK,
+			useAuth:        true,
+		},
+		{
+			name:           "unauthorized - no token",
+			status:         "resolved",
+			mockSetup:      func() {},
+			expectedStatus: http.StatusUnauthorized,
+			expectedError:  "Authorization header required",
+			useAuth:        false,
 		},
 		{
 			name:           "invalid status",
@@ -853,6 +1036,7 @@ func TestGetCommentsByStatus(t *testing.T) {
 			mockSetup:      func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "Invalid status. Use 'resolved' or 'unresolved'",
+			useAuth:        true,
 		},
 	}
 
@@ -867,6 +1051,11 @@ func TestGetCommentsByStatus(t *testing.T) {
 			// Create request
 			req := httptest.NewRequest(http.MethodGet,
 				fmt.Sprintf("/api/v1/comments/status/%s", tt.status), nil)
+
+			// Add auth header if needed
+			if tt.useAuth {
+				addAuthHeader(req, token)
+			}
 
 			// Create response recorder
 			w := httptest.NewRecorder()
@@ -892,8 +1081,13 @@ func TestGetCommentsByStatus(t *testing.T) {
 }
 
 func TestCommentFiltering(t *testing.T) {
-	handler, mockService := setupCommentHandler()
-	router := setupGinRouter(handler)
+	handler, mockService, authService := setupCommentHandler()
+	router := setupGinRouter(handler, authService)
+
+	// Create test user and token
+	testUser := createTestUser()
+	token, err := createTestToken(authService, testUser)
+	assert.NoError(t, err)
 
 	entityID := uuid.New()
 	resolvedCommentID := uuid.New()
@@ -1131,6 +1325,9 @@ func TestCommentFiltering(t *testing.T) {
 			url := fmt.Sprintf("/api/v1/%s/%s/comments%s", tt.entityType, tt.entityID, tt.queryParams)
 			req := httptest.NewRequest(http.MethodGet, url, nil)
 
+			// Add auth header
+			addAuthHeader(req, token)
+
 			// Create response recorder
 			w := httptest.NewRecorder()
 
@@ -1162,8 +1359,13 @@ func TestCommentFiltering(t *testing.T) {
 }
 
 func TestUnresolveComment(t *testing.T) {
-	handler, mockService := setupCommentHandler()
-	router := setupGinRouter(handler)
+	handler, mockService, authService := setupCommentHandler()
+	router := setupGinRouter(handler, authService)
+
+	// Create test user and token
+	testUser := createTestUser()
+	token, err := createTestToken(authService, testUser)
+	assert.NoError(t, err)
 
 	commentID := uuid.New()
 	entityID := uuid.New()
@@ -1175,6 +1377,7 @@ func TestUnresolveComment(t *testing.T) {
 		mockSetup      func()
 		expectedStatus int
 		expectedError  string
+		useAuth        bool
 	}{
 		{
 			name:      "successful unresolve comment",
@@ -1191,6 +1394,15 @@ func TestUnresolveComment(t *testing.T) {
 				mockService.On("UnresolveComment", commentID).Return(expectedResponse, nil)
 			},
 			expectedStatus: http.StatusOK,
+			useAuth:        true,
+		},
+		{
+			name:           "unauthorized - no token",
+			commentID:      commentID.String(),
+			mockSetup:      func() {},
+			expectedStatus: http.StatusUnauthorized,
+			expectedError:  "Authorization header required",
+			useAuth:        false,
 		},
 		{
 			name:           "invalid comment ID",
@@ -1198,6 +1410,7 @@ func TestUnresolveComment(t *testing.T) {
 			mockSetup:      func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "Invalid comment ID format",
+			useAuth:        true,
 		},
 		{
 			name:      "comment not found",
@@ -1207,6 +1420,7 @@ func TestUnresolveComment(t *testing.T) {
 			},
 			expectedStatus: http.StatusNotFound,
 			expectedError:  "Comment not found",
+			useAuth:        true,
 		},
 	}
 
@@ -1221,6 +1435,11 @@ func TestUnresolveComment(t *testing.T) {
 			// Create request
 			req := httptest.NewRequest(http.MethodPost,
 				fmt.Sprintf("/api/v1/comments/%s/unresolve", tt.commentID), nil)
+
+			// Add auth header if needed
+			if tt.useAuth {
+				addAuthHeader(req, token)
+			}
 
 			// Create response recorder
 			w := httptest.NewRecorder()

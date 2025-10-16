@@ -400,7 +400,7 @@ func TestRequirementService_CreateRequirement(t *testing.T) {
 	mockUserStoryRepo := new(MockUserStoryRepository)
 	mockAcceptanceCriteriaRepo := new(MockAcceptanceCriteriaRepository)
 	mockUserRepo := new(MockUserRepository)
-	
+
 	service := NewRequirementService(
 		mockRequirementRepo,
 		mockRequirementTypeRepo,
@@ -415,7 +415,7 @@ func TestRequirementService_CreateRequirement(t *testing.T) {
 		userStoryID := uuid.New()
 		creatorID := uuid.New()
 		typeID := uuid.New()
-		
+
 		req := CreateRequirementRequest{
 			UserStoryID: userStoryID,
 			CreatorID:   creatorID,
@@ -467,7 +467,7 @@ func TestRequirementService_CreateRequirement(t *testing.T) {
 
 	t.Run("user story not found", func(t *testing.T) {
 		userStoryID := uuid.New()
-		
+
 		req := CreateRequirementRequest{
 			UserStoryID: userStoryID,
 			CreatorID:   uuid.New(),
@@ -490,7 +490,7 @@ func TestRequirementService_CreateRequirement(t *testing.T) {
 	t.Run("requirement type not found", func(t *testing.T) {
 		userStoryID := uuid.New()
 		typeID := uuid.New()
-		
+
 		req := CreateRequirementRequest{
 			UserStoryID: userStoryID,
 			CreatorID:   uuid.New(),
@@ -521,7 +521,7 @@ func TestRequirementService_GetRequirementByID(t *testing.T) {
 	mockUserStoryRepo := new(MockUserStoryRepository)
 	mockAcceptanceCriteriaRepo := new(MockAcceptanceCriteriaRepository)
 	mockUserRepo := new(MockUserRepository)
-	
+
 	service := NewRequirementService(
 		mockRequirementRepo,
 		mockRequirementTypeRepo,
@@ -574,7 +574,7 @@ func TestRequirementService_CreateRelationship(t *testing.T) {
 	mockUserStoryRepo := new(MockUserStoryRepository)
 	mockAcceptanceCriteriaRepo := new(MockAcceptanceCriteriaRepository)
 	mockUserRepo := new(MockUserRepository)
-	
+
 	service := NewRequirementService(
 		mockRequirementRepo,
 		mockRequirementTypeRepo,
@@ -590,7 +590,7 @@ func TestRequirementService_CreateRelationship(t *testing.T) {
 		targetID := uuid.New()
 		relationshipTypeID := uuid.New()
 		creatorID := uuid.New()
-		
+
 		req := CreateRelationshipRequest{
 			SourceRequirementID: sourceID,
 			TargetRequirementID: targetID,
@@ -623,7 +623,7 @@ func TestRequirementService_CreateRelationship(t *testing.T) {
 
 	t.Run("circular relationship", func(t *testing.T) {
 		requirementID := uuid.New()
-		
+
 		req := CreateRelationshipRequest{
 			SourceRequirementID: requirementID,
 			TargetRequirementID: requirementID, // Same as source
@@ -643,7 +643,7 @@ func TestRequirementService_CreateRelationship(t *testing.T) {
 		targetID := uuid.New()
 		relationshipTypeID := uuid.New()
 		creatorID := uuid.New()
-		
+
 		req := CreateRelationshipRequest{
 			SourceRequirementID: sourceID,
 			TargetRequirementID: targetID,
@@ -679,7 +679,7 @@ func TestRequirementService_DeleteRequirement(t *testing.T) {
 	mockUserStoryRepo := new(MockUserStoryRepository)
 	mockAcceptanceCriteriaRepo := new(MockAcceptanceCriteriaRepository)
 	mockUserRepo := new(MockUserRepository)
-	
+
 	service := NewRequirementService(
 		mockRequirementRepo,
 		mockRequirementTypeRepo,
@@ -747,4 +747,3 @@ func TestRequirementService_DeleteRequirement(t *testing.T) {
 		mockRequirementRepo.AssertExpectations(t)
 	})
 }
-

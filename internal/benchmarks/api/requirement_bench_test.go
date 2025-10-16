@@ -331,7 +331,7 @@ func BenchmarkRequirementStatusChange(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			// Use safe indexing to cycle through available requirements
 			requirementIndex := safeIndex(i, len(requirementIDs))
-			
+
 			statusReq := map[string]interface{}{
 				"status": statuses[safeIndex(i, len(statuses))],
 			}
@@ -509,7 +509,7 @@ func BenchmarkRequirementRelationshipManagement(b *testing.B) {
 				// Use different pairs of requirements to avoid duplicate relationships
 				sourceIndex := safeIndex(i*2, len(requirements))
 				targetIndex := safeIndex(i*2+1, len(requirements))
-				
+
 				// Ensure we don't create self-relationships
 				if sourceIndex == targetIndex {
 					targetIndex = safeIndex(sourceIndex+1, len(requirements))
@@ -580,7 +580,7 @@ func BenchmarkRequirementTypeOperations(b *testing.B) {
 
 	b.Run("SearchRequirements", func(b *testing.B) {
 		searchTerms := []string{"test", "requirement", "benchmark", "performance"}
-		
+
 		for i := 0; i < b.N; i++ {
 			searchTerm := searchTerms[safeIndex(i, len(searchTerms))]
 			resp, err := client.GET(fmt.Sprintf("/api/v1/requirements/search?q=%s", searchTerm))

@@ -365,9 +365,9 @@ func TestValidateStatusTransition(t *testing.T) {
 		)
 
 		statusModel := &models.StatusModel{
-			ID:         uuid.New(),
-			EntityType: models.EntityTypeEpic,
-			Name:       "Default Epic Workflow",
+			ID:          uuid.New(),
+			EntityType:  models.EntityTypeEpic,
+			Name:        "Default Epic Workflow",
 			Transitions: []models.StatusTransition{}, // No explicit transitions = all allowed
 		}
 
@@ -460,4 +460,3 @@ func TestValidateStatusTransition(t *testing.T) {
 		mockStatusRepo.AssertExpectations(t)
 	})
 }
-

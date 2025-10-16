@@ -50,7 +50,7 @@ func TestSearchLogic(t *testing.T) {
 		// Test default values
 		options := service.SearchOptions{}
 		normalized := normalizeSearchOptions(options)
-		
+
 		assert.Equal(t, 50, normalized.Limit)
 		assert.Equal(t, 0, normalized.Offset)
 		assert.Equal(t, "created_at", normalized.SortBy)
@@ -82,7 +82,7 @@ func TestSearchLogic(t *testing.T) {
 		t.Run("valid priority filter", func(t *testing.T) {
 			priority := int(models.PriorityHigh)
 			filters := service.SearchFilters{Priority: &priority}
-			
+
 			err := validateFilters(filters)
 			assert.NoError(t, err)
 		})
@@ -90,7 +90,7 @@ func TestSearchLogic(t *testing.T) {
 		t.Run("invalid priority filter", func(t *testing.T) {
 			priority := 999
 			filters := service.SearchFilters{Priority: &priority}
-			
+
 			err := validateFilters(filters)
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "priority must be between 1 and 4")
@@ -99,7 +99,7 @@ func TestSearchLogic(t *testing.T) {
 		t.Run("valid UUID filter", func(t *testing.T) {
 			validUUID := uuid.New()
 			filters := service.SearchFilters{CreatorID: &validUUID}
-			
+
 			err := validateFilters(filters)
 			assert.NoError(t, err)
 		})
@@ -108,10 +108,10 @@ func TestSearchLogic(t *testing.T) {
 	t.Run("pagination logic", func(t *testing.T) {
 		// Test pagination calculations
 		testCases := []struct {
-			name           string
-			limit          int
-			offset         int
-			totalResults   int
+			name            string
+			limit           int
+			offset          int
+			totalResults    int
 			expectedHasNext bool
 			expectedHasPrev bool
 		}{
@@ -204,27 +204,27 @@ func TestSearchLogic(t *testing.T) {
 
 // MockSearchService implements search using LIKE queries for SQLite compatibility
 type MockSearchService struct {
-	db                    *gorm.DB
-	epicRepo             repository.EpicRepository
-	userStoryRepo        repository.UserStoryRepository
+	db                     *gorm.DB
+	epicRepo               repository.EpicRepository
+	userStoryRepo          repository.UserStoryRepository
 	acceptanceCriteriaRepo repository.AcceptanceCriteriaRepository
-	requirementRepo      repository.RequirementRepository
+	requirementRepo        repository.RequirementRepository
 }
 
 func NewMockSearchService(db *gorm.DB, repos *repository.Repositories) *MockSearchService {
 	return &MockSearchService{
-		db:                    db,
-		epicRepo:             repos.Epic,
-		userStoryRepo:        repos.UserStory,
+		db:                     db,
+		epicRepo:               repos.Epic,
+		userStoryRepo:          repos.UserStory,
 		acceptanceCriteriaRepo: repos.AcceptanceCriteria,
-		requirementRepo:      repos.Requirement,
+		requirementRepo:        repos.Requirement,
 	}
 }
 
 func (s *MockSearchService) Search(ctx context.Context, options service.SearchOptions) (*service.SearchResponse, error) {
 	// Normalize options
 	normalized := normalizeSearchOptions(options)
-	
+
 	// Validate filters
 	if err := validateFilters(normalized.Filters); err != nil {
 		return nil, err
@@ -251,7 +251,7 @@ func (s *MockSearchService) Search(ctx context.Context, options service.SearchOp
 	total := len(allResults)
 	start := normalized.Offset
 	end := start + normalized.Limit
-	
+
 	if start > total {
 		start = total
 	}
@@ -273,9 +273,9 @@ func (s *MockSearchService) Search(ctx context.Context, options service.SearchOp
 
 func (s *MockSearchService) searchEpicsWithLike(options service.SearchOptions) ([]service.SearchResult, error) {
 	var epics []models.Epic
-	
+
 	query := s.db.Model(&models.Epic{})
-	
+
 	// Apply text search using LIKE
 	if options.Query != "" {
 		query = query.Where(
@@ -321,9 +321,9 @@ func (s *MockSearchService) searchEpicsWithLike(options service.SearchOptions) (
 
 func (s *MockSearchService) searchUserStoriesWithLike(options service.SearchOptions) ([]service.SearchResult, error) {
 	var userStories []models.UserStory
-	
+
 	query := s.db.Model(&models.UserStory{})
-	
+
 	// Apply text search using LIKE
 	if options.Query != "" {
 		query = query.Where(
@@ -369,9 +369,9 @@ func (s *MockSearchService) searchUserStoriesWithLike(options service.SearchOpti
 
 func (s *MockSearchService) searchRequirementsWithLike(options service.SearchOptions) ([]service.SearchResult, error) {
 	var requirements []models.Requirement
-	
+
 	query := s.db.Model(&models.Requirement{})
-	
+
 	// Apply text search using LIKE
 	if options.Query != "" {
 		query = query.Where(

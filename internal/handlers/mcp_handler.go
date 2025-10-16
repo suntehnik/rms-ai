@@ -30,10 +30,11 @@ func NewMCPHandler(
 	requirementService service.RequirementService,
 	acceptanceCriteriaService service.AcceptanceCriteriaService,
 	searchService service.SearchServiceInterface,
+	steeringDocumentService service.SteeringDocumentService,
 ) *MCPHandler {
 	processor := jsonrpc.NewProcessor()
 	resourceHandler := NewResourceHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService)
-	toolsHandler := NewToolsHandler(epicService, userStoryService, requirementService, searchService)
+	toolsHandler := NewToolsHandler(epicService, userStoryService, requirementService, searchService, steeringDocumentService)
 	mcpLogger := NewMCPLogger()
 	errorMapper := jsonrpc.NewErrorMapper()
 
@@ -120,7 +121,7 @@ func (h *MCPHandler) Process(c *gin.Context) {
 	})
 
 	// If responseData is nil or empty, it was a notification (no response expected)
-	if responseData == nil || len(responseData) == 0 {
+	if len(responseData) == 0 {
 		c.Status(http.StatusNoContent)
 		return
 	}
@@ -265,6 +266,8 @@ func (h *MCPHandler) extractResourceInfoFromToolCall(toolName string, params map
 		return "user_story", h.extractIDFromParams(params, []string{"user_story_id", "id"})
 	case strings.Contains(toolName, "requirement"):
 		return "requirement", h.extractIDFromParams(params, []string{"requirement_id", "id"})
+	case strings.Contains(toolName, "steering"):
+		return "steering_document", h.extractIDFromParams(params, []string{"steering_document_id", "id"})
 	case strings.Contains(toolName, "search"):
 		return "search", ""
 	default:

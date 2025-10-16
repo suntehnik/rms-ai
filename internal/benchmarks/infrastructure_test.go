@@ -12,7 +12,7 @@ import (
 // BenchmarkDataGeneration tests the performance of data generation utilities
 func BenchmarkDataGeneration(b *testing.B) {
 	ctx := context.Background()
-	
+
 	// Create PostgreSQL container
 	dbContainer, err := setup.NewPostgreSQLContainer(ctx)
 	if err != nil {
@@ -71,7 +71,7 @@ func BenchmarkDataGeneration(b *testing.B) {
 			if err != nil {
 				b.Fatalf("Failed to create users: %v", err)
 			}
-			
+
 			// Cleanup after each iteration
 			if err := dataGen.CleanupDatabase(); err != nil {
 				b.Fatalf("Failed to cleanup database: %v", err)
@@ -84,7 +84,7 @@ func BenchmarkDataGeneration(b *testing.B) {
 		if err := dbContainer.ResetDatabase(); err != nil {
 			b.Fatalf("Failed to reset database: %v", err)
 		}
-		
+
 		users, err := dataGen.CreateUsers(50)
 		if err != nil {
 			b.Fatalf("Failed to create users: %v", err)
@@ -97,7 +97,7 @@ func BenchmarkDataGeneration(b *testing.B) {
 			if err != nil {
 				b.Fatalf("Failed to create epics: %v", err)
 			}
-			
+
 			// Cleanup epics after each iteration
 			if err := dbContainer.DB.Exec("DELETE FROM epics").Error; err != nil {
 				b.Fatalf("Failed to cleanup epics: %v", err)
@@ -139,7 +139,7 @@ func BenchmarkDataGeneration(b *testing.B) {
 // BenchmarkDatabaseOperations tests database cleanup and reset performance
 func BenchmarkDatabaseOperations(b *testing.B) {
 	ctx := context.Background()
-	
+
 	// Create PostgreSQL container
 	dbContainer, err := setup.NewPostgreSQLContainer(ctx)
 	if err != nil {

@@ -24,6 +24,7 @@ type (
 	Status                  = models.Status
 	StatusTransition        = models.StatusTransition
 	PersonalAccessToken     = models.PersonalAccessToken
+	SteeringDocument        = models.SteeringDocument
 	EpicStatus              = models.EpicStatus
 	UserStoryStatus         = models.UserStoryStatus
 	RequirementStatus       = models.RequirementStatus
@@ -192,4 +193,23 @@ type PersonalAccessTokenRepository interface {
 	UpdateLastUsed(id uuid.UUID, lastUsedAt *time.Time) error
 	DeleteExpired() (int64, error)
 	ExistsByUserIDAndName(userID uuid.UUID, name string) (bool, error)
+}
+
+// SteeringDocumentFilters defines filtering options for steering document queries
+type SteeringDocumentFilters struct {
+	CreatorID *uuid.UUID
+	Search    string
+	Limit     int
+	Offset    int
+	OrderBy   string
+}
+
+// SteeringDocumentRepository defines steering document-specific repository operations
+type SteeringDocumentRepository interface {
+	Repository[SteeringDocument]
+	ListWithFilters(filters SteeringDocumentFilters) ([]SteeringDocument, int64, error)
+	Search(query string) ([]SteeringDocument, error)
+	GetByEpicID(epicID uuid.UUID) ([]SteeringDocument, error)
+	LinkToEpic(steeringDocumentID, epicID uuid.UUID) error
+	UnlinkFromEpic(steeringDocumentID, epicID uuid.UUID) error
 }

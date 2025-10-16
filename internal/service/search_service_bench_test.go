@@ -200,14 +200,14 @@ func setupBenchmarkDB(b *testing.B) *gorm.DB {
 
 	// Create database connection
 	dsn := fmt.Sprintf("host=%s port=%s user=benchuser password=password dbname=benchdb sslmode=disable", host, port.Port())
-	
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	require.NoError(b, err)
 
 	// Verify connection
 	sqlDB, err := db.DB()
 	require.NoError(b, err)
-	
+
 	err = sqlDB.Ping()
 	require.NoError(b, err)
 
@@ -255,7 +255,7 @@ func createBenchmarkData(b *testing.B, db *gorm.DB, user *models.User, count int
 			ReferenceID: fmt.Sprintf("EP-BENCH-%03d", i+1),
 			CreatorID:   user.ID,
 			AssigneeID:  user.ID,
-			Priority:    models.Priority((i%4)+1),
+			Priority:    models.Priority((i % 4) + 1),
 			Status:      models.EpicStatusBacklog,
 			Title:       fmt.Sprintf("Test Epic %d for Authentication", i+1),
 			Description: benchStringPtr(fmt.Sprintf("This is benchmark test epic number %d with authentication and various keywords for testing search performance.", i+1)),
@@ -271,7 +271,7 @@ func createBenchmarkData(b *testing.B, db *gorm.DB, user *models.User, count int
 				EpicID:      epic.ID,
 				CreatorID:   user.ID,
 				AssigneeID:  user.ID,
-				Priority:    models.Priority((j%4)+1),
+				Priority:    models.Priority((j % 4) + 1),
 				Status:      models.UserStoryStatusBacklog,
 				Title:       fmt.Sprintf("Test User Story %d-%d Authentication Feature", i+1, j+1),
 				Description: benchStringPtr(fmt.Sprintf("As a user, I want to test authentication feature %d-%d, so that I can benchmark search performance.", i+1, j+1)),

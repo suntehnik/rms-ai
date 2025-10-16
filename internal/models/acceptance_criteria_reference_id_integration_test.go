@@ -78,7 +78,7 @@ func testAcceptanceCriteriaSequentialReferenceIDGeneration(t *testing.T, db *gor
 
 		// Verify reference ID format
 		assert.Regexp(t, `^AC-\d{3}$`, ac.ReferenceID, "Reference ID should match AC-XXX format")
-		
+
 		// Verify sequential numbering
 		expectedRefID := fmt.Sprintf("AC-%03d", i+1)
 		assert.Equal(t, expectedRefID, ac.ReferenceID, "Reference ID should be sequential")
@@ -98,7 +98,7 @@ func testAcceptanceCriteriaConcurrentReferenceIDGeneration(t *testing.T, db *gor
 
 	const numGoroutines = 10
 	const acceptanceCriteriaPerGoroutine = 5
-	
+
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	var allAcceptanceCriteria []AcceptanceCriteria
@@ -109,7 +109,7 @@ func testAcceptanceCriteriaConcurrentReferenceIDGeneration(t *testing.T, db *gor
 		wg.Add(1)
 		go func(goroutineID int) {
 			defer wg.Done()
-			
+
 			var localAcceptanceCriteria []AcceptanceCriteria
 			for j := 0; j < acceptanceCriteriaPerGoroutine; j++ {
 				ac := AcceptanceCriteria{
@@ -148,7 +148,7 @@ func testAcceptanceCriteriaConcurrentReferenceIDGeneration(t *testing.T, db *gor
 	for _, ac := range allAcceptanceCriteria {
 		assert.False(t, refIDs[ac.ReferenceID], "Reference ID %s should be unique", ac.ReferenceID)
 		refIDs[ac.ReferenceID] = true
-		
+
 		// Verify format (sequential AC-XXX or fallback AC-xxxxxxxx)
 		assert.Regexp(t, `^AC-(\d{3}|[a-f0-9]{8})$`, ac.ReferenceID, "Reference ID should match AC-XXX or AC-xxxxxxxx format")
 	}
@@ -208,7 +208,7 @@ func testAcceptanceCriteriaReferenceIDUnderLoad(t *testing.T, db *gorm.DB, testU
 
 	const numWorkers = 20
 	const acceptanceCriteriaPerWorker = 10
-	
+
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	var allRefIDs []string
@@ -219,7 +219,7 @@ func testAcceptanceCriteriaReferenceIDUnderLoad(t *testing.T, db *gorm.DB, testU
 		wg.Add(1)
 		go func(workerID int) {
 			defer wg.Done()
-			
+
 			var localRefIDs []string
 			for j := 0; j < acceptanceCriteriaPerWorker; j++ {
 				ac := AcceptanceCriteria{
@@ -263,7 +263,7 @@ func testAcceptanceCriteriaReferenceIDUnderLoad(t *testing.T, db *gorm.DB, testU
 func testAcceptanceCriteriaProductionGeneratorDirectly(t *testing.T, db *gorm.DB) {
 	// Test the production generator directly
 	generator := NewPostgreSQLReferenceIDGenerator(2147483644, "AC")
-	
+
 	// Clean acceptance_criteria table
 	db.Exec("DELETE FROM acceptance_criteria")
 
@@ -300,15 +300,15 @@ func testAcceptanceCriteriaProductionGeneratorDirectly(t *testing.T, db *gorm.DB
 	}
 	err = db.Create(testUserStory).Error
 	require.NoError(t, err)
-	
+
 	for i := 0; i < 3; i++ {
 		// Generate reference ID
 		refID, err := generator.Generate(db, &AcceptanceCriteria{})
 		require.NoError(t, err)
-		
+
 		expectedRefID := fmt.Sprintf("AC-%03d", i+1)
 		assert.Equal(t, expectedRefID, refID, "Generator should produce sequential IDs")
-		
+
 		// Create an acceptance criteria with this reference ID to maintain count for next iteration
 		ac := AcceptanceCriteria{
 			ReferenceID: refID,
@@ -365,16 +365,16 @@ func setupPostgreSQLForAcceptanceCriteriaReferenceIDTest(t *testing.T) *gorm.DB 
 	require.NoError(t, err)
 
 	// Create database connection
-	dsn := fmt.Sprintf("host=%s port=%s user=testuser password=testpass dbname=acceptance_criteria_ref_test sslmode=disable", 
+	dsn := fmt.Sprintf("host=%s port=%s user=testuser password=testpass dbname=acceptance_criteria_ref_test sslmode=disable",
 		host, port.Port())
-	
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	require.NoError(t, err)
 
 	// Verify connection
 	sqlDB, err := db.DB()
 	require.NoError(t, err)
-	
+
 	err = sqlDB.Ping()
 	require.NoError(t, err)
 

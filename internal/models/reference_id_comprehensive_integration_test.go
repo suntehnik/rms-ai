@@ -242,7 +242,7 @@ func testAllEntitiesConcurrentGeneration(t *testing.T, db *gorm.DB, testUser *Us
 					continue
 				}
 				localRefIDs = append(localRefIDs, epic.ReferenceID)
-				
+
 				// Use the first epic as parent for user stories
 				if j == 0 {
 					localEpic = &epic
@@ -270,7 +270,7 @@ func testAllEntitiesConcurrentGeneration(t *testing.T, db *gorm.DB, testUser *Us
 						continue
 					}
 					localRefIDs = append(localRefIDs, userStory.ReferenceID)
-					
+
 					// Use the first user story as parent for requirements and acceptance criteria
 					if j == 0 {
 						localUserStory = &userStory
@@ -440,12 +440,12 @@ func testReferenceIDFormatConsistency(t *testing.T, db *gorm.DB, testUser *User,
 
 	// Test format consistency for each entity type
 	entities := []struct {
-		name         string
+		name          string
 		expectedRegex string
-		createFunc   func() (string, error)
+		createFunc    func() (string, error)
 	}{
 		{
-			name:         "Epic",
+			name:          "Epic",
 			expectedRegex: `^EP-(\d{3}|[a-f0-9]{8})$`,
 			createFunc: func() (string, error) {
 				epic := Epic{
@@ -460,7 +460,7 @@ func testReferenceIDFormatConsistency(t *testing.T, db *gorm.DB, testUser *User,
 			},
 		},
 		{
-			name:         "UserStory",
+			name:          "UserStory",
 			expectedRegex: `^US-(\d{3}|[a-f0-9]{8})$`,
 			createFunc: func() (string, error) {
 				userStory := UserStory{
@@ -476,7 +476,7 @@ func testReferenceIDFormatConsistency(t *testing.T, db *gorm.DB, testUser *User,
 			},
 		},
 		{
-			name:         "Requirement",
+			name:          "Requirement",
 			expectedRegex: `^REQ-(\d{3}|[a-f0-9]{8})$`,
 			createFunc: func() (string, error) {
 				requirement := Requirement{
@@ -493,7 +493,7 @@ func testReferenceIDFormatConsistency(t *testing.T, db *gorm.DB, testUser *User,
 			},
 		},
 		{
-			name:         "AcceptanceCriteria",
+			name:          "AcceptanceCriteria",
 			expectedRegex: `^AC-(\d{3}|[a-f0-9]{8})$`,
 			createFunc: func() (string, error) {
 				acceptanceCriteria := AcceptanceCriteria{
@@ -738,16 +738,16 @@ func setupPostgreSQLForComprehensiveTest(t *testing.T) *gorm.DB {
 	require.NoError(t, err)
 
 	// Create database connection
-	dsn := fmt.Sprintf("host=%s port=%s user=testuser password=testpass dbname=comprehensive_ref_test sslmode=disable", 
+	dsn := fmt.Sprintf("host=%s port=%s user=testuser password=testpass dbname=comprehensive_ref_test sslmode=disable",
 		host, port.Port())
-	
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	require.NoError(t, err)
 
 	// Verify connection
 	sqlDB, err := db.DB()
 	require.NoError(t, err)
-	
+
 	err = sqlDB.Ping()
 	require.NoError(t, err)
 

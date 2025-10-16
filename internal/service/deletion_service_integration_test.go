@@ -114,11 +114,11 @@ func TestDeletionResult_Structure(t *testing.T) {
 // Test DependencyInfo structure
 func TestDependencyInfo_Structure(t *testing.T) {
 	depInfo := &DependencyInfo{
-		CanDelete:            false,
-		Dependencies:         []DependencyDetail{},
-		CascadeDeleteCount:   5,
+		CanDelete:             false,
+		Dependencies:          []DependencyDetail{},
+		CascadeDeleteCount:    5,
 		CascadeDeleteEntities: []CascadeDeletePreview{},
-		RequiresConfirmation: true,
+		RequiresConfirmation:  true,
 	}
 
 	assert.False(t, depInfo.CanDelete)

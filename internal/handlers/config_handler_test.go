@@ -192,10 +192,10 @@ func (m *MockConfigService) ValidateStatusTransition(entityType models.EntityTyp
 func setupConfigTestRouter() (*gin.Engine, *MockConfigService) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	
+
 	mockService := &MockConfigService{}
 	handler := NewConfigHandler(mockService)
-	
+
 	v1 := router.Group("/api/v1")
 	config := v1.Group("/config")
 	{
@@ -219,7 +219,7 @@ func setupConfigTestRouter() (*gin.Engine, *MockConfigService) {
 			relationshipTypes.DELETE("/:id", handler.DeleteRelationshipType)
 		}
 	}
-	
+
 	return router, mockService
 }
 
@@ -248,7 +248,7 @@ func TestConfigHandler_CreateRequirementType(t *testing.T) {
 		router.ServeHTTP(w, httpReq)
 
 		assert.Equal(t, http.StatusCreated, w.Code)
-		
+
 		var response models.RequirementType
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -273,7 +273,7 @@ func TestConfigHandler_CreateRequirementType(t *testing.T) {
 		router.ServeHTTP(w, httpReq)
 
 		assert.Equal(t, http.StatusConflict, w.Code)
-		
+
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -290,7 +290,7 @@ func TestConfigHandler_CreateRequirementType(t *testing.T) {
 		router.ServeHTTP(w, httpReq)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
-		
+
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -317,7 +317,7 @@ func TestConfigHandler_GetRequirementType(t *testing.T) {
 		router.ServeHTTP(w, httpReq)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response models.RequirementType
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -338,7 +338,7 @@ func TestConfigHandler_GetRequirementType(t *testing.T) {
 		router.ServeHTTP(w, httpReq)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		
+
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -354,7 +354,7 @@ func TestConfigHandler_GetRequirementType(t *testing.T) {
 		router.ServeHTTP(w, httpReq)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
-		
+
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -391,7 +391,7 @@ func TestConfigHandler_DeleteRequirementType(t *testing.T) {
 		router.ServeHTTP(w, httpReq)
 
 		assert.Equal(t, http.StatusConflict, w.Code)
-		
+
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -411,7 +411,7 @@ func TestConfigHandler_DeleteRequirementType(t *testing.T) {
 		router.ServeHTTP(w, httpReq)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		
+
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -446,7 +446,7 @@ func TestConfigHandler_CreateRelationshipType(t *testing.T) {
 		router.ServeHTTP(w, httpReq)
 
 		assert.Equal(t, http.StatusCreated, w.Code)
-		
+
 		var response models.RelationshipType
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -471,7 +471,7 @@ func TestConfigHandler_CreateRelationshipType(t *testing.T) {
 		router.ServeHTTP(w, httpReq)
 
 		assert.Equal(t, http.StatusConflict, w.Code)
-		
+
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -484,7 +484,7 @@ func TestConfigHandler_CreateRelationshipType(t *testing.T) {
 func TestConfigHandler_ListRequirementTypes(t *testing.T) {
 	t.Run("successful listing", func(t *testing.T) {
 		router, mockService := setupConfigTestRouter()
-		
+
 		expectedTypes := []models.RequirementType{
 			{
 				ID:          uuid.New(),
@@ -506,12 +506,12 @@ func TestConfigHandler_ListRequirementTypes(t *testing.T) {
 		router.ServeHTTP(w, httpReq)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Equal(t, float64(2), response["count"])
-		
+
 		types := response["requirement_types"].([]interface{})
 		assert.Len(t, types, 2)
 
@@ -520,7 +520,7 @@ func TestConfigHandler_ListRequirementTypes(t *testing.T) {
 
 	t.Run("with filters", func(t *testing.T) {
 		router, mockService := setupConfigTestRouter()
-		
+
 		expectedTypes := []models.RequirementType{
 			{
 				ID:   uuid.New(),
@@ -536,7 +536,7 @@ func TestConfigHandler_ListRequirementTypes(t *testing.T) {
 		router.ServeHTTP(w, httpReq)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)

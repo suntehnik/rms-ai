@@ -95,7 +95,7 @@ func BenchmarkEpicRepository_List(b *testing.B) {
 			ReferenceID: fmt.Sprintf("EP-BENCH-%d", i),
 			CreatorID:   user.ID,
 			AssigneeID:  user.ID,
-			Priority:    models.Priority((i%4)+1),
+			Priority:    models.Priority((i % 4) + 1),
 			Status:      models.EpicStatusBacklog,
 			Title:       fmt.Sprintf("Benchmark Epic %d", i),
 			Description: benchStringPtr(fmt.Sprintf("Benchmark description %d", i)),
@@ -212,14 +212,14 @@ func setupBenchmarkDB(b *testing.B) *gorm.DB {
 
 	// Create database connection
 	dsn := fmt.Sprintf("host=%s port=%s user=benchuser password=password dbname=benchdb sslmode=disable", host, port.Port())
-	
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	require.NoError(b, err)
 
 	// Verify connection
 	sqlDB, err := db.DB()
 	require.NoError(b, err)
-	
+
 	err = sqlDB.Ping()
 	require.NoError(b, err)
 

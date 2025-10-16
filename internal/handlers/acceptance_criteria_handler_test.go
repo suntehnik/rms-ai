@@ -3,15 +3,18 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"product-requirements-management/internal/auth"
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/service"
 )
@@ -87,7 +90,7 @@ func (m *MockAcceptanceCriteriaService) ValidateUserStoryHasAcceptanceCriteria(u
 	return args.Error(0)
 }
 
-func setupAcceptanceCriteriaTestRouter() (*gin.Engine, *MockAcceptanceCriteriaService) {
+func setupAcceptanceCriteriaTestRouter() (*gin.Engine, *MockAcceptanceCriteriaService, *auth.Service) {
 	gin.SetMode(gin.TestMode)
 
 	mockService := new(MockAcceptanceCriteriaService)
@@ -95,7 +98,11 @@ func setupAcceptanceCriteriaTestRouter() (*gin.Engine, *MockAcceptanceCriteriaSe
 
 	router := gin.New()
 
+	// Create auth service for testing
+	authService := auth.NewService("test-secret", time.Hour)
+
 	v1 := router.Group("/api/v1")
+	v1.Use(authService.Middleware()) // Add auth middleware
 	{
 		v1.POST("/user-stories/:id/acceptance-criteria", handler.CreateAcceptanceCriteria)
 		v1.GET("/acceptance-criteria/:id", handler.GetAcceptanceCriteria)
@@ -105,20 +112,70 @@ func setupAcceptanceCriteriaTestRouter() (*gin.Engine, *MockAcceptanceCriteriaSe
 		v1.GET("/user-stories/:id/acceptance-criteria", handler.GetAcceptanceCriteriaByUserStory)
 	}
 
-	return router, mockService
+	return router, mockService, authService
+}
+
+// Helper function to create authenticated request
+func createAuthenticatedAcceptanceCriteriaRequest(method, url string, body io.Reader, authService *auth.Service) (*http.Request, error) {
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create test user and token
+	testUser := &models.User{
+		ID:       uuid.New(),
+		Username: "testuser",
+		Role:     models.RoleUser,
+	}
+	token, err := authService.GenerateToken(testUser)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	return req, nil
+}
+
+// Helper function to create authenticated request with specific user
+func createAuthenticatedAcceptanceCriteriaRequestWithUser(method, url string, body io.Reader, authService *auth.Service, user *models.User) (*http.Request, error) {
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, err
+	}
+
+	token, err := authService.GenerateToken(user)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	return req, nil
 }
 
 func TestAcceptanceCriteriaHandler_CreateAcceptanceCriteria(t *testing.T) {
-	router, mockService := setupAcceptanceCriteriaTestRouter()
+	router, mockService, authService := setupAcceptanceCriteriaTestRouter()
 
 	userStoryID := uuid.New()
-	authorID := uuid.New()
 	acceptanceCriteriaID := uuid.New()
+
+	// Create test user and get their ID for consistent testing
+	testUser := &models.User{
+		ID:       uuid.New(),
+		Username: "testuser",
+		Role:     models.RoleUser,
+	}
 
 	tests := []struct {
 		name           string
 		userStoryID    string
-		requestBody    interface{}
+		requestBody    any
 		setupMocks     func()
 		expectedStatus int
 		checkResponse  func(*testing.T, *httptest.ResponseRecorder)
@@ -126,20 +183,19 @@ func TestAcceptanceCriteriaHandler_CreateAcceptanceCriteria(t *testing.T) {
 		{
 			name:        "successful creation",
 			userStoryID: userStoryID.String(),
-			requestBody: service.CreateAcceptanceCriteriaRequest{
-				AuthorID:    authorID,
-				Description: "WHEN user clicks submit THEN system SHALL validate the form",
+			requestBody: map[string]any{
+				"description": "WHEN user clicks submit THEN system SHALL validate the form",
 			},
 			setupMocks: func() {
 				expectedReq := service.CreateAcceptanceCriteriaRequest{
 					UserStoryID: userStoryID,
-					AuthorID:    authorID,
+					AuthorID:    testUser.ID, // Use the test user's ID
 					Description: "WHEN user clicks submit THEN system SHALL validate the form",
 				}
 				expectedResult := &models.AcceptanceCriteria{
 					ID:          acceptanceCriteriaID,
 					UserStoryID: userStoryID,
-					AuthorID:    authorID,
+					AuthorID:    testUser.ID,
 					ReferenceID: "AC-001",
 					Description: "WHEN user clicks submit THEN system SHALL validate the form",
 				}
@@ -157,14 +213,13 @@ func TestAcceptanceCriteriaHandler_CreateAcceptanceCriteria(t *testing.T) {
 		{
 			name:        "invalid user story ID",
 			userStoryID: "invalid-uuid",
-			requestBody: service.CreateAcceptanceCriteriaRequest{
-				AuthorID:    authorID,
-				Description: "WHEN user clicks submit THEN system SHALL validate the form",
+			requestBody: map[string]any{
+				"description": "WHEN user clicks submit THEN system SHALL validate the form",
 			},
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
-				var response map[string]interface{}
+				var response map[string]any
 				err := json.Unmarshal(w.Body.Bytes(), &response)
 				assert.NoError(t, err)
 				assert.Contains(t, response["error"], "Invalid user story ID format")
@@ -173,21 +228,20 @@ func TestAcceptanceCriteriaHandler_CreateAcceptanceCriteria(t *testing.T) {
 		{
 			name:        "user story not found",
 			userStoryID: userStoryID.String(),
-			requestBody: service.CreateAcceptanceCriteriaRequest{
-				AuthorID:    authorID,
-				Description: "WHEN user clicks submit THEN system SHALL validate the form",
+			requestBody: map[string]any{
+				"description": "WHEN user clicks submit THEN system SHALL validate the form",
 			},
 			setupMocks: func() {
 				expectedReq := service.CreateAcceptanceCriteriaRequest{
 					UserStoryID: userStoryID,
-					AuthorID:    authorID,
+					AuthorID:    testUser.ID,
 					Description: "WHEN user clicks submit THEN system SHALL validate the form",
 				}
 				mockService.On("CreateAcceptanceCriteria", expectedReq).Return(nil, service.ErrUserStoryNotFound)
 			},
 			expectedStatus: http.StatusBadRequest,
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
-				var response map[string]interface{}
+				var response map[string]any
 				err := json.Unmarshal(w.Body.Bytes(), &response)
 				assert.NoError(t, err)
 				assert.Contains(t, response["error"], "User story not found")
@@ -201,10 +255,10 @@ func TestAcceptanceCriteriaHandler_CreateAcceptanceCriteria(t *testing.T) {
 			mockService.ExpectedCalls = nil
 			tt.setupMocks()
 
-			// Create request
+			// Create request with the test user
 			body, _ := json.Marshal(tt.requestBody)
-			req := httptest.NewRequest(http.MethodPost, "/api/v1/user-stories/"+tt.userStoryID+"/acceptance-criteria", bytes.NewBuffer(body))
-			req.Header.Set("Content-Type", "application/json")
+			req, err := createAuthenticatedAcceptanceCriteriaRequestWithUser(http.MethodPost, "/api/v1/user-stories/"+tt.userStoryID+"/acceptance-criteria", bytes.NewBuffer(body), authService, testUser)
+			assert.NoError(t, err)
 			w := httptest.NewRecorder()
 
 			// Execute request
@@ -220,7 +274,7 @@ func TestAcceptanceCriteriaHandler_CreateAcceptanceCriteria(t *testing.T) {
 }
 
 func TestAcceptanceCriteriaHandler_GetAcceptanceCriteria(t *testing.T) {
-	router, mockService := setupAcceptanceCriteriaTestRouter()
+	router, mockService, authService := setupAcceptanceCriteriaTestRouter()
 
 	acceptanceCriteriaID := uuid.New()
 	expectedAcceptanceCriteria := &models.AcceptanceCriteria{
@@ -272,7 +326,7 @@ func TestAcceptanceCriteriaHandler_GetAcceptanceCriteria(t *testing.T) {
 			},
 			expectedStatus: http.StatusNotFound,
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
-				var response map[string]interface{}
+				var response map[string]any
 				err := json.Unmarshal(w.Body.Bytes(), &response)
 				assert.NoError(t, err)
 				assert.Contains(t, response["error"], "Acceptance criteria not found")
@@ -286,8 +340,9 @@ func TestAcceptanceCriteriaHandler_GetAcceptanceCriteria(t *testing.T) {
 			mockService.ExpectedCalls = nil
 			tt.setupMocks()
 
-			// Create request
-			req := httptest.NewRequest(http.MethodGet, "/api/v1/acceptance-criteria/"+tt.id, nil)
+			// Create authenticated request
+			req, err := createAuthenticatedAcceptanceCriteriaRequest(http.MethodGet, "/api/v1/acceptance-criteria/"+tt.id, nil, authService)
+			assert.NoError(t, err)
 			w := httptest.NewRecorder()
 
 			// Execute request
@@ -303,7 +358,7 @@ func TestAcceptanceCriteriaHandler_GetAcceptanceCriteria(t *testing.T) {
 }
 
 func TestAcceptanceCriteriaHandler_DeleteAcceptanceCriteria(t *testing.T) {
-	router, mockService := setupAcceptanceCriteriaTestRouter()
+	router, mockService, authService := setupAcceptanceCriteriaTestRouter()
 
 	acceptanceCriteriaID := uuid.New()
 
@@ -348,7 +403,7 @@ func TestAcceptanceCriteriaHandler_DeleteAcceptanceCriteria(t *testing.T) {
 			},
 			expectedStatus: http.StatusNotFound,
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
-				var response map[string]interface{}
+				var response map[string]any
 				err := json.Unmarshal(w.Body.Bytes(), &response)
 				assert.NoError(t, err)
 				assert.Contains(t, response["error"], "Acceptance criteria not found")
@@ -363,7 +418,7 @@ func TestAcceptanceCriteriaHandler_DeleteAcceptanceCriteria(t *testing.T) {
 			},
 			expectedStatus: http.StatusConflict,
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
-				var response map[string]interface{}
+				var response map[string]any
 				err := json.Unmarshal(w.Body.Bytes(), &response)
 				assert.NoError(t, err)
 				assert.Contains(t, response["error"], "has associated requirements")
@@ -379,7 +434,7 @@ func TestAcceptanceCriteriaHandler_DeleteAcceptanceCriteria(t *testing.T) {
 			},
 			expectedStatus: http.StatusConflict,
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
-				var response map[string]interface{}
+				var response map[string]any
 				err := json.Unmarshal(w.Body.Bytes(), &response)
 				assert.NoError(t, err)
 				assert.Contains(t, response["error"], "must have at least one acceptance criteria")
@@ -393,12 +448,13 @@ func TestAcceptanceCriteriaHandler_DeleteAcceptanceCriteria(t *testing.T) {
 			mockService.ExpectedCalls = nil
 			tt.setupMocks()
 
-			// Create request
+			// Create authenticated request
 			url := "/api/v1/acceptance-criteria/" + tt.id
 			if tt.force != "" {
 				url += "?force=" + tt.force
 			}
-			req := httptest.NewRequest(http.MethodDelete, url, nil)
+			req, err := createAuthenticatedAcceptanceCriteriaRequest(http.MethodDelete, url, nil, authService)
+			assert.NoError(t, err)
 			w := httptest.NewRecorder()
 
 			// Execute request
@@ -414,7 +470,7 @@ func TestAcceptanceCriteriaHandler_DeleteAcceptanceCriteria(t *testing.T) {
 }
 
 func TestAcceptanceCriteriaHandler_ListAcceptanceCriteria(t *testing.T) {
-	router, mockService := setupAcceptanceCriteriaTestRouter()
+	router, mockService, authService := setupAcceptanceCriteriaTestRouter()
 
 	userStoryID := uuid.New()
 	authorID := uuid.New()
@@ -452,7 +508,7 @@ func TestAcceptanceCriteriaHandler_ListAcceptanceCriteria(t *testing.T) {
 			},
 			expectedStatus: http.StatusOK,
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
-				var response map[string]interface{}
+				var response map[string]any
 				err := json.Unmarshal(w.Body.Bytes(), &response)
 				assert.NoError(t, err)
 				assert.Equal(t, float64(2), response["total_count"])
@@ -460,7 +516,7 @@ func TestAcceptanceCriteriaHandler_ListAcceptanceCriteria(t *testing.T) {
 				assert.Equal(t, float64(0), response["offset"])
 				assert.NotNil(t, response["data"])
 
-				criteria := response["data"].([]interface{})
+				criteria := response["data"].([]any)
 				assert.Len(t, criteria, 2)
 			},
 		},
@@ -475,7 +531,7 @@ func TestAcceptanceCriteriaHandler_ListAcceptanceCriteria(t *testing.T) {
 			},
 			expectedStatus: http.StatusOK,
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
-				var response map[string]interface{}
+				var response map[string]any
 				err := json.Unmarshal(w.Body.Bytes(), &response)
 				assert.NoError(t, err)
 				assert.Equal(t, float64(2), response["total_count"])
@@ -492,8 +548,9 @@ func TestAcceptanceCriteriaHandler_ListAcceptanceCriteria(t *testing.T) {
 			mockService.ExpectedCalls = nil
 			tt.setupMocks()
 
-			// Create request
-			req := httptest.NewRequest(http.MethodGet, "/api/v1/acceptance-criteria"+tt.queryParams, nil)
+			// Create authenticated request
+			req, err := createAuthenticatedAcceptanceCriteriaRequest(http.MethodGet, "/api/v1/acceptance-criteria"+tt.queryParams, nil, authService)
+			assert.NoError(t, err)
 			w := httptest.NewRecorder()
 
 			// Execute request

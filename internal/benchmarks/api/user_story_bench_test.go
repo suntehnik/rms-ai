@@ -303,7 +303,7 @@ func BenchmarkUserStoryStatusTransition(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			// Use safe indexing to cycle through available user stories
 			userStoryIndex := safeIndex(i, len(userStoryIDs))
-			
+
 			statusReq := map[string]interface{}{
 				"status": statuses[safeIndex(i, len(statuses))],
 			}
@@ -566,4 +566,3 @@ func BenchmarkUserStoryConcurrentOperations(b *testing.B) {
 		}
 	})
 }
-

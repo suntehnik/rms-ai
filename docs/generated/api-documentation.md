@@ -18,6 +18,7 @@ Features include full-text search, comment system, relationship mapping, and con
 - [Navigation](# )
 - [Requirements](# )
 - [Search](# )
+- [Steering Documents](# )
 - [User Management](# )
 - [User Stories](# )
 
@@ -37,103 +38,6 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ## Acceptance Criteria
-
-### DELETE /api/v1/acceptance-criteria/{id}/delete
-
-Comprehensive acceptance criteria deletion
-
-Delete acceptance criteria with all dependencies and cascade operations
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Deletion completed |
-| 409 | Cannot delete due to dependencies |
-
-
-
-
----
-
-### GET /api/v1/acceptance-criteria/{id}/comments/inline/visible
-
-Get visible acceptance criteria inline comments
-
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | List of visible inline comments |
-
-
-
-
----
-
-### GET /api/v1/acceptance-criteria/{id}/comments
-
-Get acceptance criteria comments
-
-
-
-#### Parameters
-
-| Name | Location | Type | Required | Description |
-|------|----------|------|----------|-------------|
-|  |  | <no value> | No |  |
-|  |  | <no value> | No |  |
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | List of acceptance criteria comments |
-
-
-
-
----
-
-### POST /api/v1/acceptance-criteria/{id}/comments
-
-Create acceptance criteria comment
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 201 | Comment created |
-
-
-
-
----
 
 ### POST /api/v1/acceptance-criteria/{id}/comments/inline
 
@@ -155,36 +59,6 @@ Create acceptance criteria inline comment
 | Status Code | Description |
 |-------------|-------------|
 | 201 | Inline comment created |
-
-
-
-
----
-
-### GET /api/v1/acceptance-criteria
-
-List acceptance criteria
-
-
-
-#### Parameters
-
-| Name | Location | Type | Required | Description |
-|------|----------|------|----------|-------------|
-| user_story_id | query | map[format:uuid type:string] | No |  |
-| author_id | query | map[format:uuid type:string] | No |  |
-|  |  | <no value> | No |  |
-|  |  | <no value> | No |  |
-|  |  | <no value> | No |  |
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | List of acceptance criteria |
 
 
 
@@ -285,6 +159,133 @@ Delete acceptance criteria
 
 ---
 
+### DELETE /api/v1/acceptance-criteria/{id}/delete
+
+Comprehensive acceptance criteria deletion
+
+Delete acceptance criteria with all dependencies and cascade operations
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Deletion completed |
+| 409 | Cannot delete due to dependencies |
+
+
+
+
+---
+
+### GET /api/v1/acceptance-criteria/{id}/comments/inline/visible
+
+Get visible acceptance criteria inline comments
+
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | List of visible inline comments |
+
+
+
+
+---
+
+### GET /api/v1/acceptance-criteria
+
+List acceptance criteria
+
+
+
+#### Parameters
+
+| Name | Location | Type | Required | Description |
+|------|----------|------|----------|-------------|
+| user_story_id | query | map[format:uuid type:string] | No |  |
+| author_id | query | map[format:uuid type:string] | No |  |
+|  |  | <no value> | No |  |
+|  |  | <no value> | No |  |
+|  |  | <no value> | No |  |
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | List of acceptance criteria |
+
+
+
+
+---
+
+### GET /api/v1/acceptance-criteria/{id}/comments
+
+Get acceptance criteria comments
+
+
+
+#### Parameters
+
+| Name | Location | Type | Required | Description |
+|------|----------|------|----------|-------------|
+|  |  | <no value> | No |  |
+|  |  | <no value> | No |  |
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | List of acceptance criteria comments |
+
+
+
+
+---
+
+### POST /api/v1/acceptance-criteria/{id}/comments
+
+Create acceptance criteria comment
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | Comment created |
+
+
+
+
+---
+
 ### GET /api/v1/acceptance-criteria/{id}/validate-deletion
 
 Validate acceptance criteria deletion
@@ -309,6 +310,150 @@ Check if acceptance criteria can be deleted and get dependency information
 ---
 
 ## Authentication
+
+### GET /auth/users
+
+List users (Admin only)
+
+Get list of all users
+
+
+#### Parameters
+
+| Name | Location | Type | Required | Description |
+|------|----------|------|----------|-------------|
+|  |  | <no value> | No |  |
+|  |  | <no value> | No |  |
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | List of users |
+| 401 |  |
+| 403 |  |
+
+
+
+
+---
+
+### POST /auth/users
+
+Create user (Admin only)
+
+Create a new user account
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | User created successfully |
+| 400 |  |
+| 401 |  |
+| 403 |  |
+
+
+
+
+---
+
+### POST /auth/change-password
+
+Change user password
+
+Change the password for the currently authenticated user
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Password changed successfully |
+| 400 | Invalid request |
+
+
+#### Security
+
+- **BearerAuth**: No specific scopes
+
+
+---
+
+### GET /auth/profile
+
+Get current user profile
+
+Get the profile information of the currently authenticated user
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | User profile |
+
+
+#### Security
+
+- **BearerAuth**: No specific scopes
+
+
+---
+
+### POST /auth/login
+
+User login
+
+Authenticate user and receive JWT token
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Login successful |
+| 401 | Invalid credentials |
+
+
+
+
+---
 
 ### GET /auth/users/{id}
 
@@ -391,70 +536,79 @@ Delete user account
 
 ---
 
-### POST /auth/login
+## Comments
 
-User login
+### POST /api/v1/comments/{id}/unresolve
 
-Authenticate user and receive JWT token
+Unresolve comment
 
-
-
-
-#### Request Body
+Mark a previously resolved comment as unresolved, reopening the discussion
 
 
 
-**Required:** Yes
+
 
 
 #### Responses
 
 | Status Code | Description |
 |-------------|-------------|
-| 200 | Login successful |
-| 401 | Invalid credentials |
+| 200 | Comment unresolved successfully |
+| 404 |  |
 
 
 
 
 ---
 
-### POST /auth/change-password
+### GET /api/v1/comments/status/{status}
 
-Change user password
+Get comments by status
 
-Change the password for the currently authenticated user
-
-
+Retrieve comments filtered by their resolution status across all entities
 
 
-#### Request Body
+#### Parameters
+
+| Name | Location | Type | Required | Description |
+|------|----------|------|----------|-------------|
+| status | path | map[enum:[resolved unresolved] type:string] | **Yes** | Filter comments by resolution status |
+|  |  | <no value> | No |  |
+|  |  | <no value> | No |  |
 
 
-
-**Required:** Yes
 
 
 #### Responses
 
 | Status Code | Description |
 |-------------|-------------|
-| 200 | Password changed successfully |
-| 400 | Invalid request |
+| 200 | List of comments filtered by status |
+| 400 |  |
 
 
-#### Security
-
-- **BearerAuth**: No specific scopes
 
 
 ---
 
-### GET /auth/users
+### GET /api/v1/comments/{id}/replies
 
-List users (Admin only)
+Get comment replies
 
-Get list of all users
+Retrieve all direct replies to a specific comment with pagination support. 
+Returns replies in chronological order (oldest first) to maintain conversation flow. 
+Each reply includes author information and metadata for building threaded comment interfaces.
+
+**Threading Behavior:**
+- Only returns direct replies (depth = 1 from parent)
+- For nested replies, call this endpoint recursively with each reply's ID
+- Replies inherit the same entity context as their parent comment
+
+**Use Cases:**
+- Building threaded comment interfaces
+- Loading conversation threads on demand
+- Implementing expandable comment sections
+
 
 
 #### Parameters
@@ -471,20 +625,37 @@ Get list of all users
 
 | Status Code | Description |
 |-------------|-------------|
-| 200 | List of users |
-| 401 |  |
-| 403 |  |
+| 200 | List of comment replies retrieved successfully |
+| 400 | Invalid parent comment ID format |
+| 404 | Parent comment not found |
+| 500 |  |
 
 
 
 
 ---
 
-### POST /auth/users
+### POST /api/v1/comments/{id}/replies
 
-Create user (Admin only)
+Create comment reply
 
-Create a new user account
+Create a new reply to an existing comment, automatically inheriting the parent's entity context for threaded discussions.
+
+**Automatic Context Inheritance:**
+- Entity type and ID are inherited from parent comment
+- Parent-child relationship is automatically established
+- Reply depth is calculated based on parent's depth
+
+**Threading Rules:**
+- Replies can be nested to any depth
+- Each reply maintains reference to its direct parent
+- All replies in a thread share the same entity context
+
+**Required Fields:**
+- Only `content` and `author_id` are required
+- Entity context is inherited automatically
+- Parent relationship is established via URL parameter
+
 
 
 
@@ -500,21 +671,20 @@ Create a new user account
 
 | Status Code | Description |
 |-------------|-------------|
-| 201 | User created successfully |
-| 400 |  |
-| 401 |  |
-| 403 |  |
+| 201 | Reply created successfully with parent-child relationship established |
+| 400 | Invalid request - bad parent ID format, missing required fields, or empty content |
+| 404 | Parent comment not found |
+| 500 |  |
 
 
 
 
 ---
 
-### GET /auth/profile
+### GET /api/v1/epics/{id}/comments/inline/visible
 
-Get current user profile
+Get visible epic inline comments
 
-Get the profile information of the currently authenticated user
 
 
 
@@ -525,17 +695,289 @@ Get the profile information of the currently authenticated user
 
 | Status Code | Description |
 |-------------|-------------|
-| 200 | User profile |
+| 200 | List of visible inline comments |
 
 
-#### Security
-
-- **BearerAuth**: No specific scopes
 
 
 ---
 
-## Comments
+### POST /api/v1/acceptance-criteria/{id}/comments/inline
+
+Create acceptance criteria inline comment
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | Inline comment created |
+
+
+
+
+---
+
+### POST /api/v1/epics/{id}/comments/inline/validate
+
+Validate epic inline comments
+
+Validate that inline comment positions are still valid against the current epic content
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Validation completed successfully |
+| 400 |  |
+| 404 |  |
+
+
+
+
+---
+
+### GET /api/v1/user-stories/{id}/comments/inline/visible
+
+Get visible user story inline comments
+
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | List of visible inline comments |
+
+
+
+
+---
+
+### POST /api/v1/comments/{id}/resolve
+
+Resolve comment
+
+Mark a comment as resolved, indicating that the issue or question has been addressed
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Comment resolved successfully |
+| 404 |  |
+
+
+
+
+---
+
+### GET /api/v1/requirements/{id}/comments/inline/visible
+
+Get visible requirement inline comments
+
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | List of visible inline comments |
+
+
+
+
+---
+
+### POST /api/v1/epics/{id}/comments/inline
+
+Create epic inline comment
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | Inline comment created |
+
+
+
+
+---
+
+### POST /api/v1/user-stories/{id}/comments/inline
+
+Create user story inline comment
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | Inline comment created |
+
+
+
+
+---
+
+### POST /api/v1/user-stories/{id}/comments/inline/validate
+
+Validate user story inline comments
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Validation result |
+
+
+
+
+---
+
+### POST /api/v1/acceptance-criteria/{id}/comments/inline/validate
+
+Validate acceptance criteria inline comments
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Validation result |
+
+
+
+
+---
+
+### GET /api/v1/requirements/{id}/comments
+
+Get requirement comments
+
+
+
+#### Parameters
+
+| Name | Location | Type | Required | Description |
+|------|----------|------|----------|-------------|
+|  |  | <no value> | No |  |
+|  |  | <no value> | No |  |
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | List of requirement comments |
+
+
+
+
+---
+
+### POST /api/v1/requirements/{id}/comments
+
+Create requirement comment
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | Comment created |
+
+
+
+
+---
 
 ### GET /api/v1/epics/{id}/comments
 
@@ -595,11 +1037,10 @@ Create a new general comment on an epic
 
 ---
 
-### POST /api/v1/comments/{id}/unresolve
+### GET /api/v1/acceptance-criteria/{id}/comments/inline/visible
 
-Unresolve comment
+Get visible acceptance criteria inline comments
 
-Mark a previously resolved comment as unresolved, reopening the discussion
 
 
 
@@ -610,8 +1051,7 @@ Mark a previously resolved comment as unresolved, reopening the discussion
 
 | Status Code | Description |
 |-------------|-------------|
-| 200 | Comment unresolved successfully |
-| 404 |  |
+| 200 | List of visible inline comments |
 
 
 
@@ -638,80 +1078,6 @@ Validate requirement inline comments
 | Status Code | Description |
 |-------------|-------------|
 | 200 | Validation result |
-
-
-
-
----
-
-### GET /api/v1/acceptance-criteria/{id}/comments/inline/visible
-
-Get visible acceptance criteria inline comments
-
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | List of visible inline comments |
-
-
-
-
----
-
-### GET /api/v1/acceptance-criteria/{id}/comments
-
-Get acceptance criteria comments
-
-
-
-#### Parameters
-
-| Name | Location | Type | Required | Description |
-|------|----------|------|----------|-------------|
-|  |  | <no value> | No |  |
-|  |  | <no value> | No |  |
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | List of acceptance criteria comments |
-
-
-
-
----
-
-### POST /api/v1/acceptance-criteria/{id}/comments
-
-Create acceptance criteria comment
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 201 | Comment created |
 
 
 
@@ -793,141 +1159,9 @@ Delete a comment and all its replies (cascade deletion)
 
 ---
 
-### POST /api/v1/epics/{id}/comments/inline/validate
+### GET /api/v1/acceptance-criteria/{id}/comments
 
-Validate epic inline comments
-
-Validate that inline comment positions are still valid against the current epic content
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Validation completed successfully |
-| 400 |  |
-| 404 |  |
-
-
-
-
----
-
-### POST /api/v1/epics/{id}/comments/inline
-
-Create epic inline comment
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 201 | Inline comment created |
-
-
-
-
----
-
-### POST /api/v1/acceptance-criteria/{id}/comments/inline
-
-Create acceptance criteria inline comment
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 201 | Inline comment created |
-
-
-
-
----
-
-### GET /api/v1/requirements/{id}/comments/inline/visible
-
-Get visible requirement inline comments
-
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | List of visible inline comments |
-
-
-
-
----
-
-### GET /api/v1/comments/status/{status}
-
-Get comments by status
-
-Retrieve comments filtered by their resolution status across all entities
-
-
-#### Parameters
-
-| Name | Location | Type | Required | Description |
-|------|----------|------|----------|-------------|
-| status | path | map[enum:[resolved unresolved] type:string] | **Yes** | Filter comments by resolution status |
-|  |  | <no value> | No |  |
-|  |  | <no value> | No |  |
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | List of comments filtered by status |
-| 400 |  |
-
-
-
-
----
-
-### GET /api/v1/requirements/{id}/comments
-
-Get requirement comments
+Get acceptance criteria comments
 
 
 
@@ -945,16 +1179,16 @@ Get requirement comments
 
 | Status Code | Description |
 |-------------|-------------|
-| 200 | List of requirement comments |
+| 200 | List of acceptance criteria comments |
 
 
 
 
 ---
 
-### POST /api/v1/requirements/{id}/comments
+### POST /api/v1/acceptance-criteria/{id}/comments
 
-Create requirement comment
+Create acceptance criteria comment
 
 
 
@@ -981,207 +1215,6 @@ Create requirement comment
 ### POST /api/v1/requirements/{id}/comments/inline
 
 Create requirement inline comment
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 201 | Inline comment created |
-
-
-
-
----
-
-### GET /api/v1/comments/{id}/replies
-
-Get comment replies
-
-Retrieve all replies to a specific comment with pagination support
-
-
-#### Parameters
-
-| Name | Location | Type | Required | Description |
-|------|----------|------|----------|-------------|
-|  |  | <no value> | No |  |
-|  |  | <no value> | No |  |
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | List of comment replies retrieved successfully |
-| 404 |  |
-
-
-
-
----
-
-### POST /api/v1/comments/{id}/replies
-
-Create comment reply
-
-Create a new reply to an existing comment, establishing a parent-child relationship
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 201 | Reply created successfully |
-| 400 |  |
-| 404 |  |
-
-
-
-
----
-
-### GET /api/v1/epics/{id}/comments/inline/visible
-
-Get visible epic inline comments
-
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | List of visible inline comments |
-
-
-
-
----
-
-### POST /api/v1/comments/{id}/resolve
-
-Resolve comment
-
-Mark a comment as resolved, indicating that the issue or question has been addressed
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Comment resolved successfully |
-| 404 |  |
-
-
-
-
----
-
-### POST /api/v1/user-stories/{id}/comments/inline/validate
-
-Validate user story inline comments
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Validation result |
-
-
-
-
----
-
-### POST /api/v1/acceptance-criteria/{id}/comments/inline/validate
-
-Validate acceptance criteria inline comments
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Validation result |
-
-
-
-
----
-
-### GET /api/v1/user-stories/{id}/comments/inline/visible
-
-Get visible user story inline comments
-
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | List of visible inline comments |
-
-
-
-
----
-
-### POST /api/v1/user-stories/{id}/comments/inline
-
-Create user story inline comment
 
 
 
@@ -1259,6 +1292,175 @@ Create user story comment
 ---
 
 ## Configuration
+
+### POST /api/v1/config/status-transitions
+
+Create status transition
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | Status transition created |
+
+
+#### Security
+
+- **BearerAuth**: No specific scopes
+
+
+---
+
+### GET /api/v1/config/requirement-types
+
+List requirement types
+
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | List of requirement types |
+| 401 |  |
+| 403 |  |
+
+
+#### Security
+
+- **BearerAuth**: No specific scopes
+
+
+---
+
+### POST /api/v1/config/requirement-types
+
+Create requirement type
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | Requirement type created |
+| 400 |  |
+| 401 |  |
+| 403 |  |
+
+
+#### Security
+
+- **BearerAuth**: No specific scopes
+
+
+---
+
+### GET /api/v1/config/status-models
+
+List status models
+
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | List of status models |
+
+
+#### Security
+
+- **BearerAuth**: No specific scopes
+
+
+---
+
+### POST /api/v1/config/status-models
+
+Create status model
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | Status model created |
+
+
+#### Security
+
+- **BearerAuth**: No specific scopes
+
+
+---
+
+### POST /api/v1/config/statuses
+
+Create status
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | Status created |
+
+
+#### Security
+
+- **BearerAuth**: No specific scopes
+
+
+---
 
 ### GET /api/v1/config/status-models/{id}
 
@@ -1338,62 +1540,9 @@ Delete status model
 
 ---
 
-### GET /api/v1/config/status-models/{id}/transitions
+### GET /api/v1/config/statuses/{id}
 
-List status transitions by model
-
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | List of status transitions |
-
-
-#### Security
-
-- **BearerAuth**: No specific scopes
-
-
----
-
-### POST /api/v1/config/status-transitions
-
-Create status transition
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 201 | Status transition created |
-
-
-#### Security
-
-- **BearerAuth**: No specific scopes
-
-
----
-
-### GET /api/v1/config/requirement-types/{id}
-
-Get requirement type by ID
+Get status by ID
 
 
 
@@ -1405,7 +1554,7 @@ Get requirement type by ID
 
 | Status Code | Description |
 |-------------|-------------|
-| 200 | Requirement type details |
+| 200 | Status details |
 | 404 |  |
 
 
@@ -1416,9 +1565,9 @@ Get requirement type by ID
 
 ---
 
-### PUT /api/v1/config/requirement-types/{id}
+### PUT /api/v1/config/statuses/{id}
 
-Update requirement type
+Update status
 
 
 
@@ -1435,7 +1584,7 @@ Update requirement type
 
 | Status Code | Description |
 |-------------|-------------|
-| 200 | Requirement type updated |
+| 200 | Status updated |
 
 
 #### Security
@@ -1445,9 +1594,9 @@ Update requirement type
 
 ---
 
-### DELETE /api/v1/config/requirement-types/{id}
+### DELETE /api/v1/config/statuses/{id}
 
-Delete requirement type
+Delete status
 
 
 
@@ -1459,7 +1608,7 @@ Delete requirement type
 
 | Status Code | Description |
 |-------------|-------------|
-| 204 | Requirement type deleted |
+| 204 | Status deleted |
 
 
 #### Security
@@ -1600,88 +1749,6 @@ Delete relationship type
 
 ---
 
-### GET /api/v1/config/status-models
-
-List status models
-
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | List of status models |
-
-
-#### Security
-
-- **BearerAuth**: No specific scopes
-
-
----
-
-### POST /api/v1/config/status-models
-
-Create status model
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 201 | Status model created |
-
-
-#### Security
-
-- **BearerAuth**: No specific scopes
-
-
----
-
-### GET /api/v1/config/status-models/default/{entity_type}
-
-Get default status model for entity type
-
-
-
-#### Parameters
-
-| Name | Location | Type | Required | Description |
-|------|----------|------|----------|-------------|
-| entity_type | path | map[$ref:#/components/schemas/EntityType] | **Yes** |  |
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Default status model |
-
-
-#### Security
-
-- **BearerAuth**: No specific scopes
-
-
----
-
 ### GET /api/v1/config/status-models/{id}/statuses
 
 List statuses by model
@@ -1706,63 +1773,9 @@ List statuses by model
 
 ---
 
-### GET /api/v1/config/statuses/{id}
+### GET /api/v1/config/status-models/{id}/transitions
 
-Get status by ID
-
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Status details |
-| 404 |  |
-
-
-#### Security
-
-- **BearerAuth**: No specific scopes
-
-
----
-
-### PUT /api/v1/config/statuses/{id}
-
-Update status
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Status updated |
-
-
-#### Security
-
-- **BearerAuth**: No specific scopes
-
-
----
-
-### DELETE /api/v1/config/statuses/{id}
-
-Delete status
+List status transitions by model
 
 
 
@@ -1774,36 +1787,7 @@ Delete status
 
 | Status Code | Description |
 |-------------|-------------|
-| 204 | Status deleted |
-
-
-#### Security
-
-- **BearerAuth**: No specific scopes
-
-
----
-
-### POST /api/v1/config/statuses
-
-Create status
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 201 | Status created |
+| 200 | List of status transitions |
 
 
 #### Security
@@ -1891,9 +1875,9 @@ Delete status transition
 
 ---
 
-### GET /api/v1/config/requirement-types
+### GET /api/v1/config/requirement-types/{id}
 
-List requirement types
+Get requirement type by ID
 
 
 
@@ -1905,9 +1889,8 @@ List requirement types
 
 | Status Code | Description |
 |-------------|-------------|
-| 200 | List of requirement types |
-| 401 |  |
-| 403 |  |
+| 200 | Requirement type details |
+| 404 |  |
 
 
 #### Security
@@ -1917,9 +1900,9 @@ List requirement types
 
 ---
 
-### POST /api/v1/config/requirement-types
+### PUT /api/v1/config/requirement-types/{id}
 
-Create requirement type
+Update requirement type
 
 
 
@@ -1936,10 +1919,60 @@ Create requirement type
 
 | Status Code | Description |
 |-------------|-------------|
-| 201 | Requirement type created |
-| 400 |  |
-| 401 |  |
-| 403 |  |
+| 200 | Requirement type updated |
+
+
+#### Security
+
+- **BearerAuth**: No specific scopes
+
+
+---
+
+### DELETE /api/v1/config/requirement-types/{id}
+
+Delete requirement type
+
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 204 | Requirement type deleted |
+
+
+#### Security
+
+- **BearerAuth**: No specific scopes
+
+
+---
+
+### GET /api/v1/config/status-models/default/{entity_type}
+
+Get default status model for entity type
+
+
+
+#### Parameters
+
+| Name | Location | Type | Required | Description |
+|------|----------|------|----------|-------------|
+| entity_type | path | map[$ref:#/components/schemas/EntityType] | **Yes** |  |
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Default status model |
 
 
 #### Security
@@ -2054,6 +2087,332 @@ Delete epic
 
 ---
 
+### GET /api/v1/epics/{id}/comments/inline/visible
+
+Get visible epic inline comments
+
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | List of visible inline comments |
+
+
+
+
+---
+
+### POST /api/v1/epics/{id}/comments/inline/validate
+
+Validate epic inline comments
+
+Validate that inline comment positions are still valid against the current epic content
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Validation completed successfully |
+| 400 |  |
+| 404 |  |
+
+
+
+
+---
+
+### PATCH /api/v1/epics/{id}/assign
+
+Assign epic to user
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Epic assigned |
+
+
+
+
+---
+
+### GET /api/v1/epics
+
+List epics
+
+
+
+#### Parameters
+
+| Name | Location | Type | Required | Description |
+|------|----------|------|----------|-------------|
+|  |  | <no value> | No |  |
+|  |  | <no value> | No |  |
+| status | query | map[$ref:#/components/schemas/EpicStatus] | No |  |
+|  |  | <no value> | No |  |
+|  |  | <no value> | No |  |
+|  |  | <no value> | No |  |
+|  |  | <no value> | No |  |
+|  |  | <no value> | No |  |
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | List of epics |
+| 401 |  |
+
+
+
+
+---
+
+### POST /api/v1/epics
+
+Create epic
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | Epic created |
+| 400 |  |
+| 401 |  |
+
+
+
+
+---
+
+### DELETE /api/v1/epics/{id}/delete
+
+Comprehensive epic deletion
+
+Delete epic with all dependencies and cascade operations
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Deletion completed |
+| 409 | Cannot delete due to dependencies |
+
+
+
+
+---
+
+### POST /api/v1/epics/{id}/comments/inline
+
+Create epic inline comment
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | Inline comment created |
+
+
+
+
+---
+
+### GET /api/v1/epics/{id}/validate-deletion
+
+Validate epic deletion
+
+Check if epic can be deleted and get dependency information
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Deletion validation result |
+| 404 |  |
+
+
+
+
+---
+
+### POST /api/v1/epics/{epic_id}/steering-documents/{doc_id}
+
+Link a steering document to an epic
+
+Create a link between a steering document and an epic. Both entities must exist. Administrators can link any document, Users can only link their own documents.
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | Successfully linked steering document to epic |
+| 400 |  |
+| 401 |  |
+| 403 |  |
+| 404 |  |
+| 409 | Link already exists |
+| 500 |  |
+
+
+#### Security
+
+- **BearerAuth**: No specific scopes
+
+
+---
+
+### DELETE /api/v1/epics/{epic_id}/steering-documents/{doc_id}
+
+Unlink a steering document from an epic
+
+Remove the link between a steering document and an epic. Administrators can unlink any document, Users can only unlink their own documents.
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 204 | Successfully unlinked steering document from epic |
+| 400 |  |
+| 401 |  |
+| 403 |  |
+| 404 |  |
+| 500 |  |
+
+
+#### Security
+
+- **BearerAuth**: No specific scopes
+
+
+---
+
+### PATCH /api/v1/epics/{id}/status
+
+Change epic status
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Status changed |
+
+
+
+
+---
+
+### GET /api/v1/epics/{id}/steering-documents
+
+Get steering documents linked to an epic
+
+Retrieve all steering documents that are linked to a specific epic. Returns an array of steering documents associated with the epic.
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Successfully retrieved steering documents for epic |
+| 400 |  |
+| 401 |  |
+| 404 |  |
+| 500 |  |
+
+
+#### Security
+
+- **BearerAuth**: No specific scopes
+
+
+---
+
 ### GET /api/v1/epics/{id}/user-stories
 
 Get epic with user stories
@@ -2159,243 +2518,29 @@ Create a new general comment on an epic
 
 ---
 
-### GET /api/v1/epics/{id}/validate-deletion
-
-Validate epic deletion
-
-Check if epic can be deleted and get dependency information
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Deletion validation result |
-| 404 |  |
-
-
-
-
----
-
-### GET /api/v1/epics
-
-List epics
-
-
-
-#### Parameters
-
-| Name | Location | Type | Required | Description |
-|------|----------|------|----------|-------------|
-|  |  | <no value> | No |  |
-|  |  | <no value> | No |  |
-| status | query | map[$ref:#/components/schemas/EpicStatus] | No |  |
-|  |  | <no value> | No |  |
-|  |  | <no value> | No |  |
-|  |  | <no value> | No |  |
-|  |  | <no value> | No |  |
-|  |  | <no value> | No |  |
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | List of epics |
-| 401 |  |
-
-
-
-
----
-
-### POST /api/v1/epics
-
-Create epic
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 201 | Epic created |
-| 400 |  |
-| 401 |  |
-
-
-
-
----
-
-### PATCH /api/v1/epics/{id}/assign
-
-Assign epic to user
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Epic assigned |
-
-
-
-
----
-
-### POST /api/v1/epics/{id}/comments/inline/validate
-
-Validate epic inline comments
-
-Validate that inline comment positions are still valid against the current epic content
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Validation completed successfully |
-| 400 |  |
-| 404 |  |
-
-
-
-
----
-
-### DELETE /api/v1/epics/{id}/delete
-
-Comprehensive epic deletion
-
-Delete epic with all dependencies and cascade operations
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Deletion completed |
-| 409 | Cannot delete due to dependencies |
-
-
-
-
----
-
-### POST /api/v1/epics/{id}/comments/inline
-
-Create epic inline comment
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 201 | Inline comment created |
-
-
-
-
----
-
-### GET /api/v1/epics/{id}/comments/inline/visible
-
-Get visible epic inline comments
-
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | List of visible inline comments |
-
-
-
-
----
-
-### PATCH /api/v1/epics/{id}/status
-
-Change epic status
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Status changed |
-
-
-
-
----
-
 ## Health
+
+### GET /live
+
+Liveness check
+
+Check if the application is alive
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Application is alive |
+
+
+
+
+---
 
 ### GET /ready
 
@@ -2420,33 +2565,11 @@ Check if the application is ready to serve requests
 
 ---
 
-### GET /live
-
-Liveness check
-
-Check if the application is alive
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Application is alive |
-
-
-
-
----
-
 ## Navigation
 
-### GET /api/v1/hierarchy/path/{entity_type}/{id}
+### GET /api/v1/hierarchy/epics/{id}
 
-Get entity breadcrumb path
+Get epic hierarchy
 
 
 
@@ -2454,8 +2577,7 @@ Get entity breadcrumb path
 
 | Name | Location | Type | Required | Description |
 |------|----------|------|----------|-------------|
-| entity_type | path | map[$ref:#/components/schemas/EntityType] | **Yes** |  |
-| id | path | map[type:string] | **Yes** |  |
+| id | path | map[type:string] | **Yes** | Epic ID (UUID or reference ID) |
 
 
 
@@ -2464,7 +2586,7 @@ Get entity breadcrumb path
 
 | Status Code | Description |
 |-------------|-------------|
-| 200 | Entity path |
+| 200 | Epic hierarchy |
 
 
 
@@ -2492,9 +2614,9 @@ Get full hierarchy
 
 ---
 
-### GET /api/v1/hierarchy/epics/{id}
+### GET /api/v1/hierarchy/path/{entity_type}/{id}
 
-Get epic hierarchy
+Get entity breadcrumb path
 
 
 
@@ -2502,7 +2624,8 @@ Get epic hierarchy
 
 | Name | Location | Type | Required | Description |
 |------|----------|------|----------|-------------|
-| id | path | map[type:string] | **Yes** | Epic ID (UUID or reference ID) |
+| entity_type | path | map[$ref:#/components/schemas/EntityType] | **Yes** |  |
+| id | path | map[type:string] | **Yes** |  |
 
 
 
@@ -2511,7 +2634,7 @@ Get epic hierarchy
 
 | Status Code | Description |
 |-------------|-------------|
-| 200 | Epic hierarchy |
+| 200 | Entity path |
 
 
 
@@ -2546,6 +2669,152 @@ Get user story hierarchy
 
 ## Requirements
 
+### POST /api/v1/requirements/relationships
+
+Create requirement relationship
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | Relationship created |
+
+
+
+
+---
+
+### DELETE /api/v1/requirements/{id}/delete
+
+Comprehensive requirement deletion
+
+Delete requirement with all dependencies and cascade operations
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Deletion completed |
+| 409 | Cannot delete due to dependencies |
+
+
+
+
+---
+
+### GET /api/v1/requirements/{id}/comments/inline/visible
+
+Get visible requirement inline comments
+
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | List of visible inline comments |
+
+
+
+
+---
+
+### GET /api/v1/requirements/search
+
+Search requirements
+
+
+
+#### Parameters
+
+| Name | Location | Type | Required | Description |
+|------|----------|------|----------|-------------|
+| q | query | map[type:string] | **Yes** | Search query |
+|  |  | <no value> | No |  |
+|  |  | <no value> | No |  |
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Search results |
+
+
+
+
+---
+
+### GET /api/v1/requirements/{id}/relationships
+
+Get requirement with relationships
+
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Requirement with relationships |
+
+
+
+
+---
+
+### DELETE /api/v1/requirement-relationships/{id}
+
+Delete requirement relationship
+
+
+
+#### Parameters
+
+| Name | Location | Type | Required | Description |
+|------|----------|------|----------|-------------|
+| id | path | map[format:uuid type:string] | **Yes** |  |
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 204 | Relationship deleted |
+| 404 |  |
+
+
+
+
+---
+
 ### PATCH /api/v1/requirements/{id}/status
 
 Change requirement status
@@ -2566,6 +2835,134 @@ Change requirement status
 | Status Code | Description |
 |-------------|-------------|
 | 200 | Status changed |
+
+
+
+
+---
+
+### GET /api/v1/requirements/{id}/validate-deletion
+
+Validate requirement deletion
+
+Check if requirement can be deleted and get dependency information
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Deletion validation result |
+| 404 |  |
+
+
+
+
+---
+
+### GET /api/v1/requirements/{id}/comments
+
+Get requirement comments
+
+
+
+#### Parameters
+
+| Name | Location | Type | Required | Description |
+|------|----------|------|----------|-------------|
+|  |  | <no value> | No |  |
+|  |  | <no value> | No |  |
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | List of requirement comments |
+
+
+
+
+---
+
+### POST /api/v1/requirements/{id}/comments
+
+Create requirement comment
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | Comment created |
+
+
+
+
+---
+
+### POST /api/v1/requirements/{id}/comments/inline/validate
+
+Validate requirement inline comments
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Validation result |
+
+
+
+
+---
+
+### POST /api/v1/requirements/{id}/comments/inline
+
+Create requirement inline comment
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | Inline comment created |
 
 
 
@@ -2640,202 +3037,6 @@ Delete requirement
 
 ---
 
-### GET /api/v1/requirements/{id}/relationships
-
-Get requirement with relationships
-
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Requirement with relationships |
-
-
-
-
----
-
-### POST /api/v1/requirements/{id}/comments/inline/validate
-
-Validate requirement inline comments
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Validation result |
-
-
-
-
----
-
-### GET /api/v1/requirements/{id}/validate-deletion
-
-Validate requirement deletion
-
-Check if requirement can be deleted and get dependency information
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Deletion validation result |
-| 404 |  |
-
-
-
-
----
-
-### GET /api/v1/requirements/{id}/comments/inline/visible
-
-Get visible requirement inline comments
-
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | List of visible inline comments |
-
-
-
-
----
-
-### GET /api/v1/requirements/{id}/comments
-
-Get requirement comments
-
-
-
-#### Parameters
-
-| Name | Location | Type | Required | Description |
-|------|----------|------|----------|-------------|
-|  |  | <no value> | No |  |
-|  |  | <no value> | No |  |
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | List of requirement comments |
-
-
-
-
----
-
-### POST /api/v1/requirements/{id}/comments
-
-Create requirement comment
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 201 | Comment created |
-
-
-
-
----
-
-### POST /api/v1/requirements/{id}/comments/inline
-
-Create requirement inline comment
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 201 | Inline comment created |
-
-
-
-
----
-
-### PATCH /api/v1/requirements/{id}/assign
-
-Assign requirement to user
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Requirement assigned |
-
-
-
-
----
-
 ### GET /api/v1/requirements
 
 List requirements
@@ -2898,59 +3099,9 @@ Create requirement
 
 ---
 
-### DELETE /api/v1/requirements/{id}/delete
+### PATCH /api/v1/requirements/{id}/assign
 
-Comprehensive requirement deletion
-
-Delete requirement with all dependencies and cascade operations
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Deletion completed |
-| 409 | Cannot delete due to dependencies |
-
-
-
-
----
-
-### DELETE /api/v1/requirement-relationships/{id}
-
-Delete requirement relationship
-
-
-
-#### Parameters
-
-| Name | Location | Type | Required | Description |
-|------|----------|------|----------|-------------|
-| id | path | map[format:uuid type:string] | **Yes** |  |
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 204 | Relationship deleted |
-| 404 |  |
-
-
-
-
----
-
-### POST /api/v1/requirements/relationships
-
-Create requirement relationship
+Assign requirement to user
 
 
 
@@ -2967,35 +3118,7 @@ Create requirement relationship
 
 | Status Code | Description |
 |-------------|-------------|
-| 201 | Relationship created |
-
-
-
-
----
-
-### GET /api/v1/requirements/search
-
-Search requirements
-
-
-
-#### Parameters
-
-| Name | Location | Type | Required | Description |
-|------|----------|------|----------|-------------|
-| q | query | map[type:string] | **Yes** | Search query |
-|  |  | <no value> | No |  |
-|  |  | <no value> | No |  |
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Search results |
+| 200 | Requirement assigned |
 
 
 
@@ -3003,33 +3126,6 @@ Search requirements
 ---
 
 ## Search
-
-### GET /api/v1/search/suggestions
-
-Get search suggestions
-
-
-
-#### Parameters
-
-| Name | Location | Type | Required | Description |
-|------|----------|------|----------|-------------|
-| query | query | map[minLength:2 type:string] | **Yes** | Partial search query |
-| limit | query | map[default:10 maximum:50 minimum:1 type:integer] | No | Maximum suggestions per category |
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Search suggestions |
-
-
-
-
----
 
 ### GET /api/v1/search
 
@@ -3061,7 +3157,258 @@ Global search
 
 ---
 
+### GET /api/v1/search/suggestions
+
+Get search suggestions
+
+
+
+#### Parameters
+
+| Name | Location | Type | Required | Description |
+|------|----------|------|----------|-------------|
+| query | query | map[minLength:2 type:string] | **Yes** | Partial search query |
+| limit | query | map[default:10 maximum:50 minimum:1 type:integer] | No | Maximum suggestions per category |
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Search suggestions |
+
+
+
+
+---
+
+## Steering Documents
+
+### GET /api/v1/steering-documents/{id}
+
+Get a steering document by ID or reference ID
+
+Retrieve a single steering document by its UUID or reference ID (e.g., STD-001). Supports both formats for flexible access. Requires authentication.
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Steering document found successfully |
+| 401 |  |
+| 404 |  |
+| 500 |  |
+
+
+#### Security
+
+- **BearerAuth**: No specific scopes
+
+
+---
+
+### PUT /api/v1/steering-documents/{id}
+
+Update an existing steering document
+
+Update a steering document's properties. Only provided fields will be updated. Administrators can update any document, Users can only update their own documents.
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Steering document updated successfully |
+| 400 |  |
+| 401 |  |
+| 403 |  |
+| 404 |  |
+| 500 |  |
+
+
+#### Security
+
+- **BearerAuth**: No specific scopes
+
+
+---
+
+### DELETE /api/v1/steering-documents/{id}
+
+Delete a steering document
+
+Delete a steering document by UUID or reference ID. Administrators can delete any document, Users can only delete their own documents.
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 204 | Steering document deleted successfully |
+| 401 |  |
+| 403 |  |
+| 404 |  |
+| 500 |  |
+
+
+#### Security
+
+- **BearerAuth**: No specific scopes
+
+
+---
+
+### GET /api/v1/steering-documents
+
+List steering documents with filtering and pagination
+
+Retrieve a list of steering documents with optional filtering by creator and search query. Supports pagination and custom ordering. Requires authentication.
+
+
+#### Parameters
+
+| Name | Location | Type | Required | Description |
+|------|----------|------|----------|-------------|
+| creator_id | query | map[format:uuid type:string] | No | Filter by creator UUID |
+| search | query | map[type:string] | No | Search query for full-text search in title and description |
+| order_by | query | map[type:string] | No | Order results by field |
+| limit | query | map[default:50 maximum:100 minimum:1 type:integer] | No | Maximum number of results to return |
+| offset | query | map[default:0 minimum:0 type:integer] | No | Number of results to skip for pagination |
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | List of steering documents with count |
+| 401 |  |
+| 500 |  |
+
+
+#### Security
+
+- **BearerAuth**: No specific scopes
+
+
+---
+
+### POST /api/v1/steering-documents
+
+Create a new steering document
+
+Create a new steering document with the provided details. The steering document will be assigned a unique reference ID (STD-XXX format). Requires User or Administrator role.
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | Successfully created steering document |
+| 400 |  |
+| 401 |  |
+| 403 |  |
+| 500 |  |
+
+
+#### Security
+
+- **BearerAuth**: No specific scopes
+
+
+---
+
 ## User Management
+
+### GET /auth/users
+
+List users (Admin only)
+
+Get list of all users
+
+
+#### Parameters
+
+| Name | Location | Type | Required | Description |
+|------|----------|------|----------|-------------|
+|  |  | <no value> | No |  |
+|  |  | <no value> | No |  |
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | List of users |
+| 401 |  |
+| 403 |  |
+
+
+
+
+---
+
+### POST /auth/users
+
+Create user (Admin only)
+
+Create a new user account
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | User created successfully |
+| 400 |  |
+| 401 |  |
+| 403 |  |
+
+
+
+
+---
 
 ### GET /auth/users/{id}
 
@@ -3144,71 +3491,11 @@ Delete user account
 
 ---
 
-### GET /auth/users
-
-List users (Admin only)
-
-Get list of all users
-
-
-#### Parameters
-
-| Name | Location | Type | Required | Description |
-|------|----------|------|----------|-------------|
-|  |  | <no value> | No |  |
-|  |  | <no value> | No |  |
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | List of users |
-| 401 |  |
-| 403 |  |
-
-
-
-
----
-
-### POST /auth/users
-
-Create user (Admin only)
-
-Create a new user account
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 201 | User created successfully |
-| 400 |  |
-| 401 |  |
-| 403 |  |
-
-
-
-
----
-
 ## User Stories
 
-### GET /api/v1/user-stories/{id}
+### GET /api/v1/user-stories/{id}/comments/inline/visible
 
-Get user story by ID
+Get visible user story inline comments
 
 
 
@@ -3220,16 +3507,16 @@ Get user story by ID
 
 | Status Code | Description |
 |-------------|-------------|
-| 200 | User story details |
+| 200 | List of visible inline comments |
 
 
 
 
 ---
 
-### PUT /api/v1/user-stories/{id}
+### PATCH /api/v1/user-stories/{id}/status
 
-Update user story
+Change user story status
 
 
 
@@ -3246,16 +3533,91 @@ Update user story
 
 | Status Code | Description |
 |-------------|-------------|
-| 200 | User story updated |
+| 200 | Status changed |
 
 
 
 
 ---
 
-### DELETE /api/v1/user-stories/{id}
+### DELETE /api/v1/user-stories/{id}/delete
 
-Delete user story
+Comprehensive user story deletion
+
+Delete user story with all dependencies and cascade operations
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Deletion completed |
+| 409 | Cannot delete due to dependencies |
+
+
+
+
+---
+
+### POST /api/v1/user-stories/{id}/comments/inline
+
+Create user story inline comment
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | Inline comment created |
+
+
+
+
+---
+
+### POST /api/v1/user-stories/{id}/comments/inline/validate
+
+Validate user story inline comments
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Validation result |
+
+
+
+
+---
+
+### GET /api/v1/user-stories/{id}/acceptance-criteria
+
+Get user story acceptance criteria
 
 
 
@@ -3267,7 +3629,59 @@ Delete user story
 
 | Status Code | Description |
 |-------------|-------------|
-| 204 | User story deleted |
+| 200 | List of acceptance criteria |
+
+
+
+
+---
+
+### POST /api/v1/user-stories/{id}/acceptance-criteria
+
+Create acceptance criteria in user story
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 201 | Acceptance criteria created |
+
+
+
+
+---
+
+### PATCH /api/v1/user-stories/{id}/assign
+
+Assign user story to user
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | User story assigned |
 
 
 
@@ -3328,201 +3742,6 @@ Create user story
 | Status Code | Description |
 |-------------|-------------|
 | 201 | User story created |
-
-
-
-
----
-
-### DELETE /api/v1/user-stories/{id}/delete
-
-Comprehensive user story deletion
-
-Delete user story with all dependencies and cascade operations
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Deletion completed |
-| 409 | Cannot delete due to dependencies |
-
-
-
-
----
-
-### GET /api/v1/user-stories/{id}/acceptance-criteria
-
-Get user story acceptance criteria
-
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | List of acceptance criteria |
-
-
-
-
----
-
-### POST /api/v1/user-stories/{id}/acceptance-criteria
-
-Create acceptance criteria in user story
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 201 | Acceptance criteria created |
-
-
-
-
----
-
-### POST /api/v1/user-stories/{id}/comments/inline/validate
-
-Validate user story inline comments
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Validation result |
-
-
-
-
----
-
-### GET /api/v1/user-stories/{id}/comments/inline/visible
-
-Get visible user story inline comments
-
-
-
-
-
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | List of visible inline comments |
-
-
-
-
----
-
-### PATCH /api/v1/user-stories/{id}/assign
-
-Assign user story to user
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | User story assigned |
-
-
-
-
----
-
-### POST /api/v1/user-stories/{id}/comments/inline
-
-Create user story inline comment
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 201 | Inline comment created |
-
-
-
-
----
-
-### PATCH /api/v1/user-stories/{id}/status
-
-Change user story status
-
-
-
-
-
-#### Request Body
-
-
-
-**Required:** Yes
-
-
-#### Responses
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Status changed |
 
 
 
@@ -3593,6 +3812,74 @@ Create requirement in user story
 | Status Code | Description |
 |-------------|-------------|
 | 201 | Requirement created |
+
+
+
+
+---
+
+### GET /api/v1/user-stories/{id}
+
+Get user story by ID
+
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | User story details |
+
+
+
+
+---
+
+### PUT /api/v1/user-stories/{id}
+
+Update user story
+
+
+
+
+
+#### Request Body
+
+
+
+**Required:** Yes
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | User story updated |
+
+
+
+
+---
+
+### DELETE /api/v1/user-stories/{id}
+
+Delete user story
+
+
+
+
+
+
+
+#### Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 204 | User story deleted |
 
 
 

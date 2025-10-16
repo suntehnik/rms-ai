@@ -120,6 +120,10 @@ type Epic struct {
 	// Comments contains all comments associated with this epic
 	// @Description List of comments on this epic (populated when requested with ?include=comments)
 	Comments []Comment `gorm:"polymorphic:Entity;polymorphicValue:epic" json:"comments,omitempty"`
+
+	// SteeringDocuments contains all steering documents linked to this epic
+	// @Description List of steering documents linked to this epic (populated when requested with ?include=steering_documents)
+	SteeringDocuments []SteeringDocument `gorm:"many2many:epic_steering_documents;" json:"steering_documents,omitempty"`
 }
 
 // BeforeCreate sets the ID if not already set and ensures default status
@@ -240,6 +244,11 @@ func (e *Epic) MarshalJSON() ([]byte, error) {
 	// Only include comments if they have been populated
 	if len(e.Comments) > 0 {
 		result["comments"] = e.Comments
+	}
+
+	// Only include steering_documents if they have been populated
+	if len(e.SteeringDocuments) > 0 {
+		result["steering_documents"] = e.SteeringDocuments
 	}
 
 	return json.Marshal(result)

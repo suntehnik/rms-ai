@@ -63,7 +63,7 @@ type CreateCommentRequest struct {
 	EntityType        models.EntityType `json:"entity_type"`
 	EntityID          uuid.UUID         `json:"entity_id"`
 	ParentCommentID   *uuid.UUID        `json:"parent_comment_id"`
-	AuthorID          uuid.UUID         `json:"author_id" binding:"required"`
+	AuthorID          uuid.UUID         `json:"author_id"`
 	Content           string            `json:"content"`
 	LinkedText        *string           `json:"linked_text"`
 	TextPositionStart *int              `json:"text_position_start"`

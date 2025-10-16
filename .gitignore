@@ -70,3 +70,4 @@ benchmark-results/
 tmp/
 temp/
 browser-control-mcp/
+*_key*
