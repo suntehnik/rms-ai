@@ -122,9 +122,20 @@
   - MCP tools tests: ✅ Mock-based testing of MCP tool handlers with various input scenarios
   - Coverage: All major functionality paths tested including success cases, error cases, and edge cases
 
-- [ ] 11. Write integration tests for steering document functionality
+- [x] 11. Add optional epic_id field to steering document creation
+  - Update CreateSteeringDocumentRequest struct to include optional EpicID field
+  - Update REST API handler to accept epic_id in request body and automatically link document to epic
+  - Update MCP tool schema for create_steering_document to include optional epic_id parameter
+  - Update MCP tool handler to support epic linking during creation
+  - Update service layer to validate epic existence and create link during document creation
+  - Add validation to ensure epic exists before creating the link
+  - Update unit tests to cover new epic linking functionality during creation
+  - _Requirements: 1.3, 6.1.1, 7.2_
+
+- [-] 12. Write integration tests for steering document functionality
   - Write integration tests for steering document CRUD operations with PostgreSQL
   - Write integration tests for epic-steering document relationships
+  - Write integration tests for steering document creation with epic_id linking
   - Write integration tests for full-text search functionality
   - Write integration tests for REST API endpoints with authentication
   - Write integration tests for MCP tools with PAT authentication

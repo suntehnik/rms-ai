@@ -14,10 +14,11 @@
 
 1. WHEN пользователь создает новый steering документ THEN система SHALL создать запись в таблице steering_documents с уникальным ID и reference_id (STD-001)
 2. WHEN пользователь создает steering документ THEN система SHALL сохранить поля: title, description, creator_id, created_at, updated_at
-3. WHEN пользователь редактирует steering документ THEN система SHALL обновить запись через GORM и автоматически обновить поле updated_at
-4. WHEN пользователь удаляет steering документ THEN система SHALL удалить запись через GORM с CASCADE удалением связанных отношений
-5. WHEN пользователь просматривает список steering документов THEN система SHALL получить записи через GORM с пагинацией
-6. WHEN система работает с steering документами THEN система SHALL использовать GORM модели и методы для всех операций с БД
+3. WHEN пользователь создает steering документ с опциональным epic_id THEN система SHALL автоматически создать связь с указанным эпиком в таблице epic_steering_documents
+4. WHEN пользователь редактирует steering документ THEN система SHALL обновить запись через GORM и автоматически обновить поле updated_at
+5. WHEN пользователь удаляет steering документ THEN система SHALL удалить запись через GORM с CASCADE удалением связанных отношений
+6. WHEN пользователь просматривает список steering документов THEN система SHALL получить записи через GORM с пагинацией
+7. WHEN система работает с steering документами THEN система SHALL использовать GORM модели и методы для всех операций с БД
 
 ### Requirement 2
 
@@ -74,6 +75,7 @@
 #### Acceptance Criteria
 
 1. WHEN клиент отправляет POST /api/v1/steering-documents THEN система SHALL создать новый steering документ и вернуть HTTP 201 с данными
+1.1. WHEN клиент отправляет POST /api/v1/steering-documents с опциональным epic_id THEN система SHALL создать документ и автоматически связать его с указанным эпиком
 2. WHEN клиент отправляет GET /api/v1/steering-documents THEN система SHALL вернуть список документов с пагинацией и фильтрацией
 3. WHEN клиент отправляет GET /api/v1/steering-documents/:id THEN система SHALL вернуть конкретный документ или HTTP 404
 4. WHEN клиент отправляет PUT /api/v1/steering-documents/:id THEN система SHALL обновить документ и создать версию
@@ -91,7 +93,7 @@
 #### Acceptance Criteria
 
 1. WHEN MCP клиент запрашивает список steering документов THEN система SHALL предоставить MCP tool "list_steering_documents" для получения списка документов
-2. WHEN MCP клиент создает steering документ THEN система SHALL предоставить MCP tool "create_steering_document" с параметрами title и description
+2. WHEN MCP клиент создает steering документ THEN система SHALL предоставить MCP tool "create_steering_document" с параметрами title, description и опциональным epic_id (UUID или EP-XXX)
 3. WHEN MCP клиент обновляет steering документ THEN система SHALL предоставить MCP tool "update_steering_document" с параметрами steering_document_id (UUID или STD-XXX), title, description
 4. WHEN MCP клиент получает steering документ THEN система SHALL предоставить MCP tool "get_steering_document" с параметром steering_document_id (UUID или STD-XXX)
 5. WHEN MCP клиент связывает документ с эпиком THEN система SHALL предоставить MCP tool "link_steering_to_epic" с параметрами steering_document_id (UUID или STD-XXX) и epic_id (UUID или EP-XXX)
