@@ -93,7 +93,8 @@ func TestGetToolByName(t *testing.T) {
 	assert.Nil(t, tool)
 }
 
-func _TestToolSchemaValidation(t *testing.T) {
+func TestToolSchemaValidation(t *testing.T) {
+	t.Skip("STD MCP tool is failing this test - shoould review carefully list STD tool")
 	// Test that all tools have proper JSON schema structure
 	tools := GetSupportedTools()
 
