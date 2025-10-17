@@ -17,13 +17,15 @@ import (
 // SteeringDocumentHandler handles HTTP requests for steering document operations
 type SteeringDocumentHandler struct {
 	steeringDocumentService service.SteeringDocumentService
+	epicService             service.EpicService
 	userRepo                repository.UserRepository
 }
 
 // NewSteeringDocumentHandler creates a new steering document handler instance
-func NewSteeringDocumentHandler(steeringDocumentService service.SteeringDocumentService, userRepo repository.UserRepository) *SteeringDocumentHandler {
+func NewSteeringDocumentHandler(steeringDocumentService service.SteeringDocumentService, epicService service.EpicService, userRepo repository.UserRepository) *SteeringDocumentHandler {
 	return &SteeringDocumentHandler{
 		steeringDocumentService: steeringDocumentService,
+		epicService:             epicService,
 		userRepo:                userRepo,
 	}
 }
@@ -478,18 +480,32 @@ func (h *SteeringDocumentHandler) LinkSteeringDocumentToEpic(c *gin.Context) {
 		return
 	}
 
-	// Parse epic_id (UUID only for now)
+	// Parse epic_id (try UUID first, then reference ID)
 	var epicID uuid.UUID
 	if id, parseErr := uuid.Parse(epicIDParam); parseErr == nil {
 		epicID = id
 	} else {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": gin.H{
-				"code":    "VALIDATION_ERROR",
-				"message": "Invalid epic ID format",
-			},
-		})
-		return
+		// For reference ID, first get the epic to get its UUID
+		epic, err := h.epicService.GetEpicByReferenceID(epicIDParam)
+		if err != nil {
+			if errors.Is(err, service.ErrEpicNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{
+					"error": gin.H{
+						"code":    "ENTITY_NOT_FOUND",
+						"message": "Epic not found",
+					},
+				})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": gin.H{
+						"code":    "INTERNAL_ERROR",
+						"message": "Failed to get epic",
+					},
+				})
+			}
+			return
+		}
+		epicID = epic.ID
 	}
 
 	// Parse doc_id (try UUID first, then reference ID)
@@ -599,18 +615,32 @@ func (h *SteeringDocumentHandler) UnlinkSteeringDocumentFromEpic(c *gin.Context)
 		return
 	}
 
-	// Parse epic_id (UUID only for now)
+	// Parse epic_id (try UUID first, then reference ID)
 	var epicID uuid.UUID
 	if id, parseErr := uuid.Parse(epicIDParam); parseErr == nil {
 		epicID = id
 	} else {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": gin.H{
-				"code":    "VALIDATION_ERROR",
-				"message": "Invalid epic ID format",
-			},
-		})
-		return
+		// For reference ID, first get the epic to get its UUID
+		epic, err := h.epicService.GetEpicByReferenceID(epicIDParam)
+		if err != nil {
+			if errors.Is(err, service.ErrEpicNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{
+					"error": gin.H{
+						"code":    "ENTITY_NOT_FOUND",
+						"message": "Epic not found",
+					},
+				})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": gin.H{
+						"code":    "INTERNAL_ERROR",
+						"message": "Failed to get epic",
+					},
+				})
+			}
+			return
+		}
+		epicID = epic.ID
 	}
 
 	// Parse doc_id (try UUID first, then reference ID)
@@ -708,18 +738,32 @@ func (h *SteeringDocumentHandler) GetEpicSteeringDocuments(c *gin.Context) {
 		return
 	}
 
-	// Parse epic_id (UUID only for now)
+	// Parse epic_id (try UUID first, then reference ID)
 	var epicID uuid.UUID
 	if id, parseErr := uuid.Parse(idParam); parseErr == nil {
 		epicID = id
 	} else {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": gin.H{
-				"code":    "VALIDATION_ERROR",
-				"message": "Invalid epic ID format",
-			},
-		})
-		return
+		// For reference ID, first get the epic to get its UUID
+		epic, err := h.epicService.GetEpicByReferenceID(idParam)
+		if err != nil {
+			if errors.Is(err, service.ErrEpicNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{
+					"error": gin.H{
+						"code":    "ENTITY_NOT_FOUND",
+						"message": "Epic not found",
+					},
+				})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": gin.H{
+						"code":    "INTERNAL_ERROR",
+						"message": "Failed to get epic",
+					},
+				})
+			}
+			return
+		}
+		epicID = epic.ID
 	}
 
 	docs, err := h.steeringDocumentService.GetSteeringDocumentsByEpicID(epicID, currentUser)
