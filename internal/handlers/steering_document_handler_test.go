@@ -99,19 +99,22 @@ func (m *MockUserRepository) ExistsByEmail(email string) (bool, error)          
 
 func TestNewSteeringDocumentHandler(t *testing.T) {
 	mockService := &MockSteeringDocumentService{}
+	mockEpicService := &MockEpicService{}
 	mockUserRepo := &MockUserRepository{}
 
-	handler := NewSteeringDocumentHandler(mockService, mockUserRepo)
+	handler := NewSteeringDocumentHandler(mockService, mockEpicService, mockUserRepo)
 
 	assert.NotNil(t, handler)
 	assert.Equal(t, mockService, handler.steeringDocumentService)
+	assert.Equal(t, mockEpicService, handler.epicService)
 	assert.Equal(t, mockUserRepo, handler.userRepo)
 }
 
 func TestSteeringDocumentHandler_CreateSteeringDocument_Success(t *testing.T) {
 	mockService := &MockSteeringDocumentService{}
+	mockEpicService := &MockEpicService{}
 	mockUserRepo := &MockUserRepository{}
-	handler := NewSteeringDocumentHandler(mockService, mockUserRepo)
+	handler := NewSteeringDocumentHandler(mockService, mockEpicService, mockUserRepo)
 
 	// Create test user
 	user := &models.User{
@@ -148,8 +151,9 @@ func TestSteeringDocumentHandler_CreateSteeringDocument_Success(t *testing.T) {
 
 func TestSteeringDocumentHandler_CreateSteeringDocument_ValidationError(t *testing.T) {
 	mockService := &MockSteeringDocumentService{}
+	mockEpicService := &MockEpicService{}
 	mockUserRepo := &MockUserRepository{}
-	handler := NewSteeringDocumentHandler(mockService, mockUserRepo)
+	handler := NewSteeringDocumentHandler(mockService, mockEpicService, mockUserRepo)
 
 	user := &models.User{ID: uuid.New(), Role: models.RoleUser}
 	req := service.CreateSteeringDocumentRequest{Title: ""} // Invalid request
@@ -169,8 +173,9 @@ func TestSteeringDocumentHandler_CreateSteeringDocument_ValidationError(t *testi
 
 func TestSteeringDocumentHandler_GetSteeringDocumentByID_Success(t *testing.T) {
 	mockService := &MockSteeringDocumentService{}
+	mockEpicService := &MockEpicService{}
 	mockUserRepo := &MockUserRepository{}
-	handler := NewSteeringDocumentHandler(mockService, mockUserRepo)
+	handler := NewSteeringDocumentHandler(mockService, mockEpicService, mockUserRepo)
 
 	// Create test data
 	docID := uuid.New()
@@ -196,8 +201,9 @@ func TestSteeringDocumentHandler_GetSteeringDocumentByID_Success(t *testing.T) {
 
 func TestSteeringDocumentHandler_GetSteeringDocumentByID_NotFound(t *testing.T) {
 	mockService := &MockSteeringDocumentService{}
+	mockEpicService := &MockEpicService{}
 	mockUserRepo := &MockUserRepository{}
-	handler := NewSteeringDocumentHandler(mockService, mockUserRepo)
+	handler := NewSteeringDocumentHandler(mockService, mockEpicService, mockUserRepo)
 
 	docID := uuid.New()
 	user := &models.User{ID: uuid.New(), Role: models.RoleUser}
@@ -217,8 +223,9 @@ func TestSteeringDocumentHandler_GetSteeringDocumentByID_NotFound(t *testing.T) 
 
 func TestSteeringDocumentHandler_GetSteeringDocumentByReferenceID_Success(t *testing.T) {
 	mockService := &MockSteeringDocumentService{}
+	mockEpicService := &MockEpicService{}
 	mockUserRepo := &MockUserRepository{}
-	handler := NewSteeringDocumentHandler(mockService, mockUserRepo)
+	handler := NewSteeringDocumentHandler(mockService, mockEpicService, mockUserRepo)
 
 	// Create test data
 	referenceID := "STD-001"
@@ -244,8 +251,9 @@ func TestSteeringDocumentHandler_GetSteeringDocumentByReferenceID_Success(t *tes
 
 func TestSteeringDocumentHandler_UpdateSteeringDocument_Success(t *testing.T) {
 	mockService := &MockSteeringDocumentService{}
+	mockEpicService := &MockEpicService{}
 	mockUserRepo := &MockUserRepository{}
-	handler := NewSteeringDocumentHandler(mockService, mockUserRepo)
+	handler := NewSteeringDocumentHandler(mockService, mockEpicService, mockUserRepo)
 
 	// Create test data
 	docID := uuid.New()
@@ -276,8 +284,9 @@ func TestSteeringDocumentHandler_UpdateSteeringDocument_Success(t *testing.T) {
 
 func TestSteeringDocumentHandler_UpdateSteeringDocument_AccessDenied(t *testing.T) {
 	mockService := &MockSteeringDocumentService{}
+	mockEpicService := &MockEpicService{}
 	mockUserRepo := &MockUserRepository{}
-	handler := NewSteeringDocumentHandler(mockService, mockUserRepo)
+	handler := NewSteeringDocumentHandler(mockService, mockEpicService, mockUserRepo)
 
 	docID := uuid.New()
 	user := &models.User{ID: uuid.New(), Role: models.RoleUser}
@@ -298,8 +307,9 @@ func TestSteeringDocumentHandler_UpdateSteeringDocument_AccessDenied(t *testing.
 
 func TestSteeringDocumentHandler_DeleteSteeringDocument_Success(t *testing.T) {
 	mockService := &MockSteeringDocumentService{}
+	mockEpicService := &MockEpicService{}
 	mockUserRepo := &MockUserRepository{}
-	handler := NewSteeringDocumentHandler(mockService, mockUserRepo)
+	handler := NewSteeringDocumentHandler(mockService, mockEpicService, mockUserRepo)
 
 	docID := uuid.New()
 	user := &models.User{ID: uuid.New(), Role: models.RoleUser}
@@ -317,8 +327,9 @@ func TestSteeringDocumentHandler_DeleteSteeringDocument_Success(t *testing.T) {
 
 func TestSteeringDocumentHandler_ListSteeringDocuments_Success(t *testing.T) {
 	mockService := &MockSteeringDocumentService{}
+	mockEpicService := &MockEpicService{}
 	mockUserRepo := &MockUserRepository{}
-	handler := NewSteeringDocumentHandler(mockService, mockUserRepo)
+	handler := NewSteeringDocumentHandler(mockService, mockEpicService, mockUserRepo)
 
 	user := &models.User{ID: uuid.New(), Role: models.RoleUser}
 	filters := service.SteeringDocumentFilters{
@@ -346,8 +357,9 @@ func TestSteeringDocumentHandler_ListSteeringDocuments_Success(t *testing.T) {
 
 func TestSteeringDocumentHandler_SearchSteeringDocuments_Success(t *testing.T) {
 	mockService := &MockSteeringDocumentService{}
+	mockEpicService := &MockEpicService{}
 	mockUserRepo := &MockUserRepository{}
-	handler := NewSteeringDocumentHandler(mockService, mockUserRepo)
+	handler := NewSteeringDocumentHandler(mockService, mockEpicService, mockUserRepo)
 
 	user := &models.User{ID: uuid.New(), Role: models.RoleUser}
 	query := "test query"
@@ -369,8 +381,9 @@ func TestSteeringDocumentHandler_SearchSteeringDocuments_Success(t *testing.T) {
 
 func TestSteeringDocumentHandler_LinkSteeringDocumentToEpic_Success(t *testing.T) {
 	mockService := &MockSteeringDocumentService{}
+	mockEpicService := &MockEpicService{}
 	mockUserRepo := &MockUserRepository{}
-	handler := NewSteeringDocumentHandler(mockService, mockUserRepo)
+	handler := NewSteeringDocumentHandler(mockService, mockEpicService, mockUserRepo)
 
 	docID := uuid.New()
 	epicID := uuid.New()
@@ -389,8 +402,9 @@ func TestSteeringDocumentHandler_LinkSteeringDocumentToEpic_Success(t *testing.T
 
 func TestSteeringDocumentHandler_UnlinkSteeringDocumentFromEpic_Success(t *testing.T) {
 	mockService := &MockSteeringDocumentService{}
+	mockEpicService := &MockEpicService{}
 	mockUserRepo := &MockUserRepository{}
-	handler := NewSteeringDocumentHandler(mockService, mockUserRepo)
+	handler := NewSteeringDocumentHandler(mockService, mockEpicService, mockUserRepo)
 
 	docID := uuid.New()
 	epicID := uuid.New()
@@ -409,8 +423,9 @@ func TestSteeringDocumentHandler_UnlinkSteeringDocumentFromEpic_Success(t *testi
 
 func TestSteeringDocumentHandler_GetSteeringDocumentsByEpicID_Success(t *testing.T) {
 	mockService := &MockSteeringDocumentService{}
+	mockEpicService := &MockEpicService{}
 	mockUserRepo := &MockUserRepository{}
-	handler := NewSteeringDocumentHandler(mockService, mockUserRepo)
+	handler := NewSteeringDocumentHandler(mockService, mockEpicService, mockUserRepo)
 
 	epicID := uuid.New()
 	user := &models.User{ID: uuid.New(), Role: models.RoleUser}
