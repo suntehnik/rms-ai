@@ -131,6 +131,11 @@ func (m *MockEpicRepository) GetByReferenceIDWithUsers(referenceID string) (*mod
 	return args.Get(0).(*models.Epic), args.Error(1)
 }
 
+func (m *MockEpicRepository) ListWithIncludes(filters map[string]interface{}, includes []string, orderBy string, limit, offset int) ([]models.Epic, error) {
+	args := m.Called(filters, includes, orderBy, limit, offset)
+	return args.Get(0).([]models.Epic), args.Error(1)
+}
+
 // MockUserRepository is a mock implementation of UserRepository
 type MockUserRepository struct {
 	mock.Mock

@@ -148,6 +148,11 @@ func (m *MockUserStoryRepository) GetByReferenceIDWithUsers(referenceID string) 
 	return args.Get(0).(*models.UserStory), args.Error(1)
 }
 
+func (m *MockUserStoryRepository) ListWithIncludes(filters map[string]interface{}, includes []string, orderBy string, limit, offset int) ([]models.UserStory, error) {
+	args := m.Called(filters, includes, orderBy, limit, offset)
+	return args.Get(0).([]models.UserStory), args.Error(1)
+}
+
 func TestUserStoryService_CreateUserStory(t *testing.T) {
 	mockUserStoryRepo := new(MockUserStoryRepository)
 	mockEpicRepo := new(MockEpicRepository)

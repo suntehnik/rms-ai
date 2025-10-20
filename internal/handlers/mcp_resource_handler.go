@@ -576,7 +576,7 @@ func (rh *ResourceHandler) buildURIFromParsed(parsedURI *ParsedURI) string {
 // - requirements://epics/EP-001
 // Also supports collection resources:
 // - requirements://epics (returns all epics)
-func (rh *ResourceHandler) convertRequirementsURI(ctx context.Context, uri string) (string, error) {
+func (rh *ResourceHandler) convertRequirementsURI(_ context.Context, uri string) (string, error) {
 	// Parse requirements:// URI format: requirements://epics/{id} or requirements://epics
 	parts := strings.Split(strings.TrimPrefix(uri, "requirements://"), "/")
 	if len(parts) < 1 {
@@ -770,7 +770,7 @@ func (rh *ResourceHandler) handleCollectionResource(ctx context.Context, uri str
 }
 
 // handleEpicsCollection handles requirements://epics collection resource
-func (rh *ResourceHandler) handleEpicsCollection(ctx context.Context, uri string) (interface{}, error) {
+func (rh *ResourceHandler) handleEpicsCollection(_ context.Context, uri string) (interface{}, error) {
 	// Get all epics using the existing ListEpics method with no filters
 	epics, _, err := rh.epicService.ListEpics(service.EpicFilters{
 		Limit: 1000, // Set a reasonable limit for collection resources
@@ -784,7 +784,7 @@ func (rh *ResourceHandler) handleEpicsCollection(ctx context.Context, uri string
 }
 
 // handleUserStoriesCollection handles requirements://user-stories collection resource
-func (rh *ResourceHandler) handleUserStoriesCollection(ctx context.Context, uri string) (interface{}, error) {
+func (rh *ResourceHandler) handleUserStoriesCollection(_ context.Context, uri string) (interface{}, error) {
 	// Get all user stories using the existing ListUserStories method with no filters
 	userStories, _, err := rh.userStoryService.ListUserStories(service.UserStoryFilters{
 		Limit: 1000, // Set a reasonable limit for collection resources
@@ -798,7 +798,7 @@ func (rh *ResourceHandler) handleUserStoriesCollection(ctx context.Context, uri 
 }
 
 // handleRequirementsCollection handles requirements://requirements collection resource
-func (rh *ResourceHandler) handleRequirementsCollection(ctx context.Context, uri string) (interface{}, error) {
+func (rh *ResourceHandler) handleRequirementsCollection(_ context.Context, uri string) (interface{}, error) {
 	// Get all requirements using the existing ListRequirements method with no filters
 	requirements, _, err := rh.requirementService.ListRequirements(service.RequirementFilters{
 		Limit: 1000, // Set a reasonable limit for collection resources
@@ -812,7 +812,7 @@ func (rh *ResourceHandler) handleRequirementsCollection(ctx context.Context, uri
 }
 
 // handleAcceptanceCriteriaCollection handles requirements://acceptance-criteria collection resource
-func (rh *ResourceHandler) handleAcceptanceCriteriaCollection(ctx context.Context, uri string) (interface{}, error) {
+func (rh *ResourceHandler) handleAcceptanceCriteriaCollection(_ context.Context, uri string) (interface{}, error) {
 	// Get all acceptance criteria using the existing ListAcceptanceCriteria method with no filters
 	acceptanceCriteria, _, err := rh.acceptanceCriteriaService.ListAcceptanceCriteria(service.AcceptanceCriteriaFilters{
 		Limit: 1000, // Set a reasonable limit for collection resources

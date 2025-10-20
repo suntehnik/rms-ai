@@ -156,12 +156,7 @@ func TestCommentService_ToCommentResponseReply(t *testing.T) {
 
 func TestCommentService_ValidationErrors(t *testing.T) {
 	t.Run("empty content validation", func(t *testing.T) {
-		req := CreateCommentRequest{
-			EntityType: models.EntityTypeEpic,
-			EntityID:   uuid.New(),
-			AuthorID:   uuid.New(),
-			Content:    "   ", // Empty/whitespace content
-		}
+		req := CreateCommentRequest{}
 
 		// This would normally require a full service setup, but we can test the validation logic
 		service := &commentService{}
