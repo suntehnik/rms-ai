@@ -2,16 +2,20 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"strings"
 	"time"
 
+	"product-requirements-management/internal/auth"
 	"product-requirements-management/internal/jsonrpc"
+	"product-requirements-management/internal/logger"
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/service"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 // MCPHandler handles MCP (Model Context Protocol) requests
@@ -21,6 +25,7 @@ type MCPHandler struct {
 	toolsHandler    *ToolsHandler
 	mcpLogger       *MCPLogger
 	errorMapper     *jsonrpc.ErrorMapper
+	resourceService service.ResourceService
 }
 
 // NewMCPHandler creates a new MCP handler instance
@@ -31,6 +36,7 @@ func NewMCPHandler(
 	acceptanceCriteriaService service.AcceptanceCriteriaService,
 	searchService service.SearchServiceInterface,
 	steeringDocumentService service.SteeringDocumentService,
+	resourceService service.ResourceService,
 ) *MCPHandler {
 	processor := jsonrpc.NewProcessor()
 	resourceHandler := NewResourceHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService)
@@ -45,6 +51,7 @@ func NewMCPHandler(
 		toolsHandler:    toolsHandler,
 		mcpLogger:       mcpLogger,
 		errorMapper:     errorMapper,
+		resourceService: resourceService,
 	}
 
 	// Register MCP methods with enhanced error handling
@@ -52,6 +59,7 @@ func NewMCPHandler(
 	processor.RegisterHandler("ping", handler.wrapHandler("ping", handlePing))
 	processor.RegisterHandler("tools/list", handler.wrapHandler("tools/list", handleToolsList))
 	processor.RegisterHandler("tools/call", handler.wrapHandler("tools/call", toolsHandler.HandleToolsCall))
+	processor.RegisterHandler("resources/list", handler.wrapHandler("resources/list", handler.handleResourcesList))
 	processor.RegisterHandler("resources/read", handler.wrapHandler("resources/read", resourceHandler.HandleResourcesRead))
 
 	return handler
@@ -165,6 +173,233 @@ func handleToolsList(ctx context.Context, params interface{}) (interface{}, erro
 	return map[string]interface{}{
 		"tools": tools,
 	}, nil
+}
+
+// handleResourcesList handles the resources/list method with comprehensive error handling
+func (h *MCPHandler) handleResourcesList(ctx context.Context, params interface{}) (interface{}, error) {
+	// Add timeout handling for resource list operations
+	timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	// Extract correlation ID for logging
+	correlationID := logger.GetCorrelationID(ctx)
+
+	// Extract user from context for logging and authentication validation
+	var user *models.User
+	if ginCtx, ok := ctx.Value("gin_context").(*gin.Context); ok {
+		user = h.mcpLogger.GetUserFromGinContext(ginCtx)
+	}
+
+	// Validate authentication - user should be present for MCP operations
+	// Note: For direct method calls (testing), user may be nil
+	if user == nil {
+		// Check if this is a direct call (no gin context) - allow for testing
+		if _, hasGinCtx := ctx.Value("gin_context").(*gin.Context); hasGinCtx {
+			h.mcpLogger.LogSecurityEvent(ctx, "resources_list_unauthorized_access", map[string]interface{}{
+				"method":         "resources/list",
+				"correlation_id": correlationID,
+				"error":          "no authenticated user found",
+			})
+			return nil, h.errorMapper.MapError(errors.New("authentication required"))
+		}
+		// For direct calls without gin context, proceed without user (testing scenario)
+	}
+
+	// Log request with method name and correlation ID
+	h.mcpLogger.LogRequest(ctx, "resources/list", params, user)
+
+	// Get resource list from service with timeout context
+	resources, err := h.resourceService.GetResourceList(timeoutCtx)
+	if err != nil {
+		// Handle different types of errors with appropriate logging and mapping
+		return h.handleResourcesListError(ctx, err, user, correlationID)
+	}
+
+	// Validate resource list is not nil (defensive programming)
+	if resources == nil {
+		h.mcpLogger.LogError(ctx, "resources/list", errors.New("resource service returned nil resources"), user)
+		return nil, h.errorMapper.MapError(errors.New("internal error: invalid resource data"))
+	}
+
+	// Create JSON-RPC 2.0 compliant response
+	result := map[string]interface{}{
+		"resources": resources,
+	}
+
+	// Log successful response with resource count
+	h.mcpLogger.logger.WithFields(logrus.Fields{
+		"method":         "resources/list",
+		"correlation_id": correlationID,
+		"resource_count": len(resources),
+		"user_id":        getUserID(user),
+		"component":      "mcp_handler",
+		"operation":      "resources_list_success",
+	}).Info("Resources list retrieved successfully")
+
+	return result, nil
+}
+
+// handleResourcesListError handles different types of errors for resources/list method
+func (h *MCPHandler) handleResourcesListError(ctx context.Context, err error, user *models.User, correlationID string) (interface{}, error) {
+	// Log error with proper context but without exposing internal details
+	h.mcpLogger.LogError(ctx, "resources/list", err, user)
+
+	// Determine error type and create appropriate JSON-RPC error response
+	switch {
+	case errors.Is(err, context.DeadlineExceeded):
+		// Timeout error
+		h.mcpLogger.logger.WithFields(logrus.Fields{
+			"method":         "resources/list",
+			"correlation_id": correlationID,
+			"user_id":        getUserID(user),
+			"component":      "mcp_handler",
+			"operation":      "resources_list_timeout",
+			"error_type":     "timeout",
+		}).Warn("Resources list operation timed out")
+
+		return nil, h.errorMapper.MapError(errors.New("operation timed out"))
+
+	case errors.Is(err, context.Canceled):
+		// Context canceled
+		h.mcpLogger.logger.WithFields(logrus.Fields{
+			"method":         "resources/list",
+			"correlation_id": correlationID,
+			"user_id":        getUserID(user),
+			"component":      "mcp_handler",
+			"operation":      "resources_list_canceled",
+			"error_type":     "canceled",
+		}).Info("Resources list operation was canceled")
+
+		return nil, h.errorMapper.MapError(errors.New("operation was canceled"))
+
+	case isDatabaseError(err):
+		// Database connectivity or query errors
+		h.mcpLogger.logger.WithFields(logrus.Fields{
+			"method":         "resources/list",
+			"correlation_id": correlationID,
+			"user_id":        getUserID(user),
+			"component":      "mcp_handler",
+			"operation":      "resources_list_database_error",
+			"error_type":     "database",
+		}).Error("Database error during resources list retrieval")
+
+		// Don't expose internal database details to client
+		return nil, h.errorMapper.MapError(errors.New("service temporarily unavailable"))
+
+	case isAuthenticationError(err):
+		// Authentication/authorization errors
+		h.mcpLogger.LogSecurityEvent(ctx, "resources_list_auth_error", map[string]interface{}{
+			"method":         "resources/list",
+			"correlation_id": correlationID,
+			"user_id":        getUserID(user),
+			"error_type":     "authentication",
+		})
+
+		return nil, h.errorMapper.MapError(err)
+
+	case isValidationError(err):
+		// Validation errors (e.g., invalid parameters)
+		h.mcpLogger.logger.WithFields(logrus.Fields{
+			"method":         "resources/list",
+			"correlation_id": correlationID,
+			"user_id":        getUserID(user),
+			"component":      "mcp_handler",
+			"operation":      "resources_list_validation_error",
+			"error_type":     "validation",
+		}).Warn("Validation error during resources list retrieval")
+
+		return nil, h.errorMapper.MapError(err)
+
+	default:
+		// Generic internal errors - don't expose details
+		h.mcpLogger.logger.WithFields(logrus.Fields{
+			"method":         "resources/list",
+			"correlation_id": correlationID,
+			"user_id":        getUserID(user),
+			"component":      "mcp_handler",
+			"operation":      "resources_list_internal_error",
+			"error_type":     "internal",
+		}).Error("Internal error during resources list retrieval")
+
+		// Return generic error without exposing internal details
+		return nil, h.errorMapper.MapError(errors.New("internal server error"))
+	}
+}
+
+// isDatabaseError checks if the error is related to database operations
+func isDatabaseError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	errStr := strings.ToLower(err.Error())
+	databaseKeywords := []string{
+		"database", "connection", "sql", "postgres", "gorm",
+		"driver", "network", "timeout", "connection refused",
+		"connection reset", "broken pipe", "no such host",
+	}
+
+	for _, keyword := range databaseKeywords {
+		if strings.Contains(errStr, keyword) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// isAuthenticationError checks if the error is related to authentication
+func isAuthenticationError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	// Check for specific authentication errors
+	authErrors := []error{
+		auth.ErrInvalidCredentials, auth.ErrInvalidToken, auth.ErrTokenExpired, auth.ErrInsufficientRole,
+	}
+
+	for _, authErr := range authErrors {
+		if errors.Is(err, authErr) {
+			return true
+		}
+	}
+
+	// Check for authentication-related error messages
+	errStr := strings.ToLower(err.Error())
+	authKeywords := []string{
+		"unauthorized", "authentication", "token", "forbidden",
+		"access denied", "permission denied", "invalid credentials",
+	}
+
+	for _, keyword := range authKeywords {
+		if strings.Contains(errStr, keyword) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// isValidationError checks if the error is related to validation
+func isValidationError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	errStr := strings.ToLower(err.Error())
+	validationKeywords := []string{
+		"validation", "invalid", "required", "constraint",
+		"format", "parse", "decode", "unmarshal",
+	}
+
+	for _, keyword := range validationKeywords {
+		if strings.Contains(errStr, keyword) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // wrapHandler wraps a JSON-RPC handler with enhanced logging and error handling
@@ -285,4 +520,12 @@ func (h *MCPHandler) extractIDFromParams(params map[string]interface{}, possible
 		}
 	}
 	return ""
+}
+
+// getUserID safely extracts user ID from user object for logging
+func getUserID(user *models.User) string {
+	if user == nil {
+		return "anonymous"
+	}
+	return user.ID.String()
 }

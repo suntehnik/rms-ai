@@ -24,6 +24,8 @@ const (
 	ValidationError    = -32003
 	ServiceUnavailable = -32004
 	RateLimitExceeded  = -32005
+	OperationTimeout   = -32006
+	DatabaseError      = -32007
 )
 
 // ErrorMessages maps error codes to their standard messages
@@ -38,6 +40,8 @@ var ErrorMessages = map[int]string{
 	ValidationError:    "Validation error",
 	ServiceUnavailable: "Service unavailable",
 	RateLimitExceeded:  "Rate limit exceeded",
+	OperationTimeout:   "Operation timeout",
+	DatabaseError:      "Database error",
 }
 
 // NewJSONRPCError creates a new JSON-RPC error
@@ -129,6 +133,10 @@ func (em *ErrorMapper) MapError(err error) *JSONRPCError {
 		return NewStandardError(ServiceUnavailable, err.Error())
 	case isRateLimitError(err):
 		return NewStandardError(RateLimitExceeded, err.Error())
+	case isTimeoutError(err):
+		return NewStandardError(OperationTimeout, err.Error())
+	case isDatabaseConnectionError(err):
+		return NewStandardError(DatabaseError, "Database service unavailable")
 	default:
 		return NewStandardError(InternalError, "An unexpected error occurred")
 	}
@@ -176,6 +184,29 @@ func isRateLimitError(err error) bool {
 		contains(errStr, "quota exceeded")
 }
 
+func isTimeoutError(err error) bool {
+	errStr := err.Error()
+	return contains(errStr, "timeout") ||
+		contains(errStr, "deadline exceeded") ||
+		contains(errStr, "context deadline exceeded") ||
+		contains(errStr, "operation timed out")
+}
+
+func isDatabaseConnectionError(err error) bool {
+	errStr := err.Error()
+	return contains(errStr, "database") ||
+		contains(errStr, "connection") ||
+		contains(errStr, "sql") ||
+		contains(errStr, "postgres") ||
+		contains(errStr, "gorm") ||
+		contains(errStr, "driver") ||
+		contains(errStr, "network") ||
+		contains(errStr, "connection refused") ||
+		contains(errStr, "connection reset") ||
+		contains(errStr, "broken pipe") ||
+		contains(errStr, "no such host")
+}
+
 // contains checks if a string contains a substring (case-insensitive)
 func contains(s, substr string) bool {
 	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
@@ -221,6 +252,21 @@ func NewUnauthorizedError(data interface{}) *JSONRPCError {
 // NewValidationError creates a validation error
 func NewValidationError(data interface{}) *JSONRPCError {
 	return NewStandardError(ValidationError, data)
+}
+
+// NewTimeoutError creates a timeout error
+func NewTimeoutError(data interface{}) *JSONRPCError {
+	return NewStandardError(OperationTimeout, data)
+}
+
+// NewDatabaseError creates a database error
+func NewDatabaseError(data interface{}) *JSONRPCError {
+	return NewStandardError(DatabaseError, data)
+}
+
+// NewServiceUnavailableError creates a service unavailable error
+func NewServiceUnavailableError(data interface{}) *JSONRPCError {
+	return NewStandardError(ServiceUnavailable, data)
 }
 
 // Service-specific error checking and mapping functions
