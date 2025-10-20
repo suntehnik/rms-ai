@@ -38,10 +38,19 @@ func (p *EpicResourceProvider) GetResourceDescriptors(ctx context.Context) ([]Re
 
 	var resources []ResourceDescriptor
 
-	// Add individual epic resources
+	// Add individual epic resources - both UUID and reference ID variants
 	for _, epic := range epics {
+		// Add UUID-based resource
 		resources = append(resources, ResourceDescriptor{
 			URI:         fmt.Sprintf("requirements://epics/%s", epic.ID),
+			Name:        fmt.Sprintf("Epic: %s", epic.Title),
+			Description: fmt.Sprintf("Epic %s: %s", epic.ReferenceID, epic.Title),
+			MimeType:    "application/json",
+		})
+
+		// Add reference ID-based resource
+		resources = append(resources, ResourceDescriptor{
+			URI:         fmt.Sprintf("requirements://epics/%s", epic.ReferenceID),
 			Name:        fmt.Sprintf("Epic: %s", epic.Title),
 			Description: fmt.Sprintf("Epic %s: %s", epic.ReferenceID, epic.Title),
 			MimeType:    "application/json",

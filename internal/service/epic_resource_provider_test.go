@@ -34,7 +34,7 @@ func TestEpicResourceProvider_GetResourceDescriptors(t *testing.T) {
 					Title:       "Payment Processing",
 				},
 			},
-			expectedCount: 3, // 2 individual epics + 1 collection resource
+			expectedCount: 5, // 2 epics * 2 variants (UUID + reference ID) + 1 collection resource
 			expectedError: false,
 			setupMock: func(mockRepo *MockEpicRepository) {
 				mockRepo.On("List", mock.Anything, "created_at ASC", 1000, 0).Return([]models.Epic{
@@ -118,7 +118,7 @@ func TestEpicResourceProvider_GetResourceDescriptors(t *testing.T) {
 							assert.Equal(t, "application/json", resource.MimeType)
 						}
 					}
-					assert.Equal(t, len(tt.epics), epicResourceCount)
+					assert.Equal(t, len(tt.epics)*2, epicResourceCount) // Each epic generates 2 resources (UUID + reference ID)
 				}
 			}
 

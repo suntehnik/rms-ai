@@ -38,10 +38,19 @@ func (p *UserStoryResourceProvider) GetResourceDescriptors(ctx context.Context) 
 
 	var resources []ResourceDescriptor
 
-	// Add individual user story resources
+	// Add individual user story resources - both UUID and reference ID variants
 	for _, userStory := range userStories {
+		// Add UUID-based resource
 		resources = append(resources, ResourceDescriptor{
 			URI:         fmt.Sprintf("requirements://user-stories/%s", userStory.ID),
+			Name:        fmt.Sprintf("User Story: %s", userStory.Title),
+			Description: fmt.Sprintf("User Story %s: %s", userStory.ReferenceID, userStory.Title),
+			MimeType:    "application/json",
+		})
+
+		// Add reference ID-based resource
+		resources = append(resources, ResourceDescriptor{
+			URI:         fmt.Sprintf("requirements://user-stories/%s", userStory.ReferenceID),
 			Name:        fmt.Sprintf("User Story: %s", userStory.Title),
 			Description: fmt.Sprintf("User Story %s: %s", userStory.ReferenceID, userStory.Title),
 			MimeType:    "application/json",

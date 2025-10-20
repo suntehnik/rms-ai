@@ -38,10 +38,19 @@ func (p *RequirementResourceProvider) GetResourceDescriptors(ctx context.Context
 
 	var resources []ResourceDescriptor
 
-	// Add individual requirement resources
+	// Add individual requirement resources - both UUID and reference ID variants
 	for _, requirement := range requirements {
+		// Add UUID-based resource
 		resources = append(resources, ResourceDescriptor{
 			URI:         fmt.Sprintf("requirements://requirements/%s", requirement.ID),
+			Name:        fmt.Sprintf("Requirement: %s", requirement.Title),
+			Description: fmt.Sprintf("Requirement %s: %s", requirement.ReferenceID, requirement.Title),
+			MimeType:    "application/json",
+		})
+
+		// Add reference ID-based resource
+		resources = append(resources, ResourceDescriptor{
+			URI:         fmt.Sprintf("requirements://requirements/%s", requirement.ReferenceID),
 			Name:        fmt.Sprintf("Requirement: %s", requirement.Title),
 			Description: fmt.Sprintf("Requirement %s: %s", requirement.ReferenceID, requirement.Title),
 			MimeType:    "application/json",

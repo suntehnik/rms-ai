@@ -1,0 +1,15 @@
+{
+  "image": "ghcr.io/suntehnik/rms-ai",
+  "version": "feature-mcp-resources-list-tasks-1-10-36695fc",
+  "latest_tag": "ghcr.io/suntehnik/rms-ai:latest",
+  "version_tag": "ghcr.io/suntehnik/rms-ai:feature-mcp-resources-list-tasks-1-10-36695fc",
+  "git_commit": "36695fcb39282615a853881b8f9fc57066dfae05",
+  "git_branch": "feature/mcp-resources-list-tasks-1-10",
+  "git_tag": "",
+  "build_date": "2025-10-20T11:08:55Z",
+  "registry": "ghcr.io",
+  "repository": "suntehnik/rms-ai",
+  "build_type": "multi-platform",
+  "platforms": "linux/amd64",
+  "buildx_enabled": true
+}
