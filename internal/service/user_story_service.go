@@ -136,6 +136,11 @@ type UserStoryFilters struct {
 	// @Example 2
 	Priority *models.Priority `json:"priority,omitempty"`
 
+	// Include specifies which related entities to include
+	// @Description Comma-separated list of related entities to include (optional)
+	// @Example "epic,creator,assignee,acceptance_criteria,requirements,comments"
+	Include []string `json:"include,omitempty"`
+
 	// OrderBy specifies the sort order
 	// @Description Sort order for results (optional, default: "created_at DESC")
 	// @Example "created_at DESC"
@@ -408,7 +413,14 @@ func (s *userStoryService) ListUserStories(filters UserStoryFilters) ([]models.U
 		limit = filters.Limit
 	}
 
-	userStories, err := s.userStoryRepo.List(filterMap, orderBy, limit, filters.Offset)
+	// Use the new method with includes if specified, otherwise use the regular method
+	var userStories []models.UserStory
+	if len(filters.Include) > 0 {
+		userStories, err = s.userStoryRepo.ListWithIncludes(filterMap, filters.Include, orderBy, limit, filters.Offset)
+	} else {
+		userStories, err = s.userStoryRepo.List(filterMap, orderBy, limit, filters.Offset)
+	}
+
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to list user stories: %w", err)
 	}

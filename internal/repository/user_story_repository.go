@@ -131,3 +131,52 @@ func (r *userStoryRepository) GetByReferenceIDWithUsers(referenceID string) (*mo
 	}
 	return &userStory, nil
 }
+
+// ListWithIncludes retrieves user stories with optional related entity preloading
+func (r *userStoryRepository) ListWithIncludes(filters map[string]interface{}, includes []string, orderBy string, limit, offset int) ([]models.UserStory, error) {
+	var userStories []models.UserStory
+
+	query := r.GetDB().Model(&models.UserStory{})
+
+	// Apply includes (preloads)
+	for _, include := range includes {
+		switch include {
+		case "epic":
+			query = query.Preload("Epic")
+		case "creator":
+			query = query.Preload("Creator")
+		case "assignee":
+			query = query.Preload("Assignee")
+		case "acceptance_criteria":
+			query = query.Preload("AcceptanceCriteria")
+		case "requirements":
+			query = query.Preload("Requirements")
+		case "comments":
+			query = query.Preload("Comments")
+		}
+	}
+
+	// Apply filters
+	for key, value := range filters {
+		query = query.Where(key+" = ?", value)
+	}
+
+	// Apply ordering
+	if orderBy != "" {
+		query = query.Order(orderBy)
+	}
+
+	// Apply pagination
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+
+	if err := query.Find(&userStories).Error; err != nil {
+		return nil, r.handleDBError(err)
+	}
+
+	return userStories, nil
+}

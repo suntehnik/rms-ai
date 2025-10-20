@@ -70,6 +70,11 @@ func (rh *ResourceHandler) HandleResourcesRead(ctx context.Context, params inter
 
 	// Check if this is a requirements:// URI (from resources/list) and convert it
 	if strings.HasPrefix(uri, "requirements://") {
+		// Check if it's a collection resource first
+		if rh.isCollectionResource(uri) {
+			return rh.handleCollectionResource(ctx, uri)
+		}
+
 		convertedURI, err := rh.convertRequirementsURI(ctx, uri)
 		if err != nil {
 			return nil, jsonrpc.NewInvalidParamsError(fmt.Sprintf("Failed to convert URI: %v", err))
@@ -569,6 +574,8 @@ func (rh *ResourceHandler) buildURIFromParsed(parsedURI *ParsedURI) string {
 // Supports both UUID and reference ID formats:
 // - requirements://epics/516722c8-4ca6-4cea-b78c-523fc3ea665f
 // - requirements://epics/EP-001
+// Also supports collection resources:
+// - requirements://epics (returns all epics)
 func (rh *ResourceHandler) convertRequirementsURI(ctx context.Context, uri string) (string, error) {
 	// Parse requirements:// URI format: requirements://epics/{id} or requirements://epics
 	parts := strings.Split(strings.TrimPrefix(uri, "requirements://"), "/")
@@ -578,9 +585,9 @@ func (rh *ResourceHandler) convertRequirementsURI(ctx context.Context, uri strin
 
 	entityType := parts[0]
 
-	// Handle collection resources (no ID)
+	// Handle collection resources (no ID) - return as-is for collection handling
 	if len(parts) == 1 {
-		return "", fmt.Errorf("collection resources not supported in resources/read")
+		return uri, nil // Return the original URI for collection handling
 	}
 
 	if len(parts) != 2 {
@@ -732,4 +739,235 @@ func (rh *ResourceHandler) isValidReferenceID(id, expectedPrefix string) bool {
 
 	// Use the URI parser's validation logic
 	return rh.uriParser.isValidReferenceID(id)
+}
+
+// isCollectionResource checks if the URI is a collection resource (no specific ID)
+func (rh *ResourceHandler) isCollectionResource(uri string) bool {
+	// Parse requirements:// URI format: requirements://epics/{id} or requirements://epics
+	parts := strings.Split(strings.TrimPrefix(uri, "requirements://"), "/")
+
+	// Collection resource has only one part (entity type, no ID)
+	return len(parts) == 1 && parts[0] != ""
+}
+
+// handleCollectionResource handles collection resources like requirements://epics
+func (rh *ResourceHandler) handleCollectionResource(ctx context.Context, uri string) (interface{}, error) {
+	// Parse the entity type from the URI
+	entityType := strings.TrimPrefix(uri, "requirements://")
+
+	switch entityType {
+	case "epics":
+		return rh.handleEpicsCollection(ctx, uri)
+	case "user-stories":
+		return rh.handleUserStoriesCollection(ctx, uri)
+	case "requirements":
+		return rh.handleRequirementsCollection(ctx, uri)
+	case "acceptance-criteria":
+		return rh.handleAcceptanceCriteriaCollection(ctx, uri)
+	default:
+		return nil, jsonrpc.NewInvalidParamsError(fmt.Sprintf("Unsupported collection type: %s", entityType))
+	}
+}
+
+// handleEpicsCollection handles requirements://epics collection resource
+func (rh *ResourceHandler) handleEpicsCollection(ctx context.Context, uri string) (interface{}, error) {
+	// Get all epics using the existing ListEpics method with no filters
+	epics, _, err := rh.epicService.ListEpics(service.EpicFilters{
+		Limit: 1000, // Set a reasonable limit for collection resources
+	})
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get epics: %v", err))
+	}
+
+	// Format as collection resource
+	return rh.formatEpicsCollectionResource(uri, epics), nil
+}
+
+// handleUserStoriesCollection handles requirements://user-stories collection resource
+func (rh *ResourceHandler) handleUserStoriesCollection(ctx context.Context, uri string) (interface{}, error) {
+	// Get all user stories using the existing ListUserStories method with no filters
+	userStories, _, err := rh.userStoryService.ListUserStories(service.UserStoryFilters{
+		Limit: 1000, // Set a reasonable limit for collection resources
+	})
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get user stories: %v", err))
+	}
+
+	// Format as collection resource
+	return rh.formatUserStoriesCollectionResource(uri, userStories), nil
+}
+
+// handleRequirementsCollection handles requirements://requirements collection resource
+func (rh *ResourceHandler) handleRequirementsCollection(ctx context.Context, uri string) (interface{}, error) {
+	// Get all requirements using the existing ListRequirements method with no filters
+	requirements, _, err := rh.requirementService.ListRequirements(service.RequirementFilters{
+		Limit: 1000, // Set a reasonable limit for collection resources
+	})
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get requirements: %v", err))
+	}
+
+	// Format as collection resource
+	return rh.formatRequirementsCollectionResource(uri, requirements), nil
+}
+
+// handleAcceptanceCriteriaCollection handles requirements://acceptance-criteria collection resource
+func (rh *ResourceHandler) handleAcceptanceCriteriaCollection(ctx context.Context, uri string) (interface{}, error) {
+	// Get all acceptance criteria using the existing ListAcceptanceCriteria method with no filters
+	acceptanceCriteria, _, err := rh.acceptanceCriteriaService.ListAcceptanceCriteria(service.AcceptanceCriteriaFilters{
+		Limit: 1000, // Set a reasonable limit for collection resources
+	})
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get acceptance criteria: %v", err))
+	}
+
+	// Format as collection resource
+	return rh.formatAcceptanceCriteriaCollectionResource(uri, acceptanceCriteria), nil
+}
+
+// Collection formatting methods
+
+// formatEpicsCollectionResource formats a collection of epics as a resource response
+func (rh *ResourceHandler) formatEpicsCollectionResource(uri string, epics []models.Epic) *ResourceResponse {
+	epicsData := make([]any, len(epics))
+	for i, epic := range epics {
+		epicsData[i] = map[string]any{
+			"id":           epic.ID,
+			"reference_id": epic.ReferenceID,
+			"title":        epic.Title,
+			"description":  epic.Description,
+			"status":       epic.Status,
+			"priority":     epic.Priority,
+			"creator_id":   epic.CreatorID,
+			"assignee_id":  epic.AssigneeID,
+			"created_at":   epic.CreatedAt,
+			"updated_at":   epic.UpdatedAt,
+		}
+	}
+
+	contents := map[string]any{
+		"epics": epicsData,
+		"count": len(epics),
+	}
+
+	contentsJSON, _ := json.Marshal(contents)
+
+	return &ResourceResponse{
+		Contents: []ResourceContents{
+			{
+				URI:      uri,
+				MimeType: "application/json",
+				Text:     string(contentsJSON),
+			},
+		},
+	}
+}
+
+// formatUserStoriesCollectionResource formats a collection of user stories as a resource response
+func (rh *ResourceHandler) formatUserStoriesCollectionResource(uri string, userStories []models.UserStory) *ResourceResponse {
+	userStoriesData := make([]any, len(userStories))
+	for i, us := range userStories {
+		userStoriesData[i] = map[string]any{
+			"id":           us.ID,
+			"reference_id": us.ReferenceID,
+			"title":        us.Title,
+			"description":  us.Description,
+			"status":       us.Status,
+			"priority":     us.Priority,
+			"epic_id":      us.EpicID,
+			"creator_id":   us.CreatorID,
+			"assignee_id":  us.AssigneeID,
+			"created_at":   us.CreatedAt,
+			"updated_at":   us.UpdatedAt,
+		}
+	}
+
+	contents := map[string]any{
+		"user_stories": userStoriesData,
+		"count":        len(userStories),
+	}
+
+	contentsJSON, _ := json.Marshal(contents)
+
+	return &ResourceResponse{
+		Contents: []ResourceContents{
+			{
+				URI:      uri,
+				MimeType: "application/json",
+				Text:     string(contentsJSON),
+			},
+		},
+	}
+}
+
+// formatRequirementsCollectionResource formats a collection of requirements as a resource response
+func (rh *ResourceHandler) formatRequirementsCollectionResource(uri string, requirements []models.Requirement) *ResourceResponse {
+	requirementsData := make([]any, len(requirements))
+	for i, req := range requirements {
+		requirementsData[i] = map[string]any{
+			"id":                     req.ID,
+			"reference_id":           req.ReferenceID,
+			"title":                  req.Title,
+			"description":            req.Description,
+			"status":                 req.Status,
+			"priority":               req.Priority,
+			"user_story_id":          req.UserStoryID,
+			"acceptance_criteria_id": req.AcceptanceCriteriaID,
+			"type_id":                req.TypeID,
+			"creator_id":             req.CreatorID,
+			"assignee_id":            req.AssigneeID,
+			"created_at":             req.CreatedAt,
+			"updated_at":             req.UpdatedAt,
+		}
+	}
+
+	contents := map[string]any{
+		"requirements": requirementsData,
+		"count":        len(requirements),
+	}
+
+	contentsJSON, _ := json.Marshal(contents)
+
+	return &ResourceResponse{
+		Contents: []ResourceContents{
+			{
+				URI:      uri,
+				MimeType: "application/json",
+				Text:     string(contentsJSON),
+			},
+		},
+	}
+}
+
+// formatAcceptanceCriteriaCollectionResource formats a collection of acceptance criteria as a resource response
+func (rh *ResourceHandler) formatAcceptanceCriteriaCollectionResource(uri string, acceptanceCriteria []models.AcceptanceCriteria) *ResourceResponse {
+	acceptanceCriteriaData := make([]any, len(acceptanceCriteria))
+	for i, ac := range acceptanceCriteria {
+		acceptanceCriteriaData[i] = map[string]any{
+			"id":            ac.ID,
+			"reference_id":  ac.ReferenceID,
+			"description":   ac.Description,
+			"user_story_id": ac.UserStoryID,
+			"author_id":     ac.AuthorID,
+			"created_at":    ac.CreatedAt,
+			"updated_at":    ac.UpdatedAt,
+		}
+	}
+
+	contents := map[string]any{
+		"acceptance_criteria": acceptanceCriteriaData,
+		"count":               len(acceptanceCriteria),
+	}
+
+	contentsJSON, _ := json.Marshal(contents)
+
+	return &ResourceResponse{
+		Contents: []ResourceContents{
+			{
+				URI:      uri,
+				MimeType: "application/json",
+				Text:     string(contentsJSON),
+			},
+		},
+	}
 }
