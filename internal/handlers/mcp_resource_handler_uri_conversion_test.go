@@ -168,9 +168,10 @@ func TestResourceHandler_HandleResourcesRead_WithRequirementsURI(t *testing.T) {
 	// Verify the result structure
 	resourceResponse, ok := result.(*ResourceResponse)
 	assert.True(t, ok, "Result should be a ResourceResponse")
-	assert.Equal(t, "epic://EP-001", resourceResponse.URI)
-	assert.Equal(t, "Epic EP-001: Test Epic", resourceResponse.Name)
-	assert.Equal(t, "application/json", resourceResponse.MimeType)
+	assert.Len(t, resourceResponse.Contents, 1, "Should have exactly one content item")
+	assert.Equal(t, "epic://EP-001", resourceResponse.Contents[0].URI)
+	assert.Equal(t, "application/json", resourceResponse.Contents[0].MimeType)
+	assert.NotEmpty(t, resourceResponse.Contents[0].Text, "Content text should not be empty")
 
 	// Verify mock expectations
 	mockEpicService.AssertExpectations(t)
@@ -216,9 +217,10 @@ func TestResourceHandler_HandleResourcesRead_WithRequirementsURI_ReferenceID(t *
 	// Verify the result structure
 	resourceResponse, ok := result.(*ResourceResponse)
 	assert.True(t, ok, "Result should be a ResourceResponse")
-	assert.Equal(t, "epic://EP-001", resourceResponse.URI)
-	assert.Equal(t, "Epic EP-001: Test Epic", resourceResponse.Name)
-	assert.Equal(t, "application/json", resourceResponse.MimeType)
+	assert.Len(t, resourceResponse.Contents, 1, "Should have exactly one content item")
+	assert.Equal(t, "epic://EP-001", resourceResponse.Contents[0].URI)
+	assert.Equal(t, "application/json", resourceResponse.Contents[0].MimeType)
+	assert.NotEmpty(t, resourceResponse.Contents[0].Text, "Content text should not be empty")
 
 	// Verify mock expectations
 	mockEpicService.AssertExpectations(t)
