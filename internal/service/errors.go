@@ -21,4 +21,8 @@ var (
 	// General validation and permission errors
 	ErrValidation              = errors.New("validation error")
 	ErrInsufficientPermissions = errors.New("insufficient permissions")
+
+	// Resource service errors
+	ErrResourceProviderFailed = errors.New("resource provider failed")
+	ErrNoResourceProviders    = errors.New("no resource providers registered")
 )

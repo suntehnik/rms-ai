@@ -113,6 +113,9 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 		repos.User,
 	)
 
+	// Initialize resource service for MCP with proper dependency injection
+	resourceService := service.SetupResourceServiceForMCPHandler(repos, logger.Logger)
+
 	// Initialize auth service and handlers
 	authService := auth.NewService(cfg.JWT.Secret, 24*time.Hour) // 24 hours token duration
 	authHandler := auth.NewHandlers(authService, db.Postgres)
@@ -134,7 +137,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	searchHandler := handlers.NewSearchHandler(searchService, logger.Logger)
 	navigationHandler := handlers.NewNavigationHandler(navigationService)
 	steeringDocumentHandler := handlers.NewSteeringDocumentHandler(steeringDocumentService, epicService, repos.User)
-	mcpHandler := handlers.NewMCPHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService, searchService, steeringDocumentService)
+	mcpHandler := handlers.NewMCPHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService, searchService, steeringDocumentService, resourceService)
 
 	// Authentication routes (no /api/v1 prefix for auth)
 	authGroup := router.Group("/auth")

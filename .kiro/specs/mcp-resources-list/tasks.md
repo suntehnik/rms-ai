@@ -4,29 +4,29 @@ Convert the feature design into a series of prompts for a code-generation LLM th
 
 ## Task List
 
-- [ ] 1. Create core resource service interfaces and data models
+- [x] 1. Create core resource service interfaces and data models
   - Define ResourceDescriptor struct with JSON tags for MCP compliance
   - Create ResourceService interface with GetResourceList method
   - Create ResourceProvider interface for pluggable resource providers
   - Create ResourceRegistry interface for managing multiple providers
   - _Requirements: REQ-c4588fc0, REQ-5421, REQ-5426_
 
-- [ ] 2. Implement resource registry with provider management
+- [x] 2. Implement resource registry with provider management
   - Create ResourceRegistryImpl struct with provider registration
   - Implement GetAllResources method that aggregates from all providers
   - Add error handling for individual provider failures (continue with others)
   - Add resource sorting for consistent ordering
   - _Requirements: REQ-c4588fc0, REQ-5427_
 
-- [ ] 3. Create epic resource provider
-  - Implement EpicResourceProvider struct with database repository dependency
+- [x] 3. Create epic resource provider
+  - Implement EpicResourceProvider struct with database repository depend ency
   - Create GetResourceDescriptors method that queries epic metadata
   - Generate individual epic resources with URI format: requirements://epics/{id}
   - Add collection resource for all epics: requirements://epics
   - Include proper resource naming and descriptions with reference IDs
   - _Requirements: REQ-5422_
 
-- [ ] 4. Create user story resource provider
+- [x] 4. Create user story resource provider
   - Implement UserStoryResourceProvider struct with database repository dependency
   - Create GetResourceDescriptors method that queries user story metadata
   - Generate individual user story resources with URI format: requirements://user-stories/{id}
@@ -34,7 +34,7 @@ Convert the feature design into a series of prompts for a code-generation LLM th
   - Include proper resource naming and descriptions with reference IDs
   - _Requirements: REQ-5423_
 
-- [ ] 5. Create requirement resource provider
+- [x] 5. Create requirement resource provider
   - Implement RequirementResourceProvider struct with database repository dependency
   - Create GetResourceDescriptors method that queries requirement metadata
   - Generate individual requirement resources with URI format: requirements://requirements/{id}
@@ -42,21 +42,21 @@ Convert the feature design into a series of prompts for a code-generation LLM th
   - Include proper resource naming and descriptions with reference IDs
   - _Requirements: REQ-5423_
 
-- [ ] 6. Create search resource provider
+- [x] 6. Create search resource provider
   - Implement SearchResourceProvider struct (no database dependency needed)
   - Create GetResourceDescriptors method that returns search template resource
   - Generate search template resource with URI: requirements://search/{query}
   - Add proper description explaining search functionality
   - _Requirements: REQ-5424, REQ-5425_
 
-- [ ] 7. Implement main resource service
+- [x] 7. Implement main resource service
   - Create ResourceServiceImpl struct with registry dependency
   - Implement GetResourceList method that calls registry.GetAllResources
   - Add resource sorting by URI for consistent ordering
   - Add structured logging for service operations
   - _Requirements: REQ-c4588fc0, REQ-5428_
 
-- [ ] 8. Extend MCP handler with resources/list method
+- [x] 8. Extend MCP handler with resources/list method
   - Add resourceService field to existing MCPHandler struct
   - Implement handleResourcesList method with JSON-RPC 2.0 compliance
   - Add proper request logging with method name and request ID
@@ -64,7 +64,7 @@ Convert the feature design into a series of prompts for a code-generation LLM th
   - Integrate with existing MCP method routing
   - _Requirements: REQ-c4588fc0, REQ-5421, REQ-5426_
 
-- [ ] 9. Add comprehensive error handling
+- [x] 9. Add comprehensive error handling
   - Implement error handling in handleResourcesList for database errors
   - Add JSON-RPC error response formatting with proper error codes
   - Add error logging without exposing internal details
@@ -72,7 +72,7 @@ Convert the feature design into a series of prompts for a code-generation LLM th
   - Add timeout handling for resource list operations
   - _Requirements: REQ-5427, REQ-5428_
 
-- [ ] 10. Create service setup and dependency injection
+- [x] 10. Create service setup and dependency injection
   - Create SetupResourceService function that initializes all components
   - Register all resource providers (epic, user story, requirement, search)
   - Wire resource service with registry and providers
