@@ -206,6 +206,9 @@ func (m *MockSteeringEpicRepository) GetByIDWithUsers(id uuid.UUID) (*models.Epi
 func (m *MockSteeringEpicRepository) GetByReferenceIDWithUsers(referenceID string) (*models.Epic, error) {
 	return nil, nil
 }
+func (m *MockSteeringEpicRepository) ListWithIncludes(filters map[string]interface{}, includes []string, orderBy string, limit, offset int) ([]models.Epic, error) {
+	return nil, nil
+}
 
 func TestNewSteeringDocumentService(t *testing.T) {
 	mockRepo := &MockSteeringDocumentRepository{}

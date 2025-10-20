@@ -611,7 +611,7 @@ func (s *navigationService) ResolveReferenceID(entityType, referenceID string) (
 // Helper functions
 
 // getUserStoriesForEpic gets user stories for an epic with sorting
-func (s *navigationService) getUserStoriesForEpic(epicID uuid.UUID, orderBy, orderDirection string) ([]models.UserStory, error) {
+func (s *navigationService) getUserStoriesForEpic(epicID uuid.UUID, _, _ string) ([]models.UserStory, error) {
 	// Get user stories by epic ID - this will return user stories with populated users
 	// since they're being used in hierarchy context where user info is expected
 	return s.userStoryRepo.GetByEpic(epicID)

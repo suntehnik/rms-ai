@@ -214,7 +214,7 @@ func (s *SearchService) Search(ctx context.Context, options SearchOptions) (*Sea
 }
 
 // performFullTextSearch performs PostgreSQL full-text search
-func (s *SearchService) performFullTextSearch(ctx context.Context, options SearchOptions) ([]SearchResult, int64, error) {
+func (s *SearchService) performFullTextSearch(_ context.Context, options SearchOptions) ([]SearchResult, int64, error) {
 	var results []SearchResult
 	var total int64
 
@@ -273,7 +273,7 @@ func (s *SearchService) performFullTextSearch(ctx context.Context, options Searc
 }
 
 // performFilterSearch performs filtering without full-text search
-func (s *SearchService) performFilterSearch(ctx context.Context, options SearchOptions) ([]SearchResult, int64, error) {
+func (s *SearchService) performFilterSearch(_ context.Context, options SearchOptions) ([]SearchResult, int64, error) {
 	var results []SearchResult
 	var total int64
 
@@ -407,8 +407,8 @@ func (s *SearchService) searchEpics(searchQuery string, options SearchOptions) (
 	query := s.db.Model(&models.Epic{}).
 		Select("id, reference_id, title, description, priority, status, created_at, "+
 			"ts_rank(to_tsvector('english', reference_id || ' ' || title || ' ' || COALESCE(description, '')), "+
-			"plainto_tsquery('english', ?)) as relevance", options.Query).
-		Where("to_tsvector('english', reference_id || ' ' || title || ' ' || COALESCE(description, '')) @@ plainto_tsquery('english', ?)", options.Query)
+			"to_tsquery('english', ?)) as relevance", searchQuery).
+		Where("to_tsvector('english', reference_id || ' ' || title || ' ' || COALESCE(description, '')) @@ to_tsquery('english', ?)", searchQuery)
 
 	// Apply filters
 	query = s.applyEpicFilters(query, options.Filters)
@@ -442,8 +442,8 @@ func (s *SearchService) searchUserStories(searchQuery string, options SearchOpti
 	query := s.db.Model(&models.UserStory{}).
 		Select("id, reference_id, title, description, priority, status, created_at, "+
 			"ts_rank(to_tsvector('english', reference_id || ' ' || title || ' ' || COALESCE(description, '')), "+
-			"plainto_tsquery('english', ?)) as relevance", options.Query).
-		Where("to_tsvector('english', reference_id || ' ' || title || ' ' || COALESCE(description, '')) @@ plainto_tsquery('english', ?)", options.Query)
+			"to_tsquery('english', ?)) as relevance", searchQuery).
+		Where("to_tsvector('english', reference_id || ' ' || title || ' ' || COALESCE(description, '')) @@ to_tsquery('english', ?)", searchQuery)
 
 	// Apply filters
 	query = s.applyUserStoryFilters(query, options.Filters)
@@ -477,8 +477,8 @@ func (s *SearchService) searchAcceptanceCriteria(searchQuery string, options Sea
 	query := s.db.Model(&models.AcceptanceCriteria{}).
 		Select("id, reference_id, description, created_at, "+
 			"ts_rank(to_tsvector('english', reference_id || ' ' || COALESCE(description, '')), "+
-			"plainto_tsquery('english', ?)) as relevance", options.Query).
-		Where("to_tsvector('english', reference_id || ' ' || COALESCE(description, '')) @@ plainto_tsquery('english', ?)", options.Query)
+			"to_tsquery('english', ?)) as relevance", searchQuery).
+		Where("to_tsvector('english', reference_id || ' ' || COALESCE(description, '')) @@ to_tsquery('english', ?)", searchQuery)
 
 	// Apply filters
 	query = s.applyAcceptanceCriteriaFilters(query, options.Filters)
@@ -511,8 +511,8 @@ func (s *SearchService) searchRequirements(searchQuery string, options SearchOpt
 	query := s.db.Model(&models.Requirement{}).
 		Select("id, reference_id, title, description, priority, status, created_at, "+
 			"ts_rank(to_tsvector('english', reference_id || ' ' || title || ' ' || COALESCE(description, '')), "+
-			"plainto_tsquery('english', ?)) as relevance", options.Query).
-		Where("to_tsvector('english', reference_id || ' ' || title || ' ' || COALESCE(description, '')) @@ plainto_tsquery('english', ?)", options.Query)
+			"to_tsquery('english', ?)) as relevance", searchQuery).
+		Where("to_tsvector('english', reference_id || ' ' || title || ' ' || COALESCE(description, '')) @@ to_tsquery('english', ?)", searchQuery)
 
 	// Apply filters
 	query = s.applyRequirementFilters(query, options.Filters)

@@ -67,6 +67,7 @@ type EpicRepository interface {
 	HasUserStories(id uuid.UUID) (bool, error)
 	GetByIDWithUsers(id uuid.UUID) (*Epic, error)
 	GetByReferenceIDWithUsers(referenceID string) (*Epic, error)
+	ListWithIncludes(filters map[string]interface{}, includes []string, orderBy string, limit, offset int) ([]Epic, error)
 }
 
 // UserStoryRepository defines user story-specific repository operations
@@ -83,6 +84,7 @@ type UserStoryRepository interface {
 	HasRequirements(id uuid.UUID) (bool, error)
 	GetByIDWithUsers(id uuid.UUID) (*UserStory, error)
 	GetByReferenceIDWithUsers(referenceID string) (*UserStory, error)
+	ListWithIncludes(filters map[string]interface{}, includes []string, orderBy string, limit, offset int) ([]UserStory, error)
 }
 
 // AcceptanceCriteriaRepository defines acceptance criteria-specific repository operations

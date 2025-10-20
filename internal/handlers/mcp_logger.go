@@ -61,6 +61,34 @@ func (ml *MCPLogger) LogRequest(ctx context.Context, method string, params inter
 	ml.logger.WithFields(fields).Info("Processing MCP request")
 }
 
+// LogRequestBody logs the raw JSON-RPC request body for debugging
+func (ml *MCPLogger) LogRequestBody(ctx context.Context, method string, requestBody []byte, user *models.User) {
+	correlationID := logger.GetCorrelationID(ctx)
+	if correlationID == "" {
+		correlationID = logger.NewCorrelationID()
+	}
+
+	fields := logrus.Fields{
+		"correlation_id": correlationID,
+		"component":      "mcp_handler",
+		"operation":      "request_body",
+		"method":         method,
+		"timestamp":      time.Now().UTC(),
+	}
+
+	// Add user information if available
+	if user != nil {
+		fields["user_id"] = user.ID.String()
+		fields["username"] = user.Username
+	}
+
+	// Sanitize the request body before logging
+	sanitizedBody := ml.redactSensitiveStrings(string(requestBody))
+	fields["request_body"] = sanitizedBody
+
+	ml.logger.WithFields(fields).Info("MCP JSON-RPC request body")
+}
+
 // LogResponse logs an MCP response with timing information
 func (ml *MCPLogger) LogResponse(ctx context.Context, method string, success bool, duration time.Duration, user *models.User) {
 	correlationID := logger.GetCorrelationID(ctx)
@@ -86,6 +114,31 @@ func (ml *MCPLogger) LogResponse(ctx context.Context, method string, success boo
 	} else {
 		ml.logger.WithFields(fields).Warn("MCP request completed with error")
 	}
+}
+
+// LogResponseBody logs the raw JSON-RPC response body for debugging
+func (ml *MCPLogger) LogResponseBody(ctx context.Context, method string, responseBody []byte, user *models.User) {
+	correlationID := logger.GetCorrelationID(ctx)
+
+	fields := logrus.Fields{
+		"correlation_id": correlationID,
+		"component":      "mcp_handler",
+		"operation":      "response_body",
+		"method":         method,
+		"timestamp":      time.Now().UTC(),
+	}
+
+	// Add user information if available
+	if user != nil {
+		fields["user_id"] = user.ID.String()
+		fields["username"] = user.Username
+	}
+
+	// Sanitize the response body before logging (though responses typically don't contain sensitive data)
+	sanitizedBody := ml.redactSensitiveStrings(string(responseBody))
+	fields["response_body"] = sanitizedBody
+
+	ml.logger.WithFields(fields).Info("MCP JSON-RPC response body")
 }
 
 // LogError logs an error that occurred during MCP processing
@@ -296,4 +349,52 @@ func (ml *MCPLogger) WithCorrelationID(ctx context.Context) context.Context {
 		return logger.WithCorrelationID(ctx, logger.NewCorrelationID())
 	}
 	return ctx
+}
+
+// Info implements jsonrpc.Logger interface for info level logging
+func (ml *MCPLogger) Info(msg string, fields ...interface{}) {
+	logFields := logrus.Fields{}
+
+	// Convert fields to logrus.Fields format
+	for i := 0; i < len(fields); i += 2 {
+		if i+1 < len(fields) {
+			key := fields[i].(string)
+			value := fields[i+1]
+			logFields[key] = value
+		}
+	}
+
+	ml.logger.WithFields(logFields).Info(msg)
+}
+
+// Error implements jsonrpc.Logger interface for error level logging
+func (ml *MCPLogger) Error(msg string, fields ...interface{}) {
+	logFields := logrus.Fields{}
+
+	// Convert fields to logrus.Fields format
+	for i := 0; i < len(fields); i += 2 {
+		if i+1 < len(fields) {
+			key := fields[i].(string)
+			value := fields[i+1]
+			logFields[key] = value
+		}
+	}
+
+	ml.logger.WithFields(logFields).Error(msg)
+}
+
+// Debug implements jsonrpc.Logger interface for debug level logging
+func (ml *MCPLogger) Debug(msg string, fields ...interface{}) {
+	logFields := logrus.Fields{}
+
+	// Convert fields to logrus.Fields format
+	for i := 0; i < len(fields); i += 2 {
+		if i+1 < len(fields) {
+			key := fields[i].(string)
+			value := fields[i+1]
+			logFields[key] = value
+		}
+	}
+
+	ml.logger.WithFields(logFields).Debug(msg)
 }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -43,6 +44,9 @@ func NewMCPHandler(
 	toolsHandler := NewToolsHandler(epicService, userStoryService, requirementService, searchService, steeringDocumentService)
 	mcpLogger := NewMCPLogger()
 	errorMapper := jsonrpc.NewErrorMapper()
+
+	// Set the MCP logger for the JSON-RPC processor to enable request/response body logging
+	processor.SetLogger(mcpLogger)
 
 	// Create handler instance
 	handler := &MCPHandler{
@@ -101,26 +105,52 @@ func (h *MCPHandler) Process(c *gin.Context) {
 		h.mcpLogger.LogError(ctx, "request_parsing", err, user)
 
 		jsonrpcErr := jsonrpc.NewParseError("Failed to read request body")
+
+		// Log the error response body even for read errors
+		if errorBody, marshalErr := json.Marshal(jsonrpcErr); marshalErr == nil {
+			h.mcpLogger.LogResponseBody(ctx, "unknown", errorBody, user)
+		}
+
 		c.JSON(http.StatusBadRequest, jsonrpcErr)
 		return
 	}
+
+	// Extract method from request for better logging
+	method := h.extractMethodFromRequestBody(body)
+
+	// Log the request body for debugging (always log, regardless of success/failure)
+	h.mcpLogger.LogRequestBody(ctx, method, body, user)
 
 	// Process the JSON-RPC request
 	responseData, err := h.processor.ProcessRequest(ctx, body)
 	duration := time.Since(startTime)
 
+	// Check if the response contains an error (JSON-RPC processor returns responseData even for errors)
+	isError := h.isErrorResponse(responseData)
+
 	if err != nil {
 		h.mcpLogger.LogError(ctx, "request_processing", err, user)
-		h.mcpLogger.LogResponse(ctx, "unknown", false, duration, user)
+		h.mcpLogger.LogResponse(ctx, method, false, duration, user)
 
 		// Map the error to appropriate JSON-RPC error
 		jsonrpcErr := h.errorMapper.MapError(err)
+
+		// Log the error response body
+		if errorBody, marshalErr := json.Marshal(jsonrpcErr); marshalErr == nil {
+			h.mcpLogger.LogResponseBody(ctx, method, errorBody, user)
+		}
+
 		c.JSON(http.StatusInternalServerError, jsonrpcErr)
 		return
 	}
 
-	// Log successful processing
-	h.mcpLogger.LogResponse(ctx, "unknown", true, duration, user)
+	// Log processing result (success or error based on response content)
+	h.mcpLogger.LogResponse(ctx, method, !isError, duration, user)
+
+	// Always log the response body for debugging (both success and error responses)
+	if len(responseData) > 0 {
+		h.mcpLogger.LogResponseBody(ctx, method, responseData, user)
+	}
 
 	// Log performance metrics
 	h.mcpLogger.LogPerformanceMetrics(ctx, "mcp_request", duration, user, map[string]interface{}{
@@ -528,4 +558,41 @@ func getUserID(user *models.User) string {
 		return "anonymous"
 	}
 	return user.ID.String()
+}
+
+// extractMethodFromRequestBody extracts the method name from JSON-RPC request body
+func (h *MCPHandler) extractMethodFromRequestBody(body []byte) string {
+	var request struct {
+		Method string `json:"method"`
+	}
+
+	if err := json.Unmarshal(body, &request); err != nil {
+		return "unknown"
+	}
+
+	if request.Method == "" {
+		return "unknown"
+	}
+
+	return request.Method
+}
+
+// isErrorResponse checks if the JSON-RPC response contains an error
+func (h *MCPHandler) isErrorResponse(responseData []byte) bool {
+	if len(responseData) == 0 {
+		return false
+	}
+
+	var response struct {
+		Error *struct {
+			Code    int    `json:"code"`
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+
+	if err := json.Unmarshal(responseData, &response); err != nil {
+		return false
+	}
+
+	return response.Error != nil
 }

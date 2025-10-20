@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -352,7 +353,7 @@ func (h *UserStoryHandler) DeleteUserStory(c *gin.Context) {
 
 // ListUserStories handles GET /api/v1/user-stories
 // @Summary List user stories with filtering and pagination
-// @Description Retrieve a list of user stories with optional filtering by epic, creator, assignee, status, and priority. Supports pagination and custom sorting.
+// @Description Retrieve a list of user stories with optional filtering by epic, creator, assignee, status, and priority. Supports pagination and custom sorting. Use the include parameter to load related entities.
 // @Tags user-stories
 // @Accept json
 // @Produce json
@@ -362,6 +363,7 @@ func (h *UserStoryHandler) DeleteUserStory(c *gin.Context) {
 // @Param assignee_id query string false "Filter by assignee UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174002")
 // @Param status query string false "Filter by user story status" Enums(Backlog,Draft,In Progress,Done,Cancelled) example("Backlog")
 // @Param priority query integer false "Filter by priority level" minimum(1) maximum(4) example(2)
+// @Param include query string false "Include related entities (comma-separated)" example("epic,creator,assignee") example("acceptance_criteria,requirements,comments")
 // @Param order_by query string false "Sort order for results" example("created_at DESC") example("priority ASC") example("title ASC")
 // @Param limit query integer false "Maximum number of results to return" minimum(1) maximum(100) default(50) example(20)
 // @Param offset query integer false "Number of results to skip for pagination" minimum(0) default(0) example(0)
@@ -401,6 +403,18 @@ func (h *UserStoryHandler) ListUserStories(c *gin.Context) {
 			prio := models.Priority(p)
 			filters.Priority = &prio
 		}
+	}
+
+	if include := c.Query("include"); include != "" {
+		// Split comma-separated includes and trim whitespace
+		includes := make([]string, 0)
+		for _, inc := range strings.Split(include, ",") {
+			trimmed := strings.TrimSpace(inc)
+			if trimmed != "" {
+				includes = append(includes, trimmed)
+			}
+		}
+		filters.Include = includes
 	}
 
 	if orderBy := c.Query("order_by"); orderBy != "" {

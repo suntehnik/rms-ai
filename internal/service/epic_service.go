@@ -124,6 +124,11 @@ type EpicFilters struct {
 	// @Example 1
 	Priority *models.Priority `json:"priority,omitempty"`
 
+	// Include specifies which related entities to include
+	// @Description Comma-separated list of related entities to include (optional)
+	// @Example "creator,assignee,user_stories,comments"
+	Include []string `json:"include,omitempty"`
+
 	// OrderBy specifies the field and direction for sorting
 	// @Description Order results by field and direction (optional, default: "created_at DESC")
 	// @Example "created_at DESC"
@@ -344,6 +349,12 @@ func (s *epicService) ListEpics(filters EpicFilters) ([]models.Epic, int64, erro
 		filterMap["priority"] = *filters.Priority
 	}
 
+	// Get total count with filters
+	totalCount, err := s.epicRepo.Count(filterMap)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count epics: %w", err)
+	}
+
 	// Set default ordering
 	orderBy := "created_at DESC"
 	if filters.OrderBy != "" {
@@ -356,15 +367,16 @@ func (s *epicService) ListEpics(filters EpicFilters) ([]models.Epic, int64, erro
 		limit = filters.Limit
 	}
 
-	epics, err := s.epicRepo.List(filterMap, orderBy, limit, filters.Offset)
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to list epics: %w", err)
+	// Use the new method with includes if specified, otherwise use the regular method
+	var epics []models.Epic
+	if len(filters.Include) > 0 {
+		epics, err = s.epicRepo.ListWithIncludes(filterMap, filters.Include, orderBy, limit, filters.Offset)
+	} else {
+		epics, err = s.epicRepo.List(filterMap, orderBy, limit, filters.Offset)
 	}
 
-	// Get total count for pagination
-	totalCount, err := s.epicRepo.Count(filterMap)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to count epics: %w", err)
+		return nil, 0, fmt.Errorf("failed to list epics: %w", err)
 	}
 
 	return epics, totalCount, nil

@@ -101,3 +101,48 @@ func (r *epicRepository) GetByReferenceIDWithUsers(referenceID string) (*models.
 	}
 	return &epic, nil
 }
+
+// ListWithIncludes retrieves epics with optional related entity preloading
+func (r *epicRepository) ListWithIncludes(filters map[string]interface{}, includes []string, orderBy string, limit, offset int) ([]models.Epic, error) {
+	var epics []models.Epic
+
+	query := r.GetDB().Model(&models.Epic{})
+
+	// Apply includes (preloads)
+	for _, include := range includes {
+		switch include {
+		case "creator":
+			query = query.Preload("Creator")
+		case "assignee":
+			query = query.Preload("Assignee")
+		case "user_stories":
+			query = query.Preload("UserStories")
+		case "comments":
+			query = query.Preload("Comments")
+		}
+	}
+
+	// Apply filters
+	for key, value := range filters {
+		query = query.Where(key+" = ?", value)
+	}
+
+	// Apply ordering
+	if orderBy != "" {
+		query = query.Order(orderBy)
+	}
+
+	// Apply pagination
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+
+	if err := query.Find(&epics).Error; err != nil {
+		return nil, r.handleDBError(err)
+	}
+
+	return epics, nil
+}

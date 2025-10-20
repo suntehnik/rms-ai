@@ -61,12 +61,17 @@ func (p *Processor) RegisterHandler(method string, handler Handler) {
 
 // ProcessRequest processes a JSON-RPC request and returns a response
 func (p *Processor) ProcessRequest(ctx context.Context, requestData []byte) ([]byte, error) {
+	// Log the incoming request body
+	p.logger.Debug("JSON-RPC request body", "request", string(requestData))
+
 	// Parse the request
 	request, err := ParseRequest(requestData)
 	if err != nil {
 		// For parse errors, we can't get the ID, so use nil
 		response := NewErrorResponse(nil, err.(*JSONRPCError))
-		return json.Marshal(response)
+		responseData, _ := json.Marshal(response)
+		p.logger.Debug("JSON-RPC response body", "response", string(responseData))
+		return responseData, nil
 	}
 
 	var idValue interface{}
@@ -99,6 +104,9 @@ func (p *Processor) ProcessRequest(ctx context.Context, requestData []byte) ([]b
 		fallbackResponse := NewErrorResponse(idValue, NewInternalError("Failed to marshal response"))
 		responseData, _ = json.Marshal(fallbackResponse)
 	}
+
+	// Log the outgoing response body
+	p.logger.Debug("JSON-RPC response body", "response", string(responseData))
 
 	return responseData, nil
 }
