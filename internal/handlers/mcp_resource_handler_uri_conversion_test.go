@@ -60,10 +60,10 @@ func TestResourceHandler_ConvertRequirementsURI(t *testing.T) {
 			setupMock:     func(mockService *MockEpicService) {},
 		},
 		{
-			name:          "collection URI not supported",
+			name:          "collection URI supported",
 			uri:           "requirements://epics",
-			expectedURI:   "",
-			expectedError: true,
+			expectedURI:   "requirements://epics",
+			expectedError: false,
 			setupMock:     func(mockService *MockEpicService) {},
 		},
 		{
