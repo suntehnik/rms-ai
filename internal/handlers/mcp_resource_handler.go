@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -44,11 +45,14 @@ type ResourceReadRequest struct {
 
 // ResourceResponse represents the response for resources/read method
 type ResourceResponse struct {
-	URI         string      `json:"uri"`
-	Name        string      `json:"name"`
-	Description string      `json:"description"`
-	MimeType    string      `json:"mimeType"`
-	Contents    interface{} `json:"contents"`
+	Contents []ResourceContents `json:"contents"`
+}
+
+// ResourceContents represents individual resource content according to MCP spec
+type ResourceContents struct {
+	URI      string `json:"uri"`
+	MimeType string `json:"mimeType,omitempty"`
+	Text     string `json:"text,omitempty"`
 }
 
 // HandleResourcesRead handles the resources/read method
@@ -222,22 +226,28 @@ func (rh *ResourceHandler) handleAcceptanceCriteriaResource(_ context.Context, p
 
 // formatEpicResource formats an epic as a resource response
 func (rh *ResourceHandler) formatEpicResource(parsedURI *ParsedURI, epic *models.Epic) *ResourceResponse {
+	contents := map[string]interface{}{
+		"id":           epic.ID,
+		"reference_id": epic.ReferenceID,
+		"title":        epic.Title,
+		"description":  epic.Description,
+		"status":       epic.Status,
+		"priority":     epic.Priority,
+		"creator_id":   epic.CreatorID,
+		"assignee_id":  epic.AssigneeID,
+		"created_at":   epic.CreatedAt,
+		"updated_at":   epic.UpdatedAt,
+	}
+
+	contentsJSON, _ := json.Marshal(contents)
+
 	return &ResourceResponse{
-		URI:         rh.buildURIFromParsed(parsedURI),
-		Name:        fmt.Sprintf("Epic %s: %s", epic.ReferenceID, epic.Title),
-		Description: fmt.Sprintf("Epic %s with status %s and priority %d", epic.ReferenceID, epic.Status, epic.Priority),
-		MimeType:    "application/json",
-		Contents: map[string]interface{}{
-			"id":           epic.ID,
-			"reference_id": epic.ReferenceID,
-			"title":        epic.Title,
-			"description":  epic.Description,
-			"status":       epic.Status,
-			"priority":     epic.Priority,
-			"creator_id":   epic.CreatorID,
-			"assignee_id":  epic.AssigneeID,
-			"created_at":   epic.CreatedAt,
-			"updated_at":   epic.UpdatedAt,
+		Contents: []ResourceContents{
+			{
+				URI:      rh.buildURIFromParsed(parsedURI),
+				MimeType: "application/json",
+				Text:     string(contentsJSON),
+			},
 		},
 	}
 }
@@ -278,12 +288,16 @@ func (rh *ResourceHandler) formatEpicHierarchyResource(parsedURI *ParsedURI, epi
 		contents["user_stories"] = userStories
 	}
 
+	contentsJSON, _ := json.Marshal(contents)
+
 	return &ResourceResponse{
-		URI:         rh.buildURIFromParsed(parsedURI),
-		Name:        fmt.Sprintf("Epic %s Hierarchy: %s", epic.ReferenceID, epic.Title),
-		Description: fmt.Sprintf("Epic %s with all its user stories", epic.ReferenceID),
-		MimeType:    "application/json",
-		Contents:    contents,
+		Contents: []ResourceContents{
+			{
+				URI:      rh.buildURIFromParsed(parsedURI),
+				MimeType: "application/json",
+				Text:     string(contentsJSON),
+			},
+		},
 	}
 }
 
@@ -305,37 +319,49 @@ func (rh *ResourceHandler) formatUserStoriesResource(parsedURI *ParsedURI, userS
 		}
 	}
 
+	contents := map[string]interface{}{
+		"user_stories": userStoriesData,
+		"count":        len(userStories),
+	}
+
+	contentsJSON, _ := json.Marshal(contents)
+
 	return &ResourceResponse{
-		URI:         rh.buildURIFromParsed(parsedURI),
-		Name:        "User Stories",
-		Description: fmt.Sprintf("List of %d user stories", len(userStories)),
-		MimeType:    "application/json",
-		Contents: map[string]interface{}{
-			"user_stories": userStoriesData,
-			"count":        len(userStories),
+		Contents: []ResourceContents{
+			{
+				URI:      rh.buildURIFromParsed(parsedURI),
+				MimeType: "application/json",
+				Text:     string(contentsJSON),
+			},
 		},
 	}
 }
 
 // formatUserStoryResource formats a user story as a resource response
 func (rh *ResourceHandler) formatUserStoryResource(parsedURI *ParsedURI, userStory *models.UserStory) *ResourceResponse {
+	contents := map[string]interface{}{
+		"id":           userStory.ID,
+		"reference_id": userStory.ReferenceID,
+		"title":        userStory.Title,
+		"description":  userStory.Description,
+		"status":       userStory.Status,
+		"priority":     userStory.Priority,
+		"epic_id":      userStory.EpicID,
+		"creator_id":   userStory.CreatorID,
+		"assignee_id":  userStory.AssigneeID,
+		"created_at":   userStory.CreatedAt,
+		"updated_at":   userStory.UpdatedAt,
+	}
+
+	contentsJSON, _ := json.Marshal(contents)
+
 	return &ResourceResponse{
-		URI:         rh.buildURIFromParsed(parsedURI),
-		Name:        fmt.Sprintf("User Story %s: %s", userStory.ReferenceID, userStory.Title),
-		Description: fmt.Sprintf("User Story %s with status %s and priority %d", userStory.ReferenceID, userStory.Status, userStory.Priority),
-		MimeType:    "application/json",
-		Contents: map[string]interface{}{
-			"id":           userStory.ID,
-			"reference_id": userStory.ReferenceID,
-			"title":        userStory.Title,
-			"description":  userStory.Description,
-			"status":       userStory.Status,
-			"priority":     userStory.Priority,
-			"epic_id":      userStory.EpicID,
-			"creator_id":   userStory.CreatorID,
-			"assignee_id":  userStory.AssigneeID,
-			"created_at":   userStory.CreatedAt,
-			"updated_at":   userStory.UpdatedAt,
+		Contents: []ResourceContents{
+			{
+				URI:      rh.buildURIFromParsed(parsedURI),
+				MimeType: "application/json",
+				Text:     string(contentsJSON),
+			},
 		},
 	}
 }
@@ -361,39 +387,51 @@ func (rh *ResourceHandler) formatRequirementsResource(parsedURI *ParsedURI, requ
 		}
 	}
 
+	contents := map[string]interface{}{
+		"requirements": requirementsData,
+		"count":        len(requirements),
+	}
+
+	contentsJSON, _ := json.Marshal(contents)
+
 	return &ResourceResponse{
-		URI:         rh.buildURIFromParsed(parsedURI),
-		Name:        "Requirements",
-		Description: fmt.Sprintf("List of %d requirements", len(requirements)),
-		MimeType:    "application/json",
-		Contents: map[string]interface{}{
-			"requirements": requirementsData,
-			"count":        len(requirements),
+		Contents: []ResourceContents{
+			{
+				URI:      rh.buildURIFromParsed(parsedURI),
+				MimeType: "application/json",
+				Text:     string(contentsJSON),
+			},
 		},
 	}
 }
 
 // formatRequirementResource formats a requirement as a resource response
 func (rh *ResourceHandler) formatRequirementResource(parsedURI *ParsedURI, requirement *models.Requirement) *ResourceResponse {
+	contents := map[string]interface{}{
+		"id":                     requirement.ID,
+		"reference_id":           requirement.ReferenceID,
+		"title":                  requirement.Title,
+		"description":            requirement.Description,
+		"status":                 requirement.Status,
+		"priority":               requirement.Priority,
+		"user_story_id":          requirement.UserStoryID,
+		"acceptance_criteria_id": requirement.AcceptanceCriteriaID,
+		"type_id":                requirement.TypeID,
+		"creator_id":             requirement.CreatorID,
+		"assignee_id":            requirement.AssigneeID,
+		"created_at":             requirement.CreatedAt,
+		"updated_at":             requirement.UpdatedAt,
+	}
+
+	contentsJSON, _ := json.Marshal(contents)
+
 	return &ResourceResponse{
-		URI:         rh.buildURIFromParsed(parsedURI),
-		Name:        fmt.Sprintf("Requirement %s: %s", requirement.ReferenceID, requirement.Title),
-		Description: fmt.Sprintf("Requirement %s with status %s and priority %d", requirement.ReferenceID, requirement.Status, requirement.Priority),
-		MimeType:    "application/json",
-		Contents: map[string]interface{}{
-			"id":                     requirement.ID,
-			"reference_id":           requirement.ReferenceID,
-			"title":                  requirement.Title,
-			"description":            requirement.Description,
-			"status":                 requirement.Status,
-			"priority":               requirement.Priority,
-			"user_story_id":          requirement.UserStoryID,
-			"acceptance_criteria_id": requirement.AcceptanceCriteriaID,
-			"type_id":                requirement.TypeID,
-			"creator_id":             requirement.CreatorID,
-			"assignee_id":            requirement.AssigneeID,
-			"created_at":             requirement.CreatedAt,
-			"updated_at":             requirement.UpdatedAt,
+		Contents: []ResourceContents{
+			{
+				URI:      rh.buildURIFromParsed(parsedURI),
+				MimeType: "application/json",
+				Text:     string(contentsJSON),
+			},
 		},
 	}
 }
@@ -450,30 +488,40 @@ func (rh *ResourceHandler) formatRequirementRelationshipsResource(parsedURI *Par
 		contents["target_relationships"] = targetRels
 	}
 
+	contentsJSON, _ := json.Marshal(contents)
+
 	return &ResourceResponse{
-		URI:         rh.buildURIFromParsed(parsedURI),
-		Name:        fmt.Sprintf("Requirement %s Relationships: %s", requirement.ReferenceID, requirement.Title),
-		Description: fmt.Sprintf("Requirement %s with all its relationships", requirement.ReferenceID),
-		MimeType:    "application/json",
-		Contents:    contents,
+		Contents: []ResourceContents{
+			{
+				URI:      rh.buildURIFromParsed(parsedURI),
+				MimeType: "application/json",
+				Text:     string(contentsJSON),
+			},
+		},
 	}
 }
 
 // formatAcceptanceCriteriaResource formats acceptance criteria as a resource response
 func (rh *ResourceHandler) formatAcceptanceCriteriaResource(parsedURI *ParsedURI, acceptanceCriteria *models.AcceptanceCriteria) *ResourceResponse {
+	contents := map[string]interface{}{
+		"id":            acceptanceCriteria.ID,
+		"reference_id":  acceptanceCriteria.ReferenceID,
+		"description":   acceptanceCriteria.Description,
+		"user_story_id": acceptanceCriteria.UserStoryID,
+		"author_id":     acceptanceCriteria.AuthorID,
+		"created_at":    acceptanceCriteria.CreatedAt,
+		"updated_at":    acceptanceCriteria.UpdatedAt,
+	}
+
+	contentsJSON, _ := json.Marshal(contents)
+
 	return &ResourceResponse{
-		URI:         rh.buildURIFromParsed(parsedURI),
-		Name:        fmt.Sprintf("Acceptance Criteria %s", acceptanceCriteria.ReferenceID),
-		Description: fmt.Sprintf("Acceptance Criteria %s for user story", acceptanceCriteria.ReferenceID),
-		MimeType:    "application/json",
-		Contents: map[string]interface{}{
-			"id":            acceptanceCriteria.ID,
-			"reference_id":  acceptanceCriteria.ReferenceID,
-			"description":   acceptanceCriteria.Description,
-			"user_story_id": acceptanceCriteria.UserStoryID,
-			"author_id":     acceptanceCriteria.AuthorID,
-			"created_at":    acceptanceCriteria.CreatedAt,
-			"updated_at":    acceptanceCriteria.UpdatedAt,
+		Contents: []ResourceContents{
+			{
+				URI:      rh.buildURIFromParsed(parsedURI),
+				MimeType: "application/json",
+				Text:     string(contentsJSON),
+			},
 		},
 	}
 }
@@ -493,14 +541,20 @@ func (rh *ResourceHandler) formatAcceptanceCriteriaListResource(parsedURI *Parse
 		}
 	}
 
+	contents := map[string]interface{}{
+		"acceptance_criteria": acceptanceCriteriaData,
+		"count":               len(acceptanceCriteriaList),
+	}
+
+	contentsJSON, _ := json.Marshal(contents)
+
 	return &ResourceResponse{
-		URI:         rh.buildURIFromParsed(parsedURI),
-		Name:        "Acceptance Criteria",
-		Description: fmt.Sprintf("List of %d acceptance criteria", len(acceptanceCriteriaList)),
-		MimeType:    "application/json",
-		Contents: map[string]interface{}{
-			"acceptance_criteria": acceptanceCriteriaData,
-			"count":               len(acceptanceCriteriaList),
+		Contents: []ResourceContents{
+			{
+				URI:      rh.buildURIFromParsed(parsedURI),
+				MimeType: "application/json",
+				Text:     string(contentsJSON),
+			},
 		},
 	}
 }
