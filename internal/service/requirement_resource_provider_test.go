@@ -34,7 +34,7 @@ func TestRequirementResourceProvider_GetResourceDescriptors(t *testing.T) {
 					Title:       "Password Validation Rules",
 				},
 			},
-			expectedCount: 3, // 2 individual requirements + 1 collection resource
+			expectedCount: 5, // 2 requirements * 2 variants (UUID + reference ID) + 1 collection resource
 			expectedError: false,
 			setupMock: func(mockRepo *MockRequirementRepository) {
 				mockRepo.On("List", mock.Anything, "created_at ASC", 1000, 0).Return([]models.Requirement{
@@ -118,7 +118,7 @@ func TestRequirementResourceProvider_GetResourceDescriptors(t *testing.T) {
 							assert.Equal(t, "application/json", resource.MimeType)
 						}
 					}
-					assert.Equal(t, len(tt.requirements), requirementResourceCount)
+					assert.Equal(t, len(tt.requirements)*2, requirementResourceCount) // Each requirement generates 2 resources (UUID + reference ID)
 				}
 			}
 
@@ -186,24 +186,35 @@ func TestRequirementResourceProvider_GetResourceDescriptors_Success(t *testing.T
 
 	// Assert
 	assert.NoError(t, err)
-	assert.Len(t, resources, 3) // 2 individual requirements + 1 collection resource
+	assert.Len(t, resources, 5) // 2 requirements * 2 variants (UUID + reference ID) + 1 collection resource
 
-	// Check individual requirement resources
+	// Check individual requirement resources (UUID variants)
 	assert.Equal(t, "requirements://requirements/550e8400-e29b-41d4-a716-446655440001", resources[0].URI)
 	assert.Equal(t, "Requirement: User Authentication API", resources[0].Name)
 	assert.Equal(t, "Requirement REQ-001: User Authentication API", resources[0].Description)
 	assert.Equal(t, "application/json", resources[0].MimeType)
 
-	assert.Equal(t, "requirements://requirements/550e8400-e29b-41d4-a716-446655440002", resources[1].URI)
-	assert.Equal(t, "Requirement: Password Validation Rules", resources[1].Name)
-	assert.Equal(t, "Requirement REQ-002: Password Validation Rules", resources[1].Description)
+	// Check individual requirement resources (reference ID variants)
+	assert.Equal(t, "requirements://requirements/REQ-001", resources[1].URI)
+	assert.Equal(t, "Requirement: User Authentication API", resources[1].Name)
+	assert.Equal(t, "Requirement REQ-001: User Authentication API", resources[1].Description)
 	assert.Equal(t, "application/json", resources[1].MimeType)
 
-	// Check collection resource
-	assert.Equal(t, "requirements://requirements", resources[2].URI)
-	assert.Equal(t, "All Requirements", resources[2].Name)
-	assert.Equal(t, "Complete list of all requirements in the system", resources[2].Description)
+	assert.Equal(t, "requirements://requirements/550e8400-e29b-41d4-a716-446655440002", resources[2].URI)
+	assert.Equal(t, "Requirement: Password Validation Rules", resources[2].Name)
+	assert.Equal(t, "Requirement REQ-002: Password Validation Rules", resources[2].Description)
 	assert.Equal(t, "application/json", resources[2].MimeType)
+
+	assert.Equal(t, "requirements://requirements/REQ-002", resources[3].URI)
+	assert.Equal(t, "Requirement: Password Validation Rules", resources[3].Name)
+	assert.Equal(t, "Requirement REQ-002: Password Validation Rules", resources[3].Description)
+	assert.Equal(t, "application/json", resources[3].MimeType)
+
+	// Check collection resource
+	assert.Equal(t, "requirements://requirements", resources[4].URI)
+	assert.Equal(t, "All Requirements", resources[4].Name)
+	assert.Equal(t, "Complete list of all requirements in the system", resources[4].Description)
+	assert.Equal(t, "application/json", resources[4].MimeType)
 
 	// Verify mock expectations
 	mockRepo.AssertExpectations(t)

@@ -3,10 +3,13 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"product-requirements-management/internal/jsonrpc"
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/service"
+
+	"github.com/google/uuid"
 )
 
 // ResourceHandler handles MCP resources/read requests
@@ -59,6 +62,15 @@ func (rh *ResourceHandler) HandleResourcesRead(ctx context.Context, params inter
 	uri, ok := paramsMap["uri"].(string)
 	if !ok || uri == "" {
 		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid URI parameter")
+	}
+
+	// Check if this is a requirements:// URI (from resources/list) and convert it
+	if strings.HasPrefix(uri, "requirements://") {
+		convertedURI, err := rh.convertRequirementsURI(ctx, uri)
+		if err != nil {
+			return nil, jsonrpc.NewInvalidParamsError(fmt.Sprintf("Failed to convert URI: %v", err))
+		}
+		uri = convertedURI
 	}
 
 	// Parse the URI
@@ -497,4 +509,173 @@ func (rh *ResourceHandler) formatAcceptanceCriteriaListResource(parsedURI *Parse
 func (rh *ResourceHandler) buildURIFromParsed(parsedURI *ParsedURI) string {
 	uri, _ := rh.uriParser.BuildURI(parsedURI.Scheme, parsedURI.ReferenceID, parsedURI.SubPath, parsedURI.Parameters)
 	return uri
+}
+
+// convertRequirementsURI converts requirements:// URIs to the expected format
+// Supports both UUID and reference ID formats:
+// - requirements://epics/516722c8-4ca6-4cea-b78c-523fc3ea665f
+// - requirements://epics/EP-001
+func (rh *ResourceHandler) convertRequirementsURI(ctx context.Context, uri string) (string, error) {
+	// Parse requirements:// URI format: requirements://epics/{id} or requirements://epics
+	parts := strings.Split(strings.TrimPrefix(uri, "requirements://"), "/")
+	if len(parts) < 1 {
+		return "", fmt.Errorf("invalid requirements URI format")
+	}
+
+	entityType := parts[0]
+
+	// Handle collection resources (no ID)
+	if len(parts) == 1 {
+		return "", fmt.Errorf("collection resources not supported in resources/read")
+	}
+
+	if len(parts) != 2 {
+		return "", fmt.Errorf("invalid requirements URI format")
+	}
+
+	entityID := parts[1]
+
+	// Convert based on entity type
+	switch entityType {
+	case "epics":
+		referenceID, err := rh.getEpicReferenceID(entityID)
+		if err != nil {
+			return "", fmt.Errorf("epic not found: %v", err)
+		}
+		return fmt.Sprintf("epic://%s", referenceID), nil
+
+	case "user-stories":
+		referenceID, err := rh.getUserStoryReferenceID(entityID)
+		if err != nil {
+			return "", fmt.Errorf("user story not found: %v", err)
+		}
+		return fmt.Sprintf("user-story://%s", referenceID), nil
+
+	case "requirements":
+		referenceID, err := rh.getRequirementReferenceID(entityID)
+		if err != nil {
+			return "", fmt.Errorf("requirement not found: %v", err)
+		}
+		return fmt.Sprintf("requirement://%s", referenceID), nil
+
+	case "acceptance-criteria":
+		referenceID, err := rh.getAcceptanceCriteriaReferenceID(entityID)
+		if err != nil {
+			return "", fmt.Errorf("acceptance criteria not found: %v", err)
+		}
+		return fmt.Sprintf("acceptance-criteria://%s", referenceID), nil
+
+	default:
+		return "", fmt.Errorf("unsupported entity type: %s", entityType)
+	}
+}
+
+// getEpicReferenceID gets epic reference ID from either UUID or reference ID
+func (rh *ResourceHandler) getEpicReferenceID(id string) (string, error) {
+	// Try to parse as UUID first
+	if epicUUID, err := uuid.Parse(id); err == nil {
+		// It's a UUID, get by ID
+		epic, err := rh.epicService.GetEpicByID(epicUUID)
+		if err != nil {
+			return "", err
+		}
+		return epic.ReferenceID, nil
+	}
+
+	// Not a UUID, assume it's a reference ID - validate and return
+	if rh.isValidReferenceID(id, "EP") {
+		// Verify it exists by trying to get it
+		_, err := rh.epicService.GetEpicByReferenceID(id)
+		if err != nil {
+			return "", err
+		}
+		return id, nil
+	}
+
+	return "", fmt.Errorf("invalid epic identifier: %s", id)
+}
+
+// getUserStoryReferenceID gets user story reference ID from either UUID or reference ID
+func (rh *ResourceHandler) getUserStoryReferenceID(id string) (string, error) {
+	// Try to parse as UUID first
+	if userStoryUUID, err := uuid.Parse(id); err == nil {
+		// It's a UUID, get by ID
+		userStory, err := rh.userStoryService.GetUserStoryByID(userStoryUUID)
+		if err != nil {
+			return "", err
+		}
+		return userStory.ReferenceID, nil
+	}
+
+	// Not a UUID, assume it's a reference ID - validate and return
+	if rh.isValidReferenceID(id, "US") {
+		// Verify it exists by trying to get it
+		_, err := rh.userStoryService.GetUserStoryByReferenceID(id)
+		if err != nil {
+			return "", err
+		}
+		return id, nil
+	}
+
+	return "", fmt.Errorf("invalid user story identifier: %s", id)
+}
+
+// getRequirementReferenceID gets requirement reference ID from either UUID or reference ID
+func (rh *ResourceHandler) getRequirementReferenceID(id string) (string, error) {
+	// Try to parse as UUID first
+	if requirementUUID, err := uuid.Parse(id); err == nil {
+		// It's a UUID, get by ID
+		requirement, err := rh.requirementService.GetRequirementByID(requirementUUID)
+		if err != nil {
+			return "", err
+		}
+		return requirement.ReferenceID, nil
+	}
+
+	// Not a UUID, assume it's a reference ID - validate and return
+	if rh.isValidReferenceID(id, "REQ") {
+		// Verify it exists by trying to get it
+		_, err := rh.requirementService.GetRequirementByReferenceID(id)
+		if err != nil {
+			return "", err
+		}
+		return id, nil
+	}
+
+	return "", fmt.Errorf("invalid requirement identifier: %s", id)
+}
+
+// getAcceptanceCriteriaReferenceID gets acceptance criteria reference ID from either UUID or reference ID
+func (rh *ResourceHandler) getAcceptanceCriteriaReferenceID(id string) (string, error) {
+	// Try to parse as UUID first
+	if acUUID, err := uuid.Parse(id); err == nil {
+		// It's a UUID, get by ID
+		ac, err := rh.acceptanceCriteriaService.GetAcceptanceCriteriaByID(acUUID)
+		if err != nil {
+			return "", err
+		}
+		return ac.ReferenceID, nil
+	}
+
+	// Not a UUID, assume it's a reference ID - validate and return
+	if rh.isValidReferenceID(id, "AC") {
+		// Verify it exists by trying to get it
+		_, err := rh.acceptanceCriteriaService.GetAcceptanceCriteriaByReferenceID(id)
+		if err != nil {
+			return "", err
+		}
+		return id, nil
+	}
+
+	return "", fmt.Errorf("invalid acceptance criteria identifier: %s", id)
+}
+
+// isValidReferenceID checks if the ID matches the expected reference ID pattern for the given prefix
+func (rh *ResourceHandler) isValidReferenceID(id, expectedPrefix string) bool {
+	if !strings.HasPrefix(id, expectedPrefix+"-") {
+		return false
+	}
+
+	// Use the URI parser's validation logic
+	return rh.uriParser.isValidReferenceID(id)
 }

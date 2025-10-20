@@ -45,24 +45,35 @@ func TestUserStoryResourceProvider_GetResourceDescriptors_Success(t *testing.T) 
 
 	// Assert
 	assert.NoError(t, err)
-	assert.Len(t, resources, 3) // 2 individual user stories + 1 collection resource
+	assert.Len(t, resources, 5) // 2 user stories * 2 variants (UUID + reference ID) + 1 collection resource
 
-	// Check individual user story resources
+	// Check individual user story resources (UUID variants)
 	assert.Equal(t, "requirements://user-stories/550e8400-e29b-41d4-a716-446655440001", resources[0].URI)
 	assert.Equal(t, "User Story: User Authentication", resources[0].Name)
 	assert.Equal(t, "User Story US-001: User Authentication", resources[0].Description)
 	assert.Equal(t, "application/json", resources[0].MimeType)
 
-	assert.Equal(t, "requirements://user-stories/550e8400-e29b-41d4-a716-446655440002", resources[1].URI)
-	assert.Equal(t, "User Story: User Profile Management", resources[1].Name)
-	assert.Equal(t, "User Story US-002: User Profile Management", resources[1].Description)
+	// Check individual user story resources (reference ID variants)
+	assert.Equal(t, "requirements://user-stories/US-001", resources[1].URI)
+	assert.Equal(t, "User Story: User Authentication", resources[1].Name)
+	assert.Equal(t, "User Story US-001: User Authentication", resources[1].Description)
 	assert.Equal(t, "application/json", resources[1].MimeType)
 
-	// Check collection resource
-	assert.Equal(t, "requirements://user-stories", resources[2].URI)
-	assert.Equal(t, "All User Stories", resources[2].Name)
-	assert.Equal(t, "Complete list of all user stories in the system", resources[2].Description)
+	assert.Equal(t, "requirements://user-stories/550e8400-e29b-41d4-a716-446655440002", resources[2].URI)
+	assert.Equal(t, "User Story: User Profile Management", resources[2].Name)
+	assert.Equal(t, "User Story US-002: User Profile Management", resources[2].Description)
 	assert.Equal(t, "application/json", resources[2].MimeType)
+
+	assert.Equal(t, "requirements://user-stories/US-002", resources[3].URI)
+	assert.Equal(t, "User Story: User Profile Management", resources[3].Name)
+	assert.Equal(t, "User Story US-002: User Profile Management", resources[3].Description)
+	assert.Equal(t, "application/json", resources[3].MimeType)
+
+	// Check collection resource
+	assert.Equal(t, "requirements://user-stories", resources[4].URI)
+	assert.Equal(t, "All User Stories", resources[4].Name)
+	assert.Equal(t, "Complete list of all user stories in the system", resources[4].Description)
+	assert.Equal(t, "application/json", resources[4].MimeType)
 
 	// Verify mock expectations
 	mockRepo.AssertExpectations(t)
