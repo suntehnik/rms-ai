@@ -47,6 +47,7 @@ type PostgreSQLReferenceIDGenerator struct {
 // - US: get_next_user_story_ref_id()
 // - REQ: get_next_requirement_ref_id()
 // - AC: get_next_acceptance_criteria_ref_id()
+// - STD: get_next_steering_document_ref_id()
 func NewPostgreSQLReferenceIDGenerator(lockKey int64, prefix string) *PostgreSQLReferenceIDGenerator {
 	return &PostgreSQLReferenceIDGenerator{
 		lockKey: lockKey,
@@ -79,6 +80,8 @@ func (g *PostgreSQLReferenceIDGenerator) Generate(tx *gorm.DB, model interface{}
 			functionName = "get_next_acceptance_criteria_ref_id"
 		case "REQ":
 			functionName = "get_next_requirement_ref_id"
+		case "STD":
+			functionName = "get_next_steering_document_ref_id"
 		default:
 			return "", fmt.Errorf("unknown prefix: %s", g.prefix)
 		}
