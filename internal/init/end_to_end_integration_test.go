@@ -259,7 +259,7 @@ func TestEndToEnd_InitializationFailure_Recovery(t *testing.T) {
 	defer testDB.cleanup(t)
 
 	// Create some existing data to trigger safety check failure
-	err := models.AutoMigrate(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
 	existingUser := &models.User{

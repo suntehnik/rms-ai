@@ -7,11 +7,16 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
@@ -474,6 +479,9 @@ func setupE2EEnvironment(t *testing.T) *E2EEnvironment {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	require.NoError(t, err)
 
+	// Create migration DSN in postgres:// format
+	migrationDSN := fmt.Sprintf("postgres://testuser:password@%s:%s/testdb?sslmode=disable", pgHost, pgPort.Port())
+
 	// Setup Redis connection
 	redisConfig := &config.RedisConfig{
 		Host:     redisHost,
@@ -485,12 +493,8 @@ func setupE2EEnvironment(t *testing.T) *E2EEnvironment {
 	redisClient, err := database.NewRedisClient(redisConfig, logger)
 	require.NoError(t, err)
 
-	// Auto-migrate models
-	err = models.AutoMigrate(db)
-	require.NoError(t, err)
-
-	// Seed default data
-	err = models.SeedDefaultData(db)
+	// Run SQL migrations to create PostgreSQL functions and sequences
+	err = runSQLMigrations(db, migrationDSN)
 	require.NoError(t, err)
 
 	// Setup repositories
@@ -679,4 +683,65 @@ func createLargeDatasetViaAPI(t *testing.T, env *E2EEnvironment, user *models.Us
 		err := env.DB.Create(epic).Error
 		require.NoError(t, err)
 	}
+}
+
+// runSQLMigrations executes SQL migrations for the E2E test database
+func runSQLMigrations(db *gorm.DB, migrationDSN string) error {
+	// Get absolute path to migrations directory relative to project root
+	migrationsDir := "../../migrations"
+	absPath, err := filepath.Abs(migrationsDir)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path for migrations: %w", err)
+	}
+
+	// Check that migrations directory exists
+	if _, err := os.Stat(absPath); os.IsNotExist(err) {
+		return fmt.Errorf("migrations directory does not exist: %s", absPath)
+	}
+
+	// Create migrator
+	migrator, err := migrate.New(
+		fmt.Sprintf("file://%s", absPath),
+		migrationDSN,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create migrator: %w", err)
+	}
+	defer migrator.Close()
+
+	// Run migrations
+	if err := migrator.Up(); err != nil && err != migrate.ErrNoChange {
+		return fmt.Errorf("failed to run migrations: %w", err)
+	}
+
+	// After running SQL migrations, seed default data
+	if err := models.SeedDefaultData(db); err != nil {
+		return fmt.Errorf("failed to seed default data: %w", err)
+	}
+
+	// Reset sequences to ensure tests start with predictable reference IDs
+	if err := resetSequences(db); err != nil {
+		return fmt.Errorf("failed to reset sequences: %w", err)
+	}
+
+	return nil
+}
+
+// resetSequences resets all reference ID sequences to start from 1
+func resetSequences(db *gorm.DB) error {
+	sequences := []string{
+		"epic_ref_seq",
+		"user_story_ref_seq",
+		"acceptance_criteria_ref_seq",
+		"requirement_ref_seq",
+		"steering_document_ref_seq",
+	}
+
+	for _, seq := range sequences {
+		if err := db.Exec(fmt.Sprintf("ALTER SEQUENCE %s RESTART WITH 1", seq)).Error; err != nil {
+			return fmt.Errorf("failed to reset sequence %s: %w", seq, err)
+		}
+	}
+
+	return nil
 }

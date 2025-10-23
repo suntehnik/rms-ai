@@ -1,18 +1,15 @@
 package models
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"testing"
-	"time"
 
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -23,17 +20,10 @@ func TestAcceptanceCriteriaReferenceIDProductionGenerator(t *testing.T) {
 		t.Skip("Skipping integration test in short mode")
 	}
 
-	db := setupPostgreSQLForAcceptanceCriteriaReferenceIDTest(t)
-	defer cleanupPostgreSQLAcceptanceCriteriaTest(t, db)
-
-	// Auto-migrate required models
-	err := db.AutoMigrate(
-		&User{},
-		&Epic{},
-		&UserStory{},
-		&AcceptanceCriteria{},
-	)
-	require.NoError(t, err)
+	// Setup PostgreSQL test database with SQL migrations
+	testDB := setupPostgreSQLWithMigrations(t)
+	defer testDB.cleanup(t)
+	db := testDB.db
 
 	// Create test data
 	testUser, testUserStory := createTestDataForAcceptanceCriteria(t, db)
@@ -164,6 +154,9 @@ func testAcceptanceCriteriaReferenceIDFormatAndUniqueness(t *testing.T, db *gorm
 	// Clean acceptance_criteria table
 	db.Exec("DELETE FROM acceptance_criteria")
 
+	// Reset sequence to ensure predictable reference IDs
+	db.Exec("ALTER SEQUENCE acceptance_criteria_ref_seq RESTART WITH 1")
+
 	// Test that reference IDs follow the correct format
 	ac := AcceptanceCriteria{
 		UserStoryID: testUserStory.ID,
@@ -199,7 +192,7 @@ func testAcceptanceCriteriaReferenceIDFormatAndUniqueness(t *testing.T, db *gorm
 
 	err = db.Create(&nextAC).Error
 	require.NoError(t, err)
-	assert.Equal(t, "AC-003", nextAC.ReferenceID, "Should continue sequence after manual ID")
+	assert.Equal(t, "AC-002", nextAC.ReferenceID, "Should continue sequence after manual ID")
 }
 
 func testAcceptanceCriteriaReferenceIDUnderLoad(t *testing.T, db *gorm.DB, testUser *User, testUserStory *UserStory) {
@@ -267,6 +260,9 @@ func testAcceptanceCriteriaProductionGeneratorDirectly(t *testing.T, db *gorm.DB
 	// Clean acceptance_criteria table
 	db.Exec("DELETE FROM acceptance_criteria")
 
+	// Reset sequence to ensure predictable reference IDs
+	db.Exec("ALTER SEQUENCE acceptance_criteria_ref_seq RESTART WITH 1")
+
 	// Create unique test data for this test
 	testUser := &User{
 		ID:           uuid.New(),
@@ -325,62 +321,6 @@ func testAcceptanceCriteriaProductionGeneratorDirectly(t *testing.T, db *gorm.DB
 	assert.Equal(t, "AC", acceptanceCriteriaGenerator.prefix, "Model should use correct prefix")
 }
 
-func setupPostgreSQLForAcceptanceCriteriaReferenceIDTest(t *testing.T) *gorm.DB {
-	ctx := context.Background()
-
-	// Create PostgreSQL container
-	req := testcontainers.ContainerRequest{
-		Image:        "postgres:15",
-		ExposedPorts: []string{"5432/tcp"},
-		Env: map[string]string{
-			"POSTGRES_DB":       "acceptance_criteria_ref_test",
-			"POSTGRES_PASSWORD": "testpass",
-			"POSTGRES_USER":     "testuser",
-		},
-		WaitingFor: wait.ForAll(
-			wait.ForLog("database system is ready to accept connections"),
-			wait.ForListeningPort("5432/tcp"),
-		).WithDeadline(60 * time.Second),
-	}
-
-	postgresContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
-	require.NoError(t, err)
-
-	// Cleanup container when test finishes
-	t.Cleanup(func() {
-		err := postgresContainer.Terminate(ctx)
-		if err != nil {
-			t.Logf("Failed to terminate container: %v", err)
-		}
-	})
-
-	// Get connection details
-	host, err := postgresContainer.Host(ctx)
-	require.NoError(t, err)
-
-	port, err := postgresContainer.MappedPort(ctx, "5432")
-	require.NoError(t, err)
-
-	// Create database connection
-	dsn := fmt.Sprintf("host=%s port=%s user=testuser password=testpass dbname=acceptance_criteria_ref_test sslmode=disable",
-		host, port.Port())
-
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	require.NoError(t, err)
-
-	// Verify connection
-	sqlDB, err := db.DB()
-	require.NoError(t, err)
-
-	err = sqlDB.Ping()
-	require.NoError(t, err)
-
-	return db
-}
-
 func createTestDataForAcceptanceCriteria(t *testing.T, db *gorm.DB) (*User, *UserStory) {
 	// Create test user
 	testUser := &User{
@@ -419,21 +359,4 @@ func createTestDataForAcceptanceCriteria(t *testing.T, db *gorm.DB) (*User, *Use
 	require.NoError(t, err)
 
 	return testUser, testUserStory
-}
-
-func cleanupPostgreSQLAcceptanceCriteriaTest(t *testing.T, db *gorm.DB) {
-	// Clean up test data
-	tables := []string{
-		"acceptance_criteria",
-		"user_stories",
-		"epics",
-		"users",
-	}
-
-	for _, table := range tables {
-		err := db.Exec("DELETE FROM " + table).Error
-		if err != nil {
-			t.Logf("Warning: Could not clean table %s: %v", table, err)
-		}
-	}
 }

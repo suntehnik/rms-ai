@@ -1,18 +1,15 @@
 package models
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"testing"
-	"time"
 
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -23,19 +20,10 @@ func TestAllEntitiesReferenceIDProductionGenerator(t *testing.T) {
 		t.Skip("Skipping comprehensive integration test in short mode")
 	}
 
-	db := setupPostgreSQLForComprehensiveTest(t)
-	defer cleanupPostgreSQLComprehensiveTest(t, db)
-
-	// Auto-migrate all required models
-	err := db.AutoMigrate(
-		&User{},
-		&Epic{},
-		&UserStory{},
-		&AcceptanceCriteria{},
-		&Requirement{},
-		&RequirementType{},
-	)
-	require.NoError(t, err)
+	// Setup PostgreSQL test database with SQL migrations
+	testDB := setupPostgreSQLWithMigrations(t)
+	defer testDB.cleanup(t)
+	db := testDB.db
 
 	// Create test data
 	testUser, testEpic, testUserStory, testRequirementType := createComprehensiveTestData(t, db)
@@ -698,62 +686,6 @@ func testAllProductionGeneratorsDirectly(t *testing.T, db *gorm.DB) {
 
 // Helper functions
 
-func setupPostgreSQLForComprehensiveTest(t *testing.T) *gorm.DB {
-	ctx := context.Background()
-
-	// Create PostgreSQL container
-	req := testcontainers.ContainerRequest{
-		Image:        "postgres:15",
-		ExposedPorts: []string{"5432/tcp"},
-		Env: map[string]string{
-			"POSTGRES_DB":       "comprehensive_ref_test",
-			"POSTGRES_PASSWORD": "testpass",
-			"POSTGRES_USER":     "testuser",
-		},
-		WaitingFor: wait.ForAll(
-			wait.ForLog("database system is ready to accept connections"),
-			wait.ForListeningPort("5432/tcp"),
-		).WithDeadline(60 * time.Second),
-	}
-
-	postgresContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
-	require.NoError(t, err)
-
-	// Cleanup container when test finishes
-	t.Cleanup(func() {
-		err := postgresContainer.Terminate(ctx)
-		if err != nil {
-			t.Logf("Failed to terminate container: %v", err)
-		}
-	})
-
-	// Get connection details
-	host, err := postgresContainer.Host(ctx)
-	require.NoError(t, err)
-
-	port, err := postgresContainer.MappedPort(ctx, "5432")
-	require.NoError(t, err)
-
-	// Create database connection
-	dsn := fmt.Sprintf("host=%s port=%s user=testuser password=testpass dbname=comprehensive_ref_test sslmode=disable",
-		host, port.Port())
-
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	require.NoError(t, err)
-
-	// Verify connection
-	sqlDB, err := db.DB()
-	require.NoError(t, err)
-
-	err = sqlDB.Ping()
-	require.NoError(t, err)
-
-	return db
-}
-
 func createComprehensiveTestData(t *testing.T, db *gorm.DB) (*User, *Epic, *UserStory, *RequirementType) {
 	// Create test user
 	testUser := &User{
@@ -815,23 +747,16 @@ func cleanAllEntityTables(db *gorm.DB) {
 	for _, table := range tables {
 		db.Exec("DELETE FROM " + table)
 	}
-}
 
-func cleanupPostgreSQLComprehensiveTest(t *testing.T, db *gorm.DB) {
-	// Clean up test data
-	tables := []string{
-		"acceptance_criteria",
-		"requirements",
-		"requirement_types",
-		"user_stories",
-		"epics",
-		"users",
+	// Reset sequences to ensure predictable reference IDs
+	sequences := []string{
+		"epic_ref_seq",
+		"user_story_ref_seq",
+		"acceptance_criteria_ref_seq",
+		"requirement_ref_seq",
 	}
 
-	for _, table := range tables {
-		err := db.Exec("DELETE FROM " + table).Error
-		if err != nil {
-			t.Logf("Warning: Could not clean table %s: %v", table, err)
-		}
+	for _, seq := range sequences {
+		db.Exec(fmt.Sprintf("ALTER SEQUENCE %s RESTART WITH 1", seq))
 	}
 }

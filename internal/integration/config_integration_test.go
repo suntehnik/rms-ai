@@ -20,17 +20,9 @@ import (
 )
 
 func setupConfigIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, service.ConfigService) {
-	// Setup in-memory SQLite database
+	// Setup test database with SQL migrations
 	testDatabase := SetupTestDatabase(t)
 	db := testDatabase.DB
-
-	// Auto-migrate models
-	err := models.AutoMigrate(db)
-	require.NoError(t, err)
-
-	// Seed default data
-	err = models.SeedDefaultData(db)
-	require.NoError(t, err)
 
 	// Initialize repositories
 	requirementTypeRepo := repository.NewRequirementTypeRepository(db)

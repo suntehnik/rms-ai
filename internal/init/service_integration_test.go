@@ -2,10 +2,15 @@ package init
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
@@ -139,11 +144,49 @@ func (td *TestDatabase) reset() error {
 	return nil
 }
 
+// runSQLMigrations executes SQL migrations for the test database
+func (td *TestDatabase) runSQLMigrations() error {
+	// Get absolute path to migrations directory relative to project root
+	migrationsDir := "../../migrations"
+	absPath, err := filepath.Abs(migrationsDir)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path for migrations: %w", err)
+	}
+
+	// Check that migrations directory exists
+	if _, err := os.Stat(absPath); os.IsNotExist(err) {
+		return fmt.Errorf("migrations directory does not exist: %s", absPath)
+	}
+
+	// Create migrator
+	migrator, err := migrate.New(
+		fmt.Sprintf("file://%s", absPath),
+		td.DSN,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create migrator: %w", err)
+	}
+	defer migrator.Close()
+
+	// Run migrations
+	if err := migrator.Up(); err != nil && err != migrate.ErrNoChange {
+		return fmt.Errorf("failed to run migrations: %w", err)
+	}
+
+	// After running SQL migrations, seed default data
+	if err := models.SeedDefaultData(td.DB); err != nil {
+		return fmt.Errorf("failed to seed default data: %w", err)
+	}
+
+	return nil
+}
+
 // createTestDataForSafetyCheck creates test data to make database non-empty
 func (td *TestDatabase) createTestDataForSafetyCheck(t *testing.T) {
-	// First run migrations to create tables
-	err := models.AutoMigrate(td.DB)
-	require.NoError(t, err)
+	// First run SQL migrations to create tables with proper PostgreSQL functions
+	if err := td.runSQLMigrations(); err != nil {
+		require.NoError(t, err)
+	}
 
 	// Create a test user to make database non-empty
 	user := &models.User{
@@ -153,7 +196,7 @@ func (td *TestDatabase) createTestDataForSafetyCheck(t *testing.T) {
 		Role:         models.RoleUser,
 	}
 
-	err = td.DB.Create(user).Error
+	err := td.DB.Create(user).Error
 	require.NoError(t, err)
 }
 
@@ -561,7 +604,7 @@ func TestInitService_SafetyChecker_DetailedReporting(t *testing.T) {
 	defer testDB.cleanup(t)
 
 	// Create comprehensive test data
-	err := models.AutoMigrate(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
 	// Seed default data

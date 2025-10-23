@@ -22,6 +22,7 @@ import (
 type RequirementIntegrationTestSuite struct {
 	suite.Suite
 	db                          *gorm.DB
+	testDatabase                *TestDatabase
 	router                      *gin.Engine
 	requirementHandler          *handlers.RequirementHandler
 	requirementService          service.RequirementService
@@ -43,39 +44,19 @@ type RequirementIntegrationTestSuite struct {
 }
 
 func (suite *RequirementIntegrationTestSuite) SetupSuite() {
-	// Setup Postgres Test Container
-	testDatabase := SetupTestDatabase(suite.T())
-	db := testDatabase.DB
-
-	// Auto-migrate the schema
-	err := db.AutoMigrate(
-		&models.User{},
-		&models.Epic{},
-		&models.UserStory{},
-		&models.AcceptanceCriteria{},
-		&models.Requirement{},
-		&models.RequirementType{},
-		&models.RelationshipType{},
-		&models.RequirementRelationship{},
-		&models.Comment{},
-	)
-	suite.Require().NoError(err)
-
-	// Seed default data
-	err = models.SeedDefaultData(db)
-	suite.Require().NoError(err)
-
-	suite.db = db
+	// Setup test database with SQL migrations
+	suite.testDatabase = SetupTestDatabase(suite.T())
+	suite.db = suite.testDatabase.DB
 
 	// Setup repositories
-	suite.userRepo = repository.NewUserRepository(db)
-	suite.epicRepo = repository.NewEpicRepository(db)
-	suite.userStoryRepo = repository.NewUserStoryRepository(db)
-	suite.acceptanceCriteriaRepo = repository.NewAcceptanceCriteriaRepository(db)
-	suite.requirementRepo = repository.NewRequirementRepository(db)
-	suite.requirementTypeRepo = repository.NewRequirementTypeRepository(db)
-	suite.relationshipTypeRepo = repository.NewRelationshipTypeRepository(db)
-	suite.requirementRelationshipRepo = repository.NewRequirementRelationshipRepository(db)
+	suite.userRepo = repository.NewUserRepository(suite.db)
+	suite.epicRepo = repository.NewEpicRepository(suite.db)
+	suite.userStoryRepo = repository.NewUserStoryRepository(suite.db)
+	suite.acceptanceCriteriaRepo = repository.NewAcceptanceCriteriaRepository(suite.db)
+	suite.requirementRepo = repository.NewRequirementRepository(suite.db)
+	suite.requirementTypeRepo = repository.NewRequirementTypeRepository(suite.db)
+	suite.relationshipTypeRepo = repository.NewRelationshipTypeRepository(suite.db)
+	suite.requirementRelationshipRepo = repository.NewRequirementRelationshipRepository(suite.db)
 
 	// Setup services
 	suite.requirementService = service.NewRequirementService(
@@ -92,7 +73,7 @@ func (suite *RequirementIntegrationTestSuite) SetupSuite() {
 	suite.requirementHandler = handlers.NewRequirementHandler(suite.requirementService)
 
 	// Setup authentication
-	suite.authContext = SetupTestAuth(suite.T(), db)
+	suite.authContext = SetupTestAuth(suite.T(), suite.db)
 
 	// Setup Gin router
 	gin.SetMode(gin.TestMode)
@@ -814,8 +795,9 @@ func (suite *RequirementIntegrationTestSuite) TestDeleteNonExistentRequirement()
 }
 
 func (suite *RequirementIntegrationTestSuite) TearDownSuite() {
-	sqlDB, _ := suite.db.DB()
-	sqlDB.Close()
+	if suite.testDatabase != nil {
+		suite.testDatabase.Cleanup(suite.T())
+	}
 }
 
 func TestRequirementIntegrationTestSuite(t *testing.T) {
