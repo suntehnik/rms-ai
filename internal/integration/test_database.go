@@ -3,9 +3,14 @@ package integration
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/testcontainers/testcontainers-go"
 	postgresContainer "github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -60,14 +65,9 @@ func SetupTestDatabase(t *testing.T) *TestDatabase {
 		t.Fatalf("Failed to connect to test database: %v", err)
 	}
 
-	// Выполняем миграции
-	if err := models.AutoMigrate(db); err != nil {
-		t.Fatalf("Failed to migrate test database: %v", err)
-	}
-
-	// Заполняем базовые данные
-	if err := models.SeedDefaultData(db); err != nil {
-		t.Fatalf("Failed to seed test database: %v", err)
+	// Выполняем SQL миграции вместо AutoMigrate для корректной работы с PostgreSQL функциями
+	if err := runSQLMigrations(db, dsn); err != nil {
+		t.Fatalf("Failed to run SQL migrations: %v", err)
 	}
 
 	return &TestDatabase{
@@ -159,4 +159,42 @@ func (td *TestDatabase) GetRelationshipType(name string) (*models.RelationshipTy
 	var relType models.RelationshipType
 	err := td.DB.Where("name = ?", name).First(&relType).Error
 	return &relType, err
+}
+
+// runSQLMigrations выполняет SQL миграции для тестовой базы данных
+func runSQLMigrations(db *gorm.DB, databaseURL string) error {
+	// Получаем абсолютный путь к папке с миграциями относительно корня проекта
+	// Ищем папку migrations в корне проекта
+	migrationsDir := "../../migrations"
+	absPath, err := filepath.Abs(migrationsDir)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path for migrations: %w", err)
+	}
+
+	// Проверяем, что папка с миграциями существует
+	if _, err := os.Stat(absPath); os.IsNotExist(err) {
+		return fmt.Errorf("migrations directory does not exist: %s", absPath)
+	}
+
+	// Создаем мигратор
+	migrator, err := migrate.New(
+		fmt.Sprintf("file://%s", absPath),
+		databaseURL,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create migrator: %w", err)
+	}
+	defer migrator.Close()
+
+	// Выполняем миграции
+	if err := migrator.Up(); err != nil && err != migrate.ErrNoChange {
+		return fmt.Errorf("failed to run migrations: %w", err)
+	}
+
+	// После выполнения SQL миграций, заполняем базовые данные
+	if err := models.SeedDefaultData(db); err != nil {
+		return fmt.Errorf("failed to seed default data: %w", err)
+	}
+
+	return nil
 }

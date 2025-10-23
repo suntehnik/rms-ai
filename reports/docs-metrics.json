@@ -1,49 +1,52 @@
 {
-  "generated_at": "2025-09-22T23:50:45.087077+02:00",
+  "generated_at": "2025-10-20T23:09:40.241798+02:00",
   "annotation_coverage": {
-    "total_handlers": 118,
-    "annotated_handlers": 88,
-    "coverage_percentage": 74.57627118644068,
-    "missing_count": 30
+    "total_handlers": 132,
+    "annotated_handlers": 104,
+    "coverage_percentage": 78.78787878787878,
+    "missing_count": 28
   },
   "endpoint_coverage": {
-    "total_endpoints": 106,
-    "documented_endpoints": 106,
+    "total_endpoints": 126,
+    "documented_endpoints": 126,
     "coverage_percentage": 100,
     "endpoints_by_method": {
-      "DELETE": 16,
-      "GET": 44,
+      "DELETE": 19,
+      "GET": 52,
       "PATCH": 6,
-      "POST": 29,
-      "PUT": 11
+      "POST": 37,
+      "PUT": 12
     },
     "endpoints_by_tag": {
-      "acceptance-criteria": 7,
+      "acceptance-criteria": 9,
       "authentication": 8,
-      "comments": 25,
+      "comments": 33,
       "configuration": 26,
       "deletion": 9,
-      "epics": 12,
+      "epics": 17,
       "inline-comments": 15,
-      "requirements": 14,
+      "mcp": 1,
+      "personal-access-tokens": 3,
+      "requirements": 16,
       "search": 2,
-      "user-stories": 14,
+      "steering-documents": 5,
+      "user-stories": 16,
       "users": 1
     }
   },
   "example_coverage": {
-    "handlers_with_examples": 66,
-    "example_coverage_percent": 55.932203389830505,
+    "handlers_with_examples": 79,
+    "example_coverage_percent": 59.84848484848485,
     "request_body_examples": 8,
     "response_examples": 5,
     "query_parameter_examples": 4
   },
   "quality_score": {
-    "overall_score": 81.01694915254237,
+    "overall_score": 83.48484848484848,
     "component_scores": {
-      "annotation_coverage": 74.57627118644068,
+      "annotation_coverage": 78.78787878787878,
       "endpoint_coverage": 100,
-      "example_coverage": 55.932203389830505,
+      "example_coverage": 59.84848484848485,
       "tag_distribution": 100
     },
     "grade": "B",
@@ -53,15 +56,18 @@
     ]
   },
   "tag_distribution": {
-    "acceptance-criteria": 6,
-    "comments": 13,
+    "acceptance-criteria": 7,
+    "comments": 17,
     "configuration": 26,
     "deletion": 9,
-    "epics": 11,
+    "epics": 15,
     "inline-comments": 10,
-    "requirements": 14,
+    "mcp": 1,
+    "personal-access-tokens": 3,
+    "requirements": 15,
     "search": 2,
-    "user-stories": 14,
+    "steering-documents": 5,
+    "user-stories": 15,
     "users": 1
   },
   "missing_annotations": [
@@ -200,54 +206,6 @@
     },
     {
       "file": "comment_handler.go",
-      "handler": "CreateEpicComment",
-      "missing_fields": [
-        "@Summary",
-        "@Description",
-        "@Tags",
-        "@Accept",
-        "@Produce"
-      ],
-      "severity": "high"
-    },
-    {
-      "file": "comment_handler.go",
-      "handler": "CreateUserStoryComment",
-      "missing_fields": [
-        "@Summary",
-        "@Description",
-        "@Tags",
-        "@Accept",
-        "@Produce"
-      ],
-      "severity": "high"
-    },
-    {
-      "file": "comment_handler.go",
-      "handler": "CreateAcceptanceCriteriaComment",
-      "missing_fields": [
-        "@Summary",
-        "@Description",
-        "@Tags",
-        "@Accept",
-        "@Produce"
-      ],
-      "severity": "high"
-    },
-    {
-      "file": "comment_handler.go",
-      "handler": "CreateRequirementComment",
-      "missing_fields": [
-        "@Summary",
-        "@Description",
-        "@Tags",
-        "@Accept",
-        "@Produce"
-      ],
-      "severity": "high"
-    },
-    {
-      "file": "comment_handler.go",
       "handler": "createCommentForEntity",
       "missing_fields": [
         "@Summary",
@@ -262,41 +220,37 @@
       "file": "comment_handler.go",
       "handler": "GetEpicComments",
       "missing_fields": [
-        "@Summary",
-        "@Description",
-        "@Tags",
-        "@Accept",
-        "@Produce"
+        "@Accept"
       ],
-      "severity": "high"
+      "severity": "medium"
     },
     {
       "file": "comment_handler.go",
       "handler": "GetUserStoryComments",
       "missing_fields": [
-        "@Summary",
-        "@Description",
-        "@Tags",
-        "@Accept",
-        "@Produce"
+        "@Accept"
       ],
-      "severity": "high"
+      "severity": "medium"
     },
     {
       "file": "comment_handler.go",
       "handler": "GetAcceptanceCriteriaComments",
       "missing_fields": [
-        "@Summary",
-        "@Description",
-        "@Tags",
-        "@Accept",
-        "@Produce"
+        "@Accept"
       ],
-      "severity": "high"
+      "severity": "medium"
     },
     {
       "file": "comment_handler.go",
       "handler": "GetRequirementComments",
+      "missing_fields": [
+        "@Accept"
+      ],
+      "severity": "medium"
+    },
+    {
+      "file": "comment_handler.go",
+      "handler": "getCommentsForEntity",
       "missing_fields": [
         "@Summary",
         "@Description",
@@ -307,8 +261,8 @@
       "severity": "high"
     },
     {
-      "file": "comment_handler.go",
-      "handler": "getCommentsForEntity",
+      "file": "mcp_logger.go",
+      "handler": "GetUserFromGinContext",
       "missing_fields": [
         "@Summary",
         "@Description",
@@ -377,11 +331,23 @@
         "@Produce"
       ],
       "severity": "high"
+    },
+    {
+      "file": "steering_document_handler.go",
+      "handler": "getCurrentUser",
+      "missing_fields": [
+        "@Summary",
+        "@Description",
+        "@Tags",
+        "@Accept",
+        "@Produce"
+      ],
+      "severity": "high"
     }
   ],
   "recommendations": [
-    "Improve annotation coverage from 74.6% to 90% by adding Swagger annotations to 30 handlers",
+    "Improve annotation coverage from 78.8% to 90% by adding Swagger annotations to 28 handlers",
     "Add more examples to handler documentation to improve developer experience",
-    "Address 18 high-priority missing annotations first"
+    "Address 12 high-priority missing annotations first"
   ]
 }

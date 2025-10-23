@@ -1,18 +1,15 @@
 package models
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"testing"
-	"time"
 
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -23,19 +20,10 @@ func TestRequirementReferenceIDProductionGenerator(t *testing.T) {
 		t.Skip("Skipping integration test in short mode")
 	}
 
-	db := setupPostgreSQLForReferenceIDTest(t)
-	defer cleanupPostgreSQLTest(t, db)
-
-	// Auto-migrate required models
-	err := db.AutoMigrate(
-		&User{},
-		&Epic{},
-		&UserStory{},
-		&AcceptanceCriteria{},
-		&Requirement{},
-		&RequirementType{},
-	)
-	require.NoError(t, err)
+	// Setup PostgreSQL test database with SQL migrations
+	testDB := setupPostgreSQLWithMigrations(t)
+	defer testDB.cleanup(t)
+	db := testDB.db
 
 	// Create test data
 	testUser, testUserStory, testRequirementType := createTestDataForRequirement(t, db)
@@ -174,6 +162,9 @@ func testReferenceIDFormatAndUniqueness(t *testing.T, db *gorm.DB, testUser *Use
 	// Clean requirements table
 	db.Exec("DELETE FROM requirements")
 
+	// Reset sequence to ensure predictable reference IDs
+	db.Exec("ALTER SEQUENCE requirement_ref_seq RESTART WITH 1")
+
 	// Test that reference IDs follow the correct format
 	req := Requirement{
 		UserStoryID: testUserStory.ID,
@@ -221,7 +212,7 @@ func testReferenceIDFormatAndUniqueness(t *testing.T, db *gorm.DB, testUser *Use
 
 	err = db.Create(&nextReq).Error
 	require.NoError(t, err)
-	assert.Equal(t, "REQ-003", nextReq.ReferenceID, "Should continue sequence after manual ID")
+	assert.Equal(t, "REQ-002", nextReq.ReferenceID, "Should continue sequence after manual ID")
 }
 
 func testReferenceIDUnderLoad(t *testing.T, db *gorm.DB, testUser *User, testUserStory *UserStory, testRequirementType *RequirementType) {
@@ -293,6 +284,9 @@ func testProductionGeneratorDirectly(t *testing.T, db *gorm.DB) {
 	// Clean requirements table
 	db.Exec("DELETE FROM requirements")
 
+	// Reset sequence to ensure predictable reference IDs
+	db.Exec("ALTER SEQUENCE requirement_ref_seq RESTART WITH 1")
+
 	// Create unique test data for this test
 	testUser := &User{
 		ID:           uuid.New(),
@@ -363,62 +357,6 @@ func testProductionGeneratorDirectly(t *testing.T, db *gorm.DB) {
 	assert.Equal(t, "REQ", requirementGenerator.prefix, "Model should use correct prefix")
 }
 
-func setupPostgreSQLForReferenceIDTest(t *testing.T) *gorm.DB {
-	ctx := context.Background()
-
-	// Create PostgreSQL container
-	req := testcontainers.ContainerRequest{
-		Image:        "postgres:15",
-		ExposedPorts: []string{"5432/tcp"},
-		Env: map[string]string{
-			"POSTGRES_DB":       "requirement_ref_test",
-			"POSTGRES_PASSWORD": "testpass",
-			"POSTGRES_USER":     "testuser",
-		},
-		WaitingFor: wait.ForAll(
-			wait.ForLog("database system is ready to accept connections"),
-			wait.ForListeningPort("5432/tcp"),
-		).WithDeadline(60 * time.Second),
-	}
-
-	postgresContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
-	require.NoError(t, err)
-
-	// Cleanup container when test finishes
-	t.Cleanup(func() {
-		err := postgresContainer.Terminate(ctx)
-		if err != nil {
-			t.Logf("Failed to terminate container: %v", err)
-		}
-	})
-
-	// Get connection details
-	host, err := postgresContainer.Host(ctx)
-	require.NoError(t, err)
-
-	port, err := postgresContainer.MappedPort(ctx, "5432")
-	require.NoError(t, err)
-
-	// Create database connection
-	dsn := fmt.Sprintf("host=%s port=%s user=testuser password=testpass dbname=requirement_ref_test sslmode=disable",
-		host, port.Port())
-
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	require.NoError(t, err)
-
-	// Verify connection
-	sqlDB, err := db.DB()
-	require.NoError(t, err)
-
-	err = sqlDB.Ping()
-	require.NoError(t, err)
-
-	return db
-}
-
 func createTestDataForRequirement(t *testing.T, db *gorm.DB) (*User, *UserStory, *RequirementType) {
 	// Create test user
 	testUser := &User{
@@ -466,22 +404,4 @@ func createTestDataForRequirement(t *testing.T, db *gorm.DB) (*User, *UserStory,
 	require.NoError(t, err)
 
 	return testUser, testUserStory, testRequirementType
-}
-
-func cleanupPostgreSQLTest(t *testing.T, db *gorm.DB) {
-	// Clean up test data
-	tables := []string{
-		"requirements",
-		"requirement_types",
-		"user_stories",
-		"epics",
-		"users",
-	}
-
-	for _, table := range tables {
-		err := db.Exec("DELETE FROM " + table).Error
-		if err != nil {
-			t.Logf("Warning: Could not clean table %s: %v", table, err)
-		}
-	}
 }

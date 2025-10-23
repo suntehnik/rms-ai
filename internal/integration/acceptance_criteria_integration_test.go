@@ -23,6 +23,7 @@ import (
 type AcceptanceCriteriaIntegrationTestSuite struct {
 	suite.Suite
 	db                        *gorm.DB
+	testDatabase              *TestDatabase
 	router                    *gin.Engine
 	acceptanceCriteriaHandler *handlers.AcceptanceCriteriaHandler
 	acceptanceCriteriaService service.AcceptanceCriteriaService
@@ -37,32 +38,15 @@ type AcceptanceCriteriaIntegrationTestSuite struct {
 }
 
 func (suite *AcceptanceCriteriaIntegrationTestSuite) SetupSuite() {
-	// Setup test database
-	testDatabase := SetupTestDatabase(suite.T())
-	db := testDatabase.DB
-
-	// Auto-migrate the schema
-	err := db.AutoMigrate(
-		&models.User{},
-		&models.Epic{},
-		&models.UserStory{},
-		&models.AcceptanceCriteria{},
-		&models.Requirement{},
-		&models.Comment{},
-	)
-	suite.Require().NoError(err)
-
-	// Seed default data
-	err = models.SeedDefaultData(db)
-	suite.Require().NoError(err)
-
-	suite.db = db
+	// Setup test database with SQL migrations
+	suite.testDatabase = SetupTestDatabase(suite.T())
+	suite.db = suite.testDatabase.DB
 
 	// Setup repositories
-	suite.userRepo = repository.NewUserRepository(db)
-	suite.epicRepo = repository.NewEpicRepository(db)
-	suite.userStoryRepo = repository.NewUserStoryRepository(db)
-	suite.acceptanceCriteriaRepo = repository.NewAcceptanceCriteriaRepository(db)
+	suite.userRepo = repository.NewUserRepository(suite.db)
+	suite.epicRepo = repository.NewEpicRepository(suite.db)
+	suite.userStoryRepo = repository.NewUserStoryRepository(suite.db)
+	suite.acceptanceCriteriaRepo = repository.NewAcceptanceCriteriaRepository(suite.db)
 
 	// Setup services
 	suite.acceptanceCriteriaService = service.NewAcceptanceCriteriaService(suite.acceptanceCriteriaRepo, suite.userStoryRepo, suite.userRepo)
@@ -71,7 +55,7 @@ func (suite *AcceptanceCriteriaIntegrationTestSuite) SetupSuite() {
 	suite.acceptanceCriteriaHandler = handlers.NewAcceptanceCriteriaHandler(suite.acceptanceCriteriaService)
 
 	// Setup authentication
-	suite.authContext = SetupTestAuth(suite.T(), db)
+	suite.authContext = SetupTestAuth(suite.T(), suite.db)
 
 	// Setup router
 	gin.SetMode(gin.TestMode)
@@ -141,8 +125,9 @@ func (suite *AcceptanceCriteriaIntegrationTestSuite) SetupTest() {
 }
 
 func (suite *AcceptanceCriteriaIntegrationTestSuite) TearDownSuite() {
-	sqlDB, _ := suite.db.DB()
-	sqlDB.Close()
+	if suite.testDatabase != nil {
+		suite.testDatabase.Cleanup(suite.T())
+	}
 }
 
 func (suite *AcceptanceCriteriaIntegrationTestSuite) TestCreateAcceptanceCriteria() {

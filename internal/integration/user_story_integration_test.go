@@ -23,6 +23,7 @@ import (
 type UserStoryIntegrationTestSuite struct {
 	suite.Suite
 	db               *gorm.DB
+	testDatabase     *TestDatabase
 	router           *gin.Engine
 	userStoryHandler *handlers.UserStoryHandler
 	userStoryService service.UserStoryService
@@ -35,31 +36,14 @@ type UserStoryIntegrationTestSuite struct {
 }
 
 func (suite *UserStoryIntegrationTestSuite) SetupSuite() {
-	// Setup test database
-	testDatabase := SetupTestDatabase(suite.T())
-	db := testDatabase.DB
-
-	// Auto-migrate the schema
-	err := db.AutoMigrate(
-		&models.User{},
-		&models.Epic{},
-		&models.UserStory{},
-		&models.AcceptanceCriteria{},
-		&models.Requirement{},
-		&models.Comment{},
-	)
-	suite.Require().NoError(err)
-
-	// Seed default data
-	err = models.SeedDefaultData(db)
-	suite.Require().NoError(err)
-
-	suite.db = db
+	// Setup test database with SQL migrations
+	suite.testDatabase = SetupTestDatabase(suite.T())
+	suite.db = suite.testDatabase.DB
 
 	// Setup repositories
-	suite.userRepo = repository.NewUserRepository(db)
-	suite.epicRepo = repository.NewEpicRepository(db)
-	suite.userStoryRepo = repository.NewUserStoryRepository(db)
+	suite.userRepo = repository.NewUserRepository(suite.db)
+	suite.epicRepo = repository.NewEpicRepository(suite.db)
+	suite.userStoryRepo = repository.NewUserStoryRepository(suite.db)
 
 	// Setup services
 	suite.userStoryService = service.NewUserStoryService(suite.userStoryRepo, suite.epicRepo, suite.userRepo)
@@ -68,7 +52,7 @@ func (suite *UserStoryIntegrationTestSuite) SetupSuite() {
 	suite.userStoryHandler = handlers.NewUserStoryHandler(suite.userStoryService)
 
 	// Setup authentication
-	suite.authContext = SetupTestAuth(suite.T(), db)
+	suite.authContext = SetupTestAuth(suite.T(), suite.db)
 
 	// Setup router
 	gin.SetMode(gin.TestMode)
@@ -116,8 +100,9 @@ func (suite *UserStoryIntegrationTestSuite) SetupTest() {
 }
 
 func (suite *UserStoryIntegrationTestSuite) TearDownSuite() {
-	sqlDB, _ := suite.db.DB()
-	sqlDB.Close()
+	if suite.testDatabase != nil {
+		suite.testDatabase.Cleanup(suite.T())
+	}
 }
 
 func (suite *UserStoryIntegrationTestSuite) TestCreateUserStory() {

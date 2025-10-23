@@ -15,7 +15,7 @@ func TestSafetyChecker_Integration_IsDatabaseEmpty_EmptyDatabase(t *testing.T) {
 	defer testDB.cleanup(t)
 
 	// Run migrations to create tables but don't add data
-	err := models.AutoMigrate(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
 	// Create safety checker
@@ -33,7 +33,7 @@ func TestSafetyChecker_Integration_IsDatabaseEmpty_WithUsers(t *testing.T) {
 	defer testDB.cleanup(t)
 
 	// Run migrations and seed data
-	err := models.AutoMigrate(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
 	// Create test user
@@ -61,11 +61,7 @@ func TestSafetyChecker_Integration_IsDatabaseEmpty_WithEpics(t *testing.T) {
 	defer testDB.cleanup(t)
 
 	// Run migrations and seed data
-	err := models.AutoMigrate(testDB.DB)
-	require.NoError(t, err)
-
-	// Seed default data to get requirement types
-	err = models.SeedDefaultData(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
 	// Create test user first (required for epic)
@@ -104,7 +100,7 @@ func TestSafetyChecker_Integration_GetDataSummary_EmptyDatabase(t *testing.T) {
 	defer testDB.cleanup(t)
 
 	// Run migrations to create tables
-	err := models.AutoMigrate(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
 	// Create safety checker
@@ -132,11 +128,9 @@ func TestSafetyChecker_Integration_GetDataSummary_WithData(t *testing.T) {
 	defer testDB.cleanup(t)
 
 	// Run migrations and seed data
-	err := models.AutoMigrate(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
-	err = models.SeedDefaultData(testDB.DB)
-	require.NoError(t, err)
 
 	// Create test users
 	users := []*models.User{
@@ -238,7 +232,7 @@ func TestSafetyChecker_Integration_GetNonEmptyTablesReport_EmptyDatabase(t *test
 	defer testDB.cleanup(t)
 
 	// Run migrations to create tables
-	err := models.AutoMigrate(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
 	// Create safety checker
@@ -256,7 +250,7 @@ func TestSafetyChecker_Integration_GetNonEmptyTablesReport_WithData(t *testing.T
 	defer testDB.cleanup(t)
 
 	// Run migrations and seed data
-	err := models.AutoMigrate(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
 	// Create test users
@@ -296,7 +290,7 @@ func TestSafetyChecker_Integration_ValidateEmptyDatabase_EmptyDatabase(t *testin
 	defer testDB.cleanup(t)
 
 	// Run migrations to create tables
-	err := models.AutoMigrate(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
 	// Create safety checker
@@ -313,7 +307,7 @@ func TestSafetyChecker_Integration_ValidateEmptyDatabase_NonEmptyDatabase(t *tes
 	defer testDB.cleanup(t)
 
 	// Run migrations and create test data
-	err := models.AutoMigrate(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
 	// Create test user
@@ -342,11 +336,9 @@ func TestSafetyChecker_PartialData_OnlyComments(t *testing.T) {
 	defer testDB.cleanup(t)
 
 	// Run migrations and seed data
-	err := models.AutoMigrate(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
-	err = models.SeedDefaultData(testDB.DB)
-	require.NoError(t, err)
 
 	// Create minimal data structure for comment
 	user := &models.User{
@@ -428,11 +420,9 @@ func TestSafetyChecker_LargeDataset_Performance(t *testing.T) {
 	defer testDB.cleanup(t)
 
 	// Run migrations and seed data
-	err := models.AutoMigrate(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
-	err = models.SeedDefaultData(testDB.DB)
-	require.NoError(t, err)
 
 	// Create many users to test performance with larger dataset
 	users := make([]*models.User, 100)

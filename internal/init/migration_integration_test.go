@@ -27,8 +27,8 @@ func TestMigrationExecution_CompleteFlow(t *testing.T) {
 		assert.False(t, exists, "Table %s should not exist initially", table)
 	}
 
-	// Run auto-migration (this is what the initialization service actually uses)
-	err := models.AutoMigrate(testDB.DB)
+	// Run SQL migrations (this is what the initialization service actually uses)
+	err := testDB.runSQLMigrations()
 	assert.NoError(t, err)
 
 	// Seed default data

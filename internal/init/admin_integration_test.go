@@ -17,7 +17,7 @@ func TestAdminCreator_CreateAdminUser_Integration(t *testing.T) {
 	defer testDB.cleanup(t)
 
 	// Run migrations to create tables
-	err := models.AutoMigrate(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
 	// Create auth service
@@ -60,7 +60,7 @@ func TestAdminCreator_CreateAdminUserFromEnv_Integration(t *testing.T) {
 	defer testDB.cleanup(t)
 
 	// Run migrations to create tables
-	err := models.AutoMigrate(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
 	// Set environment variable
@@ -128,7 +128,7 @@ func TestAdminCreator_CreateAdminUser_DuplicateUser(t *testing.T) {
 	defer testDB.cleanup(t)
 
 	// Run migrations to create tables
-	err := models.AutoMigrate(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
 	// Create auth service
@@ -191,7 +191,7 @@ func TestAdminCreator_AdminUserExists_Integration(t *testing.T) {
 	defer testDB.cleanup(t)
 
 	// Run migrations to create tables
-	err := models.AutoMigrate(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
 	// Create auth service
@@ -223,7 +223,7 @@ func TestAdminCreator_AdminUserExists_ByRole(t *testing.T) {
 	defer testDB.cleanup(t)
 
 	// Run migrations to create tables
-	err := models.AutoMigrate(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
 	// Create auth service
@@ -254,7 +254,7 @@ func TestAdminCreator_CreateAdminUser_DatabaseTransaction(t *testing.T) {
 	defer testDB.cleanup(t)
 
 	// Run migrations to create tables
-	err := models.AutoMigrate(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
 	// Create auth service
@@ -296,7 +296,7 @@ func TestAdminCreator_PasswordHashing_Integration(t *testing.T) {
 	defer testDB.cleanup(t)
 
 	// Run migrations to create tables
-	err := models.AutoMigrate(testDB.DB)
+	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
 	// Create auth service
@@ -320,7 +320,7 @@ func TestAdminCreator_PasswordHashing_Integration(t *testing.T) {
 			require.NoError(t, err)
 
 			// Run migrations again
-			err = models.AutoMigrate(testDB.DB)
+			err = testDB.runSQLMigrations()
 			require.NoError(t, err)
 
 			// Create admin user

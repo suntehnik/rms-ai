@@ -23,17 +23,9 @@ import (
 )
 
 func setupCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, *auth.Service, func()) {
-	// Create in-memory SQLite database
+	// Setup test database with SQL migrations
 	testDatabase := SetupTestDatabase(t)
 	db := testDatabase.DB
-
-	// Auto-migrate models
-	err := models.AutoMigrate(db)
-	require.NoError(t, err)
-
-	// Seed default data
-	err = models.SeedDefaultData(db)
-	require.NoError(t, err)
 
 	// Initialize repositories
 	repos := repository.NewRepositories(db)
@@ -74,11 +66,8 @@ func setupCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, *auth.Ser
 	}
 
 	cleanup := func() {
-		// Close database connection
-		sqlDB, _ := db.DB()
-		if sqlDB != nil {
-			sqlDB.Close()
-		}
+		// Cleanup test database
+		testDatabase.Cleanup(t)
 	}
 
 	return router, db, authService, cleanup

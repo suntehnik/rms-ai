@@ -22,17 +22,9 @@ import (
 )
 
 func setupInlineCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, *TestAuthContext, func()) {
-	// Create in-memory SQLite database
+	// Setup test database with SQL migrations
 	testDatabase := SetupTestDatabase(t)
 	db := testDatabase.DB
-
-	// Auto-migrate models
-	err := models.AutoMigrate(db)
-	require.NoError(t, err)
-
-	// Seed default data
-	err = models.SeedDefaultData(db)
-	require.NoError(t, err)
 
 	// Setup authentication
 	authCtx := SetupTestAuth(t, db)

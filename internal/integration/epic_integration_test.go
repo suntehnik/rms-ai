@@ -22,41 +22,25 @@ import (
 
 type EpicIntegrationTestSuite struct {
 	suite.Suite
-	db          *gorm.DB
-	router      *gin.Engine
-	epicHandler *handlers.EpicHandler
-	epicService service.EpicService
-	epicRepo    repository.EpicRepository
-	userRepo    repository.UserRepository
-	testUser    *models.User
-	authContext *TestAuthContext
+	db           *gorm.DB
+	testDatabase *TestDatabase
+	router       *gin.Engine
+	epicHandler  *handlers.EpicHandler
+	epicService  service.EpicService
+	epicRepo     repository.EpicRepository
+	userRepo     repository.UserRepository
+	testUser     *models.User
+	authContext  *TestAuthContext
 }
 
 func (suite *EpicIntegrationTestSuite) SetupSuite() {
-	// Setup test database
-	testDatabase := SetupTestDatabase(suite.T())
-	db := testDatabase.DB
-
-	// Auto-migrate the schema
-	err := db.AutoMigrate(
-		&models.User{},
-		&models.Epic{},
-		&models.UserStory{},
-		&models.AcceptanceCriteria{},
-		&models.Requirement{},
-		&models.Comment{},
-	)
-	suite.Require().NoError(err)
-
-	// Seed default data
-	err = models.SeedDefaultData(db)
-	suite.Require().NoError(err)
-
-	suite.db = db
+	// Setup test database with SQL migrations
+	suite.testDatabase = SetupTestDatabase(suite.T())
+	suite.db = suite.testDatabase.DB
 
 	// Setup repositories
-	suite.userRepo = repository.NewUserRepository(db)
-	suite.epicRepo = repository.NewEpicRepository(db)
+	suite.userRepo = repository.NewUserRepository(suite.db)
+	suite.epicRepo = repository.NewEpicRepository(suite.db)
 
 	// Setup services
 	suite.epicService = service.NewEpicService(suite.epicRepo, suite.userRepo)
@@ -65,7 +49,7 @@ func (suite *EpicIntegrationTestSuite) SetupSuite() {
 	suite.epicHandler = handlers.NewEpicHandler(suite.epicService)
 
 	// Setup authentication
-	suite.authContext = SetupTestAuth(suite.T(), db)
+	suite.authContext = SetupTestAuth(suite.T(), suite.db)
 
 	// Setup router
 	gin.SetMode(gin.TestMode)
@@ -99,8 +83,9 @@ func (suite *EpicIntegrationTestSuite) SetupTest() {
 }
 
 func (suite *EpicIntegrationTestSuite) TearDownSuite() {
-	sqlDB, _ := suite.db.DB()
-	sqlDB.Close()
+	if suite.testDatabase != nil {
+		suite.testDatabase.Cleanup(suite.T())
+	}
 }
 
 func (suite *EpicIntegrationTestSuite) TestCreateEpic() {
