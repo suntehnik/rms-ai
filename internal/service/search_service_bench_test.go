@@ -34,6 +34,7 @@ func BenchmarkSearchService_Search(b *testing.B) {
 		repos.UserStory,
 		repos.AcceptanceCriteria,
 		repos.Requirement,
+		repos.SteeringDocument,
 	)
 
 	// Create test data
@@ -107,7 +108,7 @@ func BenchmarkSearchService_SearchWithPagination(b *testing.B) {
 	defer cleanupBenchmarkDB(db)
 
 	repos := repository.NewRepositories(db)
-	searchService := NewSearchService(db, nil, repos.Epic, repos.UserStory, repos.AcceptanceCriteria, repos.Requirement)
+	searchService := NewSearchService(db, nil, repos.Epic, repos.UserStory, repos.AcceptanceCriteria, repos.Requirement, repos.SteeringDocument)
 
 	user := createBenchmarkUser(b, db)
 	createBenchmarkData(b, db, user, 500) // Larger dataset for pagination testing

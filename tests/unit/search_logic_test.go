@@ -271,6 +271,23 @@ func (s *MockSearchService) Search(ctx context.Context, options service.SearchOp
 	}, nil
 }
 
+func (s *MockSearchService) SearchByReferenceID(ctx context.Context, referenceID string, entityTypes []string) (*service.SearchResponse, error) {
+	// For unit tests, just return empty results
+	return &service.SearchResponse{
+		Results:    []service.SearchResult{},
+		Total:      0,
+		Query:      referenceID,
+		Limit:      50,
+		Offset:     0,
+		ExecutedAt: time.Now(),
+	}, nil
+}
+
+func (s *MockSearchService) InvalidateCache(ctx context.Context) error {
+	// For unit tests, just return nil
+	return nil
+}
+
 func (s *MockSearchService) searchEpicsWithLike(options service.SearchOptions) ([]service.SearchResult, error) {
 	var epics []models.Epic
 

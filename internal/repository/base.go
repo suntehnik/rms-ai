@@ -47,10 +47,32 @@ func (r *BaseRepository[T]) GetByID(id uuid.UUID) (*T, error) {
 	return &entity, nil
 }
 
-// GetByReferenceID retrieves an entity by its reference ID
+// GetByReferenceID retrieves an entity by its reference ID (case-sensitive)
 func (r *BaseRepository[T]) GetByReferenceID(referenceID string) (*T, error) {
 	var entity T
 	if err := r.db.Where("reference_id = ?", referenceID).First(&entity).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, r.handleDBError(err)
+	}
+	return &entity, nil
+}
+
+// GetByReferenceIDCaseInsensitive retrieves an entity by its reference ID (case-insensitive)
+func (r *BaseRepository[T]) GetByReferenceIDCaseInsensitive(referenceID string) (*T, error) {
+	var entity T
+
+	// Use ILIKE for PostgreSQL, LOWER() LIKE for SQLite compatibility
+	var err error
+	if r.db.Dialector.Name() == "postgres" {
+		err = r.db.Where("reference_id ILIKE ?", referenceID).First(&entity).Error
+	} else {
+		// SQLite and other databases - use LOWER() LIKE for case-insensitive matching
+		err = r.db.Where("LOWER(reference_id) LIKE LOWER(?)", referenceID).First(&entity).Error
+	}
+
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrNotFound
 		}

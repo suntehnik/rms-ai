@@ -54,6 +54,30 @@ func (r *steeringDocumentRepository) GetByReferenceID(referenceID string) (*mode
 	return &doc, nil
 }
 
+// GetByReferenceIDCaseInsensitive retrieves a steering document by reference ID (case-insensitive)
+func (r *steeringDocumentRepository) GetByReferenceIDCaseInsensitive(referenceID string) (*models.SteeringDocument, error) {
+	var doc models.SteeringDocument
+
+	query := r.db.Preload("Creator")
+	var err error
+
+	// Use ILIKE for PostgreSQL, LOWER() LIKE for SQLite compatibility
+	if r.db.Dialector.Name() == "postgres" {
+		err = query.Where("reference_id ILIKE ?", referenceID).First(&doc).Error
+	} else {
+		// SQLite and other databases - use LOWER() LIKE for case-insensitive matching
+		err = query.Where("LOWER(reference_id) LIKE LOWER(?)", referenceID).First(&doc).Error
+	}
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to get steering document by reference ID (case-insensitive): %w", err)
+	}
+	return &doc, nil
+}
+
 // Update updates a steering document
 func (r *steeringDocumentRepository) Update(doc *models.SteeringDocument) error {
 	if err := r.db.Save(doc).Error; err != nil {

@@ -64,6 +64,14 @@ func (m *MockCommentRepository) GetByReferenceID(referenceID string) (*models.Co
 	return args.Get(0).(*models.Comment), args.Error(1)
 }
 
+func (m *MockCommentRepository) GetByReferenceIDCaseInsensitive(referenceID string) (*models.Comment, error) {
+	args := m.Called(referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Comment), args.Error(1)
+}
+
 func (m *MockCommentRepository) List(filters map[string]interface{}, orderBy string, limit, offset int) ([]models.Comment, error) {
 	args := m.Called(filters, orderBy, limit, offset)
 	return args.Get(0).([]models.Comment), args.Error(1)

@@ -40,6 +40,14 @@ func (m *MockPATRepository) GetByReferenceID(referenceID string) (*models.Person
 	return args.Get(0).(*models.PersonalAccessToken), args.Error(1)
 }
 
+func (m *MockPATRepository) GetByReferenceIDCaseInsensitive(referenceID string) (*models.PersonalAccessToken, error) {
+	args := m.Called(referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.PersonalAccessToken), args.Error(1)
+}
+
 func (m *MockPATRepository) Update(pat *models.PersonalAccessToken) error {
 	args := m.Called(pat)
 	return args.Error(0)

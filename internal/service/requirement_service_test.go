@@ -38,6 +38,14 @@ func (m *MockRequirementRepository) GetByReferenceID(referenceID string) (*model
 	return args.Get(0).(*models.Requirement), args.Error(1)
 }
 
+func (m *MockRequirementRepository) GetByReferenceIDCaseInsensitive(referenceID string) (*models.Requirement, error) {
+	args := m.Called(referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Requirement), args.Error(1)
+}
+
 func (m *MockRequirementRepository) Update(entity *models.Requirement) error {
 	args := m.Called(entity)
 	return args.Error(0)
@@ -160,6 +168,14 @@ func (m *MockRequirementTypeRepository) GetByReferenceID(referenceID string) (*m
 	return args.Get(0).(*models.RequirementType), args.Error(1)
 }
 
+func (m *MockRequirementTypeRepository) GetByReferenceIDCaseInsensitive(referenceID string) (*models.RequirementType, error) {
+	args := m.Called(referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.RequirementType), args.Error(1)
+}
+
 func (m *MockRequirementTypeRepository) Update(entity *models.RequirementType) error {
 	args := m.Called(entity)
 	return args.Error(0)
@@ -242,6 +258,14 @@ func (m *MockRelationshipTypeRepository) GetByReferenceID(referenceID string) (*
 	return args.Get(0).(*models.RelationshipType), args.Error(1)
 }
 
+func (m *MockRelationshipTypeRepository) GetByReferenceIDCaseInsensitive(referenceID string) (*models.RelationshipType, error) {
+	args := m.Called(referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.RelationshipType), args.Error(1)
+}
+
 func (m *MockRelationshipTypeRepository) Update(entity *models.RelationshipType) error {
 	args := m.Called(entity)
 	return args.Error(0)
@@ -317,6 +341,14 @@ func (m *MockRequirementRelationshipRepository) GetByID(id uuid.UUID) (*models.R
 }
 
 func (m *MockRequirementRelationshipRepository) GetByReferenceID(referenceID string) (*models.RequirementRelationship, error) {
+	args := m.Called(referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.RequirementRelationship), args.Error(1)
+}
+
+func (m *MockRequirementRelationshipRepository) GetByReferenceIDCaseInsensitive(referenceID string) (*models.RequirementRelationship, error) {
 	args := m.Called(referenceID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)

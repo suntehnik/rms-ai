@@ -102,6 +102,30 @@ func (r *epicRepository) GetByReferenceIDWithUsers(referenceID string) (*models.
 	return &epic, nil
 }
 
+// GetByReferenceIDWithUsersCaseInsensitive retrieves an epic by its reference ID (case-insensitive) with creator and assignee preloaded
+func (r *epicRepository) GetByReferenceIDWithUsersCaseInsensitive(referenceID string) (*models.Epic, error) {
+	var epic models.Epic
+
+	query := r.GetDB().Preload("Creator").Preload("Assignee")
+	var err error
+
+	// Use ILIKE for PostgreSQL, LOWER() LIKE for SQLite compatibility
+	if r.GetDB().Dialector.Name() == "postgres" {
+		err = query.Where("reference_id ILIKE ?", referenceID).First(&epic).Error
+	} else {
+		// SQLite and other databases - use LOWER() LIKE for case-insensitive matching
+		err = query.Where("LOWER(reference_id) LIKE LOWER(?)", referenceID).First(&epic).Error
+	}
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, r.handleDBError(err)
+	}
+	return &epic, nil
+}
+
 // ListWithIncludes retrieves epics with optional related entity preloading
 func (r *epicRepository) ListWithIncludes(filters map[string]interface{}, includes []string, orderBy string, limit, offset int) ([]models.Epic, error) {
 	var epics []models.Epic

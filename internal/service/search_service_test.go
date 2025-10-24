@@ -79,15 +79,26 @@ func TestSearchService_generateCacheKey(t *testing.T) {
 		Offset:    0,
 	}
 
+	options4 := SearchOptions{
+		Query:       "test",
+		EntityTypes: []string{"epic", "user_story"},
+		SortBy:      "created_at",
+		SortOrder:   "desc",
+		Limit:       50,
+		Offset:      0,
+	}
+
 	key1 := service.generateCacheKey(options1)
 	key2 := service.generateCacheKey(options2)
 	key3 := service.generateCacheKey(options3)
+	key4 := service.generateCacheKey(options4)
 
 	// Same options should generate same key
 	assert.Equal(t, key1, key2)
 
 	// Different options should generate different keys
 	assert.NotEqual(t, key1, key3)
+	assert.NotEqual(t, key1, key4) // Different entity types should generate different key
 
 	// Keys should start with "search:"
 	assert.Contains(t, key1, "search:")
@@ -303,6 +314,35 @@ func TestSearchService_validateSearchOptions(t *testing.T) {
 			options: SearchOptions{
 				SortBy:    "title",
 				SortOrder: "asc",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid entity types",
+			options: SearchOptions{
+				EntityTypes: []string{"epic", "user_story", "requirement"},
+			},
+			expectError: false,
+		},
+		{
+			name: "invalid entity type",
+			options: SearchOptions{
+				EntityTypes: []string{"epic", "invalid_type"},
+			},
+			expectError: true,
+			errorMsg:    "invalid entity_type: invalid_type",
+		},
+		{
+			name: "empty entity types is valid",
+			options: SearchOptions{
+				EntityTypes: []string{},
+			},
+			expectError: false,
+		},
+		{
+			name: "all valid entity types",
+			options: SearchOptions{
+				EntityTypes: []string{"epic", "user_story", "acceptance_criteria", "requirement"},
 			},
 			expectError: false,
 		},

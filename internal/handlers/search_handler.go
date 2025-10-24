@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -60,6 +61,7 @@ type SearchRequest struct {
 //	@Produce		json
 //	@Security		BearerAuth
 //	@Param			query					query		string	false	"Full-text search query. Searches across titles, descriptions, and reference IDs. Supports PostgreSQL text search syntax with automatic prefix matching."	example("user authentication")
+//	@Param			entity_types			query		string	false	"Comma-separated list of entity types to search (epic, user_story, acceptance_criteria, requirement). Defaults to all types if not specified."					example("epic,user_story")
 //	@Param			creator_id				query		string	false	"Filter by creator ID (UUID format)"																																		example("123e4567-e89b-12d3-a456-426614174000")
 //	@Param			assignee_id				query		string	false	"Filter by assignee ID (UUID format)"																																		example("123e4567-e89b-12d3-a456-426614174001")
 //	@Param			priority				query		int		false	"Filter by priority level (1=Critical, 2=High, 3=Medium, 4=Low)"																											example(1)
@@ -132,6 +134,16 @@ func (h *SearchHandler) parseSearchOptions(c *gin.Context) (service.SearchOption
 		Query:     c.Query("query"),
 		SortBy:    c.DefaultQuery("sort_by", "created_at"),
 		SortOrder: c.DefaultQuery("sort_order", "desc"),
+	}
+
+	// Parse entity types from query parameter
+	if entityTypesStr := c.Query("entity_types"); entityTypesStr != "" {
+		entityTypes := strings.Split(entityTypesStr, ",")
+		// Trim whitespace from each entity type
+		for i, entityType := range entityTypes {
+			entityTypes[i] = strings.TrimSpace(entityType)
+		}
+		options.EntityTypes = entityTypes
 	}
 
 	// Parse limit

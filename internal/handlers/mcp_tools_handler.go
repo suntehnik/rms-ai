@@ -688,11 +688,12 @@ func (h *ToolsHandler) handleSearchGlobal(ctx context.Context, args map[string]i
 		offset = int(offsetFloat)
 	}
 
-	// Create search options
+	// Create search options with entity types
 	searchOptions := service.SearchOptions{
-		Query:  query,
-		Limit:  limit,
-		Offset: offset,
+		Query:       query,
+		EntityTypes: entityTypes,
+		Limit:       limit,
+		Offset:      offset,
 	}
 
 	// Perform the search using the search service

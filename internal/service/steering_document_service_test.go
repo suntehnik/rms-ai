@@ -38,6 +38,14 @@ func (m *MockSteeringDocumentRepository) GetByReferenceID(referenceID string) (*
 	return args.Get(0).(*models.SteeringDocument), args.Error(1)
 }
 
+func (m *MockSteeringDocumentRepository) GetByReferenceIDCaseInsensitive(referenceID string) (*models.SteeringDocument, error) {
+	args := m.Called(referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.SteeringDocument), args.Error(1)
+}
+
 func (m *MockSteeringDocumentRepository) Update(entity *models.SteeringDocument) error {
 	args := m.Called(entity)
 	return args.Error(0)
@@ -126,6 +134,10 @@ func (m *MockSteeringUserRepository) Create(entity *models.User) error { return 
 func (m *MockSteeringUserRepository) GetByReferenceID(referenceID string) (*models.User, error) {
 	return nil, nil
 }
+
+func (m *MockSteeringUserRepository) GetByReferenceIDCaseInsensitive(referenceID string) (*models.User, error) {
+	return nil, nil
+}
 func (m *MockSteeringUserRepository) Update(entity *models.User) error { return nil }
 func (m *MockSteeringUserRepository) Delete(id uuid.UUID) error        { return nil }
 func (m *MockSteeringUserRepository) List(filters map[string]interface{}, orderBy string, limit, offset int) ([]models.User, error) {
@@ -166,6 +178,10 @@ func (m *MockSteeringEpicRepository) GetByID(id uuid.UUID) (*models.Epic, error)
 func (m *MockSteeringEpicRepository) GetByReferenceID(referenceID string) (*models.Epic, error) {
 	return nil, nil
 }
+
+func (m *MockSteeringEpicRepository) GetByReferenceIDCaseInsensitive(referenceID string) (*models.Epic, error) {
+	return nil, nil
+}
 func (m *MockSteeringEpicRepository) Update(entity *models.Epic) error { return nil }
 func (m *MockSteeringEpicRepository) Delete(id uuid.UUID) error        { return nil }
 func (m *MockSteeringEpicRepository) List(filters map[string]interface{}, orderBy string, limit, offset int) ([]models.Epic, error) {
@@ -204,6 +220,10 @@ func (m *MockSteeringEpicRepository) GetByIDWithUsers(id uuid.UUID) (*models.Epi
 	return nil, nil
 }
 func (m *MockSteeringEpicRepository) GetByReferenceIDWithUsers(referenceID string) (*models.Epic, error) {
+	return nil, nil
+}
+
+func (m *MockSteeringEpicRepository) GetByReferenceIDWithUsersCaseInsensitive(referenceID string) (*models.Epic, error) {
 	return nil, nil
 }
 func (m *MockSteeringEpicRepository) ListWithIncludes(filters map[string]interface{}, includes []string, orderBy string, limit, offset int) ([]models.Epic, error) {

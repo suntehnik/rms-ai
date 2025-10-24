@@ -38,6 +38,14 @@ func (m *MockUserStoryRepository) GetByReferenceID(referenceID string) (*models.
 	return args.Get(0).(*models.UserStory), args.Error(1)
 }
 
+func (m *MockUserStoryRepository) GetByReferenceIDCaseInsensitive(referenceID string) (*models.UserStory, error) {
+	args := m.Called(referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.UserStory), args.Error(1)
+}
+
 func (m *MockUserStoryRepository) Update(entity *models.UserStory) error {
 	args := m.Called(entity)
 	return args.Error(0)
@@ -141,6 +149,14 @@ func (m *MockUserStoryRepository) GetByIDWithUsers(id uuid.UUID) (*models.UserSt
 }
 
 func (m *MockUserStoryRepository) GetByReferenceIDWithUsers(referenceID string) (*models.UserStory, error) {
+	args := m.Called(referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.UserStory), args.Error(1)
+}
+
+func (m *MockUserStoryRepository) GetByReferenceIDWithUsersCaseInsensitive(referenceID string) (*models.UserStory, error) {
 	args := m.Called(referenceID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)

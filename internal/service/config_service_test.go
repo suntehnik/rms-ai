@@ -32,6 +32,14 @@ func (m *MockConfigRequirementTypeRepository) GetByReferenceID(referenceID strin
 	return args.Get(0).(*models.RequirementType), args.Error(1)
 }
 
+func (m *MockConfigRequirementTypeRepository) GetByReferenceIDCaseInsensitive(referenceID string) (*models.RequirementType, error) {
+	args := m.Called(referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.RequirementType), args.Error(1)
+}
+
 func (m *MockConfigRequirementTypeRepository) Update(entity *models.RequirementType) error {
 	args := m.Called(entity)
 	return args.Error(0)
@@ -98,6 +106,14 @@ func (m *MockConfigRelationshipTypeRepository) GetByID(id uuid.UUID) (*models.Re
 
 func (m *MockConfigRelationshipTypeRepository) GetByReferenceID(referenceID string) (*models.RelationshipType, error) {
 	args := m.Called(referenceID)
+	return args.Get(0).(*models.RelationshipType), args.Error(1)
+}
+
+func (m *MockConfigRelationshipTypeRepository) GetByReferenceIDCaseInsensitive(referenceID string) (*models.RelationshipType, error) {
+	args := m.Called(referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
 	return args.Get(0).(*models.RelationshipType), args.Error(1)
 }
 
@@ -168,6 +184,10 @@ func (m *MockConfigRequirementRepository) GetByID(id uuid.UUID) (*models.Require
 func (m *MockConfigRequirementRepository) GetByReferenceID(referenceID string) (*models.Requirement, error) {
 	return nil, nil
 }
+
+func (m *MockConfigRequirementRepository) GetByReferenceIDCaseInsensitive(referenceID string) (*models.Requirement, error) {
+	return nil, nil
+}
 func (m *MockConfigRequirementRepository) Update(entity *models.Requirement) error { return nil }
 func (m *MockConfigRequirementRepository) Delete(id uuid.UUID) error               { return nil }
 func (m *MockConfigRequirementRepository) List(filters map[string]interface{}, orderBy string, limit, offset int) ([]models.Requirement, error) {
@@ -229,6 +249,10 @@ func (m *MockConfigRequirementRelationshipRepository) GetByID(id uuid.UUID) (*mo
 	return nil, nil
 }
 func (m *MockConfigRequirementRelationshipRepository) GetByReferenceID(referenceID string) (*models.RequirementRelationship, error) {
+	return nil, nil
+}
+
+func (m *MockConfigRequirementRelationshipRepository) GetByReferenceIDCaseInsensitive(referenceID string) (*models.RequirementRelationship, error) {
 	return nil, nil
 }
 func (m *MockConfigRequirementRelationshipRepository) Update(entity *models.RequirementRelationship) error {
