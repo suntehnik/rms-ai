@@ -111,6 +111,47 @@ func TestBaseRepository_GetByReferenceID_NotFound(t *testing.T) {
 	assert.Nil(t, retrieved)
 }
 
+func TestBaseRepository_GetByReferenceIDCaseInsensitive(t *testing.T) {
+	db := setupTestDB(t)
+	repo := NewBaseRepository[TestEntity](db)
+
+	// Create test entity
+	entity := &TestEntity{
+		ReferenceID: "TEST-001",
+		Name:        "Test Entity",
+	}
+	err := repo.Create(entity)
+	require.NoError(t, err)
+
+	// Test case-insensitive retrieval with lowercase
+	retrieved, err := repo.GetByReferenceIDCaseInsensitive("test-001")
+	assert.NoError(t, err)
+	assert.Equal(t, entity.ID, retrieved.ID)
+	assert.Equal(t, entity.Name, retrieved.Name)
+
+	// Test case-insensitive retrieval with uppercase
+	retrieved, err = repo.GetByReferenceIDCaseInsensitive("TEST-001")
+	assert.NoError(t, err)
+	assert.Equal(t, entity.ID, retrieved.ID)
+	assert.Equal(t, entity.Name, retrieved.Name)
+
+	// Test case-insensitive retrieval with mixed case
+	retrieved, err = repo.GetByReferenceIDCaseInsensitive("Test-001")
+	assert.NoError(t, err)
+	assert.Equal(t, entity.ID, retrieved.ID)
+	assert.Equal(t, entity.Name, retrieved.Name)
+}
+
+func TestBaseRepository_GetByReferenceIDCaseInsensitive_NotFound(t *testing.T) {
+	db := setupTestDB(t)
+	repo := NewBaseRepository[TestEntity](db)
+
+	retrieved, err := repo.GetByReferenceIDCaseInsensitive("non-existent")
+	assert.Error(t, err)
+	assert.Equal(t, ErrNotFound, err)
+	assert.Nil(t, retrieved)
+}
+
 func TestBaseRepository_Update(t *testing.T) {
 	db := setupTestDB(t)
 	repo := NewBaseRepository[TestEntity](db)

@@ -39,6 +39,14 @@ func (m *MockAcceptanceCriteriaRepository) GetByReferenceID(referenceID string) 
 	return args.Get(0).(*models.AcceptanceCriteria), args.Error(1)
 }
 
+func (m *MockAcceptanceCriteriaRepository) GetByReferenceIDCaseInsensitive(referenceID string) (*models.AcceptanceCriteria, error) {
+	args := m.Called(referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.AcceptanceCriteria), args.Error(1)
+}
+
 func (m *MockAcceptanceCriteriaRepository) Update(entity *models.AcceptanceCriteria) error {
 	args := m.Called(entity)
 	return args.Error(0)

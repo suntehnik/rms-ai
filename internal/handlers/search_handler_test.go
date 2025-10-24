@@ -28,6 +28,11 @@ func (m *MockSearchService) Search(ctx context.Context, options service.SearchOp
 	return args.Get(0).(*service.SearchResponse), args.Error(1)
 }
 
+func (m *MockSearchService) SearchByReferenceID(ctx context.Context, referenceID string, entityTypes []string) (*service.SearchResponse, error) {
+	args := m.Called(ctx, referenceID, entityTypes)
+	return args.Get(0).(*service.SearchResponse), args.Error(1)
+}
+
 func (m *MockSearchService) InvalidateCache(ctx context.Context) error {
 	args := m.Called(ctx)
 	return args.Error(0)

@@ -505,7 +505,7 @@ func setupE2EEnvironment(t *testing.T) *E2EEnvironment {
 	if redisClient != nil {
 		redisClientForService = redisClient.Client
 	}
-	searchService := service.NewSearchService(db, redisClientForService, repos.Epic, repos.UserStory, repos.AcceptanceCriteria, repos.Requirement)
+	searchService := service.NewSearchService(db, redisClientForService, repos.Epic, repos.UserStory, repos.AcceptanceCriteria, repos.Requirement, repos.SteeringDocument)
 	epicService := service.NewEpicService(repos.Epic, repos.User)
 	userStoryService := service.NewUserStoryService(repos.UserStory, repos.Epic, repos.User)
 	requirementService := service.NewRequirementService(

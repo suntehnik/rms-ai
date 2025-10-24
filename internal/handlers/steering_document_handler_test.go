@@ -82,6 +82,9 @@ func (m *MockUserRepository) Create(entity *models.User) error { return nil }
 func (m *MockUserRepository) GetByReferenceID(referenceID string) (*models.User, error) {
 	return nil, nil
 }
+func (m *MockUserRepository) GetByReferenceIDCaseInsensitive(referenceID string) (*models.User, error) {
+	return nil, nil
+}
 func (m *MockUserRepository) Update(entity *models.User) error { return nil }
 func (m *MockUserRepository) Delete(id uuid.UUID) error        { return nil }
 func (m *MockUserRepository) List(filters map[string]interface{}, orderBy string, limit, offset int) ([]models.User, error) {

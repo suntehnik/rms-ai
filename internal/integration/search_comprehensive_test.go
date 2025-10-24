@@ -29,6 +29,7 @@ func TestSearchIntegration_ComprehensiveSearch(t *testing.T) {
 		repos.UserStory,
 		repos.AcceptanceCriteria,
 		repos.Requirement,
+		repos.SteeringDocument,
 	)
 
 	// Create test user

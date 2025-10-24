@@ -132,6 +132,30 @@ func (r *userStoryRepository) GetByReferenceIDWithUsers(referenceID string) (*mo
 	return &userStory, nil
 }
 
+// GetByReferenceIDWithUsersCaseInsensitive retrieves a user story by its reference ID (case-insensitive) with creator and assignee preloaded
+func (r *userStoryRepository) GetByReferenceIDWithUsersCaseInsensitive(referenceID string) (*models.UserStory, error) {
+	var userStory models.UserStory
+
+	query := r.GetDB().Preload("Creator").Preload("Assignee")
+	var err error
+
+	// Use ILIKE for PostgreSQL, LOWER() LIKE for SQLite compatibility
+	if r.GetDB().Dialector.Name() == "postgres" {
+		err = query.Where("reference_id ILIKE ?", referenceID).First(&userStory).Error
+	} else {
+		// SQLite and other databases - use LOWER() LIKE for case-insensitive matching
+		err = query.Where("LOWER(reference_id) LIKE LOWER(?)", referenceID).First(&userStory).Error
+	}
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, r.handleDBError(err)
+	}
+	return &userStory, nil
+}
+
 // ListWithIncludes retrieves user stories with optional related entity preloading
 func (r *userStoryRepository) ListWithIncludes(filters map[string]interface{}, includes []string, orderBy string, limit, offset int) ([]models.UserStory, error) {
 	var userStories []models.UserStory

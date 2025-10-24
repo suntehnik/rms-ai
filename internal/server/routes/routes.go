@@ -84,6 +84,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 			repos.UserStory,
 			repos.AcceptanceCriteria,
 			repos.Requirement,
+			repos.SteeringDocument,
 		)
 	} else {
 		searchService = service.NewSearchService(
@@ -93,6 +94,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 			repos.UserStory,
 			repos.AcceptanceCriteria,
 			repos.Requirement,
+			repos.SteeringDocument,
 		)
 	}
 

@@ -39,6 +39,14 @@ func (m *MockEpicRepository) GetByReferenceID(referenceID string) (*models.Epic,
 	return args.Get(0).(*models.Epic), args.Error(1)
 }
 
+func (m *MockEpicRepository) GetByReferenceIDCaseInsensitive(referenceID string) (*models.Epic, error) {
+	args := m.Called(referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Epic), args.Error(1)
+}
+
 func (m *MockEpicRepository) Update(epic *models.Epic) error {
 	args := m.Called(epic)
 	return args.Error(0)
@@ -131,6 +139,14 @@ func (m *MockEpicRepository) GetByReferenceIDWithUsers(referenceID string) (*mod
 	return args.Get(0).(*models.Epic), args.Error(1)
 }
 
+func (m *MockEpicRepository) GetByReferenceIDWithUsersCaseInsensitive(referenceID string) (*models.Epic, error) {
+	args := m.Called(referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Epic), args.Error(1)
+}
+
 func (m *MockEpicRepository) ListWithIncludes(filters map[string]interface{}, includes []string, orderBy string, limit, offset int) ([]models.Epic, error) {
 	args := m.Called(filters, includes, orderBy, limit, offset)
 	return args.Get(0).([]models.Epic), args.Error(1)
@@ -155,6 +171,14 @@ func (m *MockUserRepository) GetByID(id uuid.UUID) (*models.User, error) {
 }
 
 func (m *MockUserRepository) GetByReferenceID(referenceID string) (*models.User, error) {
+	args := m.Called(referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.User), args.Error(1)
+}
+
+func (m *MockUserRepository) GetByReferenceIDCaseInsensitive(referenceID string) (*models.User, error) {
 	args := m.Called(referenceID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)

@@ -37,6 +37,7 @@ type Repository[T any] interface {
 	Create(entity *T) error
 	GetByID(id uuid.UUID) (*T, error)
 	GetByReferenceID(referenceID string) (*T, error)
+	GetByReferenceIDCaseInsensitive(referenceID string) (*T, error)
 	Update(entity *T) error
 	Delete(id uuid.UUID) error
 	List(filters map[string]interface{}, orderBy string, limit, offset int) ([]T, error)
@@ -67,6 +68,7 @@ type EpicRepository interface {
 	HasUserStories(id uuid.UUID) (bool, error)
 	GetByIDWithUsers(id uuid.UUID) (*Epic, error)
 	GetByReferenceIDWithUsers(referenceID string) (*Epic, error)
+	GetByReferenceIDWithUsersCaseInsensitive(referenceID string) (*Epic, error)
 	ListWithIncludes(filters map[string]interface{}, includes []string, orderBy string, limit, offset int) ([]Epic, error)
 }
 
@@ -84,6 +86,7 @@ type UserStoryRepository interface {
 	HasRequirements(id uuid.UUID) (bool, error)
 	GetByIDWithUsers(id uuid.UUID) (*UserStory, error)
 	GetByReferenceIDWithUsers(referenceID string) (*UserStory, error)
+	GetByReferenceIDWithUsersCaseInsensitive(referenceID string) (*UserStory, error)
 	ListWithIncludes(filters map[string]interface{}, includes []string, orderBy string, limit, offset int) ([]UserStory, error)
 }
 

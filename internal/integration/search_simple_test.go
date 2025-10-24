@@ -27,6 +27,7 @@ func TestSearchIntegration_BasicFunctionality(t *testing.T) {
 		repos.UserStory,
 		repos.AcceptanceCriteria,
 		repos.Requirement,
+		repos.SteeringDocument,
 	)
 
 	// Test basic search functionality
@@ -67,6 +68,7 @@ func TestSearchIntegration_CacheInvalidation(t *testing.T) {
 		repos.UserStory,
 		repos.AcceptanceCriteria,
 		repos.Requirement,
+		repos.SteeringDocument,
 	)
 
 	// Test cache invalidation without Redis (should not fail)
@@ -90,6 +92,7 @@ func TestSearchIntegration_PrepareSearchQuery(t *testing.T) {
 		repos.UserStory,
 		repos.AcceptanceCriteria,
 		repos.Requirement,
+		repos.SteeringDocument,
 	)
 
 	// Test filter-only search (no full-text search with SQLite)
@@ -123,6 +126,7 @@ func TestSearchIntegration_FilterValidation(t *testing.T) {
 		repos.UserStory,
 		repos.AcceptanceCriteria,
 		repos.Requirement,
+		repos.SteeringDocument,
 	)
 
 	// Test with various filter combinations
