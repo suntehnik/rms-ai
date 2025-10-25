@@ -55,7 +55,7 @@ func TestMCPHandler_ResourcesList_Success(t *testing.T) {
 	mockResourceService.On("GetResourceList", mock.Anything).Return(expectedResources, nil)
 
 	// Create MCP handler with mock resource service
-	handler := NewMCPHandler(nil, nil, nil, nil, nil, nil, mockResourceService)
+	handler := NewMCPHandler(nil, nil, nil, nil, nil, nil, nil, mockResourceService)
 
 	// Create test request
 	requestBody := `{
@@ -133,7 +133,7 @@ func TestMCPHandler_ResourcesList_ServiceError(t *testing.T) {
 	mockResourceService.On("GetResourceList", mock.Anything).Return([]service.ResourceDescriptor{}, assert.AnError)
 
 	// Create MCP handler with mock resource service
-	handler := NewMCPHandler(nil, nil, nil, nil, nil, nil, mockResourceService)
+	handler := NewMCPHandler(nil, nil, nil, nil, nil, nil, nil, mockResourceService)
 
 	// Create test request
 	requestBody := `{
@@ -192,7 +192,7 @@ func TestMCPHandler_ResourcesList_Integration(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	// Create MCP handler with nil resource service (just for registration test)
-	handler := NewMCPHandler(nil, nil, nil, nil, nil, nil, nil)
+	handler := NewMCPHandler(nil, nil, nil, nil, nil, nil, nil, nil)
 
 	// Check that resources/list method is registered
 	methods := handler.processor.GetRegisteredMethods()

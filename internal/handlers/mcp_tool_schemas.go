@@ -473,6 +473,130 @@ func GetSupportedTools() []ToolDefinition {
 				"required": []string{"epic_id"},
 			},
 		},
+		{
+			Name:        "create_prompt",
+			Title:       "Create Prompt",
+			Description: "Create a new system prompt (requires Administrator role). The creator is automatically set to the authenticated user.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Unique name identifier for the prompt (required, max 255 characters)",
+						"maxLength":   255,
+					},
+					"title": map[string]interface{}{
+						"type":        "string",
+						"description": "Display title of the prompt (required, max 500 characters)",
+						"maxLength":   500,
+					},
+					"description": map[string]interface{}{
+						"type":        "string",
+						"description": "Detailed description of the prompt's purpose (optional, max 50000 characters)",
+						"maxLength":   50000,
+					},
+					"content": map[string]interface{}{
+						"type":        "string",
+						"description": "The actual prompt content/instructions (required)",
+					},
+				},
+				"required": []string{"name", "title", "content"},
+			},
+		},
+		{
+			Name:        "update_prompt",
+			Title:       "Update Prompt",
+			Description: "Update an existing system prompt (requires Administrator role)",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"prompt_id": map[string]interface{}{
+						"type":        "string",
+						"description": "UUID or reference ID (PROMPT-XXX) of the prompt to update",
+					},
+					"title": map[string]interface{}{
+						"type":        "string",
+						"description": "New display title of the prompt (optional, max 500 characters)",
+						"maxLength":   500,
+					},
+					"description": map[string]interface{}{
+						"type":        "string",
+						"description": "New description of the prompt's purpose (optional, max 50000 characters)",
+						"maxLength":   50000,
+					},
+					"content": map[string]interface{}{
+						"type":        "string",
+						"description": "New prompt content/instructions (optional)",
+					},
+				},
+				"required": []string{"prompt_id"},
+			},
+		},
+		{
+			Name:        "delete_prompt",
+			Title:       "Delete Prompt",
+			Description: "Delete a system prompt (requires Administrator role)",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"prompt_id": map[string]interface{}{
+						"type":        "string",
+						"description": "UUID or reference ID (PROMPT-XXX) of the prompt to delete",
+					},
+				},
+				"required": []string{"prompt_id"},
+			},
+		},
+		{
+			Name:        "activate_prompt",
+			Title:       "Activate Prompt",
+			Description: "Activate a system prompt and deactivate all others (requires Administrator role)",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"prompt_id": map[string]interface{}{
+						"type":        "string",
+						"description": "UUID or reference ID (PROMPT-XXX) of the prompt to activate",
+					},
+				},
+				"required": []string{"prompt_id"},
+			},
+		},
+		{
+			Name:        "list_prompts",
+			Title:       "List Prompts",
+			Description: "List all system prompts with pagination",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"limit": map[string]interface{}{
+						"type":        "integer",
+						"description": "Number of items per page (default: 50, max: 100)",
+						"minimum":     1,
+						"maximum":     100,
+					},
+					"offset": map[string]interface{}{
+						"type":        "integer",
+						"description": "Number of items to skip (default: 0)",
+						"minimum":     0,
+					},
+					"creator_id": map[string]interface{}{
+						"type":        "string",
+						"description": "Filter by creator UUID (optional)",
+						"format":      "uuid",
+					},
+				},
+			},
+		},
+		{
+			Name:        "get_active_prompt",
+			Title:       "Get Active Prompt",
+			Description: "Get the currently active system prompt",
+			InputSchema: map[string]interface{}{
+				"type":       "object",
+				"properties": map[string]interface{}{},
+			},
+		},
 	}
 }
 

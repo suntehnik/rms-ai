@@ -119,17 +119,59 @@ This document outlines the requirements for implementing a JSON-RPC API handler 
 8. WHEN validation fails THEN the system SHALL return JSON-RPC error with details
 9. IF user lacks permissions THEN the system SHALL return 403 Forbidden
 
-### Requirement 8: Prompts Handler Implementation
+### Requirement 8: System Prompts Management with Database Storage
 
-**User Story:** As an MCP client, I want to access parameterized prompts for common tasks, so that I can provide consistent AI-assisted workflows to users.
+**User Story:** As an administrator, I want to manage system prompts stored in database with CRUD operations, so that I can configure AI assistant behavior and ensure only one prompt is active at any time.
 
 #### Acceptance Criteria
 
-1. WHEN handling "prompts/get" method THEN the system SHALL validate prompt name exists
-2. WHEN prompt requires context THEN the system SHALL load entities using service layer
-3. WHEN formatting prompt THEN the system SHALL include description and messages array
-4. WHEN supporting prompts THEN the system SHALL provide "analyze_requirement_quality", "suggest_acceptance_criteria"
-5. WHEN supporting prompts THEN the system SHALL provide "generate_user_story", "decompose_epic", "suggest_test_scenarios"
-6. WHEN arguments missing THEN the system SHALL return error indicating required arguments
-7. WHEN context loading fails THEN the system SHALL return error with details
-8. IF user lacks read permissions THEN the system SHALL return 403 Forbidden
+1. WHEN system stores prompts THEN they SHALL be persisted in database with reference IDs (PROMPT-001, PROMPT-002, etc.)
+2. WHEN managing prompts THEN only one prompt SHALL be marked as active at any time
+3. WHEN MCP client initializes THEN the system SHALL automatically provide active system prompt
+4. WHEN handling "resources/read" with URI "requirements://prompts" THEN the system SHALL return collection of all prompts
+5. WHEN handling "resources/read" with URI "requirements://prompts/active" THEN the system SHALL return currently active prompt
+6. WHEN handling "prompts/list" method THEN the system SHALL return array of available prompt descriptors from database
+7. WHEN handling "prompts/get" method THEN the system SHALL validate prompt name exists in database and return full definition
+8. WHEN administrator creates prompt THEN the system SHALL provide CRUD operations through both REST API and MCP tools
+9. WHEN administrator updates prompt THEN the system SHALL validate prompt content structure
+10. WHEN administrator activates prompt THEN the system SHALL deactivate current active prompt and activate selected one
+11. WHEN formatting prompt response THEN the system SHALL include name, description, and content as simple text
+12. IF user lacks administrator permissions for CRUD operations THEN the system SHALL return 403 Forbidden
+
+### Requirement 9: REST API for System Prompts Management
+
+**User Story:** As an administrator, I want to manage system prompts through REST API endpoints, so that I can perform CRUD operations and activate prompts through web interface.
+
+#### Acceptance Criteria
+
+1. WHEN implementing REST API THEN the system SHALL provide POST /api/v1/prompts endpoint for creating prompts
+2. WHEN implementing REST API THEN the system SHALL provide GET /api/v1/prompts endpoint for listing prompts with pagination
+3. WHEN implementing REST API THEN the system SHALL provide GET /api/v1/prompts/:id endpoint for retrieving prompt by ID or reference ID
+4. WHEN implementing REST API THEN the system SHALL provide PUT /api/v1/prompts/:id endpoint for updating prompts
+5. WHEN implementing REST API THEN the system SHALL provide DELETE /api/v1/prompts/:id endpoint for deleting prompts
+6. WHEN implementing REST API THEN the system SHALL provide PATCH /api/v1/prompts/:id/activate endpoint for activating prompts
+7. WHEN implementing REST API THEN the system SHALL provide GET /api/v1/prompts/active endpoint for retrieving active prompt
+8. WHEN REST API operations execute THEN they SHALL require Administrator role for all operations except GET
+9. WHEN activating prompt through REST API THEN the system SHALL ensure only one prompt is active
+10. WHEN validating prompt data THEN the system SHALL validate content field as plain text
+11. IF non-administrator attempts CRUD operations THEN the system SHALL return 403 Forbidden
+12. IF prompt not found THEN the system SHALL return 404 Not Found
+
+### Requirement 10: MCP Tools for System Prompts Management
+
+**User Story:** As an MCP client with administrator privileges, I want to manage system prompts through MCP tools, so that I can perform CRUD operations and activate prompts through MCP protocol.
+
+#### Acceptance Criteria
+
+1. WHEN supporting MCP tools THEN the system SHALL provide "create_prompt" tool for creating new prompts
+2. WHEN supporting MCP tools THEN the system SHALL provide "update_prompt" tool for updating existing prompts
+3. WHEN supporting MCP tools THEN the system SHALL provide "delete_prompt" tool for deleting prompts
+4. WHEN supporting MCP tools THEN the system SHALL provide "activate_prompt" tool for activating prompts
+5. WHEN supporting MCP tools THEN the system SHALL provide "list_prompts" tool for listing all prompts
+6. WHEN supporting MCP tools THEN the system SHALL provide "get_active_prompt" tool for retrieving active prompt
+7. WHEN MCP tools execute THEN they SHALL require Administrator role for CRUD operations
+8. WHEN validating tool arguments THEN the system SHALL validate prompt content as plain text
+9. WHEN activating prompt through MCP tool THEN the system SHALL ensure only one prompt is active
+10. WHEN tool execution succeeds THEN the system SHALL return structured result with content array
+11. IF non-administrator attempts CRUD tools THEN the system SHALL return JSON-RPC error with code -32002
+12. IF prompt not found THEN the system SHALL return JSON-RPC error with appropriate message

@@ -515,7 +515,7 @@ func TestURIParser_ConcurrentAccess(t *testing.T) {
 
 				// Test utility methods
 				schemes := parser.GetSupportedSchemes()
-				assert.Len(t, schemes, 4)
+				assert.Len(t, schemes, 5)
 
 				prefix, err := parser.GetExpectedPrefix("epic")
 				assert.NoError(t, err)
