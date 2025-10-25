@@ -19,6 +19,7 @@ type ResourceHandler struct {
 	userStoryService          service.UserStoryService
 	requirementService        service.RequirementService
 	acceptanceCriteriaService service.AcceptanceCriteriaService
+	promptService             *service.PromptService
 	uriParser                 *URIParser
 }
 
@@ -28,12 +29,14 @@ func NewResourceHandler(
 	userStoryService service.UserStoryService,
 	requirementService service.RequirementService,
 	acceptanceCriteriaService service.AcceptanceCriteriaService,
+	promptService *service.PromptService,
 ) *ResourceHandler {
 	return &ResourceHandler{
 		epicService:               epicService,
 		userStoryService:          userStoryService,
 		requirementService:        requirementService,
 		acceptanceCriteriaService: acceptanceCriteriaService,
+		promptService:             promptService,
 		uriParser:                 NewURIParser(),
 	}
 }
@@ -103,6 +106,8 @@ func (rh *ResourceHandler) handleResourceByScheme(ctx context.Context, parsedURI
 		return rh.handleRequirementResource(ctx, parsedURI)
 	case AcceptanceCriteriaURIScheme:
 		return rh.handleAcceptanceCriteriaResource(ctx, parsedURI)
+	case PromptURIScheme:
+		return rh.handlePromptResource(ctx, parsedURI)
 	default:
 		return nil, jsonrpc.NewInvalidParamsError(fmt.Sprintf("Unsupported URI scheme: %s", parsedURI.Scheme))
 	}
@@ -747,6 +752,11 @@ func (rh *ResourceHandler) isCollectionResource(uri string) bool {
 	parts := strings.Split(strings.TrimPrefix(uri, "requirements://"), "/")
 
 	// Collection resource has only one part (entity type, no ID)
+	// Special case: "prompts/active" is also a collection resource
+	if len(parts) == 2 && parts[0] == "prompts" && parts[1] == "active" {
+		return true
+	}
+
 	return len(parts) == 1 && parts[0] != ""
 }
 
@@ -754,6 +764,11 @@ func (rh *ResourceHandler) isCollectionResource(uri string) bool {
 func (rh *ResourceHandler) handleCollectionResource(ctx context.Context, uri string) (interface{}, error) {
 	// Parse the entity type from the URI
 	entityType := strings.TrimPrefix(uri, "requirements://")
+
+	// Handle special case for prompts/active
+	if entityType == "prompts/active" {
+		return rh.handleActivePromptResource(ctx, uri)
+	}
 
 	switch entityType {
 	case "epics":
@@ -764,6 +779,8 @@ func (rh *ResourceHandler) handleCollectionResource(ctx context.Context, uri str
 		return rh.handleRequirementsCollection(ctx, uri)
 	case "acceptance-criteria":
 		return rh.handleAcceptanceCriteriaCollection(ctx, uri)
+	case "prompts":
+		return rh.handlePromptsCollection(ctx, uri)
 	default:
 		return nil, jsonrpc.NewInvalidParamsError(fmt.Sprintf("Unsupported collection type: %s", entityType))
 	}
@@ -970,4 +987,136 @@ func (rh *ResourceHandler) formatAcceptanceCriteriaCollectionResource(uri string
 			},
 		},
 	}
+}
+
+// handlePromptResource handles prompt:// URI resources
+func (rh *ResourceHandler) handlePromptResource(ctx context.Context, parsedURI *ParsedURI) (interface{}, error) {
+	// Get the prompt by reference ID
+	prompt, err := rh.promptService.GetByReferenceID(ctx, parsedURI.ReferenceID)
+	if err != nil {
+		if err == service.ErrNotFound {
+			return nil, jsonrpc.NewJSONRPCError(-32002, "Prompt not found", nil)
+		}
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get prompt: %v", err))
+	}
+
+	// Format the prompt content
+	content := map[string]interface{}{
+		"id":           prompt.ID,
+		"reference_id": prompt.ReferenceID,
+		"name":         prompt.Name,
+		"title":        prompt.Title,
+		"content":      prompt.Content,
+		"is_active":    prompt.IsActive,
+		"created_at":   prompt.CreatedAt,
+		"updated_at":   prompt.UpdatedAt,
+	}
+
+	if prompt.Description != nil {
+		content["description"] = *prompt.Description
+	}
+
+	contentsJSON, err := json.MarshalIndent(content, "", "  ")
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to marshal prompt: %v", err))
+	}
+
+	uri := fmt.Sprintf("prompt://%s", parsedURI.ReferenceID)
+	return &ResourceResponse{
+		Contents: []ResourceContents{
+			{
+				URI:      uri,
+				MimeType: "application/json",
+				Text:     string(contentsJSON),
+			},
+		},
+	}, nil
+}
+
+// handlePromptsCollection handles requirements://prompts collection resource
+func (rh *ResourceHandler) handlePromptsCollection(ctx context.Context, uri string) (interface{}, error) {
+	// Get all prompts using the PromptService
+	prompts, _, err := rh.promptService.List(ctx, 100, 0, nil)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get prompts: %v", err))
+	}
+
+	// Format the collection
+	collection := map[string]interface{}{
+		"type":        "prompts_collection",
+		"total_count": len(prompts),
+		"prompts":     prompts,
+		"description": "Collection of all system prompts",
+	}
+
+	contentsJSON, err := json.MarshalIndent(collection, "", "  ")
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to marshal prompts collection: %v", err))
+	}
+
+	return &ResourceResponse{
+		Contents: []ResourceContents{
+			{
+				URI:      uri,
+				MimeType: "application/json",
+				Text:     string(contentsJSON),
+			},
+		},
+	}, nil
+}
+
+// handleActivePromptResource handles requirements://prompts/active resource
+func (rh *ResourceHandler) handleActivePromptResource(ctx context.Context, uri string) (interface{}, error) {
+	// Get the active prompt
+	prompt, err := rh.promptService.GetActive(ctx)
+	if err != nil {
+		if err == service.ErrNotFound {
+			// Return empty response if no active prompt
+			collection := map[string]interface{}{
+				"type":        "active_prompt",
+				"active":      false,
+				"prompt":      nil,
+				"description": "No active system prompt found",
+			}
+
+			contentsJSON, err := json.MarshalIndent(collection, "", "  ")
+			if err != nil {
+				return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to marshal empty active prompt: %v", err))
+			}
+
+			return &ResourceResponse{
+				Contents: []ResourceContents{
+					{
+						URI:      uri,
+						MimeType: "application/json",
+						Text:     string(contentsJSON),
+					},
+				},
+			}, nil
+		}
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get active prompt: %v", err))
+	}
+
+	// Format the active prompt
+	collection := map[string]interface{}{
+		"type":        "active_prompt",
+		"active":      true,
+		"prompt":      prompt,
+		"description": fmt.Sprintf("Currently active system prompt: %s", prompt.Title),
+	}
+
+	contentsJSON, err := json.MarshalIndent(collection, "", "  ")
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to marshal active prompt: %v", err))
+	}
+
+	return &ResourceResponse{
+		Contents: []ResourceContents{
+			{
+				URI:      uri,
+				MimeType: "application/json",
+				Text:     string(contentsJSON),
+			},
+		},
+	}, nil
 }

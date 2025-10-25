@@ -24,6 +24,7 @@ type MCPHandler struct {
 	processor       *jsonrpc.Processor
 	resourceHandler *ResourceHandler
 	toolsHandler    *ToolsHandler
+	promptsHandler  *PromptsHandler
 	mcpLogger       *MCPLogger
 	errorMapper     *jsonrpc.ErrorMapper
 	resourceService service.ResourceService
@@ -37,11 +38,13 @@ func NewMCPHandler(
 	acceptanceCriteriaService service.AcceptanceCriteriaService,
 	searchService service.SearchServiceInterface,
 	steeringDocumentService service.SteeringDocumentService,
+	promptService *service.PromptService,
 	resourceService service.ResourceService,
 ) *MCPHandler {
 	processor := jsonrpc.NewProcessor()
-	resourceHandler := NewResourceHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService)
-	toolsHandler := NewToolsHandler(epicService, userStoryService, requirementService, searchService, steeringDocumentService)
+	resourceHandler := NewResourceHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService, promptService)
+	toolsHandler := NewToolsHandler(epicService, userStoryService, requirementService, searchService, steeringDocumentService, promptService)
+	promptsHandler := NewPromptsHandler(promptService, epicService, userStoryService, requirementService, acceptanceCriteriaService, logger.Logger)
 	mcpLogger := NewMCPLogger()
 	errorMapper := jsonrpc.NewErrorMapper()
 
@@ -53,6 +56,7 @@ func NewMCPHandler(
 		processor:       processor,
 		resourceHandler: resourceHandler,
 		toolsHandler:    toolsHandler,
+		promptsHandler:  promptsHandler,
 		mcpLogger:       mcpLogger,
 		errorMapper:     errorMapper,
 		resourceService: resourceService,
@@ -65,6 +69,8 @@ func NewMCPHandler(
 	processor.RegisterHandler("tools/call", handler.wrapHandler("tools/call", toolsHandler.HandleToolsCall))
 	processor.RegisterHandler("resources/list", handler.wrapHandler("resources/list", handler.handleResourcesList))
 	processor.RegisterHandler("resources/read", handler.wrapHandler("resources/read", resourceHandler.HandleResourcesRead))
+	processor.RegisterHandler("prompts/list", handler.wrapHandler("prompts/list", promptsHandler.HandlePromptsList))
+	processor.RegisterHandler("prompts/get", handler.wrapHandler("prompts/get", promptsHandler.HandlePromptsGet))
 
 	return handler
 }

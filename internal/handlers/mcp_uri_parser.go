@@ -13,6 +13,7 @@ const (
 	UserStoryURIScheme          = "user-story"
 	RequirementURIScheme        = "requirement"
 	AcceptanceCriteriaURIScheme = "acceptance-criteria"
+	PromptURIScheme             = "prompt"
 )
 
 // URIParser handles parsing and validation of MCP resource URIs
@@ -32,12 +33,13 @@ type ParsedURI struct {
 // NewURIParser creates a new URI parser instance
 func NewURIParser() *URIParser {
 	return &URIParser{
-		referenceIDPattern: regexp.MustCompile(`^(EP|US|REQ|AC)-\d+$`),
+		referenceIDPattern: regexp.MustCompile(`^(EP|US|REQ|AC|PROMPT)-\d+$`),
 		schemePrefixMap: map[string]string{
 			EpicURIScheme:               "EP",
 			UserStoryURIScheme:          "US",
 			RequirementURIScheme:        "REQ",
 			AcceptanceCriteriaURIScheme: "AC",
+			PromptURIScheme:             "PROMPT",
 		},
 	}
 }

@@ -13,7 +13,7 @@ func TestNewURIParser(t *testing.T) {
 	assert.NotNil(t, parser)
 	assert.NotNil(t, parser.referenceIDPattern)
 	assert.NotNil(t, parser.schemePrefixMap)
-	assert.Len(t, parser.schemePrefixMap, 4)
+	assert.Len(t, parser.schemePrefixMap, 5)
 }
 
 func TestURIParser_Parse(t *testing.T) {
@@ -320,11 +320,12 @@ func TestURIParser_GetSupportedSchemes(t *testing.T) {
 
 	schemes := parser.GetSupportedSchemes()
 
-	assert.Len(t, schemes, 4)
+	assert.Len(t, schemes, 5)
 	assert.Contains(t, schemes, "epic")
 	assert.Contains(t, schemes, "user-story")
 	assert.Contains(t, schemes, "requirement")
 	assert.Contains(t, schemes, "acceptance-criteria")
+	assert.Contains(t, schemes, "prompt")
 }
 
 func TestURIParser_GetExpectedPrefix(t *testing.T) {

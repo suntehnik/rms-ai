@@ -115,6 +115,9 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 		repos.User,
 	)
 
+	// Initialize prompt service
+	promptService := service.NewPromptService(db.Postgres, logger.Logger)
+
 	// Initialize resource service for MCP with proper dependency injection
 	resourceService := service.SetupResourceServiceForMCPHandler(repos, logger.Logger)
 
@@ -139,7 +142,8 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	searchHandler := handlers.NewSearchHandler(searchService, logger.Logger)
 	navigationHandler := handlers.NewNavigationHandler(navigationService)
 	steeringDocumentHandler := handlers.NewSteeringDocumentHandler(steeringDocumentService, epicService, repos.User)
-	mcpHandler := handlers.NewMCPHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService, searchService, steeringDocumentService, resourceService)
+	promptHandler := handlers.NewPromptHandler(promptService, logger.Logger)
+	mcpHandler := handlers.NewMCPHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService, searchService, steeringDocumentService, promptService, resourceService)
 
 	// Authentication routes (no /api/v1 prefix for auth)
 	authGroup := router.Group("/auth")
@@ -273,6 +277,22 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 		epics.GET("/:id/steering-documents", steeringDocumentHandler.GetEpicSteeringDocuments)
 		epics.POST("/:id/steering-documents/:doc_id", steeringDocumentHandler.LinkSteeringDocumentToEpic)
 		epics.DELETE("/:id/steering-documents/:doc_id", steeringDocumentHandler.UnlinkSteeringDocumentFromEpic)
+
+		// Prompt routes (admin only for CRUD operations)
+		prompts := v1.Group("/prompts")
+		prompts.Use(authService.Middleware()) // Add authentication middleware
+		{
+			// Public read operations (all authenticated users)
+			prompts.GET("", promptHandler.ListPrompts)
+			prompts.GET("/active", promptHandler.GetActivePrompt)
+			prompts.GET("/:id", promptHandler.GetPrompt)
+
+			// Admin-only operations
+			prompts.POST("", authService.RequireAdministrator(), promptHandler.CreatePrompt)
+			prompts.PUT("/:id", authService.RequireAdministrator(), promptHandler.UpdatePrompt)
+			prompts.DELETE("/:id", authService.RequireAdministrator(), promptHandler.DeletePrompt)
+			prompts.PATCH("/:id/activate", authService.RequireAdministrator(), promptHandler.ActivatePrompt)
+		}
 
 		// Configuration routes (admin only)
 		config := v1.Group("/config")

@@ -22,6 +22,10 @@ var (
 	ErrValidation              = errors.New("validation error")
 	ErrInsufficientPermissions = errors.New("insufficient permissions")
 
+	// Common CRUD errors
+	ErrNotFound       = errors.New("entity not found")
+	ErrDuplicateEntry = errors.New("duplicate entry")
+
 	// Resource service errors
 	ErrResourceProviderFailed = errors.New("resource provider failed")
 	ErrNoResourceProviders    = errors.New("no resource providers registered")
