@@ -86,7 +86,7 @@ func (ph *PromptHandler) CreatePrompt(c *gin.Context) {
 // @Param limit query int false "Number of items per page (default: 50, max: 100)"
 // @Param offset query int false "Number of items to skip (default: 0)"
 // @Param creator_id query string false "Filter by creator UUID"
-// @Success 200 {object} ListResponse[models.Prompt]
+// @Success 200 {object} map[string]interface{}
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse

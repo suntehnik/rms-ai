@@ -5379,6 +5379,438 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/prompts": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "List all prompts with pagination",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "prompts"
+                ],
+                "summary": "List prompts",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page (default: 50, max: 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items to skip (default: 0)",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by creator UUID",
+                        "name": "creator_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new system prompt (requires Administrator role)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "prompts"
+                ],
+                "summary": "Create a new prompt",
+                "parameters": [
+                    {
+                        "description": "Prompt creation request",
+                        "name": "prompt",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreatePromptRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Prompt"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/prompts/active": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get the currently active prompt",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "prompts"
+                ],
+                "summary": "Get active prompt",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Prompt"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/prompts/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a prompt by UUID or reference ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "prompts"
+                ],
+                "summary": "Get prompt by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Prompt UUID or reference ID (e.g., PROMPT-001)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Prompt"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update an existing prompt (requires Administrator role)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "prompts"
+                ],
+                "summary": "Update prompt",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Prompt UUID or reference ID (e.g., PROMPT-001)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Prompt update request",
+                        "name": "prompt",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.UpdatePromptRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.Prompt"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a prompt (requires Administrator role)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "prompts"
+                ],
+                "summary": "Delete prompt",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Prompt UUID or reference ID (e.g., PROMPT-001)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/prompts/{id}/activate": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Activate a prompt and deactivate all others (requires Administrator role)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "prompts"
+                ],
+                "summary": "Activate prompt",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Prompt UUID or reference ID (e.g., PROMPT-001)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/requirement-relationships/{id}": {
             "delete": {
                 "security": [
@@ -6628,6 +7060,13 @@ const docTemplate = `{
                         "example": "\"user authentication\"",
                         "description": "Full-text search query. Searches across titles, descriptions, and reference IDs. Supports PostgreSQL text search syntax with automatic prefix matching.",
                         "name": "query",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "\"epic,user_story\"",
+                        "description": "Comma-separated list of entity types to search (epic, user_story, acceptance_criteria, requirement). Defaults to all types if not specified.",
+                        "name": "entity_types",
                         "in": "query"
                     },
                     {
@@ -10160,6 +10599,60 @@ const docTemplate = `{
                 "PriorityLow"
             ]
         },
+        "product-requirements-management_internal_models.Prompt": {
+            "description": "System prompt contains instructions for AI assistant behavior and can be activated for use",
+            "type": "object",
+            "required": [
+                "content",
+                "name",
+                "title"
+            ],
+            "properties": {
+                "content": {
+                    "description": "Content is the actual prompt text\n@Description The actual prompt content/instructions (required)\n@Example \"You are an expert requirements analyst...\"",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "CreatedAt is the timestamp when the prompt was created\n@Description Timestamp when the prompt was created (RFC3339 format)\n@Example \"2023-01-15T10:30:00Z\"",
+                    "type": "string"
+                },
+                "creator_id": {
+                    "description": "CreatorID is the UUID of the user who created the prompt\n@Description UUID of the user who created this prompt\n@Example \"123e4567-e89b-12d3-a456-426614174001\"",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description provides information about the prompt's purpose\n@Description Detailed description of the prompt's purpose (optional, max 50000 characters)\n@MaxLength 50000\n@Example \"AI assistant specialized in requirements analysis and management\"",
+                    "type": "string",
+                    "maxLength": 50000
+                },
+                "id": {
+                    "description": "ID is the unique identifier for the prompt\n@Description Unique UUID identifier for the prompt\n@Example \"123e4567-e89b-12d3-a456-426614174000\"",
+                    "type": "string"
+                },
+                "is_active": {
+                    "description": "IsActive indicates if this prompt is currently active\n@Description Whether this prompt is currently active (only one can be active at a time)\n@Example true",
+                    "type": "boolean"
+                },
+                "name": {
+                    "description": "Name is the unique name identifier for the prompt\n@Description Unique name identifier for the prompt (required, max 255 characters)\n@MaxLength 255\n@Example \"requirements-analyst\"",
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "reference_id": {
+                    "description": "ReferenceID is the human-readable identifier for the prompt\n@Description Human-readable reference identifier (auto-generated, format: PROMPT-XXX)\n@Example \"PROMPT-001\"",
+                    "type": "string"
+                },
+                "title": {
+                    "description": "Title is the display name of the prompt\n@Description Display title of the prompt (required, max 500 characters)\n@MaxLength 500\n@Example \"Requirements Analyst Assistant\"",
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "updated_at": {
+                    "description": "UpdatedAt is the timestamp when the prompt was last updated\n@Description Timestamp when the prompt was last modified (RFC3339 format)\n@Example \"2023-01-16T14:45:30Z\"",
+                    "type": "string"
+                }
+            }
+        },
         "product-requirements-management_internal_models.RelationshipType": {
             "type": "object",
             "properties": {
@@ -11029,6 +11522,31 @@ const docTemplate = `{
                 }
             }
         },
+        "product-requirements-management_internal_service.CreatePromptRequest": {
+            "type": "object",
+            "required": [
+                "content",
+                "name",
+                "title"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 50000
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "title": {
+                    "type": "string",
+                    "maxLength": 500
+                }
+            }
+        },
         "product-requirements-management_internal_service.CreateRelationshipRequest": {
             "type": "object",
             "required": [
@@ -11492,6 +12010,22 @@ const docTemplate = `{
                 "title": {
                     "description": "Title is the name/summary of the epic\n@Description Title or name of the epic (optional, max 500 characters)\n@MaxLength 500\n@Example \"Enhanced User Authentication System\"",
                     "type": "string"
+                }
+            }
+        },
+        "product-requirements-management_internal_service.UpdatePromptRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 50000
+                },
+                "title": {
+                    "type": "string",
+                    "maxLength": 500
                 }
             }
         },
