@@ -37,6 +37,12 @@ func LoadConfig() (*Config, error) {
 	// Construct config file path
 	configPath := filepath.Join(homeDir, ".requirements-mcp", "config.json")
 
+	return LoadConfigFromPath(configPath)
+}
+
+// LoadConfigFromPath loads the MCP server configuration from the specified file path.
+// Returns an error if the configuration file cannot be read or parsed.
+func LoadConfigFromPath(configPath string) (*Config, error) {
 	// Read configuration file
 	data, err := os.ReadFile(configPath)
 	if err != nil {

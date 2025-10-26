@@ -1,15 +1,15 @@
 {
   "image": "ghcr.io/suntehnik/rms-ai",
-  "version": "fix-mcp-resource-response-format-68b73d4",
+  "version": "main-7d0f385",
   "latest_tag": "ghcr.io/suntehnik/rms-ai:latest",
-  "version_tag": "ghcr.io/suntehnik/rms-ai:fix-mcp-resource-response-format-68b73d4",
-  "git_commit": "68b73d436f004c769a2e180e8858cb0797c1db96",
-  "git_branch": "fix/mcp-resource-response-format",
+  "version_tag": "ghcr.io/suntehnik/rms-ai:main-7d0f385",
+  "git_commit": "7d0f385769a7a954c092ae6aa00d60e021295272",
+  "git_branch": "main",
   "git_tag": "",
-  "build_date": "2025-10-20T17:47:00Z",
+  "build_date": "2025-10-26T02:09:03Z",
   "registry": "ghcr.io",
   "repository": "suntehnik/rms-ai",
   "build_type": "multi-platform",
-  "platforms": "linux/amd64",
+  "platforms": "linux/amd64,linux/arm64",
   "buildx_enabled": true
 }
