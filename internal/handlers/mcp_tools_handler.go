@@ -21,6 +21,7 @@ type ToolsHandler struct {
 	requirementService      service.RequirementService
 	searchService           service.SearchServiceInterface
 	steeringDocumentService service.SteeringDocumentService
+	promptService           *service.PromptService
 }
 
 // NewToolsHandler creates a new tools handler instance
@@ -30,6 +31,7 @@ func NewToolsHandler(
 	requirementService service.RequirementService,
 	searchService service.SearchServiceInterface,
 	steeringDocumentService service.SteeringDocumentService,
+	promptService *service.PromptService,
 ) *ToolsHandler {
 	return &ToolsHandler{
 		epicService:             epicService,
@@ -37,6 +39,7 @@ func NewToolsHandler(
 		requirementService:      requirementService,
 		searchService:           searchService,
 		steeringDocumentService: steeringDocumentService,
+		promptService:           promptService,
 	}
 }
 
@@ -123,6 +126,18 @@ func (h *ToolsHandler) HandleToolsCall(ctx context.Context, params interface{}) 
 		return h.handleUnlinkSteeringFromEpic(ctx, arguments)
 	case "get_epic_steering_documents":
 		return h.handleGetEpicSteeringDocuments(ctx, arguments)
+	case "create_prompt":
+		return h.handleCreatePrompt(ctx, arguments)
+	case "update_prompt":
+		return h.handleUpdatePrompt(ctx, arguments)
+	case "delete_prompt":
+		return h.handleDeletePrompt(ctx, arguments)
+	case "activate_prompt":
+		return h.handleActivatePrompt(ctx, arguments)
+	case "list_prompts":
+		return h.handleListPrompts(ctx, arguments)
+	case "get_active_prompt":
+		return h.handleGetActivePrompt(ctx, arguments)
 	default:
 		return nil, jsonrpc.NewMethodNotFoundError(fmt.Sprintf("Unknown tool: %s", toolName))
 	}
@@ -1178,6 +1193,322 @@ func (h *ToolsHandler) handleGetEpicSteeringDocuments(ctx context.Context, args 
 			{
 				Type: "text",
 				Text: fmt.Sprintf("Found %d steering documents linked to epic %s", len(docs), epicIDStr),
+			},
+			{
+				Type: "text",
+				Text: string(jsonData),
+			},
+		},
+	}, nil
+}
+
+// handleCreatePrompt handles the create_prompt tool
+func (h *ToolsHandler) handleCreatePrompt(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+	// Get current user from context
+	user, err := getUserFromContext(ctx)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get user from context: %v", err))
+	}
+
+	// Check if user has Administrator role
+	if user.Role != models.RoleAdministrator {
+		return nil, jsonrpc.NewJSONRPCError(-32002, "Insufficient permissions: Administrator role required", nil)
+	}
+
+	// Validate required arguments
+	name, ok := args["name"].(string)
+	if !ok || name == "" {
+		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid 'name' argument")
+	}
+
+	title, ok := args["title"].(string)
+	if !ok || title == "" {
+		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid 'title' argument")
+	}
+
+	content, ok := args["content"].(string)
+	if !ok || content == "" {
+		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid 'content' argument")
+	}
+
+	// Optional arguments
+	var description *string
+	if desc, ok := args["description"].(string); ok && desc != "" {
+		description = &desc
+	}
+
+	// Create the prompt
+	req := service.CreatePromptRequest{
+		Name:        name,
+		Title:       title,
+		Description: description,
+		Content:     content,
+	}
+
+	prompt, err := h.promptService.Create(ctx, &req, user.ID)
+	if err != nil {
+		if err == service.ErrDuplicateEntry {
+			return nil, jsonrpc.NewJSONRPCError(-32003, "Prompt with this name already exists", nil)
+		}
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to create prompt: %v", err))
+	}
+
+	return &ToolResponse{
+		Content: []ContentItem{
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Successfully created prompt %s: %s", prompt.ReferenceID, prompt.Title),
+			},
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Prompt ID: %s, Name: %s", prompt.ID, prompt.Name),
+			},
+		},
+	}, nil
+}
+
+// handleUpdatePrompt handles the update_prompt tool
+func (h *ToolsHandler) handleUpdatePrompt(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+	// Get current user from context
+	user, err := getUserFromContext(ctx)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get user from context: %v", err))
+	}
+
+	// Check if user has Administrator role
+	if user.Role != models.RoleAdministrator {
+		return nil, jsonrpc.NewJSONRPCError(-32002, "Insufficient permissions: Administrator role required", nil)
+	}
+
+	// Validate required arguments
+	promptIDStr, ok := args["prompt_id"].(string)
+	if !ok || promptIDStr == "" {
+		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid 'prompt_id' argument")
+	}
+
+	var promptID uuid.UUID
+	if id, parseErr := uuid.Parse(promptIDStr); parseErr == nil {
+		promptID = id
+	} else {
+		// Try as reference ID
+		prompt, getErr := h.promptService.GetByReferenceID(ctx, promptIDStr)
+		if getErr != nil {
+			if getErr == service.ErrNotFound {
+				return nil, jsonrpc.NewJSONRPCError(-32002, "Prompt not found", nil)
+			}
+			return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get prompt: %v", getErr))
+		}
+		promptID = prompt.ID
+	}
+
+	// Build update request from optional arguments
+	req := service.UpdatePromptRequest{}
+	if title, ok := args["title"].(string); ok && title != "" {
+		req.Title = &title
+	}
+	if description, ok := args["description"].(string); ok {
+		req.Description = &description
+	}
+	if content, ok := args["content"].(string); ok && content != "" {
+		req.Content = &content
+	}
+
+	prompt, err := h.promptService.Update(ctx, promptID, &req)
+	if err != nil {
+		if err == service.ErrNotFound {
+			return nil, jsonrpc.NewJSONRPCError(-32002, "Prompt not found", nil)
+		}
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to update prompt: %v", err))
+	}
+
+	return &ToolResponse{
+		Content: []ContentItem{
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Successfully updated prompt %s: %s", prompt.ReferenceID, prompt.Title),
+			},
+		},
+	}, nil
+}
+
+// handleDeletePrompt handles the delete_prompt tool
+func (h *ToolsHandler) handleDeletePrompt(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+	// Get current user from context
+	user, err := getUserFromContext(ctx)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get user from context: %v", err))
+	}
+
+	// Check if user has Administrator role
+	if user.Role != models.RoleAdministrator {
+		return nil, jsonrpc.NewJSONRPCError(-32002, "Insufficient permissions: Administrator role required", nil)
+	}
+
+	// Validate required arguments
+	promptIDStr, ok := args["prompt_id"].(string)
+	if !ok || promptIDStr == "" {
+		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid 'prompt_id' argument")
+	}
+
+	var promptID uuid.UUID
+	if id, parseErr := uuid.Parse(promptIDStr); parseErr == nil {
+		promptID = id
+	} else {
+		// Try as reference ID
+		prompt, getErr := h.promptService.GetByReferenceID(ctx, promptIDStr)
+		if getErr != nil {
+			if getErr == service.ErrNotFound {
+				return nil, jsonrpc.NewJSONRPCError(-32002, "Prompt not found", nil)
+			}
+			return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get prompt: %v", getErr))
+		}
+		promptID = prompt.ID
+	}
+
+	err = h.promptService.Delete(ctx, promptID)
+	if err != nil {
+		if err == service.ErrNotFound {
+			return nil, jsonrpc.NewJSONRPCError(-32002, "Prompt not found", nil)
+		}
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to delete prompt: %v", err))
+	}
+
+	return &ToolResponse{
+		Content: []ContentItem{
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Successfully deleted prompt %s", promptIDStr),
+			},
+		},
+	}, nil
+}
+
+// handleActivatePrompt handles the activate_prompt tool
+func (h *ToolsHandler) handleActivatePrompt(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+	// Get current user from context
+	user, err := getUserFromContext(ctx)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get user from context: %v", err))
+	}
+
+	// Check if user has Administrator role
+	if user.Role != models.RoleAdministrator {
+		return nil, jsonrpc.NewJSONRPCError(-32002, "Insufficient permissions: Administrator role required", nil)
+	}
+
+	// Validate required arguments
+	promptIDStr, ok := args["prompt_id"].(string)
+	if !ok || promptIDStr == "" {
+		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid 'prompt_id' argument")
+	}
+
+	var promptID uuid.UUID
+	if id, parseErr := uuid.Parse(promptIDStr); parseErr == nil {
+		promptID = id
+	} else {
+		// Try as reference ID
+		prompt, getErr := h.promptService.GetByReferenceID(ctx, promptIDStr)
+		if getErr != nil {
+			if getErr == service.ErrNotFound {
+				return nil, jsonrpc.NewJSONRPCError(-32002, "Prompt not found", nil)
+			}
+			return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get prompt: %v", getErr))
+		}
+		promptID = prompt.ID
+	}
+
+	err = h.promptService.Activate(ctx, promptID)
+	if err != nil {
+		if err == service.ErrNotFound {
+			return nil, jsonrpc.NewJSONRPCError(-32002, "Prompt not found", nil)
+		}
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to activate prompt: %v", err))
+	}
+
+	return &ToolResponse{
+		Content: []ContentItem{
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Successfully activated prompt %s", promptIDStr),
+			},
+		},
+	}, nil
+}
+
+// handleListPrompts handles the list_prompts tool
+func (h *ToolsHandler) handleListPrompts(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+
+	// Parse optional pagination parameters
+	limit := 50
+	if l, ok := args["limit"].(float64); ok && l > 0 && l <= 100 {
+		limit = int(l)
+	}
+
+	offset := 0
+	if o, ok := args["offset"].(float64); ok && o >= 0 {
+		offset = int(o)
+	}
+
+	// Parse optional creator filter
+	var creatorID *uuid.UUID
+	if creatorIDStr, ok := args["creator_id"].(string); ok && creatorIDStr != "" {
+		if parsed, parseErr := uuid.Parse(creatorIDStr); parseErr == nil {
+			creatorID = &parsed
+		}
+	}
+
+	prompts, total, err := h.promptService.List(ctx, limit, offset, creatorID)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to list prompts: %v", err))
+	}
+
+	promptsData := map[string]interface{}{
+		"prompts":     prompts,
+		"total_count": total,
+		"limit":       limit,
+		"offset":      offset,
+	}
+
+	jsonData, err := json.MarshalIndent(promptsData, "", "  ")
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to marshal prompts: %v", err))
+	}
+
+	return &ToolResponse{
+		Content: []ContentItem{
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Found %d prompts (total: %d)", len(prompts), total),
+			},
+			{
+				Type: "text",
+				Text: string(jsonData),
+			},
+		},
+	}, nil
+}
+
+// handleGetActivePrompt handles the get_active_prompt tool
+func (h *ToolsHandler) handleGetActivePrompt(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+
+	prompt, err := h.promptService.GetActive(ctx)
+	if err != nil {
+		if err == service.ErrNotFound {
+			return nil, jsonrpc.NewJSONRPCError(-32002, "No active prompt found", nil)
+		}
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get active prompt: %v", err))
+	}
+
+	jsonData, err := json.MarshalIndent(prompt, "", "  ")
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to marshal active prompt: %v", err))
+	}
+
+	return &ToolResponse{
+		Content: []ContentItem{
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Active prompt: %s (%s)", prompt.Title, prompt.ReferenceID),
 			},
 			{
 				Type: "text",

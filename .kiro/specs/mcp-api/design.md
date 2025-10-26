@@ -194,25 +194,303 @@ type ContentItem struct {
 
 ```go
 type PromptsHandler struct {
-    epicService        *service.EpicService
-    userStoryService   *service.UserStoryService
-    requirementService *service.RequirementService
+    promptService             *service.PromptService
+    epicService               *service.EpicService
+    userStoryService          *service.UserStoryService
+    requirementService        *service.RequirementService
+    acceptanceCriteriaService *service.AcceptanceCriteriaService
+    logger                    *logrus.Logger
+}
+
+// MCP protocol request/response structures
+type PromptListRequest struct {
+    // No parameters needed for listing prompts
 }
 
 type PromptGetRequest struct {
-    Name      string                 `json:"name" validate:"required"`
-    Arguments map[string]interface{} `json:"arguments"`
+    Name string `json:"name" validate:"required"`
 }
 
-type PromptResponse struct {
-    Description string        `json:"description"`
+type PromptListResponse struct {
+    Prompts []*MCPPromptDescriptor `json:"prompts"`
+}
+
+type PromptGetResponse struct {
+    Name        string          `json:"name"`
+    Description string          `json:"description"`
     Messages    []PromptMessage `json:"messages"`
 }
 
-type PromptMessage struct {
-    Role    string `json:"role"`
-    Content string `json:"content"`
+// MCP Tools for prompt management
+type CreatePromptRequest struct {
+    Name        string `json:"name" validate:"required"`
+    Title       string `json:"title" validate:"required"`
+    Description string `json:"description"`
+    Content     string `json:"content" validate:"required"`
 }
+
+type UpdatePromptRequest struct {
+    PromptID    string `json:"prompt_id" validate:"required"`
+    Title       string `json:"title,omitempty"`
+    Description string `json:"description,omitempty"`
+    Content     string `json:"content,omitempty"`
+}
+
+type ActivatePromptRequest struct {
+    PromptID string `json:"prompt_id" validate:"required"`
+}
+
+// Context loading methods
+func (ph *PromptsHandler) loadEntityContext(ctx context.Context, entityType, referenceID string) (interface{}, error) {
+    switch entityType {
+    case "epic":
+        return ph.epicService.GetByReferenceID(ctx, referenceID)
+    case "user_story":
+        return ph.userStoryService.GetByReferenceID(ctx, referenceID)
+    case "requirement":
+        return ph.requirementService.GetByReferenceID(ctx, referenceID)
+    case "acceptance_criteria":
+        return ph.acceptanceCriteriaService.GetByReferenceID(ctx, referenceID)
+    default:
+        return nil, fmt.Errorf("unsupported entity type: %s", entityType)
+    }
+}
+
+// Template generation methods
+func (ph *PromptsHandler) generatePromptMessages(ctx context.Context, prompt *Prompt) ([]PromptMessage, error) {
+    // Generate structured prompt messages from prompt content
+    // Return formatted messages for MCP protocol
+    return []PromptMessage{
+        {
+            Role:    "system",
+            Content: prompt.Content,
+        },
+    }, nil
+}
+```
+
+#### 5. Prompt Service (`internal/service/prompt_service.go`)
+
+```go
+type PromptService struct {
+    db     *gorm.DB
+    logger *logrus.Logger
+}
+
+func NewPromptService(db *gorm.DB, logger *logrus.Logger) *PromptService {
+    return &PromptService{
+        db:     db,
+        logger: logger,
+    }
+}
+
+// CRUD operations
+func (ps *PromptService) Create(ctx context.Context, req *CreatePromptRequest, creatorID uuid.UUID) (*Prompt, error) {
+    prompt := &Prompt{
+        Name:        req.Name,
+        Title:       req.Title,
+        Description: req.Description,
+        Content:     req.Content,
+        CreatorID:   creatorID,
+        IsActive:    false, // New prompts are not active by default
+    }
+    
+    if err := ps.db.WithContext(ctx).Create(prompt).Error; err != nil {
+        return nil, err
+    }
+    
+    return prompt, nil
+}
+
+func (ps *PromptService) GetByReferenceID(ctx context.Context, referenceID string) (*Prompt, error) {
+    var prompt Prompt
+    if err := ps.db.WithContext(ctx).Where("reference_id = ?", referenceID).First(&prompt).Error; err != nil {
+        return nil, err
+    }
+    return &prompt, nil
+}
+
+func (ps *PromptService) GetByName(ctx context.Context, name string) (*Prompt, error) {
+    var prompt Prompt
+    if err := ps.db.WithContext(ctx).Where("name = ?", name).First(&prompt).Error; err != nil {
+        return nil, err
+    }
+    return &prompt, nil
+}
+
+func (ps *PromptService) GetActive(ctx context.Context) (*Prompt, error) {
+    var prompt Prompt
+    if err := ps.db.WithContext(ctx).Where("is_active = ?", true).First(&prompt).Error; err != nil {
+        return nil, err
+    }
+    return &prompt, nil
+}
+
+func (ps *PromptService) List(ctx context.Context, limit, offset int) ([]*Prompt, int64, error) {
+    var prompts []*Prompt
+    var total int64
+    
+    if err := ps.db.WithContext(ctx).Model(&Prompt{}).Count(&total).Error; err != nil {
+        return nil, 0, err
+    }
+    
+    if err := ps.db.WithContext(ctx).Limit(limit).Offset(offset).Find(&prompts).Error; err != nil {
+        return nil, 0, err
+    }
+    
+    return prompts, total, nil
+}
+
+func (ps *PromptService) Update(ctx context.Context, id uuid.UUID, req *UpdatePromptRequest) (*Prompt, error) {
+    var prompt Prompt
+    if err := ps.db.WithContext(ctx).Where("id = ?", id).First(&prompt).Error; err != nil {
+        return nil, err
+    }
+    
+    // Update fields
+    if req.Title != "" {
+        prompt.Title = req.Title
+    }
+    if req.Description != "" {
+        prompt.Description = req.Description
+    }
+    if req.Content != "" {
+        prompt.Content = req.Content
+    }
+    
+    if err := ps.db.WithContext(ctx).Save(&prompt).Error; err != nil {
+        return nil, err
+    }
+    
+    return &prompt, nil
+}
+
+func (ps *PromptService) Activate(ctx context.Context, id uuid.UUID) error {
+    return ps.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+        // Deactivate all prompts
+        if err := tx.Model(&Prompt{}).Update("is_active", false).Error; err != nil {
+            return err
+        }
+        
+        // Activate selected prompt
+        if err := tx.Model(&Prompt{}).Where("id = ?", id).Update("is_active", true).Error; err != nil {
+            return err
+        }
+        
+        return nil
+    })
+}
+
+func (ps *PromptService) Delete(ctx context.Context, id uuid.UUID) error {
+    return ps.db.WithContext(ctx).Where("id = ?", id).Delete(&Prompt{}).Error
+}
+
+// Helper methods for prompt management
+```
+
+#### 6. REST API Handler (`internal/handlers/prompt_handler.go`)
+
+```go
+type PromptHandler struct {
+    promptService *service.PromptService
+    logger        *logrus.Logger
+}
+
+func NewPromptHandler(promptService *service.PromptService, logger *logrus.Logger) *PromptHandler {
+    return &PromptHandler{
+        promptService: promptService,
+        logger:        logger,
+    }
+}
+
+// REST API endpoints
+func (ph *PromptHandler) CreatePrompt(c *gin.Context) {
+    // POST /api/v1/prompts
+    // Requires Administrator role
+}
+
+func (ph *PromptHandler) ListPrompts(c *gin.Context) {
+    // GET /api/v1/prompts
+    // Supports pagination with limit/offset
+}
+
+func (ph *PromptHandler) GetPrompt(c *gin.Context) {
+    // GET /api/v1/prompts/:id
+    // Accepts both UUID and reference ID
+}
+
+func (ph *PromptHandler) UpdatePrompt(c *gin.Context) {
+    // PUT /api/v1/prompts/:id
+    // Requires Administrator role
+}
+
+func (ph *PromptHandler) DeletePrompt(c *gin.Context) {
+    // DELETE /api/v1/prompts/:id
+    // Requires Administrator role
+}
+
+func (ph *PromptHandler) ActivatePrompt(c *gin.Context) {
+    // PATCH /api/v1/prompts/:id/activate
+    // Requires Administrator role
+}
+
+func (ph *PromptHandler) GetActivePrompt(c *gin.Context) {
+    // GET /api/v1/prompts/active
+    // Returns currently active prompt
+}
+```
+
+### Database Migration
+
+#### Migration: `000007_add_prompts_table.up.sql`
+
+```sql
+-- Add prompts table for system prompt management
+CREATE SEQUENCE prompt_ref_seq START 1;
+
+CREATE TABLE prompts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    reference_id VARCHAR(20) UNIQUE NOT NULL DEFAULT ('PROMPT-' || LPAD(nextval('prompt_ref_seq')::TEXT, 3, '0')),
+    name VARCHAR(255) UNIQUE NOT NULL,
+    title VARCHAR(500) NOT NULL,
+    description TEXT,
+    content TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT FALSE,
+    creator_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for prompts
+CREATE INDEX idx_prompts_reference ON prompts(reference_id);
+CREATE INDEX idx_prompts_name ON prompts(name);
+CREATE INDEX idx_prompts_is_active ON prompts(is_active);
+CREATE INDEX idx_prompts_creator ON prompts(creator_id);
+CREATE INDEX idx_prompts_created_at ON prompts(created_at);
+
+-- Ensure only one prompt can be active at a time
+CREATE UNIQUE INDEX idx_prompts_single_active ON prompts(is_active) WHERE is_active = true;
+
+-- Add trigger for updated_at
+CREATE TRIGGER update_prompts_updated_at BEFORE UPDATE ON prompts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Insert default system prompt
+INSERT INTO prompts (name, title, description, content, is_active, creator_id) 
+SELECT 
+    'requirements-analyst',
+    'Requirements Analyst Assistant',
+    'AI assistant specialized in requirements analysis and management',
+    'You are an expert requirements analyst working with a Product Requirements Management System. Your role is to help users create, analyze, and manage requirements through a hierarchical structure: Epics (high-level features), User Stories (specific user needs), Acceptance Criteria (testable conditions), and Requirements (detailed specifications). You have access to tools for CRUD operations and can analyze requirement quality, suggest improvements, and identify dependencies. Always focus on clarity, testability, and traceability.',
+    true,
+    (SELECT id FROM users WHERE role = 'Administrator' LIMIT 1);
+```
+
+#### Migration: `000007_add_prompts_table.down.sql`
+
+```sql
+-- Remove prompts table
+DROP TABLE IF EXISTS prompts;
+DROP SEQUENCE IF EXISTS prompt_ref_seq;
 ```
 
 ### URI Schemes and Resource Mapping
@@ -346,41 +624,67 @@ var SupportedTools = map[string]ToolDefinition{
 }
 ```
 
-### Prompt Definitions
+### System Prompts Database Model
 
 ```go
-var SupportedPrompts = map[string]PromptDefinition{
-    "analyze_requirement_quality": {
-        Name:        "analyze_requirement_quality",
-        Description: "Analyze the quality of a requirement",
-        Arguments:   []PromptArgument{{Name: "requirement_id", Type: "string", Required: true}},
-    },
-    "suggest_acceptance_criteria": {
-        Name:        "suggest_acceptance_criteria",
-        Description: "Suggest acceptance criteria for a user story",
-        Arguments:   []PromptArgument{{Name: "user_story_id", Type: "string", Required: true}},
-    },
-    "identify_dependencies": {
-        Name:        "identify_dependencies", 
-        Description: "Identify potential dependencies for a requirement",
-        Arguments:   []PromptArgument{{Name: "requirement_id", Type: "string", Required: true}},
-    },
-    "generate_user_story": {
-        Name:        "generate_user_story",
-        Description: "Generate user story suggestions for an epic",
-        Arguments:   []PromptArgument{{Name: "epic_id", Type: "string", Required: true}},
-    },
-    "decompose_epic": {
-        Name:        "decompose_epic",
-        Description: "Suggest how to decompose an epic into user stories",
-        Arguments:   []PromptArgument{{Name: "epic_id", Type: "string", Required: true}},
-    },
-    "suggest_test_scenarios": {
-        Name:        "suggest_test_scenarios",
-        Description: "Suggest test scenarios for acceptance criteria",
-        Arguments:   []PromptArgument{{Name: "acceptance_criteria_id", Type: "string", Required: true}},
-    },
+// Database model for system prompts
+type Prompt struct {
+    ID          uuid.UUID `gorm:"type:uuid;primary_key;default:uuid_generate_v4()" json:"id"`
+    ReferenceID string    `gorm:"type:varchar(20);unique;not null" json:"reference_id"`
+    Name        string    `gorm:"type:varchar(255);unique;not null" json:"name"`
+    Title       string    `gorm:"type:varchar(500);not null" json:"title"`
+    Description string    `gorm:"type:text" json:"description"`
+    Content     string    `gorm:"type:text;not null" json:"content"`
+    IsActive    bool      `gorm:"default:false" json:"is_active"`
+    CreatorID   uuid.UUID `gorm:"type:uuid;not null" json:"creator_id"`
+    CreatedAt   time.Time `gorm:"default:now()" json:"created_at"`
+    UpdatedAt   time.Time `gorm:"default:now()" json:"updated_at"`
+    
+    // Relationships
+    Creator *User `gorm:"foreignKey:CreatorID" json:"creator,omitempty"`
 }
+
+// MCP Protocol structures
+type MCPPromptDescriptor struct {
+    Name        string `json:"name"`
+    Description string `json:"description"`
+}
+
+type MCPPromptDefinition struct {
+    Name        string          `json:"name"`
+    Description string          `json:"description"`
+    Messages    []PromptMessage `json:"messages"`
+}
+
+type PromptMessage struct {
+    Role    string `json:"role"`    // "system", "user", "assistant"
+    Content string `json:"content"` // Simple text content
+}
+
+// Database constraints and hooks
+func (p *Prompt) BeforeCreate(tx *gorm.DB) error {
+    if p.ReferenceID == "" {
+        referenceID, err := promptGenerator.Generate(tx, &Prompt{})
+        if err != nil {
+            return err
+        }
+        p.ReferenceID = referenceID
+    }
+    return nil
+}
+
+func (p *Prompt) BeforeUpdate(tx *gorm.DB) error {
+    // If setting this prompt as active, deactivate all others
+    if p.IsActive {
+        if err := tx.Model(&Prompt{}).Where("id != ?", p.ID).Update("is_active", false).Error; err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
+// Reference ID generator for prompts
+var promptGenerator = NewPostgreSQLReferenceIDGenerator(2147483643, "PROMPT")
 ```
 
 ## Data Models

@@ -82,6 +82,8 @@ func (g *PostgreSQLReferenceIDGenerator) Generate(tx *gorm.DB, model interface{}
 			functionName = "get_next_requirement_ref_id"
 		case "STD":
 			functionName = "get_next_steering_document_ref_id"
+		case "PROMPT":
+			functionName = "get_next_prompt_ref_id"
 		default:
 			return "", fmt.Errorf("unknown prefix: %s", g.prefix)
 		}

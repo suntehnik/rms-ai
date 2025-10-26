@@ -39,6 +39,7 @@ func TestMCPToolsHandler_handleListSteeringDocuments_Success(t *testing.T) {
 		mockRequirementService,
 		mockSearchService,
 		mockSteeringDocumentService,
+		nil, // promptService
 	)
 
 	// Create test user
@@ -129,6 +130,7 @@ func TestMCPToolsHandler_handleCreateSteeringDocument_Success(t *testing.T) {
 		mockRequirementService,
 		mockSearchService,
 		mockSteeringDocumentService,
+		nil, // promptService
 	)
 
 	// Create test user
@@ -194,6 +196,7 @@ func TestMCPToolsHandler_handleGetSteeringDocument_ByUUID_Success(t *testing.T) 
 		mockRequirementService,
 		mockSearchService,
 		mockSteeringDocumentService,
+		nil, // promptService
 	)
 
 	// Create test user
@@ -252,6 +255,7 @@ func TestMCPToolsHandler_handleGetSteeringDocument_ByReferenceID_Success(t *test
 		mockRequirementService,
 		mockSearchService,
 		mockSteeringDocumentService,
+		nil, // promptService
 	)
 
 	// Create test user
@@ -310,6 +314,7 @@ func TestMCPToolsHandler_handleUpdateSteeringDocument_Success(t *testing.T) {
 		mockRequirementService,
 		mockSearchService,
 		mockSteeringDocumentService,
+		nil, // promptService
 	)
 
 	// Create test user
@@ -376,6 +381,7 @@ func TestMCPToolsHandler_handleLinkSteeringToEpic_Success(t *testing.T) {
 		mockRequirementService,
 		mockSearchService,
 		mockSteeringDocumentService,
+		nil, // promptService
 	)
 
 	// Create test user
@@ -430,6 +436,7 @@ func TestMCPToolsHandler_handleUnlinkSteeringFromEpic_Success(t *testing.T) {
 		mockRequirementService,
 		mockSearchService,
 		mockSteeringDocumentService,
+		nil, // promptService
 	)
 
 	// Create test user
@@ -484,6 +491,7 @@ func TestMCPToolsHandler_handleGetEpicSteeringDocuments_Success(t *testing.T) {
 		mockRequirementService,
 		mockSearchService,
 		mockSteeringDocumentService,
+		nil, // promptService
 	)
 
 	// Create test user
@@ -552,6 +560,7 @@ func TestMCPToolsHandler_handleCreateSteeringDocument_ValidationError(t *testing
 		mockRequirementService,
 		mockSearchService,
 		mockSteeringDocumentService,
+		nil, // promptService
 	)
 
 	// Create test user
@@ -597,6 +606,7 @@ func TestMCPToolsHandler_handleGetSteeringDocument_NotFound(t *testing.T) {
 		mockRequirementService,
 		mockSearchService,
 		mockSteeringDocumentService,
+		nil, // promptService
 	)
 
 	// Create test user

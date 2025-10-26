@@ -39,12 +39,17 @@
   - Format search results as structured tool responses
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.7, 7.8, 7.9_
 
-- [ ]* 7. Implement Prompts handler for AI-assisted workflows
-  - Create PromptsHandler with context loading capabilities
-  - Implement analysis prompts: analyze_requirement_quality, suggest_acceptance_criteria
-  - Implement generation prompts: generate_user_story, decompose_epic, suggest_test_scenarios
-  - Add identify_dependencies prompt with relationship analysis
-  - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8_
+- [x] 7. Implement System Prompts management with database storage
+  - Create database migration for prompts table with reference IDs (PROMPT-001, etc.)
+  - Create Prompt model in internal/models with GORM annotations and reference ID generation
+  - Create PromptService in internal/service with CRUD operations and active prompt management
+  - Implement REST API endpoints for prompts management (/api/v1/prompts/*)
+  - Create PromptsHandler for MCP with prompts/list and prompts/get methods
+  - Add MCP tools for prompt management (create_prompt, update_prompt, activate_prompt, etc.)
+  - Add resources/read support for "requirements://prompts" and "requirements://prompts/active"
+  - Ensure only one prompt can be active at any time with database constraints
+  - Add administrator role validation for CRUD operations
+  - _Requirements: 8.1-8.12, 9.1-9.12, 10.1-10.12_
 
 - [x] 8. Add comprehensive error handling and logging
   - Implement error mapping from service layer to JSON-RPC error codes
@@ -73,10 +78,15 @@
   - _Requirements: 6.1, 6.8_
 
 - [ ]* 9.3 Write unit tests for handler implementations
-  - Test ResourceHandler entity retrieval and formatting
-  - Test ToolsHandler CRUD operations and search functionality
-  - Test PromptsHandler context loading and prompt generation
-  - _Requirements: 6.1-6.8, 7.1-7.9, 8.1-8.8_
+  - Test ResourceHandler entity retrieval and formatting including prompts resources
+  - Test ToolsHandler CRUD operations and search functionality including prompt management tools
+  - Test PromptsHandler prompts/list method returning prompt descriptors from database
+  - Test PromptsHandler prompts/get method with database lookup and validation
+  - Test PromptService CRUD operations and active prompt management
+  - Test REST API endpoints for prompts with administrator role validation
+  - Test MCP tools for prompt management with proper authorization
+  - Test database constraints ensuring only one active prompt
+  - _Requirements: 6.1-6.8, 7.1-7.9, 8.1-8.12, 9.1-9.12, 10.1-10.12_
 
 - [x] 9.4 Write integration tests for full request flow
   - Test complete flow from HTTP request to service layer
