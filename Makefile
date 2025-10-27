@@ -15,8 +15,14 @@ build-gen-mock-data:
 # Build MCP server
 build-mcp-server:
 	@echo "🔧 Building MCP Server..."
-	go build -o bin/spexus-mcp cmd/mcp-server/main.go
-	@echo "✅ MCP Server built: bin/spexus-mcp"
+	@mkdir -p bin
+	@if [ "$(OS)" = "Windows_NT" ] || [ "$(GOOS)" = "windows" ]; then \
+		go build -o bin/spexus-mcp.exe cmd/mcp-server/main.go; \
+		echo "✅ MCP Server built: bin/spexus-mcp.exe"; \
+	else \
+		go build -o bin/spexus-mcp cmd/mcp-server/main.go; \
+		echo "✅ MCP Server built: bin/spexus-mcp"; \
+	fi
 
 # Build MCP server with version info (for releases)
 build-mcp-server-release:

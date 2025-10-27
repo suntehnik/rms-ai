@@ -106,8 +106,16 @@ jobs:
     - name: Install dependencies
       run: go mod download
 
-    - name: Build MCP Server
+    - name: Build MCP Server (Unix)
+      if: runner.os != 'Windows'
       run: make build-mcp-server
+
+    - name: Build MCP Server (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        $env:GOOS = "windows"
+        make build-mcp-server
+      shell: powershell
 
     - name: Test MCP Server binary (Unix)
       if: runner.os != 'Windows'
@@ -118,17 +126,33 @@ jobs:
     - name: Test MCP Server binary (Windows)
       if: runner.os == 'Windows'
       run: |
-        # Test if binary exists and can be executed
+        # Check for binary with .exe extension first, then without
+        $binaryPath = ""
         if (Test-Path ".\bin\spexus-mcp.exe") {
-          try {
-            $process = Start-Process -FilePath ".\bin\spexus-mcp.exe" -ArgumentList "--version" -Wait -PassThru -WindowStyle Hidden -RedirectStandardOutput "nul" -RedirectStandardError "nul"
-            Write-Host "Binary exists and is executable"
-          } catch {
-            Write-Host "Binary exists but version check failed: $_"
-          }
+          $binaryPath = ".\bin\spexus-mcp.exe"
+          Write-Host "Found binary: spexus-mcp.exe"
+        } elseif (Test-Path ".\bin\spexus-mcp") {
+          $binaryPath = ".\bin\spexus-mcp"
+          Write-Host "Found binary: spexus-mcp (without .exe)"
         } else {
-          Write-Host "Binary not found"
+          Write-Host "Binary not found in bin/ directory"
+          Write-Host "Contents of bin/ directory:"
+          if (Test-Path ".\bin") {
+            Get-ChildItem ".\bin" | ForEach-Object { Write-Host "  $_" }
+          } else {
+            Write-Host "  bin/ directory does not exist"
+          }
           exit 1
+        }
+        
+        # Test binary execution
+        try {
+          Write-Host "Testing binary execution: $binaryPath"
+          $process = Start-Process -FilePath $binaryPath -ArgumentList "--version" -Wait -PassThru -WindowStyle Hidden -RedirectStandardOutput "nul" -RedirectStandardError "nul"
+          Write-Host "Binary exists and is executable (exit code: $($process.ExitCode))"
+        } catch {
+          Write-Host "Binary exists but execution failed: $_"
+          Write-Host "This is expected if --version flag is not implemented yet"
         }
       shell: powershell
 
