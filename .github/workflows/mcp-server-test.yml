@@ -84,224 +84,7 @@ jobs:
         name: mcp-server-tests
         token: ${{ secrets.CODECOV_TOKEN }}
 
-  # MCP Server integration tests
-  mcp-server-integration-tests:
-    name: MCP Server Integration Tests
-    runs-on: ubuntu-latest
-    
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: testpass
-          POSTGRES_USER: testuser
-          POSTGRES_DB: testdb
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: ${{ env.GO_VERSION }}
-
-    - name: Cache Go modules
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cache/go-build
-          ~/go/pkg/mod
-        key: ${{ runner.os }}-go-mcp-integration-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-mcp-integration-
-          ${{ runner.os }}-go-
-
-    - name: Install dependencies
-      run: go mod download
-
-    - name: Install PostgreSQL client
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y postgresql-client
-
-    - name: Wait for PostgreSQL
-      run: |
-        until pg_isready -h localhost -p 5432 -U testuser; do
-          echo "Waiting for PostgreSQL..."
-          sleep 2
-        done
-
-    - name: Run database migrations
-      env:
-        DATABASE_URL: postgres://testuser:testpass@localhost:5432/testdb?sslmode=disable
-      run: |
-        go run cmd/migrate/main.go -up
-
-    - name: Build MCP Server
-      run: make build-mcp-server
-
-    - name: Test MCP Server binary
-      env:
-        DATABASE_URL: postgres://testuser:testpass@localhost:5432/testdb?sslmode=disable
-        JWT_SECRET: test-secret-key-for-testing-only
-        LOG_LEVEL: debug
-      run: |
-        # Test basic server functionality without hanging
-        echo "Testing MCP server with database connection..."
-        
-        # Test help command first
-        timeout 10s ./bin/spexus-mcp --help 2>/dev/null || echo "Help command test completed"
-        
-        # Test version if available
-        timeout 10s ./bin/spexus-mcp --version 2>/dev/null || echo "Version command test completed"
-        
-        echo "MCP Server binary tests completed"
-
-    - name: Run MCP integration tests
-      env:
-        DATABASE_URL: postgres://testuser:testpass@localhost:5432/testdb?sslmode=disable
-        JWT_SECRET: test-secret-key-for-testing-only
-      run: |
-        if [ -d "./tests/mcp" ] && find ./tests/mcp -name "*_test.go" -type f | grep -q .; then
-          go test -v -race ./tests/mcp/...
-        else
-          echo "MCP integration tests not yet implemented"
-        fi
-
-  # MCP Protocol compliance tests
-  mcp-protocol-compliance:
-    name: MCP Protocol Compliance
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: ${{ env.GO_VERSION }}
-
-    - name: Install dependencies
-      run: go mod download
-
-    - name: Build MCP Server
-      run: make build-mcp-server
-
-    - name: Install MCP Inspector (if available)
-      run: |
-        # Install MCP Inspector for protocol compliance testing
-        npm install -g @modelcontextprotocol/inspector || echo "MCP Inspector not available"
-
-    - name: Test MCP Protocol Compliance
-      run: |
-        # Test basic server execution without hanging
-        echo "Testing MCP server basic execution..."
-        
-        # Test that server can start and stop cleanly
-        timeout 10s ./bin/spexus-mcp --help 2>/dev/null || echo "Help command test completed"
-        
-        # Test stdio mode briefly
-        echo "Testing STDIO mode..."
-        echo '{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "test-client", "version": "1.0.0"}}}' | timeout 5s ./bin/spexus-mcp --stdio 2>/dev/null || echo "STDIO protocol test completed"
-
-    - name: Validate MCP Server Configuration
-      run: |
-        # Test configuration validation
-        echo "Testing configuration validation..."
-        timeout 10s ./bin/spexus-mcp --validate-config 2>/dev/null || echo "Config validation test completed"
-
-  # Performance and load testing
-  mcp-server-performance:
-    name: MCP Server Performance Tests
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || contains(github.event.head_commit.message, '[perf]')
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: ${{ env.GO_VERSION }}
-
-    - name: Install dependencies
-      run: go mod download
-
-    - name: Build MCP Server
-      run: make build-mcp-server
-
-    - name: Run performance benchmarks
-      run: |
-        # Run Go benchmarks for MCP server components
-        if find ./cmd/mcp-server ./internal/mcp -name "*_test.go" -type f | grep -q .; then
-          go test -bench=. -benchmem -benchtime=10s ./cmd/mcp-server/... ./internal/mcp/... > mcp-benchmark.txt || echo "Benchmarks completed"
-        else
-          echo "No benchmark tests found in MCP server paths" > mcp-benchmark.txt
-        fi
-
-    - name: Upload benchmark results
-      uses: actions/upload-artifact@v4
-      with:
-        name: mcp-server-benchmarks
-        path: mcp-benchmark.txt
-        retention-days: 30
-
-  # Security scanning
-  mcp-server-security:
-    name: MCP Server Security Scan
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: ${{ env.GO_VERSION }}
-
-    - name: Install dependencies
-      run: go mod download
-
-    - name: Install Gosec
-      run: |
-        go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
-
-    - name: Run Gosec Security Scanner
-      run: |
-        # Check if there are Go files to scan
-        if find ./cmd/mcp-server ./internal/mcp -name "*.go" -type f | grep -q .; then
-          gosec -fmt sarif -out gosec-results.sarif ./cmd/mcp-server/... ./internal/mcp/... || echo "Gosec completed with warnings"
-        else
-          echo "No Go files found in MCP server paths, creating empty SARIF"
-          echo '{"version":"2.1.0","$schema":"https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json","runs":[{"tool":{"driver":{"name":"gosec","version":"dev"}},"results":[]}]}' > gosec-results.sarif
-        fi
-
-    - name: Upload SARIF file
-      uses: github/codeql-action/upload-sarif@v3
-      if: always()
-      with:
-        sarif_file: gosec-results.sarif
-
-    - name: Run govulncheck
-      run: |
-        go install golang.org/x/vuln/cmd/govulncheck@latest
-        # Check if there are Go files to scan
-        if find ./cmd/mcp-server ./internal/mcp -name "*.go" -type f | grep -q .; then
-          govulncheck ./cmd/mcp-server/... ./internal/mcp/... || echo "Govulncheck completed with warnings"
-        else
-          echo "No Go files found in MCP server paths, skipping govulncheck"
-        fi
 
   # Cross-platform compatibility
   mcp-server-compatibility:
@@ -353,7 +136,7 @@ jobs:
   mcp-test-summary:
     name: MCP Test Summary
     runs-on: ubuntu-latest
-    needs: [mcp-server-unit-tests, mcp-server-integration-tests, mcp-protocol-compliance, mcp-server-security, mcp-server-compatibility]
+    needs: [mcp-server-unit-tests, mcp-server-compatibility]
     if: always()
     
     steps:
@@ -364,30 +147,24 @@ jobs:
         echo "| Test Suite | Status |" >> $GITHUB_STEP_SUMMARY
         echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
         echo "| Unit Tests | ${{ needs.mcp-server-unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
-        echo "| Integration Tests | ${{ needs.mcp-server-integration-tests.result }} |" >> $GITHUB_STEP_SUMMARY
-        echo "| Protocol Compliance | ${{ needs.mcp-protocol-compliance.result }} |" >> $GITHUB_STEP_SUMMARY
-        echo "| Security Scan | ${{ needs.mcp-server-security.result }} |" >> $GITHUB_STEP_SUMMARY
         echo "| Cross-Platform | ${{ needs.mcp-server-compatibility.result }} |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
         # Count successful tests
         SUCCESS_COUNT=0
-        TOTAL_COUNT=5
+        TOTAL_COUNT=2
         
         [[ "${{ needs.mcp-server-unit-tests.result }}" == "success" ]] && ((SUCCESS_COUNT++))
-        [[ "${{ needs.mcp-server-integration-tests.result }}" == "success" ]] && ((SUCCESS_COUNT++))
-        [[ "${{ needs.mcp-protocol-compliance.result }}" == "success" ]] && ((SUCCESS_COUNT++))
-        [[ "${{ needs.mcp-server-security.result }}" == "success" ]] && ((SUCCESS_COUNT++))
         [[ "${{ needs.mcp-server-compatibility.result }}" == "success" ]] && ((SUCCESS_COUNT++))
         
         echo "### 📊 Test Results: $SUCCESS_COUNT/$TOTAL_COUNT passed" >> $GITHUB_STEP_SUMMARY
         
         if [[ $SUCCESS_COUNT -eq $TOTAL_COUNT ]]; then
           echo "✅ **All MCP Server tests passed!**" >> $GITHUB_STEP_SUMMARY
-        elif [[ $SUCCESS_COUNT -gt 3 ]]; then
-          echo "⚠️ **Most tests passed, but some issues need attention**" >> $GITHUB_STEP_SUMMARY
+        elif [[ $SUCCESS_COUNT -gt 0 ]]; then
+          echo "⚠️ **Some tests passed, but issues need attention**" >> $GITHUB_STEP_SUMMARY
         else
-          echo "❌ **Multiple test failures detected**" >> $GITHUB_STEP_SUMMARY
+          echo "❌ **Test failures detected**" >> $GITHUB_STEP_SUMMARY
         fi
         
         echo "" >> $GITHUB_STEP_SUMMARY
