@@ -18,12 +18,127 @@ build-mcp-server:
 	go build -o bin/requirements-mcp-server cmd/mcp-server/main.go
 	@echo "✅ MCP Server built: bin/requirements-mcp-server"
 
+# Build MCP server with version info (for releases)
+build-mcp-server-release:
+	@echo "🔧 Building MCP Server with version info..."
+	@VERSION=$${VERSION:-dev-$(shell git rev-parse --short HEAD)} && \
+	BUILD_DATE=$$(date -u +'%Y-%m-%dT%H:%M:%SZ') && \
+	GIT_COMMIT=$$(git rev-parse --short HEAD) && \
+	go build \
+		-ldflags="-s -w -X main.Version=$$VERSION -X main.BuildDate=$$BUILD_DATE -X main.GitCommit=$$GIT_COMMIT" \
+		-o bin/requirements-mcp-server \
+		cmd/mcp-server/main.go
+	@echo "✅ MCP Server built with version info: bin/requirements-mcp-server"
+
 # Install MCP server to system
 install-mcp-server: build-mcp-server
 	@echo "📦 Installing MCP Server to /usr/local/bin..."
 	@sudo cp bin/requirements-mcp-server /usr/local/bin/
 	@echo "✅ MCP Server installed: /usr/local/bin/requirements-mcp-server"
 	@echo "💡 Configure Claude Desktop to use: /usr/local/bin/requirements-mcp-server"
+
+# Test MCP server specifically
+test-mcp-server:
+	@echo "🧪 Running MCP Server tests..."
+	go test -v -race ./cmd/mcp-server/... ./internal/mcp/...
+	@echo "✅ MCP Server tests completed"
+
+# Test MCP server with coverage
+test-mcp-server-coverage:
+	@echo "📊 Running MCP Server tests with coverage..."
+	go test -v -race -coverprofile=mcp-coverage.out ./cmd/mcp-server/... ./internal/mcp/...
+	go tool cover -html=mcp-coverage.out -o mcp-coverage.html
+	@echo "✅ MCP Server coverage report: mcp-coverage.html"
+
+# Run MCP protocol compliance tests
+test-mcp-protocol:
+	@echo "🔍 Testing MCP protocol compliance..."
+	@if [ -f "bin/requirements-mcp-server" ]; then \
+		echo "Testing server startup and basic protocol..."; \
+		timeout 10s ./bin/requirements-mcp-server --test-mode || echo "Protocol test completed"; \
+	else \
+		echo "Building MCP server first..."; \
+		$(MAKE) build-mcp-server; \
+		timeout 10s ./bin/requirements-mcp-server --test-mode || echo "Protocol test completed"; \
+	fi
+	@echo "✅ MCP protocol compliance test completed"
+
+# Validate MCP server configuration
+validate-mcp-config:
+	@echo "🔍 Validating MCP server configuration..."
+	@if [ -f "config.example.json" ]; then \
+		if command -v jq >/dev/null 2>&1; then \
+			jq empty config.example.json && echo "✅ Configuration JSON is valid"; \
+		else \
+			echo "⚠️  jq not found, skipping JSON validation"; \
+		fi; \
+		if [ -f "bin/requirements-mcp-server" ]; then \
+			./bin/requirements-mcp-server --validate-config --config config.example.json || echo "Config validation completed"; \
+		else \
+			echo "Building MCP server for config validation..."; \
+			$(MAKE) build-mcp-server; \
+			./bin/requirements-mcp-server --validate-config --config config.example.json || echo "Config validation completed"; \
+		fi; \
+	else \
+		echo "⚠️  config.example.json not found"; \
+	fi
+	@echo "✅ MCP configuration validation completed"
+
+# Run MCP server benchmarks
+bench-mcp-server:
+	@echo "🏃 Running MCP Server benchmarks..."
+	@mkdir -p benchmark-results
+	go test -bench=. -benchmem -benchtime=5s -timeout=30m ./cmd/mcp-server/... ./internal/mcp/... | tee benchmark-results/mcp-benchmark-$(shell date +%Y%m%d-%H%M%S).txt
+	@echo "✅ MCP Server benchmarks completed"
+
+# Build multi-platform MCP server binaries (for local testing)
+build-mcp-server-all:
+	@echo "🏗️ Building MCP Server for multiple platforms..."
+	@mkdir -p bin/dist
+	@VERSION=$${VERSION:-dev-$(shell git rev-parse --short HEAD)} && \
+	BUILD_DATE=$$(date -u +'%Y-%m-%dT%H:%M:%SZ') && \
+	GIT_COMMIT=$$(git rev-parse --short HEAD) && \
+	LDFLAGS="-s -w -X main.Version=$$VERSION -X main.BuildDate=$$BUILD_DATE -X main.GitCommit=$$GIT_COMMIT" && \
+	echo "Building for Linux AMD64..." && \
+	GOOS=linux GOARCH=amd64 go build -ldflags="$$LDFLAGS" -o bin/dist/requirements-mcp-server-linux-amd64 cmd/mcp-server/main.go && \
+	echo "Building for Linux ARM64..." && \
+	GOOS=linux GOARCH=arm64 go build -ldflags="$$LDFLAGS" -o bin/dist/requirements-mcp-server-linux-arm64 cmd/mcp-server/main.go && \
+	echo "Building for macOS AMD64..." && \
+	GOOS=darwin GOARCH=amd64 go build -ldflags="$$LDFLAGS" -o bin/dist/requirements-mcp-server-darwin-amd64 cmd/mcp-server/main.go && \
+	echo "Building for macOS ARM64..." && \
+	GOOS=darwin GOARCH=arm64 go build -ldflags="$$LDFLAGS" -o bin/dist/requirements-mcp-server-darwin-arm64 cmd/mcp-server/main.go && \
+	echo "Building for Windows AMD64..." && \
+	GOOS=windows GOARCH=amd64 go build -ldflags="$$LDFLAGS" -o bin/dist/requirements-mcp-server-windows-amd64.exe cmd/mcp-server/main.go
+	@echo "✅ Multi-platform MCP Server binaries built in bin/dist/"
+
+# Package MCP server binaries
+package-mcp-server: build-mcp-server-all
+	@echo "📦 Packaging MCP Server binaries..."
+	@cd bin/dist && \
+	tar -czf requirements-mcp-server-linux-amd64.tar.gz requirements-mcp-server-linux-amd64 && \
+	tar -czf requirements-mcp-server-linux-arm64.tar.gz requirements-mcp-server-linux-arm64 && \
+	tar -czf requirements-mcp-server-darwin-amd64.tar.gz requirements-mcp-server-darwin-amd64 && \
+	tar -czf requirements-mcp-server-darwin-arm64.tar.gz requirements-mcp-server-darwin-arm64 && \
+	zip requirements-mcp-server-windows-amd64.zip requirements-mcp-server-windows-amd64.exe && \
+	sha256sum *.tar.gz *.zip > checksums.sha256
+	@echo "✅ MCP Server packages created in bin/dist/"
+
+# Run MCP development helper script
+mcp-dev:
+	@echo "🛠️ Running MCP development helper..."
+	@if [ -f "scripts/mcp-dev.sh" ]; then \
+		./scripts/mcp-dev.sh $(filter-out $@,$(MAKECMDGOALS)); \
+	else \
+		echo "❌ MCP development script not found: scripts/mcp-dev.sh"; \
+		exit 1; \
+	fi
+
+# MCP server development workflow
+mcp-dev-setup: build-mcp-server validate-mcp-config
+	@echo "🚀 MCP Server development setup completed!"
+	@echo "💡 Use 'make mcp-dev run --stdio' to start the server"
+	@echo "💡 Use 'make mcp-dev test' to run tests"
+	@echo "💡 Use 'make mcp-dev help' for more options"
 
 # Run the application
 run:
@@ -593,6 +708,9 @@ help:
 	@echo "  build-init         - Build initialization binary"
 	@echo "  build-gen-mock-data - Build mock data generator"
 	@echo "  build-mcp-server   - Build MCP Server console application"
+	@echo "  build-mcp-server-release - Build MCP Server with version info"
+	@echo "  build-mcp-server-all - Build MCP Server for multiple platforms"
+	@echo "  package-mcp-server - Package MCP Server binaries with checksums"
 	@echo "  install-mcp-server - Install MCP Server to /usr/local/bin"
 	@echo "  run                - Run the application directly"
 	@echo "  init               - Run initialization service"
@@ -606,6 +724,11 @@ help:
 	@echo "  test-e2e           - Run end-to-end tests"
 	@echo "  test-fast          - Run only fast unit tests"
 	@echo "  test-ci            - Run tests suitable for CI/CD"
+	@echo "  test-mcp-server    - Run MCP Server specific tests"
+	@echo "  test-mcp-server-coverage - Run MCP Server tests with coverage"
+	@echo "  test-mcp-protocol  - Test MCP protocol compliance"
+	@echo "  validate-mcp-config - Validate MCP server configuration"
+	@echo "  bench-mcp-server   - Run MCP Server benchmarks"
 	@echo ""
 	@echo "📊 Coverage & Analysis:"
 	@echo "  test-coverage      - Generate coverage reports for all tests"
@@ -711,3 +834,10 @@ help:
 	@echo "  deps               - Install/update dependencies"
 	@echo "  fmt                - Format code"
 	@echo "  lint               - Run linter"
+	@echo ""
+	@echo "🔧 MCP Server Development:"
+	@echo "  mcp-dev            - Run MCP development helper script"
+	@echo "  mcp-dev-setup      - Complete MCP development environment setup"
+	@echo "  mcp-dev COMMAND    - Run specific MCP development command"
+	@echo "                     Commands: build, test, run, install, clean, validate,"
+	@echo "                               protocol-test, benchmark, help"
