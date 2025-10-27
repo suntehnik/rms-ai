@@ -178,8 +178,14 @@ jobs:
         SUCCESS_COUNT=0
         TOTAL_COUNT=2
         
-        [[ "${{ needs.mcp-server-unit-tests.result }}" == "success" ]] && ((SUCCESS_COUNT++))
-        [[ "${{ needs.mcp-server-compatibility.result }}" == "success" ]] && ((SUCCESS_COUNT++))
+        # Use safer conditional checks that don't fail the script
+        if [[ "${{ needs.mcp-server-unit-tests.result }}" == "success" ]]; then
+          ((SUCCESS_COUNT++))
+        fi
+        
+        if [[ "${{ needs.mcp-server-compatibility.result }}" == "success" ]]; then
+          ((SUCCESS_COUNT++))
+        fi
         
         echo "### 📊 Test Results: $SUCCESS_COUNT/$TOTAL_COUNT passed" >> $GITHUB_STEP_SUMMARY
         
@@ -194,3 +200,6 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
         echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+        
+        # Always exit successfully since this is just a summary job
+        exit 0
