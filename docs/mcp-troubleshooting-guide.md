@@ -1,931 +1,649 @@
-# MCP API Troubleshooting Guide
+# MCP Server Troubleshooting Guide
 
-## Overview
-
-This guide provides comprehensive troubleshooting information for common issues encountered when using the MCP (Model Context Protocol) API. It covers authentication problems, request formatting issues, validation errors, and performance concerns.
+This guide provides comprehensive troubleshooting information for the MCP Server for Product Requirements Management.
 
 ## Table of Contents
 
-1. [Authentication Issues](#authentication-issues)
-2. [Request Format Problems](#request-format-problems)
-3. [Parameter Validation Errors](#parameter-validation-errors)
-4. [URI Scheme Issues](#uri-scheme-issues)
-5. [Tool Execution Errors](#tool-execution-errors)
-6. [Performance Issues](#performance-issues)
-7. [Network and Connectivity](#network-and-connectivity)
-8. [Debugging Tools and Techniques](#debugging-tools-and-techniques)
+1. [Quick Diagnostics](#quick-diagnostics)
+2. [Configuration Issues](#configuration-issues)
+3. [Connection Problems](#connection-problems)
+4. [Authentication Errors](#authentication-errors)
+5. [Initialization Failures](#initialization-failures)
+6. [Runtime Errors](#runtime-errors)
+7. [Performance Issues](#performance-issues)
+8. [Integration Problems](#integration-problems)
+9. [Advanced Debugging](#advanced-debugging)
 
-## Authentication Issues
+## Quick Diagnostics
 
-### 1. 401 Unauthorized Error
-
-**Symptoms:**
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "error": {
-    "code": -32603,
-    "message": "Internal error",
-    "data": "Authentication required"
-  }
-}
-```
-
-**Common Causes:**
-- Missing Authorization header
-- Invalid PAT token format
-- Expired PAT token
-- Incorrect token prefix
-
-**Solutions:**
-
-#### Check Authorization Header
-```bash
-# Correct format
-curl -H "Authorization: Bearer mcp_pat_your_token_here"
-
-# Common mistakes
-curl -H "Authorization: mcp_pat_your_token_here"  # Missing "Bearer"
-curl -H "Authorization: Bearer your_token_here"   # Missing "mcp_pat_" prefix
-```
-
-#### Verify Token Format
-PAT tokens must follow the format: `mcp_pat_[base64_encoded_secret]`
+### Health Check Commands
 
 ```bash
-# Valid token example
-mcp_pat_YWJjZGVmZ2hpams1bG1ub3BxcnN0dXZ3eHl6MTIzNDU2
+# Check if MCP server binary exists and is executable
+ls -la ./bin/mcp-server
+file ./bin/mcp-server
 
-# Invalid formats
-pat_YWJjZGVmZ2hpams1bG1ub3BxcnN0dXZ3eHl6MTIzNDU2    # Wrong prefix
-mcp_YWJjZGVmZ2hpams1bG1ub3BxcnN0dXZ3eHl6MTIzNDU2     # Missing "pat_"
+# Test configuration loading
+./bin/mcp-server 2>&1 | head -5
+
+# Verify configuration file
+cat ~/.requirements-mcp/config.json | jq .
+
+# Test backend API connectivity
+curl -I https://your-api-server.com/ready
 ```
 
-#### Test Token Validity
+### Common Quick Fixes
+
 ```bash
-# Test with a simple MCP request
-curl -X POST http://localhost:8080/api/v1/mcp \
-  -H "Authorization: Bearer mcp_pat_your_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "initialize",
-    "params": {
-      "protocolVersion": "2025-06-18",
-      "capabilities": {},
-      "clientInfo": {"name": "test", "version": "1.0.0"}
-    }
-  }'
+# Recreate configuration from scratch
+rm -f ~/.requirements-mcp/config.json
+./bin/mcp-server -i
+
+# Reset permissions
+chmod 700 ~/.requirements-mcp/
+chmod 600 ~/.requirements-mcp/config.json
+
+# Clear any cached data
+rm -rf ~/.requirements-mcp/.cache/
 ```
 
-### 2. Token Expiration
+## Configuration Issues
 
-**Symptoms:**
-- Previously working token suddenly returns 401
-- Error message about expired token
+### Problem: Configuration File Not Found
 
-**Solutions:**
-1. Check token expiration date in your PAT management system
-2. Generate a new PAT token
-3. Update your application configuration with the new token
-
-### 3. Insufficient Permissions
-
-**Symptoms:**
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "error": {
-    "code": -32603,
-    "message": "Internal error",
-    "data": "Insufficient permissions"
-  }
-}
+**Error Messages:**
+```
+Failed to load configuration from ~/.requirements-mcp/config.json: failed to read config file
 ```
 
-**Solutions:**
-1. Verify your user account has the necessary permissions
-2. Check if your PAT token has the required scopes
-3. Contact your system administrator for permission updates
-
-## Request Format Problems
-
-### 1. Invalid JSON-RPC Format
-
-**Symptoms:**
-```json
-{
-  "jsonrpc": "2.0",
-  "id": null,
-  "error": {
-    "code": -32600,
-    "message": "Invalid Request"
-  }
-}
-```
-
-**Common Causes:**
-- Missing required JSON-RPC fields
-- Incorrect JSON-RPC version
-- Invalid JSON syntax
-
-**Solutions:**
-
-#### Verify Required Fields
-```json
-{
-  "jsonrpc": "2.0",     // Required: must be "2.0"
-  "id": 1,              // Required: unique request identifier
-  "method": "tools/call", // Required: method name
-  "params": {}          // Required for most methods
-}
-```
-
-#### Common JSON-RPC Mistakes
-```json
-// ❌ Wrong version
-{
-  "jsonrpc": "1.0",
-  "id": 1,
-  "method": "tools/call"
-}
-
-// ❌ Missing ID
-{
-  "jsonrpc": "2.0",
-  "method": "tools/call"
-}
-
-// ❌ Invalid JSON syntax
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "create_epic",
-    "arguments": {
-      "title": "Test Epic",  // ❌ Trailing comma
-    }
-  }
-}
-```
-
-### 2. Content-Type Issues
-
-**Symptoms:**
-- Requests fail with parsing errors
-- Server returns 400 Bad Request
-
-**Solutions:**
+**Diagnosis:**
 ```bash
-# Always include Content-Type header
-curl -H "Content-Type: application/json"
+# Check if config file exists
+ls -la ~/.requirements-mcp/config.json
 
-# Common mistake - missing header
-curl -X POST http://localhost:8080/api/v1/mcp \
-  -H "Authorization: Bearer mcp_pat_your_token" \
-  -d '{"jsonrpc": "2.0", "id": 1, "method": "initialize"}'
-```
-
-## Parameter Validation Errors
-
-### 1. Missing Required Parameters
-
-**Symptoms:**
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "error": {
-    "code": -32602,
-    "message": "Invalid params",
-    "data": "Missing or invalid 'title' argument"
-  }
-}
+# Check directory permissions
+ls -ld ~/.requirements-mcp/
 ```
 
 **Solutions:**
 
-#### Check Tool Requirements
+1. **Create configuration using interactive mode:**
+   ```bash
+   ./bin/mcp-server -i
+   ```
+
+2. **Manual configuration creation:**
+   ```bash
+   mkdir -p ~/.requirements-mcp
+   cp config.example.json ~/.requirements-mcp/config.json
+   nano ~/.requirements-mcp/config.json
+   ```
+
+3. **Use custom config path:**
+   ```bash
+   ./bin/mcp-server -config /path/to/your/config.json
+   ```
+
+### Problem: Invalid JSON Format
+
+**Error Messages:**
+```
+Failed to load configuration: failed to parse config file
+invalid character '}' looking for beginning of object key string
+```
+
+**Diagnosis:**
 ```bash
-# ❌ Missing required 'priority' parameter
-{
-  "name": "create_epic",
-  "arguments": {
-    "title": "Test Epic"
-    // Missing "priority" field
-  }
-}
+# Validate JSON syntax
+jq . ~/.requirements-mcp/config.json
 
-# ✅ Correct with all required parameters
-{
-  "name": "create_epic",
-  "arguments": {
-    "title": "Test Epic",
-    "priority": 1
-  }
-}
-```
-
-#### Validate Parameter Types
-```json
-// ❌ Wrong data types
-{
-  "name": "create_epic",
-  "arguments": {
-    "title": "Test Epic",
-    "priority": "1"        // Should be integer, not string
-  }
-}
-
-// ✅ Correct data types
-{
-  "name": "create_epic",
-  "arguments": {
-    "title": "Test Epic",
-    "priority": 1          // Integer value
-  }
-}
-```
-
-### 2. Invalid UUID Format
-
-**Symptoms:**
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "error": {
-    "code": -32602,
-    "message": "Invalid params",
-    "data": "Invalid 'assignee_id' format"
-  }
-}
+# Check for common issues
+cat ~/.requirements-mcp/config.json | grep -E "(,$|^[[:space:]]*$)"
 ```
 
 **Solutions:**
 
-#### UUID Validation
-```javascript
-// JavaScript UUID validation
-function isValidUUID(uuid) {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(uuid);
-}
+1. **Use JSON validator:**
+   ```bash
+   python -m json.tool ~/.requirements-mcp/config.json
+   ```
 
-// Example usage
-const assigneeId = "123e4567-e89b-12d3-a456-426614174000";
-if (!isValidUUID(assigneeId)) {
-  console.error("Invalid UUID format");
-}
+2. **Recreate configuration:**
+   ```bash
+   mv ~/.requirements-mcp/config.json ~/.requirements-mcp/config.json.backup
+   ./bin/mcp-server -i
+   ```
+
+3. **Fix common JSON errors:**
+   - Remove trailing commas
+   - Ensure all strings are quoted
+   - Check bracket matching
+
+### Problem: Missing Required Fields
+
+**Error Messages:**
 ```
-
-#### Reference ID Alternative
-```json
-// Instead of UUID, you can use reference IDs
-{
-  "name": "update_epic",
-  "arguments": {
-    "epic_id": "EP-001",    // Reference ID instead of UUID
-    "title": "Updated Epic"
-  }
-}
-```
-
-### 3. Parameter Length Limits
-
-**Symptoms:**
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "error": {
-    "code": -32602,
-    "message": "Invalid params",
-    "data": "Title exceeds maximum length of 500 characters"
-  }
-}
+Failed to load configuration: invalid configuration: backend_api_url is required
+Failed to load configuration: invalid configuration: pat_token is required
 ```
 
 **Solutions:**
 
-#### Check Length Limits
-| Field | Maximum Length |
-|-------|----------------|
-| `title` | 500 characters |
-| `description` | 50,000 characters |
+1. **Check required fields:**
+   ```bash
+   jq 'keys' ~/.requirements-mcp/config.json
+   # Should include: backend_api_url, pat_token
+   ```
 
-```javascript
-// JavaScript length validation
-function validateTitle(title) {
-  if (title.length > 500) {
-    throw new Error(`Title too long: ${title.length}/500 characters`);
-  }
-}
+2. **Add missing fields:**
+   ```json
+   {
+     "backend_api_url": "https://your-api-server.com",
+     "pat_token": "your_personal_access_token",
+     "request_timeout": "30s",
+     "log_level": "info"
+   }
+   ```
 
-function validateDescription(description) {
-  if (description && description.length > 50000) {
-    throw new Error(`Description too long: ${description.length}/50000 characters`);
-  }
-}
+## Connection Problems
+
+### Problem: Backend API Unreachable
+
+**Error Messages:**
+```
+Server error: failed to connect to backend API
+dial tcp: lookup api.example.com: no such host
+connection refused
 ```
 
-## URI Scheme Issues
-
-### 1. Invalid URI Format
-
-**Symptoms:**
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "error": {
-    "code": -32602,
-    "message": "Invalid params",
-    "data": "Invalid URI: unsupported URI scheme: invalid"
-  }
-}
-```
-
-**Common URI Mistakes:**
+**Diagnosis:**
 ```bash
-# ❌ Invalid schemes
-invalid://EP-001
-Epic://EP-001          # Case sensitive
-epic//EP-001           # Missing colon
+# Test basic connectivity
+ping api.example.com
 
-# ✅ Valid schemes
-epic://EP-001
-user-story://US-001
-requirement://REQ-001
-acceptance-criteria://AC-001
-```
+# Test HTTP connectivity
+curl -I https://api.example.com/ready
 
-### 2. Reference ID Format Issues
+# Check DNS resolution
+nslookup api.example.com
 
-**Symptoms:**
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "error": {
-    "code": -32602,
-    "message": "Invalid params",
-    "data": "Invalid URI: invalid reference ID format: ep-001"
-  }
-}
-```
-
-**Reference ID Rules:**
-- Must be uppercase prefix
-- Must use hyphen separator
-- Must have numeric suffix
-
-```bash
-# ❌ Invalid formats
-epic://ep-001          # Lowercase prefix
-epic://EP_001          # Underscore separator
-epic://EP-            # Missing number
-epic://EP-01A          # Non-numeric suffix
-
-# ✅ Valid formats
-epic://EP-001
-epic://EP-1
-epic://EP-1234
-```
-
-### 3. Scheme-Prefix Mismatch
-
-**Symptoms:**
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "error": {
-    "code": -32602,
-    "message": "Invalid params",
-    "data": "Invalid URI: reference ID US-001 does not match scheme epic (expected prefix: EP)"
-  }
-}
-```
-
-**Solution:**
-Ensure the reference ID prefix matches the URI scheme:
-
-```bash
-# ❌ Mismatched scheme and prefix
-epic://US-001          # Epic scheme with User Story prefix
-
-# ✅ Correct matching
-epic://EP-001           # Epic scheme with Epic prefix
-user-story://US-001     # User Story scheme with User Story prefix
-```
-
-### 4. Unsupported Sub-paths
-
-**Symptoms:**
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "error": {
-    "code": -32602,
-    "message": "Invalid params",
-    "data": "Unsupported sub-path for epic: invalid-path"
-  }
-}
-```
-
-**Supported Sub-paths:**
-```bash
-# Epic sub-paths
-epic://EP-001/hierarchy      ✅
-epic://EP-001/user-stories   ✅
-epic://EP-001/requirements   ❌ Not supported
-
-# User Story sub-paths
-user-story://US-001/requirements        ✅
-user-story://US-001/acceptance-criteria ✅
-user-story://US-001/hierarchy           ❌ Not supported
-
-# Requirement sub-paths
-requirement://REQ-001/relationships     ✅
-requirement://REQ-001/dependencies      ❌ Not supported
-
-# Acceptance Criteria sub-paths
-acceptance-criteria://AC-001/            ❌ No sub-paths supported
-```
-
-## Tool Execution Errors
-
-### 1. Unknown Tool Name
-
-**Symptoms:**
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "error": {
-    "code": -32601,
-    "message": "Method not found",
-    "data": "Unknown tool: invalid_tool"
-  }
-}
+# Test with different protocols
+curl -I http://api.example.com/ready
+curl -I https://api.example.com/ready
 ```
 
 **Solutions:**
 
-#### List Available Tools
-```bash
-curl -X POST http://localhost:8080/api/v1/mcp \
-  -H "Authorization: Bearer mcp_pat_your_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "tools/list"
-  }'
+1. **Verify server URL:**
+   - Ensure URL includes protocol (http:// or https://)
+   - Check for typos in domain name
+   - Verify port number if non-standard
+
+2. **Network troubleshooting:**
+   ```bash
+   # Check network connectivity
+   ping 8.8.8.8
+   
+   # Check firewall rules
+   sudo iptables -L
+   
+   # Test from different network
+   curl -I https://api.example.com/ready --interface eth1
+   ```
+
+3. **Proxy configuration:**
+   ```bash
+   # Set proxy if needed
+   export HTTP_PROXY=http://proxy.company.com:8080
+   export HTTPS_PROXY=http://proxy.company.com:8080
+   ./bin/mcp-server
+   ```
+
+### Problem: SSL/TLS Certificate Issues
+
+**Error Messages:**
 ```
-
-#### Verify Tool Names
-Available tools (case-sensitive):
-- `create_epic`
-- `update_epic`
-- `create_user_story`
-- `update_user_story`
-- `create_requirement`
-- `update_requirement`
-- `create_relationship`
-- `search_global`
-- `search_requirements`
-
-### 2. Entity Not Found
-
-**Symptoms:**
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "error": {
-    "code": -32002,
-    "message": "Epic not found"
-  }
-}
+x509: certificate signed by unknown authority
+x509: certificate has expired
 ```
 
 **Solutions:**
 
-#### Verify Entity Exists
+1. **Update CA certificates:**
+   ```bash
+   # Ubuntu/Debian
+   sudo apt-get update && sudo apt-get install ca-certificates
+   
+   # CentOS/RHEL
+   sudo yum update ca-certificates
+   ```
+
+2. **Test certificate:**
+   ```bash
+   openssl s_client -connect api.example.com:443 -servername api.example.com
+   ```
+
+3. **Temporary workaround (not recommended for production):**
+   ```bash
+   # Only for testing with self-signed certificates
+   export GODEBUG=x509ignoreCN=0
+   ./bin/mcp-server
+   ```
+
+## Authentication Errors
+
+### Problem: Invalid PAT Token
+
+**Error Messages:**
+```
+Server error: authentication failed: invalid PAT token
+HTTP 401 Unauthorized
+```
+
+**Diagnosis:**
 ```bash
-# Check if epic exists using resources/read
-curl -X POST http://localhost:8080/api/v1/mcp \
-  -H "Authorization: Bearer mcp_pat_your_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "resources/read",
-    "params": {
-      "uri": "epic://EP-001"
-    }
-  }'
+# Test token manually
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+     https://api.example.com/auth/profile
+
+# Check token in config
+jq -r '.pat_token' ~/.requirements-mcp/config.json
 ```
-
-#### Search for Entity
-```bash
-# Search for the entity
-curl -X POST http://localhost:8080/api/v1/mcp \
-  -H "Authorization: Bearer mcp_pat_your_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "tools/call",
-    "params": {
-      "name": "search_global",
-      "arguments": {
-        "query": "EP-001"
-      }
-    }
-  }'
-```
-
-### 3. Relationship Creation Errors
-
-**Symptoms:**
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "error": {
-    "code": -32603,
-    "message": "Internal error",
-    "data": "Failed to create relationship: circular dependency detected"
-  }
-}
-```
-
-**Common Issues:**
-- Circular dependencies
-- Invalid relationship type
-- Requirements from different user stories
 
 **Solutions:**
 
-#### Validate Relationship Logic
-```bash
-# Check existing relationships before creating new ones
-curl -X POST http://localhost:8080/api/v1/mcp \
-  -H "Authorization: Bearer mcp_pat_your_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "resources/read",
-    "params": {
-      "uri": "requirement://REQ-001/relationships"
-    }
-  }'
+1. **Generate new PAT token:**
+   ```bash
+   ./bin/mcp-server -i
+   # This will create a new token automatically
+   ```
+
+2. **Manual token creation:**
+   - Log into web interface
+   - Go to Profile Settings → Personal Access Tokens
+   - Create new token with name "MCP Server"
+   - Copy token to configuration
+
+3. **Verify token permissions:**
+   - Ensure token has required scopes
+   - Check token expiration date
+   - Verify user account is active
+
+### Problem: Token Expired
+
+**Error Messages:**
 ```
+Server error: authentication failed: token expired
+HTTP 401 Unauthorized: Token has expired
+```
+
+**Solutions:**
+
+1. **Automatic token renewal:**
+   ```bash
+   ./bin/mcp-server -i
+   # Will create new token with 1-year expiration
+   ```
+
+2. **Check token expiration:**
+   ```bash
+   # Decode JWT token (if applicable)
+   echo "YOUR_TOKEN" | base64 -d | jq .exp
+   ```
+
+## Initialization Failures
+
+### Problem: Interactive Setup Fails
+
+**Error Messages:**
+```
+Initialization failed: Network Error: Failed to connect to server
+Initialization failed: Authentication Error: Invalid credentials
+```
+
+**Diagnosis Steps:**
+
+1. **Test server connectivity:**
+   ```bash
+   curl -I https://your-server.com/ready
+   ```
+
+2. **Verify credentials:**
+   - Try logging in through web interface
+   - Check username/password for special characters
+   - Verify account is not locked
+
+3. **Check server endpoints:**
+   ```bash
+   curl -X POST https://your-server.com/auth/login \
+        -H "Content-Type: application/json" \
+        -d '{"username":"test","password":"test"}'
+   ```
+
+**Solutions:**
+
+1. **Manual configuration:**
+   ```bash
+   # Skip interactive setup
+   cp config.example.json ~/.requirements-mcp/config.json
+   # Edit manually with known good values
+   ```
+
+2. **Debug mode:**
+   ```bash
+   # Run with debug logging
+   LOG_LEVEL=debug ./bin/mcp-server -i
+   ```
+
+### Problem: File Permission Errors
+
+**Error Messages:**
+```
+Initialization failed: File System Error: permission denied
+mkdir ~/.requirements-mcp: permission denied
+```
+
+**Solutions:**
+
+1. **Fix permissions:**
+   ```bash
+   # Ensure home directory is writable
+   ls -ld ~/
+   
+   # Create directory manually
+   mkdir -p ~/.requirements-mcp
+   chmod 700 ~/.requirements-mcp
+   ```
+
+2. **Use alternative location:**
+   ```bash
+   ./bin/mcp-server -i -config /tmp/mcp-config.json
+   ```
+
+3. **Run with appropriate permissions:**
+   ```bash
+   # If necessary (not recommended)
+   sudo ./bin/mcp-server -i -config /etc/mcp-server/config.json
+   ```
+
+## Runtime Errors
+
+### Problem: JSON-RPC Protocol Errors
+
+**Error Messages:**
+```
+Invalid JSON-RPC request
+Method not found
+Parse error
+```
+
+**Diagnosis:**
+```bash
+# Check MCP client configuration
+cat ~/.claude/claude_desktop_config.json | jq .
+
+# Test with minimal client
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}' | ./bin/mcp-server
+```
+
+**Solutions:**
+
+1. **Verify MCP client configuration:**
+   ```json
+   {
+     "mcpServers": {
+       "requirements-mcp": {
+         "command": "/correct/path/to/bin/mcp-server",
+         "args": ["-config", "/correct/path/to/config.json"]
+       }
+     }
+   }
+   ```
+
+2. **Check protocol version compatibility:**
+   - Ensure client supports MCP version 2025-06-18
+   - Update client if necessary
+
+### Problem: Backend API Errors
+
+**Error Messages:**
+```
+HTTP 500 Internal Server Error
+HTTP 404 Not Found
+Request timeout
+```
+
+**Solutions:**
+
+1. **Check backend API status:**
+   ```bash
+   curl https://api.example.com/health
+   curl https://api.example.com/api/v1/mcp
+   ```
+
+2. **Increase timeout:**
+   ```json
+   {
+     "request_timeout": "60s"
+   }
+   ```
+
+3. **Check API version compatibility:**
+   - Verify MCP endpoint exists: `/api/v1/mcp`
+   - Check API documentation for changes
 
 ## Performance Issues
 
-### 1. Slow Response Times
+### Problem: Slow Response Times
 
-**Symptoms:**
-- Requests taking longer than expected
-- Timeouts on large operations
+**Diagnosis:**
+```bash
+# Monitor response times
+./bin/mcp-server 2>&1 | grep -E "(duration|timeout)"
+
+# Test API directly
+time curl -H "Authorization: Bearer TOKEN" \
+     https://api.example.com/api/v1/epics
+```
 
 **Solutions:**
 
-#### Use Pagination for Search
-```json
-{
-  "name": "search_global",
-  "arguments": {
-    "query": "authentication",
-    "limit": 10,        // Smaller page size
-    "offset": 0
-  }
-}
-```
+1. **Increase timeouts:**
+   ```json
+   {
+     "request_timeout": "120s"
+   }
+   ```
 
-#### Optimize Resource Queries
+2. **Check network latency:**
+   ```bash
+   ping api.example.com
+   traceroute api.example.com
+   ```
+
+3. **Monitor backend performance:**
+   - Check backend server resources
+   - Review database performance
+   - Check for API rate limiting
+
+### Problem: Memory Usage
+
+**Diagnosis:**
 ```bash
-# Instead of full hierarchy
-epic://EP-001/hierarchy
-
-# Use specific sub-paths when possible
-epic://EP-001/user-stories
+# Monitor memory usage
+ps aux | grep mcp-server
+top -p $(pgrep mcp-server)
 ```
-
-#### Implement Client-Side Caching
-```javascript
-class MCPClientWithCache {
-  constructor(baseUrl, token) {
-    this.client = new MCPClient(baseUrl, token);
-    this.cache = new Map();
-  }
-  
-  async getResource(uri, ttl = 300000) { // 5 minute TTL
-    const cached = this.cache.get(uri);
-    if (cached && Date.now() - cached.timestamp < ttl) {
-      return cached.data;
-    }
-    
-    const data = await this.client.readResource(uri);
-    this.cache.set(uri, { data, timestamp: Date.now() });
-    return data;
-  }
-}
-```
-
-### 2. Rate Limiting
-
-**Symptoms:**
-- 429 Too Many Requests errors
-- Requests being rejected
 
 **Solutions:**
 
-#### Implement Request Throttling
-```javascript
-class ThrottledMCPClient {
-  constructor(baseUrl, token, requestsPerSecond = 10) {
-    this.client = new MCPClient(baseUrl, token);
-    this.requestQueue = [];
-    this.processing = false;
-    this.interval = 1000 / requestsPerSecond;
-  }
-  
-  async request(method, params) {
-    return new Promise((resolve, reject) => {
-      this.requestQueue.push({ method, params, resolve, reject });
-      this.processQueue();
-    });
-  }
-  
-  async processQueue() {
-    if (this.processing || this.requestQueue.length === 0) return;
-    
-    this.processing = true;
-    while (this.requestQueue.length > 0) {
-      const { method, params, resolve, reject } = this.requestQueue.shift();
-      try {
-        const result = await this.client.request(method, params);
-        resolve(result);
-      } catch (error) {
-        reject(error);
-      }
-      await new Promise(resolve => setTimeout(resolve, this.interval));
-    }
-    this.processing = false;
-  }
-}
-```
+1. **Restart server periodically:**
+   ```bash
+   # Add to cron for daily restart
+   0 2 * * * pkill mcp-server && sleep 5 && /path/to/bin/mcp-server
+   ```
 
-## Network and Connectivity
+2. **Check for memory leaks:**
+   - Update to latest version
+   - Report issue with memory usage patterns
 
-### 1. Connection Refused
+## Integration Problems
 
-**Symptoms:**
-```bash
-curl: (7) Failed to connect to localhost port 8080: Connection refused
-```
+### Problem: Claude Desktop Integration
+
+**Common Issues:**
+
+1. **Server not appearing in Claude:**
+   ```bash
+   # Check Claude Desktop config
+   cat ~/.claude/claude_desktop_config.json | jq .
+   
+   # Verify server path
+   ls -la /path/to/bin/mcp-server
+   
+   # Test server manually
+   echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"claude","version":"1.0.0"}}}' | /path/to/bin/mcp-server
+   ```
+
+2. **Server crashes on startup:**
+   ```bash
+   # Check Claude Desktop logs
+   tail -f ~/.claude/logs/claude_desktop.log
+   
+   # Test server independently
+   ./bin/mcp-server 2>&1 | head -20
+   ```
 
 **Solutions:**
-1. Verify server is running: `ps aux | grep server`
-2. Check port availability: `netstat -tlnp | grep 8080`
-3. Verify server configuration
-4. Check firewall settings
 
-### 2. SSL/TLS Issues
+1. **Verify configuration format:**
+   ```json
+   {
+     "mcpServers": {
+       "requirements-mcp": {
+         "command": "/absolute/path/to/bin/mcp-server",
+         "args": ["-config", "/absolute/path/to/config.json"]
+       }
+     }
+   }
+   ```
 
-**Symptoms:**
+2. **Use absolute paths:**
+   ```bash
+   # Find absolute path
+   which mcp-server
+   realpath ./bin/mcp-server
+   ```
+
+3. **Check permissions:**
+   ```bash
+   chmod +x /path/to/bin/mcp-server
+   ```
+
+## Advanced Debugging
+
+### Enable Debug Logging
+
 ```bash
-curl: (60) SSL certificate problem: self signed certificate
+# Method 1: Environment variable
+LOG_LEVEL=debug ./bin/mcp-server
+
+# Method 2: Configuration file
+jq '.log_level = "debug"' ~/.requirements-mcp/config.json > /tmp/config.json && mv /tmp/config.json ~/.requirements-mcp/config.json
+
+# Method 3: Temporary config
+./bin/mcp-server -config <(echo '{"backend_api_url":"https://api.example.com","pat_token":"YOUR_TOKEN","log_level":"debug"}')
 ```
 
-**Solutions:**
+### Network Debugging
+
 ```bash
-# For development/testing only - skip SSL verification
-curl -k -X POST https://localhost:8080/api/v1/mcp
+# Capture network traffic
+sudo tcpdump -i any -w mcp-traffic.pcap host api.example.com
 
-# Better solution - add certificate to trust store
-# or use proper SSL certificates
+# Monitor HTTP requests
+./bin/mcp-server 2>&1 | grep -E "(POST|GET|PUT|DELETE)"
+
+# Test with curl
+curl -v -H "Authorization: Bearer TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{"method":"tools/list"}' \
+     https://api.example.com/api/v1/mcp
 ```
 
-### 3. DNS Resolution Issues
+### Process Debugging
 
-**Symptoms:**
 ```bash
-curl: (6) Could not resolve host: your-server.com
+# Monitor system calls
+strace -e trace=network,file ./bin/mcp-server
+
+# Monitor file access
+lsof -p $(pgrep mcp-server)
+
+# Check process status
+ps aux | grep mcp-server
+pstree -p $(pgrep mcp-server)
 ```
 
-**Solutions:**
-1. Check DNS configuration
-2. Use IP address instead of hostname
-3. Verify network connectivity
-4. Check /etc/hosts file for local development
+### Log Analysis
 
-## Debugging Tools and Techniques
-
-### 1. Request/Response Logging
-
-#### Using curl with verbose output
 ```bash
-curl -v -X POST http://localhost:8080/api/v1/mcp \
-  -H "Authorization: Bearer mcp_pat_your_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "initialize",
-    "params": {}
-  }'
+# Parse JSON logs
+./bin/mcp-server 2>&1 | jq -r '.time + " " + .level + " " + .msg'
+
+# Filter by log level
+./bin/mcp-server 2>&1 | jq 'select(.level == "error")'
+
+# Monitor specific operations
+./bin/mcp-server 2>&1 | jq 'select(.msg | contains("authentication"))'
+
+# Count error types
+./bin/mcp-server 2>&1 | jq -r 'select(.level == "error") | .msg' | sort | uniq -c
 ```
-
-#### Using jq for JSON formatting
-```bash
-curl -X POST http://localhost:8080/api/v1/mcp \
-  -H "Authorization: Bearer mcp_pat_your_token" \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq '.'
-```
-
-### 2. Server Log Analysis
-
-#### Check server logs
-```bash
-# If using systemd
-journalctl -u your-service-name -f
-
-# If using Docker
-docker logs -f container-name
-
-# If using direct execution
-tail -f /var/log/your-app/app.log
-```
-
-#### Look for specific error patterns
-```bash
-# Search for authentication errors
-grep -i "authentication\|unauthorized" /var/log/your-app/app.log
-
-# Search for validation errors
-grep -i "validation\|invalid.*param" /var/log/your-app/app.log
-
-# Search for performance issues
-grep -i "slow\|timeout\|performance" /var/log/your-app/app.log
-```
-
-### 3. Network Debugging
-
-#### Test connectivity
-```bash
-# Basic connectivity
-ping your-server.com
-
-# Port connectivity
-telnet your-server.com 8080
-# or
-nc -zv your-server.com 8080
-```
-
-#### Analyze HTTP traffic
-```bash
-# Using tcpdump
-sudo tcpdump -i any -A -s 0 'port 8080'
-
-# Using Wireshark for GUI analysis
-# Capture on port 8080 and analyze HTTP traffic
-```
-
-### 4. JSON-RPC Validation Tools
-
-#### Online JSON-RPC validators
-- Use online JSON validators to check request format
-- Validate JSON-RPC 2.0 compliance
-
-#### Custom validation script
-```python
-import json
-import jsonschema
-
-# JSON-RPC 2.0 schema
-jsonrpc_schema = {
-    "type": "object",
-    "properties": {
-        "jsonrpc": {"const": "2.0"},
-        "method": {"type": "string"},
-        "params": {"type": ["object", "array"]},
-        "id": {"type": ["string", "number", "null"]}
-    },
-    "required": ["jsonrpc", "method"],
-    "additionalProperties": False
-}
-
-def validate_jsonrpc_request(request_data):
-    try:
-        jsonschema.validate(request_data, jsonrpc_schema)
-        print("✅ Valid JSON-RPC 2.0 request")
-        return True
-    except jsonschema.ValidationError as e:
-        print(f"❌ Invalid JSON-RPC request: {e.message}")
-        return False
-
-# Example usage
-request = {
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "tools/call",
-    "params": {
-        "name": "create_epic",
-        "arguments": {"title": "Test", "priority": 1}
-    }
-}
-
-validate_jsonrpc_request(request)
-```
-
-## Common Error Patterns and Solutions
-
-### Error Pattern Matrix
-
-| Error Code | Common Cause | Quick Fix |
-|------------|--------------|-----------|
-| -32700 | Invalid JSON | Validate JSON syntax |
-| -32600 | Invalid Request | Check JSON-RPC format |
-| -32601 | Method Not Found | Verify method name |
-| -32602 | Invalid Params | Check required parameters |
-| -32603 | Internal Error | Check server logs |
-| -32002 | Not Found | Verify entity exists |
-
-### Quick Diagnostic Checklist
-
-1. **Authentication**
-   - [ ] Authorization header present
-   - [ ] Token format correct (mcp_pat_...)
-   - [ ] Token not expired
-
-2. **Request Format**
-   - [ ] Content-Type: application/json
-   - [ ] Valid JSON syntax
-   - [ ] JSON-RPC 2.0 format
-   - [ ] Required fields present
-
-3. **Parameters**
-   - [ ] All required parameters provided
-   - [ ] Correct data types
-   - [ ] Valid UUIDs/reference IDs
-   - [ ] Length limits respected
-
-4. **URIs (for resources/read)**
-   - [ ] Valid scheme
-   - [ ] Correct reference ID format
-   - [ ] Scheme-prefix match
-   - [ ] Supported sub-path
-
-5. **Network**
-   - [ ] Server running
-   - [ ] Port accessible
-   - [ ] Network connectivity
-   - [ ] DNS resolution
 
 ## Getting Help
 
 ### Information to Collect
 
-When reporting issues, include:
+When reporting issues, please include:
 
-1. **Request Details**
-   - Complete curl command or code
-   - Request payload
-   - Expected vs actual response
+1. **Version information:**
+   ```bash
+   ./bin/mcp-server --version
+   go version
+   uname -a
+   ```
 
-2. **Environment Information**
-   - Server version
-   - Client library version
-   - Operating system
-   - Network configuration
+2. **Configuration (sanitized):**
+   ```bash
+   jq 'del(.pat_token)' ~/.requirements-mcp/config.json
+   ```
 
-3. **Error Information**
-   - Complete error response
-   - Server logs (if accessible)
-   - Timestamp of the issue
+3. **Error logs:**
+   ```bash
+   ./bin/mcp-server 2>&1 | head -50
+   ```
 
-4. **Reproduction Steps**
-   - Minimal example to reproduce
-   - Frequency of the issue
-   - Workarounds attempted
+4. **Network test results:**
+   ```bash
+   curl -I https://your-api-server.com/ready
+   ```
 
 ### Support Channels
 
-1. Check server logs for detailed error information
-2. Review this troubleshooting guide
-3. Consult the [MCP API Documentation](mcp-api-documentation.md)
-4. Test with the [MCP Testing Guide](mcp-testing-guide.md)
-5. Contact your system administrator or development team
+- **Documentation**: Check README-mcp-server.md
+- **Issue Tracker**: Create detailed bug reports
+- **Debug Mode**: Always include debug logs with issues
+
+### Self-Help Checklist
+
+Before seeking help, try:
+
+- [ ] Recreate configuration with `./bin/mcp-server -i`
+- [ ] Test with debug logging enabled
+- [ ] Verify backend API is accessible
+- [ ] Check file permissions
+- [ ] Try with minimal configuration
+- [ ] Test network connectivity
+- [ ] Review recent changes to environment
