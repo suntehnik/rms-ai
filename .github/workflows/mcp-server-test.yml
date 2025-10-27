@@ -165,7 +165,10 @@ jobs:
     
     steps:
     - name: Test Results Summary
+      shell: bash
       run: |
+        set +e  # Don't exit on errors
+        
         echo "## 🧪 MCP Server Test Results" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "| Test Suite | Status |" >> $GITHUB_STEP_SUMMARY
@@ -174,24 +177,27 @@ jobs:
         echo "| Cross-Platform | ${{ needs.mcp-server-compatibility.result }} |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
-        # Count successful tests
+        # Count successful tests with explicit variable handling
         SUCCESS_COUNT=0
         TOTAL_COUNT=2
         
-        # Use safer conditional checks that don't fail the script
-        if [[ "${{ needs.mcp-server-unit-tests.result }}" == "success" ]]; then
-          ((SUCCESS_COUNT++))
+        # Check unit tests result
+        UNIT_RESULT="${{ needs.mcp-server-unit-tests.result }}"
+        if [ "$UNIT_RESULT" = "success" ]; then
+          SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
         fi
         
-        if [[ "${{ needs.mcp-server-compatibility.result }}" == "success" ]]; then
-          ((SUCCESS_COUNT++))
+        # Check compatibility tests result
+        COMPAT_RESULT="${{ needs.mcp-server-compatibility.result }}"
+        if [ "$COMPAT_RESULT" = "success" ]; then
+          SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
         fi
         
         echo "### 📊 Test Results: $SUCCESS_COUNT/$TOTAL_COUNT passed" >> $GITHUB_STEP_SUMMARY
         
-        if [[ $SUCCESS_COUNT -eq $TOTAL_COUNT ]]; then
+        if [ $SUCCESS_COUNT -eq $TOTAL_COUNT ]; then
           echo "✅ **All MCP Server tests passed!**" >> $GITHUB_STEP_SUMMARY
-        elif [[ $SUCCESS_COUNT -gt 0 ]]; then
+        elif [ $SUCCESS_COUNT -gt 0 ]; then
           echo "⚠️ **Some tests passed, but issues need attention**" >> $GITHUB_STEP_SUMMARY
         else
           echo "❌ **Test failures detected**" >> $GITHUB_STEP_SUMMARY
@@ -201,5 +207,5 @@ jobs:
         echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
         echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
         
-        # Always exit successfully since this is just a summary job
+        # Summary job always succeeds
         exit 0
