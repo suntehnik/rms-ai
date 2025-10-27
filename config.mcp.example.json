@@ -1,0 +1,115 @@
+{
+  "server": {
+    "name": "spexus-mcp",
+    "version": "1.0.0",
+    "description": "Spexus Requirements Management MCP Server"
+  },
+  "database": {
+    "url": "postgres://user:password@localhost:5432/requirements?sslmode=disable",
+    "max_connections": 10,
+    "max_idle_connections": 5,
+    "connection_max_lifetime": "1h"
+  },
+  "mcp": {
+    "protocol_version": "2024-11-05",
+    "capabilities": {
+      "tools": {
+        "list_changed": true
+      },
+      "resources": {
+        "subscribe": true,
+        "list_changed": true
+      },
+      "prompts": {
+        "list_changed": true
+      },
+      "logging": {}
+    },
+    "transport": {
+      "type": "stdio",
+      "options": {
+        "buffer_size": 4096
+      }
+    }
+  },
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "output": "stderr"
+  },
+  "security": {
+    "jwt_secret": "${JWT_SECRET}",
+    "token_expiry": "24h",
+    "rate_limiting": {
+      "enabled": true,
+      "requests_per_minute": 100
+    }
+  },
+  "features": {
+    "tools": {
+      "epic_management": {
+        "enabled": true,
+        "description": "Create, read, update, and delete epics"
+      },
+      "user_story_management": {
+        "enabled": true,
+        "description": "Manage user stories within epics"
+      },
+      "requirement_management": {
+        "enabled": true,
+        "description": "Manage requirements and their relationships"
+      },
+      "search": {
+        "enabled": true,
+        "description": "Search across all entities"
+      },
+      "reporting": {
+        "enabled": true,
+        "description": "Generate reports and analytics"
+      }
+    },
+    "resources": {
+      "epic_data": {
+        "enabled": true,
+        "description": "Access epic data and hierarchies"
+      },
+      "requirement_schemas": {
+        "enabled": true,
+        "description": "Access requirement type definitions"
+      },
+      "project_templates": {
+        "enabled": true,
+        "description": "Access project templates and examples"
+      }
+    },
+    "prompts": {
+      "requirement_analysis": {
+        "enabled": true,
+        "description": "Analyze and improve requirement quality"
+      },
+      "epic_planning": {
+        "enabled": true,
+        "description": "Plan and structure epics"
+      },
+      "dependency_analysis": {
+        "enabled": true,
+        "description": "Analyze requirement dependencies"
+      }
+    }
+  },
+  "cache": {
+    "enabled": true,
+    "ttl": "5m",
+    "max_size": 1000
+  },
+  "monitoring": {
+    "metrics": {
+      "enabled": true,
+      "endpoint": "/metrics"
+    },
+    "health_check": {
+      "enabled": true,
+      "endpoint": "/health"
+    }
+  }
+}

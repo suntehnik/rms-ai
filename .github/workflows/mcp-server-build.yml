@@ -1,0 +1,411 @@
+name: MCP Server Build & Publish
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'cmd/mcp-server/**'
+      - 'internal/mcp/client/init/**'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Makefile'
+      - '.github/workflows/mcp-server-build.yml'
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      build_platforms:
+        description: 'Platforms to build for (comma-separated)'
+        required: false
+        default: 'linux/amd64,linux/arm64,darwin/amd64,darwin/arm64,windows/amd64'
+      create_release:
+        description: 'Create a GitHub release'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  packages: write
+  actions: read
+
+env:
+  GO_VERSION: '1.21'
+  BINARY_NAME: 'spexus-mcp'
+
+jobs:
+  # Build matrix for multiple platforms
+  build-matrix:
+    name: Build MCP Server (${{ matrix.goos }}/${{ matrix.goarch }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux builds
+          - goos: linux
+            goarch: amd64
+            os: ubuntu-latest
+            artifact_name: spexus-mcp-linux-amd64
+          - goos: linux
+            goarch: arm64
+            os: ubuntu-latest
+            artifact_name: spexus-mcp-linux-arm64
+          
+          # macOS builds
+          - goos: darwin
+            goarch: amd64
+            os: macos-latest
+            artifact_name: spexus-mcp-darwin-amd64
+          - goos: darwin
+            goarch: arm64
+            os: macos-latest
+            artifact_name: spexus-mcp-darwin-arm64
+          
+          # Windows builds
+          - goos: windows
+            goarch: amd64
+            os: windows-latest
+            artifact_name: spexus-mcp-windows-amd64.exe
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ matrix.goos }}-${{ matrix.goarch }}-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-${{ matrix.goos }}-${{ matrix.goarch }}-
+          ${{ runner.os }}-go-
+
+    - name: Install dependencies
+      run: go mod download
+
+    - name: Run tests (Linux only)
+      if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
+      run: make test-fast
+
+    - name: Get version info
+      id: version
+      shell: bash
+      run: |
+        if [[ "${{ github.event_name }}" == "release" ]]; then
+          VERSION="${{ github.event.release.tag_name }}"
+        elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          VERSION="main-$(git rev-parse --short HEAD)"
+        else
+          VERSION="dev-$(git rev-parse --short HEAD)"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        echo "build_date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+
+    - name: Build MCP Server
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+        CGO_ENABLED: 0
+      shell: bash
+      run: |
+        # Create bin directory
+        mkdir -p bin
+        
+        # Set binary name with extension for Windows
+        BINARY_NAME="${{ env.BINARY_NAME }}"
+        if [[ "${{ matrix.goos }}" == "windows" ]]; then
+          BINARY_NAME="${BINARY_NAME}.exe"
+        fi
+        
+        # Build with version information
+        go build \
+          -ldflags="-s -w -X main.Version=${{ steps.version.outputs.version }} -X main.BuildDate=${{ steps.version.outputs.build_date }} -X main.GitCommit=${{ steps.version.outputs.short_sha }}" \
+          -o "bin/${BINARY_NAME}" \
+          cmd/mcp-server/main.go
+        
+        # Verify the binary was created
+        ls -la bin/
+        
+        # Test the binary (non-Windows only)
+        if [[ "${{ matrix.goos }}" != "windows" ]]; then
+          chmod +x "bin/${BINARY_NAME}"
+          # Try version check, but don't fail if not implemented
+          timeout 10s "./bin/${BINARY_NAME}" --version 2>/dev/null || echo "Binary exists and is executable"
+        fi
+
+    - name: Create archive
+      shell: bash
+      run: |
+        cd bin
+        BINARY_NAME="${{ env.BINARY_NAME }}"
+        if [[ "${{ matrix.goos }}" == "windows" ]]; then
+          BINARY_NAME="${BINARY_NAME}.exe"
+        fi
+        
+        # Create archive based on platform
+        if [[ "${{ matrix.goos }}" == "windows" ]]; then
+          # Create ZIP for Windows using PowerShell (available on all runners)
+          if command -v powershell >/dev/null 2>&1; then
+            powershell -Command "Compress-Archive -Path '${BINARY_NAME}' -DestinationPath '../${{ matrix.artifact_name }}.zip'"
+          elif command -v zip >/dev/null 2>&1; then
+            zip "../${{ matrix.artifact_name }}.zip" "${BINARY_NAME}"
+          else
+            # Fallback: just copy the file
+            cp "${BINARY_NAME}" "../${{ matrix.artifact_name }}.exe"
+          fi
+        else
+          # Create tar.gz for Unix-like systems
+          tar -czf "../${{ matrix.artifact_name }}.tar.gz" "${BINARY_NAME}"
+        fi
+
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact_name }}
+        path: |
+          ${{ matrix.artifact_name }}.tar.gz
+          ${{ matrix.artifact_name }}.zip
+          ${{ matrix.artifact_name }}.exe
+        retention-days: 30
+        if-no-files-found: ignore
+
+    - name: Generate checksums
+      shell: bash
+      run: |
+        if [[ "${{ matrix.goos }}" == "windows" ]]; then
+          if [ -f "${{ matrix.artifact_name }}.zip" ]; then
+            sha256sum "${{ matrix.artifact_name }}.zip" > "${{ matrix.artifact_name }}.zip.sha256"
+          elif [ -f "${{ matrix.artifact_name }}.exe" ]; then
+            sha256sum "${{ matrix.artifact_name }}.exe" > "${{ matrix.artifact_name }}.exe.sha256"
+          fi
+        else
+          if [ -f "${{ matrix.artifact_name }}.tar.gz" ]; then
+            sha256sum "${{ matrix.artifact_name }}.tar.gz" > "${{ matrix.artifact_name }}.tar.gz.sha256"
+          fi
+        fi
+
+    - name: Upload checksums
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact_name }}-checksums
+        path: |
+          ${{ matrix.artifact_name }}.*.sha256
+        retention-days: 30
+
+  # Create release with all artifacts
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: build-matrix
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Prepare release assets
+      run: |
+        mkdir -p release-assets
+        find artifacts -name "*.tar.gz" -o -name "*.zip" -o -name "*.sha256" | while read file; do
+          cp "$file" release-assets/
+        done
+        ls -la release-assets/
+
+    - name: Get version info
+      id: version
+      run: |
+        if [[ "${{ github.event_name }}" == "release" ]]; then
+          VERSION="${{ github.event.release.tag_name }}"
+        else
+          VERSION="v$(date +'%Y.%m.%d')-$(git rev-parse --short HEAD)"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Create Release
+      if: github.event_name == 'workflow_dispatch'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.version.outputs.version }}
+        name: MCP Server Release ${{ steps.version.outputs.version }}
+        body: |
+          ## MCP Server Release ${{ steps.version.outputs.version }}
+          
+          ### 🚀 Features
+          - Requirements Management MCP Server
+          - Multi-platform support (Linux, macOS, Windows)
+          - Both AMD64 and ARM64 architectures
+          
+          ### 📦 Installation
+          
+          #### Linux/macOS
+          ```bash
+          # Download and extract
+          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.version }}/spexus-mcp-linux-amd64.tar.gz
+          tar -xzf spexus-mcp-linux-amd64.tar.gz
+          chmod +x spexus-mcp
+          sudo mv spexus-mcp /usr/local/bin/
+          ```
+          
+          #### Windows
+          ```powershell
+          # Download and extract the ZIP file
+          # Add the binary to your PATH
+          ```
+          
+          ### 🔧 Configuration
+          Configure your MCP client to use the server:
+          ```json
+          {
+            "mcpServers": {
+              "spexus": {
+                "command": "/usr/local/bin/spexus-mcp",
+                "args": ["--config", "/path/to/config.json"]
+              }
+            }
+          }
+          ```
+          
+          ### 📋 Checksums
+          All binaries include SHA256 checksums for verification.
+          
+          Built from commit: ${{ github.sha }}
+        files: release-assets/*
+        draft: false
+        prerelease: ${{ contains(steps.version.outputs.version, 'dev') || contains(steps.version.outputs.version, 'alpha') || contains(steps.version.outputs.version, 'beta') }}
+
+    - name: Update existing release
+      if: github.event_name == 'release'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: release-assets/*
+
+  # Docker build and publish (optional)
+  docker-build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: build-matrix
+    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ghcr.io/${{ github.repository }}/spexus-mcp
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha,prefix={{branch}}-
+
+    - name: Create Dockerfile for MCP Server
+      run: |
+        cat > Dockerfile.mcp-server << 'EOF'
+        FROM golang:1.21-alpine AS builder
+        
+        WORKDIR /app
+        COPY go.mod go.sum ./
+        RUN go mod download
+        
+        COPY . .
+        RUN CGO_ENABLED=0 GOOS=linux go build \
+            -ldflags="-s -w" \
+            -o spexus-mcp \
+            cmd/mcp-server/main.go
+        
+        FROM alpine:latest
+        RUN apk --no-cache add ca-certificates
+        WORKDIR /root/
+        
+        COPY --from=builder /app/spexus-mcp .
+        
+        EXPOSE 8080
+        CMD ["./spexus-mcp"]
+        EOF
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: Dockerfile.mcp-server
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # Notification and summary
+  build-summary:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    needs: [build-matrix, create-release, docker-build]
+    if: always()
+    
+    steps:
+    - name: Build Summary
+      run: |
+        echo "## 🏗️ MCP Server Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Multi-platform Build | ${{ needs.build-matrix.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Release Creation | ${{ needs.create-release.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Docker Build | ${{ needs.docker-build.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ needs.build-matrix.result }}" == "success" ]]; then
+          echo "✅ **Multi-platform binaries built successfully**" >> $GITHUB_STEP_SUMMARY
+          echo "- Linux (AMD64, ARM64)" >> $GITHUB_STEP_SUMMARY
+          echo "- macOS (AMD64, ARM64)" >> $GITHUB_STEP_SUMMARY
+          echo "- Windows (AMD64)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [[ "${{ needs.create-release.result }}" == "success" ]]; then
+          echo "🚀 **Release created with all artifacts**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [[ "${{ needs.docker-build.result }}" == "success" ]]; then
+          echo "🐳 **Docker image published to GitHub Container Registry**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "### 📦 Artifacts Available" >> $GITHUB_STEP_SUMMARY
+        echo "- Binary archives for all platforms" >> $GITHUB_STEP_SUMMARY
+        echo "- SHA256 checksums for verification" >> $GITHUB_STEP_SUMMARY
+        echo "- Docker image (if applicable)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
