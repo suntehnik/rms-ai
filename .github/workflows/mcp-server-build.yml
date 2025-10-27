@@ -2,22 +2,14 @@ name: MCP Server Build & Publish
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
     paths:
       - 'cmd/mcp-server/**'
-      - 'internal/**'
+      - 'internal/mcp/client/init/**'
       - 'go.mod'
       - 'go.sum'
       - 'Makefile'
       - '.github/workflows/mcp-server-build.yml'
-  pull_request:
-    branches: [ main, develop ]
-    paths:
-      - 'cmd/mcp-server/**'
-      - 'internal/**'
-      - 'go.mod'
-      - 'go.sum'
-      - 'Makefile'
   release:
     types: [published]
   workflow_dispatch:
@@ -39,7 +31,7 @@ permissions:
 
 env:
   GO_VERSION: '1.21'
-  BINARY_NAME: 'requirements-mcp-server'
+  BINARY_NAME: 'spexus-mcp'
 
 jobs:
   # Build matrix for multiple platforms
@@ -54,27 +46,27 @@ jobs:
           - goos: linux
             goarch: amd64
             os: ubuntu-latest
-            artifact_name: requirements-mcp-server-linux-amd64
+            artifact_name: spexus-mcp-linux-amd64
           - goos: linux
             goarch: arm64
             os: ubuntu-latest
-            artifact_name: requirements-mcp-server-linux-arm64
+            artifact_name: spexus-mcp-linux-arm64
           
           # macOS builds
           - goos: darwin
             goarch: amd64
             os: macos-latest
-            artifact_name: requirements-mcp-server-darwin-amd64
+            artifact_name: spexus-mcp-darwin-amd64
           - goos: darwin
             goarch: arm64
             os: macos-latest
-            artifact_name: requirements-mcp-server-darwin-arm64
+            artifact_name: spexus-mcp-darwin-arm64
           
           # Windows builds
           - goos: windows
             goarch: amd64
             os: windows-latest
-            artifact_name: requirements-mcp-server-windows-amd64.exe
+            artifact_name: spexus-mcp-windows-amd64.exe
 
     steps:
     - name: Checkout code
@@ -249,10 +241,10 @@ jobs:
           #### Linux/macOS
           ```bash
           # Download and extract
-          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.version }}/requirements-mcp-server-linux-amd64.tar.gz
-          tar -xzf requirements-mcp-server-linux-amd64.tar.gz
-          chmod +x requirements-mcp-server
-          sudo mv requirements-mcp-server /usr/local/bin/
+          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.version }}/spexus-mcp-linux-amd64.tar.gz
+          tar -xzf spexus-mcp-linux-amd64.tar.gz
+          chmod +x spexus-mcp
+          sudo mv spexus-mcp /usr/local/bin/
           ```
           
           #### Windows
@@ -266,8 +258,8 @@ jobs:
           ```json
           {
             "mcpServers": {
-              "requirements": {
-                "command": "/usr/local/bin/requirements-mcp-server",
+              "spexus": {
+                "command": "/usr/local/bin/spexus-mcp",
                 "args": ["--config", "/path/to/config.json"]
               }
             }
@@ -313,7 +305,7 @@ jobs:
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ghcr.io/${{ github.repository }}/mcp-server
+        images: ghcr.io/${{ github.repository }}/spexus-mcp
         tags: |
           type=ref,event=branch
           type=ref,event=pr
@@ -333,17 +325,17 @@ jobs:
         COPY . .
         RUN CGO_ENABLED=0 GOOS=linux go build \
             -ldflags="-s -w" \
-            -o requirements-mcp-server \
+            -o spexus-mcp \
             cmd/mcp-server/main.go
         
         FROM alpine:latest
         RUN apk --no-cache add ca-certificates
         WORKDIR /root/
         
-        COPY --from=builder /app/requirements-mcp-server .
+        COPY --from=builder /app/spexus-mcp .
         
         EXPOSE 8080
-        CMD ["./requirements-mcp-server"]
+        CMD ["./spexus-mcp"]
         EOF
 
     - name: Build and push Docker image

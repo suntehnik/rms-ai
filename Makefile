@@ -15,8 +15,8 @@ build-gen-mock-data:
 # Build MCP server
 build-mcp-server:
 	@echo "🔧 Building MCP Server..."
-	go build -o bin/requirements-mcp-server cmd/mcp-server/main.go
-	@echo "✅ MCP Server built: bin/requirements-mcp-server"
+	go build -o bin/spexus-mcp cmd/mcp-server/main.go
+	@echo "✅ MCP Server built: bin/spexus-mcp"
 
 # Build MCP server with version info (for releases)
 build-mcp-server-release:
@@ -26,16 +26,16 @@ build-mcp-server-release:
 	GIT_COMMIT=$$(git rev-parse --short HEAD) && \
 	go build \
 		-ldflags="-s -w -X main.Version=$$VERSION -X main.BuildDate=$$BUILD_DATE -X main.GitCommit=$$GIT_COMMIT" \
-		-o bin/requirements-mcp-server \
+		-o bin/spexus-mcp \
 		cmd/mcp-server/main.go
-	@echo "✅ MCP Server built with version info: bin/requirements-mcp-server"
+	@echo "✅ MCP Server built with version info: bin/spexus-mcp"
 
 # Install MCP server to system
 install-mcp-server: build-mcp-server
 	@echo "📦 Installing MCP Server to /usr/local/bin..."
-	@sudo cp bin/requirements-mcp-server /usr/local/bin/
-	@echo "✅ MCP Server installed: /usr/local/bin/requirements-mcp-server"
-	@echo "💡 Configure Claude Desktop to use: /usr/local/bin/requirements-mcp-server"
+	@sudo cp bin/spexus-mcp /usr/local/bin/
+	@echo "✅ MCP Server installed: /usr/local/bin/spexus-mcp"
+	@echo "💡 Configure Claude Desktop to use: /usr/local/bin/spexus-mcp"
 
 # Test MCP server specifically
 test-mcp-server:
@@ -53,13 +53,13 @@ test-mcp-server-coverage:
 # Run MCP protocol compliance tests
 test-mcp-protocol:
 	@echo "🔍 Testing MCP protocol compliance..."
-	@if [ -f "bin/requirements-mcp-server" ]; then \
+	@if [ -f "bin/spexus-mcp" ]; then \
 		echo "Testing server startup and basic protocol..."; \
-		timeout 10s ./bin/requirements-mcp-server --test-mode || echo "Protocol test completed"; \
+		timeout 10s ./bin/spexus-mcp --test-mode || echo "Protocol test completed"; \
 	else \
 		echo "Building MCP server first..."; \
 		$(MAKE) build-mcp-server; \
-		timeout 10s ./bin/requirements-mcp-server --test-mode || echo "Protocol test completed"; \
+		timeout 10s ./bin/spexus-mcp --test-mode || echo "Protocol test completed"; \
 	fi
 	@echo "✅ MCP protocol compliance test completed"
 
@@ -72,12 +72,12 @@ validate-mcp-config:
 		else \
 			echo "⚠️  jq not found, skipping JSON validation"; \
 		fi; \
-		if [ -f "bin/requirements-mcp-server" ]; then \
-			./bin/requirements-mcp-server --validate-config --config config.example.json || echo "Config validation completed"; \
+		if [ -f "bin/spexus-mcp" ]; then \
+			./bin/spexus-mcp --validate-config --config config.example.json || echo "Config validation completed"; \
 		else \
 			echo "Building MCP server for config validation..."; \
 			$(MAKE) build-mcp-server; \
-			./bin/requirements-mcp-server --validate-config --config config.example.json || echo "Config validation completed"; \
+			./bin/spexus-mcp --validate-config --config config.example.json || echo "Config validation completed"; \
 		fi; \
 	else \
 		echo "⚠️  config.example.json not found"; \
@@ -100,26 +100,26 @@ build-mcp-server-all:
 	GIT_COMMIT=$$(git rev-parse --short HEAD) && \
 	LDFLAGS="-s -w -X main.Version=$$VERSION -X main.BuildDate=$$BUILD_DATE -X main.GitCommit=$$GIT_COMMIT" && \
 	echo "Building for Linux AMD64..." && \
-	GOOS=linux GOARCH=amd64 go build -ldflags="$$LDFLAGS" -o bin/dist/requirements-mcp-server-linux-amd64 cmd/mcp-server/main.go && \
+	GOOS=linux GOARCH=amd64 go build -ldflags="$$LDFLAGS" -o bin/dist/spexus-mcp-linux-amd64 cmd/mcp-server/main.go && \
 	echo "Building for Linux ARM64..." && \
-	GOOS=linux GOARCH=arm64 go build -ldflags="$$LDFLAGS" -o bin/dist/requirements-mcp-server-linux-arm64 cmd/mcp-server/main.go && \
+	GOOS=linux GOARCH=arm64 go build -ldflags="$$LDFLAGS" -o bin/dist/spexus-mcp-linux-arm64 cmd/mcp-server/main.go && \
 	echo "Building for macOS AMD64..." && \
-	GOOS=darwin GOARCH=amd64 go build -ldflags="$$LDFLAGS" -o bin/dist/requirements-mcp-server-darwin-amd64 cmd/mcp-server/main.go && \
+	GOOS=darwin GOARCH=amd64 go build -ldflags="$$LDFLAGS" -o bin/dist/spexus-mcp-darwin-amd64 cmd/mcp-server/main.go && \
 	echo "Building for macOS ARM64..." && \
-	GOOS=darwin GOARCH=arm64 go build -ldflags="$$LDFLAGS" -o bin/dist/requirements-mcp-server-darwin-arm64 cmd/mcp-server/main.go && \
+	GOOS=darwin GOARCH=arm64 go build -ldflags="$$LDFLAGS" -o bin/dist/spexus-mcp-darwin-arm64 cmd/mcp-server/main.go && \
 	echo "Building for Windows AMD64..." && \
-	GOOS=windows GOARCH=amd64 go build -ldflags="$$LDFLAGS" -o bin/dist/requirements-mcp-server-windows-amd64.exe cmd/mcp-server/main.go
+	GOOS=windows GOARCH=amd64 go build -ldflags="$$LDFLAGS" -o bin/dist/spexus-mcp-windows-amd64.exe cmd/mcp-server/main.go
 	@echo "✅ Multi-platform MCP Server binaries built in bin/dist/"
 
 # Package MCP server binaries
 package-mcp-server: build-mcp-server-all
 	@echo "📦 Packaging MCP Server binaries..."
 	@cd bin/dist && \
-	tar -czf requirements-mcp-server-linux-amd64.tar.gz requirements-mcp-server-linux-amd64 && \
-	tar -czf requirements-mcp-server-linux-arm64.tar.gz requirements-mcp-server-linux-arm64 && \
-	tar -czf requirements-mcp-server-darwin-amd64.tar.gz requirements-mcp-server-darwin-amd64 && \
-	tar -czf requirements-mcp-server-darwin-arm64.tar.gz requirements-mcp-server-darwin-arm64 && \
-	zip requirements-mcp-server-windows-amd64.zip requirements-mcp-server-windows-amd64.exe && \
+	tar -czf spexus-mcp-linux-amd64.tar.gz spexus-mcp-linux-amd64 && \
+	tar -czf spexus-mcp-linux-arm64.tar.gz spexus-mcp-linux-arm64 && \
+	tar -czf spexus-mcp-darwin-amd64.tar.gz spexus-mcp-darwin-amd64 && \
+	tar -czf spexus-mcp-darwin-arm64.tar.gz spexus-mcp-darwin-arm64 && \
+	zip spexus-mcp-windows-amd64.zip spexus-mcp-windows-amd64.exe && \
 	sha256sum *.tar.gz *.zip > checksums.sha256
 	@echo "✅ MCP Server packages created in bin/dist/"
 

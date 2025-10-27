@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-BINARY_NAME="requirements-mcp-server"
+BINARY_NAME="spexus-mcp"
 CONFIG_FILE="config.example.json"
 LOG_LEVEL="debug"
 

@@ -2,18 +2,18 @@ name: MCP Server Testing
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
     paths:
       - 'cmd/mcp-server/**'
-      - 'internal/**'
+      - 'internal/mcp/client/init/**'
       - 'go.mod'
       - 'go.sum'
       - '.github/workflows/mcp-server-test.yml'
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
     paths:
       - 'cmd/mcp-server/**'
-      - 'internal/**'
+      - 'internal/mcp/client/init/**'
       - 'go.mod'
       - 'go.sum'
   workflow_dispatch:
@@ -142,7 +142,7 @@ jobs:
         LOG_LEVEL: debug
       run: |
         # Start MCP server in background
-        timeout 30s ./bin/requirements-mcp-server --test-mode &
+        timeout 30s ./bin/spexus-mcp --test-mode &
         MCP_PID=$!
         
         # Give it time to start
@@ -190,7 +190,7 @@ jobs:
     - name: Test MCP Protocol Compliance
       run: |
         # Start MCP server
-        ./bin/requirements-mcp-server --stdio &
+        ./bin/spexus-mcp --stdio &
         MCP_PID=$!
         
         # Basic protocol tests
@@ -198,7 +198,7 @@ jobs:
         sleep 2
         
         # Test initialization handshake (mock test)
-        echo '{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "test-client", "version": "1.0.0"}}}' | timeout 5s ./bin/requirements-mcp-server --stdio || echo "Protocol test completed"
+        echo '{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "test-client", "version": "1.0.0"}}}' | timeout 5s ./bin/spexus-mcp --stdio || echo "Protocol test completed"
         
         # Clean up
         kill $MCP_PID 2>/dev/null || true
@@ -208,7 +208,7 @@ jobs:
       run: |
         # Test configuration validation
         echo "Testing configuration validation..."
-        ./bin/requirements-mcp-server --validate-config || echo "Config validation test completed"
+        ./bin/spexus-mcp --validate-config || echo "Config validation test completed"
 
   # Performance and load testing
   mcp-server-performance:
@@ -301,13 +301,13 @@ jobs:
     - name: Test MCP Server binary (Unix)
       if: runner.os != 'Windows'
       run: |
-        chmod +x bin/requirements-mcp-server
-        ./bin/requirements-mcp-server --version || echo "Version check completed"
+        chmod +x bin/spexus-mcp
+        ./bin/spexus-mcp --version || echo "Version check completed"
 
     - name: Test MCP Server binary (Windows)
       if: runner.os == 'Windows'
       run: |
-        .\bin\requirements-mcp-server.exe --version || echo "Version check completed"
+        .\bin\spexus-mcp.exe --version || echo "Version check completed"
 
   # Test summary
   mcp-test-summary:

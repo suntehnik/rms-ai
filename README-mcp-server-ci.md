@@ -21,13 +21,13 @@ This document describes the Continuous Integration/Continuous Deployment (CI/CD)
 - **Docker support**: Builds and publishes Docker images to GitHub Container Registry
 
 **Artifacts produced:**
-- `requirements-mcp-server-linux-amd64.tar.gz`
-- `requirements-mcp-server-linux-arm64.tar.gz`
-- `requirements-mcp-server-darwin-amd64.tar.gz`
-- `requirements-mcp-server-darwin-arm64.tar.gz`
-- `requirements-mcp-server-windows-amd64.exe.zip`
+- `spexus-mcp-linux-amd64.tar.gz`
+- `spexus-mcp-linux-arm64.tar.gz`
+- `spexus-mcp-darwin-amd64.tar.gz`
+- `spexus-mcp-darwin-arm64.tar.gz`
+- `spexus-mcp-windows-amd64.exe.zip`
 - SHA256 checksums for all binaries
-- Docker image: `ghcr.io/[repository]/mcp-server`
+- Docker image: `ghcr.io/[repository]/spexus-mcp`
 
 ### 2. MCP Server Testing (`mcp-server-test.yml`)
 
@@ -51,33 +51,33 @@ This document describes the Continuous Integration/Continuous Deployment (CI/CD)
 1. **Download the latest release:**
    ```bash
    # Linux AMD64
-   wget https://github.com/[your-repo]/releases/latest/download/requirements-mcp-server-linux-amd64.tar.gz
-   tar -xzf requirements-mcp-server-linux-amd64.tar.gz
+   wget https://github.com/[your-repo]/releases/latest/download/spexus-mcp-linux-amd64.tar.gz
+   tar -xzf spexus-mcp-linux-amd64.tar.gz
    
    # macOS ARM64 (Apple Silicon)
-   wget https://github.com/[your-repo]/releases/latest/download/requirements-mcp-server-darwin-arm64.tar.gz
-   tar -xzf requirements-mcp-server-darwin-arm64.tar.gz
+   wget https://github.com/[your-repo]/releases/latest/download/spexus-mcp-darwin-arm64.tar.gz
+   tar -xzf spexus-mcp-darwin-arm64.tar.gz
    ```
 
 2. **Install the binary:**
    ```bash
-   chmod +x requirements-mcp-server
-   sudo mv requirements-mcp-server /usr/local/bin/
+   chmod +x spexus-mcp
+   sudo mv spexus-mcp /usr/local/bin/
    ```
 
 3. **Verify installation:**
    ```bash
-   requirements-mcp-server --version
+   spexus-mcp --version
    ```
 
 ### From Docker
 
 ```bash
 # Pull the latest image
-docker pull ghcr.io/[your-repo]/mcp-server:main
+docker pull ghcr.io/[your-repo]/spexus-mcp:main
 
 # Run the MCP server
-docker run -p 8080:8080 ghcr.io/[your-repo]/mcp-server:main
+docker run -p 8080:8080 ghcr.io/[your-repo]/spexus-mcp:main
 ```
 
 ### From Source
@@ -152,8 +152,8 @@ Configure your MCP client (like Claude Desktop) to use the server:
 ```json
 {
   "mcpServers": {
-    "requirements": {
-      "command": "/usr/local/bin/requirements-mcp-server",
+    "spexus": {
+      "command": "/usr/local/bin/spexus-mcp",
       "args": ["--config", "/path/to/config.json"],
       "env": {
         "LOG_LEVEL": "info"

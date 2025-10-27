@@ -1,8 +1,8 @@
 {
   "server": {
-    "name": "requirements-mcp-server",
+    "name": "spexus-mcp",
     "version": "1.0.0",
-    "description": "Requirements Management MCP Server"
+    "description": "Spexus Requirements Management MCP Server"
   },
   "database": {
     "url": "postgres://user:password@localhost:5432/requirements?sslmode=disable",
