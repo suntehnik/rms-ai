@@ -124,6 +124,10 @@ definitions:
         example: john_doe
         type: string
     type: object
+  internal_handlers.AcceptanceCriteriaListResponse:
+    type: object
+  internal_handlers.CommentListResponse:
+    type: object
   internal_handlers.DeleteAcceptanceCriteriaRequest:
     properties:
       force:
@@ -156,23 +160,15 @@ definitions:
       error:
         $ref: '#/definitions/internal_handlers.ErrorDetail'
     type: object
+  internal_handlers.PersonalAccessTokenListResponse:
+    type: object
   internal_handlers.RelationshipTypeListResponse:
-    properties:
-      count:
-        type: integer
-      relationship_types:
-        items:
-          $ref: '#/definitions/product-requirements-management_internal_models.RelationshipType'
-        type: array
+    type: object
+  internal_handlers.RequirementListResponse:
+    type: object
+  internal_handlers.RequirementRelationshipListResponse:
     type: object
   internal_handlers.RequirementTypeListResponse:
-    properties:
-      count:
-        type: integer
-      requirement_types:
-        items:
-          $ref: '#/definitions/product-requirements-management_internal_models.RequirementType'
-        type: array
     type: object
   internal_handlers.SearchSuggestionsResponse:
     properties:
@@ -190,31 +186,12 @@ definitions:
         type: array
     type: object
   internal_handlers.StatusListResponse:
-    properties:
-      count:
-        type: integer
-      statuses:
-        items:
-          $ref: '#/definitions/product-requirements-management_internal_models.Status'
-        type: array
     type: object
   internal_handlers.StatusModelListResponse:
-    properties:
-      count:
-        type: integer
-      status_models:
-        items:
-          $ref: '#/definitions/product-requirements-management_internal_models.StatusModel'
-        type: array
     type: object
   internal_handlers.StatusTransitionListResponse:
-    properties:
-      count:
-        type: integer
-      transitions:
-        items:
-          $ref: '#/definitions/product-requirements-management_internal_models.StatusTransition'
-        type: array
+    type: object
+  internal_handlers.SteeringDocumentListResponse:
     type: object
   product-requirements-management_internal_models.AcceptanceCriteria:
     description: Testable conditions that define when a user story is considered complete
@@ -1608,23 +1585,6 @@ definitions:
         type: array
       requires_confirmation:
         type: boolean
-    type: object
-  product-requirements-management_internal_service.ListResponse-models_PersonalAccessToken:
-    properties:
-      data:
-        description: Data contains the list of items for the current page
-        items:
-          $ref: '#/definitions/product-requirements-management_internal_models.PersonalAccessToken'
-        type: array
-      limit:
-        description: Limit is the maximum number of items per page
-        type: integer
-      offset:
-        description: Offset is the number of items skipped for pagination
-        type: integer
-      total_count:
-        description: TotalCount is the total number of items across all pages
-        type: integer
     type: object
   product-requirements-management_internal_service.PATCreateResponse:
     properties:
@@ -3334,17 +3294,11 @@ paths:
       - application/json
       responses:
         "200":
-          description: 'Successfully retrieved comment replies" example({"data": [{"id":
-            "123e4567-e89b-12d3-a456-426614174001", "content": "I agree with this
-            point", "parent_comment_id": "123e4567-e89b-12d3-a456-426614174000", "author_id":
-            "456e7890-e89b-12d3-a456-426614174002", "created_at": "2024-01-15T10:30:00Z",
-            "is_resolved": false, "is_reply": true, "depth": 1}], "total_count": 1,
-            "limit": 50, "offset": 0})'
+          description: Successfully retrieved comment replies
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/internal_handlers.CommentListResponse'
         "400":
-          description: Invalid comment ID format
+          description: Invalid comment ID format or pagination parameters
           schema:
             additionalProperties:
               type: string
@@ -5590,9 +5544,9 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieve all steering documents that are linked to a specific epic.
-        Returns an array of steering documents associated with the epic. Requires
-        authentication with JWT token.
+      description: Retrieve steering documents that are linked to a specific epic
+        with pagination support. Returns a standardized paginated response with steering
+        documents associated with the epic. Requires authentication with JWT token.
       parameters:
       - description: Epic UUID or reference ID
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -5600,15 +5554,28 @@ paths:
         name: id
         required: true
         type: string
+      - default: 50
+        description: Maximum number of results to return
+        example: 20
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of results to skip for pagination
+        example: 0
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: Successfully retrieved steering documents for epic
           schema:
-            items:
-              $ref: '#/definitions/product-requirements-management_internal_models.SteeringDocument'
-            type: array
+            $ref: '#/definitions/internal_handlers.SteeringDocumentListResponse'
         "400":
           description: Invalid epic ID format
           schema:
@@ -5631,7 +5598,7 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Get steering documents linked to an epic
+      summary: Get steering documents linked to an epic with pagination
       tags:
       - epics
   /api/v1/epics/{id}/user-stories:
@@ -5787,7 +5754,7 @@ paths:
         "200":
           description: List of PATs with pagination info
           schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.ListResponse-models_PersonalAccessToken'
+            $ref: '#/definitions/internal_handlers.PersonalAccessTokenListResponse'
         "401":
           description: Authentication required
           schema:
@@ -6871,14 +6838,26 @@ paths:
         name: id
         required: true
         type: string
+      - description: Maximum number of results
+        example: 50
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - description: Number of results to skip
+        example: 0
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
         "200":
-          description: Successfully retrieved relationships list with count
+          description: Successfully retrieved relationships list with pagination
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/internal_handlers.RequirementRelationshipListResponse'
         "401":
           description: Authentication required
           schema:
@@ -7017,14 +6996,26 @@ paths:
         name: q
         required: true
         type: string
+      - description: Maximum number of results
+        example: 50
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - description: Number of results to skip
+        example: 0
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
         "200":
-          description: Successfully retrieved search results with count and query
+          description: Successfully retrieved search results with pagination
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/internal_handlers.RequirementListResponse'
         "400":
           description: Search query parameter 'q' is required
           schema:
@@ -8288,9 +8279,9 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieve all acceptance criteria created by a specific user. This
-        endpoint helps track which testable conditions were authored by each team
-        member.
+      description: Retrieve all acceptance criteria created by a specific user with
+        pagination support. This endpoint helps track which testable conditions were
+        authored by each team member.
       parameters:
       - description: Author UUID
         example: '"123e4567-e89b-12d3-a456-426614174000"'
@@ -8299,14 +8290,27 @@ paths:
         name: id
         required: true
         type: string
+      - description: Maximum number of results
+        example: 50
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - description: Number of results to skip
+        example: 0
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
         "200":
-          description: Successfully retrieved acceptance criteria list with count
+          description: Successfully retrieved acceptance criteria list with standardized
+            pagination format
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/internal_handlers.AcceptanceCriteriaListResponse'
         "400":
           description: Invalid author ID format
           schema:

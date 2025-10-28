@@ -14,6 +14,8 @@ import (
 	"product-requirements-management/internal/service"
 )
 
+type SteeringDocumentListResponse = ListResponse[models.SteeringDocument]
+
 // SteeringDocumentHandler handles HTTP requests for steering document operations
 type SteeringDocumentHandler struct {
 	steeringDocumentService service.SteeringDocumentService
@@ -719,7 +721,7 @@ func (h *SteeringDocumentHandler) UnlinkSteeringDocumentFromEpic(c *gin.Context)
 // @Param id path string true "Epic UUID or reference ID" example("123e4567-e89b-12d3-a456-426614174000")
 // @Param limit query integer false "Maximum number of results to return" minimum(1) maximum(100) default(50) example(20)
 // @Param offset query integer false "Number of results to skip for pagination" minimum(0) default(0) example(0)
-// @Success 200 {object} handlers.SteeringDocumentListResponse "Successfully retrieved steering documents for epic"
+// @Success 200 {object} SteeringDocumentListResponse "Successfully retrieved steering documents for epic"
 // @Failure 400 {object} map[string]interface{} "Invalid epic ID format"
 // @Failure 401 {object} map[string]interface{} "Authentication required - missing or invalid JWT token"
 // @Failure 404 {object} map[string]interface{} "Epic not found"

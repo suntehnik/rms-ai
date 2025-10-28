@@ -12,6 +12,8 @@ import (
 	"product-requirements-management/internal/service"
 )
 
+type CommentListResponse = ListResponse[models.Comment]
+
 // CommentHandler handles HTTP requests for comment operations
 type CommentHandler struct {
 	commentService service.CommentService
@@ -505,7 +507,7 @@ func (h *CommentHandler) GetCommentsByStatus(c *gin.Context) {
 // @Param id path string true "Parent comment ID" format(uuid)
 // @Param limit query int false "Maximum number of replies to return (1-100)" minimum(1) maximum(100) default(50)
 // @Param offset query int false "Number of replies to skip for pagination" minimum(0) default(0)
-// @Success 200 {object} handlers.CommentListResponse "Successfully retrieved comment replies"
+// @Success 200 {object} CommentListResponse "Successfully retrieved comment replies"
 // @Failure 400 {object} map[string]string "Invalid comment ID format or pagination parameters"
 // @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Parent comment not found"

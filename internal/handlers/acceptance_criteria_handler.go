@@ -13,6 +13,8 @@ import (
 	"product-requirements-management/internal/service"
 )
 
+type AcceptanceCriteriaListResponse = ListResponse[models.AcceptanceCriteria]
+
 // AcceptanceCriteriaHandler handles HTTP requests for acceptance criteria operations
 type AcceptanceCriteriaHandler struct {
 	acceptanceCriteriaService service.AcceptanceCriteriaService
@@ -333,7 +335,7 @@ func (h *AcceptanceCriteriaHandler) ListAcceptanceCriteria(c *gin.Context) {
 // @Param id path string true "User story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param limit query integer false "Maximum number of results" minimum(1) maximum(100) example(50)
 // @Param offset query integer false "Number of results to skip" minimum(0) example(0)
-// @Success 200 {object} handlers.AcceptanceCriteriaListResponse "Successfully retrieved acceptance criteria list with standardized pagination format"
+// @Success 200 {object} AcceptanceCriteriaListResponse "Successfully retrieved acceptance criteria list with standardized pagination format"
 // @Failure 400 {object} map[string]interface{} "Invalid user story ID format (UUID required)"
 // @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "User story not found"
@@ -410,7 +412,7 @@ func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteriaByUserStory(c *gin.Cont
 // @Param id path string true "Author UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
 // @Param limit query integer false "Maximum number of results" minimum(1) maximum(100) example(50)
 // @Param offset query integer false "Number of results to skip" minimum(0) example(0)
-// @Success 200 {object} handlers.AcceptanceCriteriaListResponse "Successfully retrieved acceptance criteria list with standardized pagination format"
+// @Success 200 {object} AcceptanceCriteriaListResponse "Successfully retrieved acceptance criteria list with standardized pagination format"
 // @Failure 400 {object} map[string]interface{} "Invalid author ID format"
 // @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Author not found"

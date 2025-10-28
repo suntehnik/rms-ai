@@ -13,6 +13,9 @@ import (
 	"product-requirements-management/internal/service"
 )
 
+type RequirementRelationshipListResponse = ListResponse[models.RequirementRelationship]
+type RequirementListResponse = ListResponse[models.Requirement]
+
 // RequirementHandler handles HTTP requests for requirement operations
 type RequirementHandler struct {
 	requirementService service.RequirementService
@@ -764,7 +767,7 @@ func (h *RequirementHandler) DeleteRelationship(c *gin.Context) {
 // @Param id path string true "Requirement UUID or reference ID" example("123e4567-e89b-12d3-a456-426614174000")
 // @Param limit query integer false "Maximum number of results" minimum(1) maximum(100) example(50)
 // @Param offset query integer false "Number of results to skip" minimum(0) example(0)
-// @Success 200 {object} handlers.RequirementRelationshipListResponse "Successfully retrieved relationships list with pagination"
+// @Success 200 {object} RequirementRelationshipListResponse "Successfully retrieved relationships list with pagination"
 // @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Requirement not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
@@ -840,7 +843,7 @@ func (h *RequirementHandler) GetRelationshipsByRequirement(c *gin.Context) {
 // @Param q query string true "Search query text" example("authentication validation")
 // @Param limit query integer false "Maximum number of results" minimum(1) maximum(100) example(50)
 // @Param offset query integer false "Number of results to skip" minimum(0) example(0)
-// @Success 200 {object} handlers.RequirementListResponse "Successfully retrieved search results with pagination"
+// @Success 200 {object} RequirementListResponse "Successfully retrieved search results with pagination"
 // @Failure 400 {object} map[string]interface{} "Search query parameter 'q' is required"
 // @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
