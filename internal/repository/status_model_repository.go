@@ -116,6 +116,20 @@ func (r *statusModelRepository) Exists(id uuid.UUID) (bool, error) {
 	return count > 0, err
 }
 
+// Count returns the total number of status models matching the given filters
+func (r *statusModelRepository) Count(filters map[string]interface{}) (int64, error) {
+	var count int64
+	query := r.db.Model(&models.StatusModel{})
+
+	// Apply filters
+	for key, value := range filters {
+		query = query.Where(key+" = ?", value)
+	}
+
+	err := query.Count(&count).Error
+	return count, err
+}
+
 // ExistsByEntityTypeAndName checks if a status model exists by entity type and name
 func (r *statusModelRepository) ExistsByEntityTypeAndName(entityType models.EntityType, name string) (bool, error) {
 	var count int64

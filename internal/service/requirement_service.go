@@ -34,7 +34,9 @@ type RequirementService interface {
 	CreateRelationship(req CreateRelationshipRequest) (*models.RequirementRelationship, error)
 	DeleteRelationship(id uuid.UUID) error
 	GetRelationshipsByRequirement(requirementID uuid.UUID) ([]models.RequirementRelationship, error)
+	GetRelationshipsByRequirementWithPagination(requirementID uuid.UUID, limit, offset int) ([]models.RequirementRelationship, int64, error)
 	SearchRequirements(searchText string) ([]models.Requirement, error)
+	SearchRequirementsWithPagination(searchText string, limit, offset int) ([]models.Requirement, int64, error)
 }
 
 // CreateRequirementRequest represents the request to create a requirement
@@ -538,6 +540,23 @@ func (s *requirementService) GetRelationshipsByRequirement(requirementID uuid.UU
 	return relationships, nil
 }
 
+// GetRelationshipsByRequirementWithPagination retrieves relationships for a requirement with pagination
+func (s *requirementService) GetRelationshipsByRequirementWithPagination(requirementID uuid.UUID, limit, offset int) ([]models.RequirementRelationship, int64, error) {
+	// Validate requirement exists
+	if exists, err := s.requirementRepo.Exists(requirementID); err != nil {
+		return nil, 0, fmt.Errorf("failed to check requirement existence: %w", err)
+	} else if !exists {
+		return nil, 0, ErrRequirementNotFound
+	}
+
+	relationships, totalCount, err := s.requirementRelationshipRepo.GetByRequirementWithPagination(requirementID, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get relationships: %w", err)
+	}
+
+	return relationships, totalCount, nil
+}
+
 // SearchRequirements performs full-text search on requirements
 func (s *requirementService) SearchRequirements(searchText string) ([]models.Requirement, error) {
 	if searchText == "" {
@@ -550,4 +569,18 @@ func (s *requirementService) SearchRequirements(searchText string) ([]models.Req
 	}
 
 	return requirements, nil
+}
+
+// SearchRequirementsWithPagination performs full-text search on requirements with pagination
+func (s *requirementService) SearchRequirementsWithPagination(searchText string, limit, offset int) ([]models.Requirement, int64, error) {
+	if searchText == "" {
+		return []models.Requirement{}, 0, nil
+	}
+
+	requirements, totalCount, err := s.requirementRepo.SearchByTextWithPagination(searchText, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to search requirements: %w", err)
+	}
+
+	return requirements, totalCount, nil
 }

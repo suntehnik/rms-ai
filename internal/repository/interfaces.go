@@ -112,6 +112,7 @@ type RequirementRepository interface {
 	GetByType(typeID uuid.UUID) ([]Requirement, error)
 	HasRelationships(id uuid.UUID) (bool, error)
 	SearchByText(searchText string) ([]Requirement, error)
+	SearchByTextWithPagination(searchText string, limit, offset int) ([]Requirement, int64, error)
 }
 
 // RequirementTypeRepository defines requirement type-specific repository operations
@@ -134,6 +135,7 @@ type RequirementRelationshipRepository interface {
 	GetBySourceRequirement(sourceID uuid.UUID) ([]RequirementRelationship, error)
 	GetByTargetRequirement(targetID uuid.UUID) ([]RequirementRelationship, error)
 	GetByRequirement(requirementID uuid.UUID) ([]RequirementRelationship, error)
+	GetByRequirementWithPagination(requirementID uuid.UUID, limit, offset int) ([]RequirementRelationship, int64, error)
 	GetByType(typeID uuid.UUID) ([]RequirementRelationship, error)
 	ExistsRelationship(sourceID, targetID, typeID uuid.UUID) (bool, error)
 }
@@ -144,6 +146,7 @@ type CommentRepository interface {
 	GetByEntity(entityType EntityType, entityID uuid.UUID) ([]Comment, error)
 	GetByAuthor(authorID uuid.UUID) ([]Comment, error)
 	GetByParent(parentID uuid.UUID) ([]Comment, error)
+	GetByParentWithPagination(parentID uuid.UUID, limit, offset int) ([]Comment, int64, error)
 	GetThreaded(entityType EntityType, entityID uuid.UUID) ([]Comment, error)
 	GetByStatus(isResolved bool) ([]Comment, error)
 	GetInlineComments(entityType EntityType, entityID uuid.UUID) ([]Comment, error)
@@ -158,6 +161,7 @@ type StatusModelRepository interface {
 	Update(statusModel *StatusModel) error
 	Delete(id uuid.UUID) error
 	List(filters map[string]interface{}, orderBy string, limit, offset int) ([]StatusModel, error)
+	Count(filters map[string]interface{}) (int64, error)
 	ListByEntityType(entityType EntityType) ([]StatusModel, error)
 	Exists(id uuid.UUID) (bool, error)
 	ExistsByEntityTypeAndName(entityType EntityType, name string) (bool, error)
@@ -172,6 +176,7 @@ type StatusRepository interface {
 	Update(status *Status) error
 	Delete(id uuid.UUID) error
 	List(filters map[string]interface{}, orderBy string, limit, offset int) ([]Status, error)
+	CountByStatusModelID(statusModelID uuid.UUID) (int64, error)
 	Exists(id uuid.UUID) (bool, error)
 	ExistsByName(statusModelID uuid.UUID, name string) (bool, error)
 }
@@ -185,6 +190,7 @@ type StatusTransitionRepository interface {
 	Update(transition *StatusTransition) error
 	Delete(id uuid.UUID) error
 	List(filters map[string]interface{}, orderBy string, limit, offset int) ([]StatusTransition, error)
+	CountByStatusModelID(statusModelID uuid.UUID) (int64, error)
 	Exists(id uuid.UUID) (bool, error)
 	ExistsByTransition(statusModelID, fromStatusID, toStatusID uuid.UUID) (bool, error)
 }
@@ -215,6 +221,7 @@ type SteeringDocumentRepository interface {
 	ListWithFilters(filters SteeringDocumentFilters) ([]SteeringDocument, int64, error)
 	Search(query string) ([]SteeringDocument, error)
 	GetByEpicID(epicID uuid.UUID) ([]SteeringDocument, error)
+	GetByEpicIDWithPagination(epicID uuid.UUID, limit, offset int) ([]SteeringDocument, int64, error)
 	LinkToEpic(steeringDocumentID, epicID uuid.UUID) error
 	UnlinkFromEpic(steeringDocumentID, epicID uuid.UUID) error
 }

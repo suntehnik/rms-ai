@@ -9,8 +9,11 @@ import (
 	"github.com/google/uuid"
 
 	"product-requirements-management/internal/auth"
+	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/service"
 )
+
+type PersonalAccessTokenListResponse = ListResponse[models.PersonalAccessToken]
 
 // PATHandler handles HTTP requests for Personal Access Token operations
 type PATHandler struct {
@@ -121,7 +124,7 @@ func (h *PATHandler) CreatePAT(c *gin.Context) {
 // @Security BearerAuth
 // @Param limit query integer false "Maximum number of results to return" minimum(1) maximum(100) default(50) example(20)
 // @Param offset query integer false "Number of results to skip for pagination" minimum(0) default(0) example(0)
-// @Success 200 {object} service.ListResponse[models.PersonalAccessToken] "List of PATs with pagination info"
+// @Success 200 {object} PersonalAccessTokenListResponse "List of PATs with pagination info"
 // @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 403 {object} map[string]interface{} "User or Administrator role required"
 // @Failure 500 {object} map[string]interface{} "Internal server error"

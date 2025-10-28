@@ -1489,7 +1489,7 @@ func (h *ToolsHandler) handleListPrompts(ctx context.Context, args map[string]in
 }
 
 // handleGetActivePrompt handles the get_active_prompt tool
-func (h *ToolsHandler) handleGetActivePrompt(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+func (h *ToolsHandler) handleGetActivePrompt(ctx context.Context, _ map[string]interface{}) (interface{}, error) {
 
 	prompt, err := h.promptService.GetActive(ctx)
 	if err != nil {

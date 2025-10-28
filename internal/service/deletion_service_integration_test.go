@@ -107,6 +107,11 @@ func (m *MockCommentRepository) GetByParent(parentID uuid.UUID) ([]models.Commen
 	return args.Get(0).([]models.Comment), args.Error(1)
 }
 
+func (m *MockCommentRepository) GetByParentWithPagination(parentID uuid.UUID, limit, offset int) ([]models.Comment, int64, error) {
+	args := m.Called(parentID, limit, offset)
+	return args.Get(0).([]models.Comment), args.Get(1).(int64), args.Error(2)
+}
+
 func (m *MockCommentRepository) GetByStatus(isResolved bool) ([]models.Comment, error) {
 	args := m.Called(isResolved)
 	return args.Get(0).([]models.Comment), args.Error(1)

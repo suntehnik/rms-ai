@@ -61,6 +61,11 @@ func (m *MockStatusModelRepository) Exists(id uuid.UUID) (bool, error) {
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MockStatusModelRepository) Count(filters map[string]interface{}) (int64, error) {
+	args := m.Called(filters)
+	return args.Get(0).(int64), args.Error(1)
+}
+
 func (m *MockStatusModelRepository) ExistsByEntityTypeAndName(entityType models.EntityType, name string) (bool, error) {
 	args := m.Called(entityType, name)
 	return args.Bool(0), args.Error(1)
@@ -110,6 +115,11 @@ func (m *MockStatusRepository) Exists(id uuid.UUID) (bool, error) {
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MockStatusRepository) CountByStatusModelID(statusModelID uuid.UUID) (int64, error) {
+	args := m.Called(statusModelID)
+	return args.Get(0).(int64), args.Error(1)
+}
+
 func (m *MockStatusRepository) ExistsByName(statusModelID uuid.UUID, name string) (bool, error) {
 	args := m.Called(statusModelID, name)
 	return args.Bool(0), args.Error(1)
@@ -157,6 +167,11 @@ func (m *MockStatusTransitionRepository) List(filters map[string]interface{}, or
 func (m *MockStatusTransitionRepository) Exists(id uuid.UUID) (bool, error) {
 	args := m.Called(id)
 	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockStatusTransitionRepository) CountByStatusModelID(statusModelID uuid.UUID) (int64, error) {
+	args := m.Called(statusModelID)
+	return args.Get(0).(int64), args.Error(1)
 }
 
 func (m *MockStatusTransitionRepository) ExistsByTransition(statusModelID, fromStatusID, toStatusID uuid.UUID) (bool, error) {

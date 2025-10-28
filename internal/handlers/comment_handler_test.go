@@ -122,6 +122,14 @@ func (m *MockCommentService) GetCommentReplies(parentID uuid.UUID) ([]service.Co
 	return args.Get(0).([]service.CommentResponse), args.Error(1)
 }
 
+func (m *MockCommentService) GetCommentRepliesWithPagination(parentID uuid.UUID, limit, offset int) ([]service.CommentResponse, int64, error) {
+	args := m.Called(parentID, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]service.CommentResponse), args.Get(1).(int64), args.Error(2)
+}
+
 func setupCommentHandler() (*CommentHandler, *MockCommentService, *auth.Service) {
 	mockService := &MockCommentService{}
 	handler := NewCommentHandler(mockService)

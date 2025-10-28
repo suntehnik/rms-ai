@@ -40,6 +40,7 @@ type CommentService interface {
 	ResolveComment(id uuid.UUID) (*CommentResponse, error)
 	UnresolveComment(id uuid.UUID) (*CommentResponse, error)
 	GetCommentReplies(parentID uuid.UUID) ([]CommentResponse, error)
+	GetCommentRepliesWithPagination(parentID uuid.UUID, limit, offset int) ([]CommentResponse, int64, error)
 }
 
 // commentService implements CommentService interface
@@ -625,6 +626,31 @@ func (s *commentService) GetCommentReplies(parentID uuid.UUID) ([]CommentRespons
 	}
 
 	return responses, nil
+}
+
+// GetCommentRepliesWithPagination retrieves direct replies to a specific comment with pagination
+func (s *commentService) GetCommentRepliesWithPagination(parentID uuid.UUID, limit, offset int) ([]CommentResponse, int64, error) {
+	// First verify the parent comment exists
+	_, err := s.commentRepo.GetByID(parentID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, 0, ErrCommentNotFound
+		}
+		return nil, 0, fmt.Errorf("failed to get parent comment: %w", err)
+	}
+
+	// Get paginated replies
+	replies, totalCount, err := s.commentRepo.GetByParentWithPagination(parentID, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get comment replies: %w", err)
+	}
+
+	responses := make([]CommentResponse, len(replies))
+	for i, reply := range replies {
+		responses[i] = *s.toCommentResponse(&reply)
+	}
+
+	return responses, totalCount, nil
 }
 
 // toCommentResponseWithReplies converts a comment model to response format including replies

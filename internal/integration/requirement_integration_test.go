@@ -502,8 +502,7 @@ func (suite *RequirementIntegrationTestSuite) TestSearchRequirements() {
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	suite.Require().NoError(err)
 
-	suite.Equal("Login", response["query"])
-	requirements := response["requirements"].([]any)
+	requirements := response["data"].([]any)
 	suite.Len(requirements, 1)
 }
 

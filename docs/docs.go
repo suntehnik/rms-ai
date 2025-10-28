@@ -1743,14 +1743,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully retrieved comment replies\" example({\"data\": [{\"id\": \"123e4567-e89b-12d3-a456-426614174001\", \"content\": \"I agree with this point\", \"parent_comment_id\": \"123e4567-e89b-12d3-a456-426614174000\", \"author_id\": \"456e7890-e89b-12d3-a456-426614174002\", \"created_at\": \"2024-01-15T10:30:00Z\", \"is_resolved\": false, \"is_reply\": true, \"depth\": 1}], \"total_count\": 1, \"limit\": 50, \"offset\": 0})",
+                        "description": "Successfully retrieved comment replies",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/internal_handlers.CommentListResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid comment ID format",
+                        "description": "Invalid comment ID format or pagination parameters",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -4935,7 +4934,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retrieve all steering documents that are linked to a specific epic. Returns an array of steering documents associated with the epic. Requires authentication with JWT token.",
+                "description": "Retrieve steering documents that are linked to a specific epic with pagination support. Returns a standardized paginated response with steering documents associated with the epic. Requires authentication with JWT token.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4945,7 +4944,7 @@ const docTemplate = `{
                 "tags": [
                     "epics"
                 ],
-                "summary": "Get steering documents linked to an epic",
+                "summary": "Get steering documents linked to an epic with pagination",
                 "parameters": [
                     {
                         "type": "string",
@@ -4954,16 +4953,32 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 50,
+                        "example": 20,
+                        "description": "Maximum number of results to return",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "description": "Number of results to skip for pagination",
+                        "name": "offset",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "Successfully retrieved steering documents for epic",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/product-requirements-management_internal_models.SteeringDocument"
-                            }
+                            "$ref": "#/definitions/internal_handlers.SteeringDocumentListResponse"
                         }
                     },
                     "400": {
@@ -5216,7 +5231,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of PATs with pagination info",
                         "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.ListResponse-models_PersonalAccessToken"
+                            "$ref": "#/definitions/internal_handlers.PersonalAccessTokenListResponse"
                         }
                     },
                     "401": {
@@ -6166,14 +6181,30 @@ const docTemplate = `{
                         "name": "q",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "example": 50,
+                        "description": "Maximum number of results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "example": 0,
+                        "description": "Number of results to skip",
+                        "name": "offset",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully retrieved search results with count and query",
+                        "description": "Successfully retrieved search results with pagination",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/internal_handlers.RequirementListResponse"
                         }
                     },
                     "400": {
@@ -6926,14 +6957,30 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "example": 50,
+                        "description": "Maximum number of results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "example": 0,
+                        "description": "Number of results to skip",
+                        "name": "offset",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully retrieved relationships list with count",
+                        "description": "Successfully retrieved relationships list with pagination",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/internal_handlers.RequirementRelationshipListResponse"
                         }
                     },
                     "401": {
@@ -8776,7 +8823,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retrieve all acceptance criteria created by a specific user. This endpoint helps track which testable conditions were authored by each team member.",
+                "description": "Retrieve all acceptance criteria created by a specific user with pagination support. This endpoint helps track which testable conditions were authored by each team member.",
                 "consumes": [
                     "application/json"
                 ],
@@ -8796,14 +8843,30 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "example": 50,
+                        "description": "Maximum number of results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "example": 0,
+                        "description": "Number of results to skip",
+                        "name": "offset",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully retrieved acceptance criteria list with count",
+                        "description": "Successfully retrieved acceptance criteria list with standardized pagination format",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/internal_handlers.AcceptanceCriteriaListResponse"
                         }
                     },
                     "400": {
@@ -10048,6 +10111,12 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_handlers.AcceptanceCriteriaListResponse": {
+            "type": "object"
+        },
+        "internal_handlers.CommentListResponse": {
+            "type": "object"
+        },
         "internal_handlers.DeleteAcceptanceCriteriaRequest": {
             "type": "object",
             "properties": {
@@ -10099,33 +10168,20 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_handlers.PersonalAccessTokenListResponse": {
+            "type": "object"
+        },
         "internal_handlers.RelationshipTypeListResponse": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "relationship_types": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.RelationshipType"
-                    }
-                }
-            }
+            "type": "object"
+        },
+        "internal_handlers.RequirementListResponse": {
+            "type": "object"
+        },
+        "internal_handlers.RequirementRelationshipListResponse": {
+            "type": "object"
         },
         "internal_handlers.RequirementTypeListResponse": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "requirement_types": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.RequirementType"
-                    }
-                }
-            }
+            "type": "object"
         },
         "internal_handlers.SearchSuggestionsResponse": {
             "type": "object",
@@ -10151,46 +10207,16 @@ const docTemplate = `{
             }
         },
         "internal_handlers.StatusListResponse": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "statuses": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.Status"
-                    }
-                }
-            }
+            "type": "object"
         },
         "internal_handlers.StatusModelListResponse": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "status_models": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.StatusModel"
-                    }
-                }
-            }
+            "type": "object"
         },
         "internal_handlers.StatusTransitionListResponse": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "transitions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.StatusTransition"
-                    }
-                }
-            }
+            "type": "object"
+        },
+        "internal_handlers.SteeringDocumentListResponse": {
+            "type": "object"
         },
         "product-requirements-management_internal_models.AcceptanceCriteria": {
             "description": "Testable conditions that define when a user story is considered complete and acceptable",
@@ -11860,30 +11886,6 @@ const docTemplate = `{
                 },
                 "requires_confirmation": {
                     "type": "boolean"
-                }
-            }
-        },
-        "product-requirements-management_internal_service.ListResponse-models_PersonalAccessToken": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "Data contains the list of items for the current page",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/product-requirements-management_internal_models.PersonalAccessToken"
-                    }
-                },
-                "limit": {
-                    "description": "Limit is the maximum number of items per page",
-                    "type": "integer"
-                },
-                "offset": {
-                    "description": "Offset is the number of items skipped for pagination",
-                    "type": "integer"
-                },
-                "total_count": {
-                    "description": "TotalCount is the total number of items across all pages",
-                    "type": "integer"
                 }
             }
         },

@@ -47,6 +47,26 @@ func (r *requirementRelationshipRepository) GetByRequirement(requirementID uuid.
 	return relationships, nil
 }
 
+// GetByRequirementWithPagination retrieves relationships for a requirement with pagination
+func (r *requirementRelationshipRepository) GetByRequirementWithPagination(requirementID uuid.UUID, limit, offset int) ([]models.RequirementRelationship, int64, error) {
+	var relationships []models.RequirementRelationship
+	var totalCount int64
+
+	// Get total count
+	if err := r.GetDB().Model(&models.RequirementRelationship{}).Where("source_requirement_id = ? OR target_requirement_id = ?",
+		requirementID, requirementID).Count(&totalCount).Error; err != nil {
+		return nil, 0, r.handleDBError(err)
+	}
+
+	// Get paginated results
+	if err := r.GetDB().Where("source_requirement_id = ? OR target_requirement_id = ?",
+		requirementID, requirementID).Limit(limit).Offset(offset).Find(&relationships).Error; err != nil {
+		return nil, 0, r.handleDBError(err)
+	}
+
+	return relationships, totalCount, nil
+}
+
 // GetByType retrieves relationships by relationship type ID
 func (r *requirementRelationshipRepository) GetByType(typeID uuid.UUID) ([]models.RequirementRelationship, error) {
 	var relationships []models.RequirementRelationship

@@ -118,6 +118,16 @@ func (m *MockRequirementService) SearchRequirements(searchText string) ([]models
 	return args.Get(0).([]models.Requirement), args.Error(1)
 }
 
+func (m *MockRequirementService) GetRelationshipsByRequirementWithPagination(requirementID uuid.UUID, limit, offset int) ([]models.RequirementRelationship, int64, error) {
+	args := m.Called(requirementID, limit, offset)
+	return args.Get(0).([]models.RequirementRelationship), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockRequirementService) SearchRequirementsWithPagination(searchText string, limit, offset int) ([]models.Requirement, int64, error) {
+	args := m.Called(searchText, limit, offset)
+	return args.Get(0).([]models.Requirement), args.Get(1).(int64), args.Error(2)
+}
+
 func setupRequirementTestRouter() (*gin.Engine, *MockRequirementService, *auth.Service) {
 	gin.SetMode(gin.TestMode)
 
@@ -644,7 +654,7 @@ func TestRequirementHandler_SearchRequirements(t *testing.T) {
 			},
 		}
 
-		mockService.On("SearchRequirements", searchText).Return(expectedRequirements, nil)
+		mockService.On("SearchRequirementsWithPagination", searchText, 50, 0).Return(expectedRequirements, int64(2), nil)
 
 		req, err := createAuthenticatedRequirementRequest("GET", "/api/v1/requirements/search?q="+searchText, nil, authService)
 		assert.NoError(t, err)
@@ -657,10 +667,11 @@ func TestRequirementHandler_SearchRequirements(t *testing.T) {
 		var response map[string]interface{}
 		err = json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
-		assert.Equal(t, float64(2), response["count"])
-		assert.Equal(t, searchText, response["query"])
+		assert.Equal(t, float64(2), response["total_count"])
+		assert.Equal(t, float64(50), response["limit"])
+		assert.Equal(t, float64(0), response["offset"])
 
-		requirements := response["requirements"].([]interface{})
+		requirements := response["data"].([]interface{})
 		assert.Len(t, requirements, 2)
 
 		mockService.AssertExpectations(t)

@@ -479,7 +479,7 @@ func (s *SearchService) SearchByReferenceID(ctx context.Context, referenceID str
 }
 
 // searchByDirectReferenceID performs direct reference ID lookup
-func (s *SearchService) searchByDirectReferenceID(ctx context.Context, pattern ReferenceIDPattern) (*SearchResponse, error) {
+func (s *SearchService) searchByDirectReferenceID(_ context.Context, pattern ReferenceIDPattern) (*SearchResponse, error) {
 	var results []SearchResult
 
 	// Search for the entity based on its type
@@ -973,7 +973,7 @@ func (s *SearchService) applyRequirementFilters(query *gorm.DB, filters SearchFi
 }
 
 // sortResults sorts search results based on the specified criteria
-func (s *SearchService) sortResults(results []SearchResult, sortBy, sortOrder string) []SearchResult {
+func (s *SearchService) sortResults(results []SearchResult, _, _ string) []SearchResult {
 	if len(results) == 0 {
 		return results
 	}

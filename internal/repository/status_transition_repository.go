@@ -96,6 +96,13 @@ func (r *statusTransitionRepository) Exists(id uuid.UUID) (bool, error) {
 	return count > 0, err
 }
 
+// CountByStatusModelID counts status transitions for a specific status model
+func (r *statusTransitionRepository) CountByStatusModelID(statusModelID uuid.UUID) (int64, error) {
+	var count int64
+	err := r.db.Model(&models.StatusTransition{}).Where("status_model_id = ?", statusModelID).Count(&count).Error
+	return count, err
+}
+
 // ExistsByTransition checks if a specific transition exists
 func (r *statusTransitionRepository) ExistsByTransition(statusModelID, fromStatusID, toStatusID uuid.UUID) (bool, error) {
 	var count int64

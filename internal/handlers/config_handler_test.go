@@ -46,9 +46,9 @@ func (m *MockConfigService) DeleteRequirementType(id uuid.UUID, force bool) erro
 	return args.Error(0)
 }
 
-func (m *MockConfigService) ListRequirementTypes(filters service.RequirementTypeFilters) ([]models.RequirementType, error) {
+func (m *MockConfigService) ListRequirementTypes(filters service.RequirementTypeFilters) ([]models.RequirementType, int64, error) {
 	args := m.Called(filters)
-	return args.Get(0).([]models.RequirementType), args.Error(1)
+	return args.Get(0).([]models.RequirementType), args.Get(1).(int64), args.Error(2)
 }
 
 func (m *MockConfigService) CreateRelationshipType(req service.CreateRelationshipTypeRequest) (*models.RelationshipType, error) {
@@ -76,9 +76,9 @@ func (m *MockConfigService) DeleteRelationshipType(id uuid.UUID, force bool) err
 	return args.Error(0)
 }
 
-func (m *MockConfigService) ListRelationshipTypes(filters service.RelationshipTypeFilters) ([]models.RelationshipType, error) {
+func (m *MockConfigService) ListRelationshipTypes(filters service.RelationshipTypeFilters) ([]models.RelationshipType, int64, error) {
 	args := m.Called(filters)
-	return args.Get(0).([]models.RelationshipType), args.Error(1)
+	return args.Get(0).([]models.RelationshipType), args.Get(1).(int64), args.Error(2)
 }
 
 func (m *MockConfigService) ValidateRequirementType(typeID uuid.UUID) error {
@@ -122,9 +122,9 @@ func (m *MockConfigService) DeleteStatusModel(id uuid.UUID, force bool) error {
 	return args.Error(0)
 }
 
-func (m *MockConfigService) ListStatusModels(filters service.StatusModelFilters) ([]models.StatusModel, error) {
+func (m *MockConfigService) ListStatusModels(filters service.StatusModelFilters) ([]models.StatusModel, int64, error) {
 	args := m.Called(filters)
-	return args.Get(0).([]models.StatusModel), args.Error(1)
+	return args.Get(0).([]models.StatusModel), args.Get(1).(int64), args.Error(2)
 }
 
 func (m *MockConfigService) ListStatusModelsByEntityType(entityType models.EntityType) ([]models.StatusModel, error) {
@@ -153,9 +153,9 @@ func (m *MockConfigService) DeleteStatus(id uuid.UUID, force bool) error {
 	return args.Error(0)
 }
 
-func (m *MockConfigService) ListStatusesByModel(statusModelID uuid.UUID) ([]models.Status, error) {
+func (m *MockConfigService) ListStatusesByModel(statusModelID uuid.UUID) ([]models.Status, int64, error) {
 	args := m.Called(statusModelID)
-	return args.Get(0).([]models.Status), args.Error(1)
+	return args.Get(0).([]models.Status), args.Get(1).(int64), args.Error(2)
 }
 
 // Status Transition methods
@@ -179,9 +179,9 @@ func (m *MockConfigService) DeleteStatusTransition(id uuid.UUID) error {
 	return args.Error(0)
 }
 
-func (m *MockConfigService) ListStatusTransitionsByModel(statusModelID uuid.UUID) ([]models.StatusTransition, error) {
+func (m *MockConfigService) ListStatusTransitionsByModel(statusModelID uuid.UUID) ([]models.StatusTransition, int64, error) {
 	args := m.Called(statusModelID)
-	return args.Get(0).([]models.StatusTransition), args.Error(1)
+	return args.Get(0).([]models.StatusTransition), args.Get(1).(int64), args.Error(2)
 }
 
 func (m *MockConfigService) ValidateStatusTransition(entityType models.EntityType, fromStatus, toStatus string) error {
@@ -498,7 +498,7 @@ func TestConfigHandler_ListRequirementTypes(t *testing.T) {
 			},
 		}
 
-		mockService.On("ListRequirementTypes", mock.AnythingOfType("service.RequirementTypeFilters")).Return(expectedTypes, nil)
+		mockService.On("ListRequirementTypes", mock.AnythingOfType("service.RequirementTypeFilters")).Return(expectedTypes, int64(2), nil)
 
 		w := httptest.NewRecorder()
 		httpReq, _ := http.NewRequest("GET", "/api/v1/config/requirement-types", nil)
@@ -507,13 +507,11 @@ func TestConfigHandler_ListRequirementTypes(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 
-		var response map[string]interface{}
+		var response ListResponse[models.RequirementType]
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
-		assert.Equal(t, float64(2), response["count"])
-
-		types := response["requirement_types"].([]interface{})
-		assert.Len(t, types, 2)
+		assert.Equal(t, int64(2), response.TotalCount)
+		assert.Len(t, response.Data, 2)
 
 		mockService.AssertExpectations(t)
 	})
@@ -528,7 +526,7 @@ func TestConfigHandler_ListRequirementTypes(t *testing.T) {
 			},
 		}
 
-		mockService.On("ListRequirementTypes", mock.AnythingOfType("service.RequirementTypeFilters")).Return(expectedTypes, nil)
+		mockService.On("ListRequirementTypes", mock.AnythingOfType("service.RequirementTypeFilters")).Return(expectedTypes, int64(1), nil)
 
 		w := httptest.NewRecorder()
 		httpReq, _ := http.NewRequest("GET", "/api/v1/config/requirement-types?limit=10&offset=0&order_by=name", nil)
@@ -537,10 +535,10 @@ func TestConfigHandler_ListRequirementTypes(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 
-		var response map[string]interface{}
+		var response ListResponse[models.RequirementType]
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
-		assert.Equal(t, float64(len(expectedTypes)), response["count"])
+		assert.Equal(t, int64(1), response.TotalCount)
 
 		mockService.AssertExpectations(t)
 	})

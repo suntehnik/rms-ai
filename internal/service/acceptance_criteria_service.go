@@ -24,8 +24,8 @@ type AcceptanceCriteriaService interface {
 	UpdateAcceptanceCriteria(id uuid.UUID, req UpdateAcceptanceCriteriaRequest) (*models.AcceptanceCriteria, error)
 	DeleteAcceptanceCriteria(id uuid.UUID, force bool) error
 	ListAcceptanceCriteria(filters AcceptanceCriteriaFilters) ([]models.AcceptanceCriteria, int64, error)
-	GetAcceptanceCriteriaByUserStory(userStoryID uuid.UUID) ([]models.AcceptanceCriteria, error)
-	GetAcceptanceCriteriaByAuthor(authorID uuid.UUID) ([]models.AcceptanceCriteria, error)
+	GetAcceptanceCriteriaByUserStory(userStoryID uuid.UUID, limit, offset int) ([]models.AcceptanceCriteria, int64, error)
+	GetAcceptanceCriteriaByAuthor(authorID uuid.UUID, limit, offset int) ([]models.AcceptanceCriteria, int64, error)
 	ValidateUserStoryHasAcceptanceCriteria(userStoryID uuid.UUID) error
 }
 
@@ -225,38 +225,78 @@ func (s *acceptanceCriteriaService) ListAcceptanceCriteria(filters AcceptanceCri
 	return acceptanceCriteria, totalCount, nil
 }
 
-// GetAcceptanceCriteriaByUserStory retrieves acceptance criteria by user story ID
-func (s *acceptanceCriteriaService) GetAcceptanceCriteriaByUserStory(userStoryID uuid.UUID) ([]models.AcceptanceCriteria, error) {
+// GetAcceptanceCriteriaByUserStory retrieves acceptance criteria by user story ID with pagination
+func (s *acceptanceCriteriaService) GetAcceptanceCriteriaByUserStory(userStoryID uuid.UUID, limit, offset int) ([]models.AcceptanceCriteria, int64, error) {
 	// Validate user story exists
 	if exists, err := s.userStoryRepo.Exists(userStoryID); err != nil {
-		return nil, fmt.Errorf("failed to check user story existence: %w", err)
+		return nil, 0, fmt.Errorf("failed to check user story existence: %w", err)
 	} else if !exists {
-		return nil, ErrUserStoryNotFound
+		return nil, 0, ErrUserStoryNotFound
 	}
 
-	acceptanceCriteria, err := s.acceptanceCriteriaRepo.GetByUserStory(userStoryID)
+	// Set default limit if not provided
+	if limit <= 0 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	// Build filter for user story
+	filterMap := map[string]interface{}{
+		"user_story_id": userStoryID,
+	}
+
+	// Get total count for this user story
+	totalCount, err := s.acceptanceCriteriaRepo.Count(filterMap)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get acceptance criteria by user story: %w", err)
+		return nil, 0, fmt.Errorf("failed to count acceptance criteria by user story: %w", err)
 	}
 
-	return acceptanceCriteria, nil
+	// Get paginated results
+	acceptanceCriteria, err := s.acceptanceCriteriaRepo.List(filterMap, "created_at DESC", limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get acceptance criteria by user story: %w", err)
+	}
+
+	return acceptanceCriteria, totalCount, nil
 }
 
-// GetAcceptanceCriteriaByAuthor retrieves acceptance criteria by author ID
-func (s *acceptanceCriteriaService) GetAcceptanceCriteriaByAuthor(authorID uuid.UUID) ([]models.AcceptanceCriteria, error) {
+// GetAcceptanceCriteriaByAuthor retrieves acceptance criteria by author ID with pagination
+func (s *acceptanceCriteriaService) GetAcceptanceCriteriaByAuthor(authorID uuid.UUID, limit, offset int) ([]models.AcceptanceCriteria, int64, error) {
 	// Validate author exists
 	if exists, err := s.userRepo.Exists(authorID); err != nil {
-		return nil, fmt.Errorf("failed to check author existence: %w", err)
+		return nil, 0, fmt.Errorf("failed to check author existence: %w", err)
 	} else if !exists {
-		return nil, ErrUserNotFound
+		return nil, 0, ErrUserNotFound
 	}
 
-	acceptanceCriteria, err := s.acceptanceCriteriaRepo.GetByAuthor(authorID)
+	// Set default limit if not provided
+	if limit <= 0 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	// Build filter for author
+	filterMap := map[string]interface{}{
+		"author_id": authorID,
+	}
+
+	// Get total count for this author
+	totalCount, err := s.acceptanceCriteriaRepo.Count(filterMap)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get acceptance criteria by author: %w", err)
+		return nil, 0, fmt.Errorf("failed to count acceptance criteria by author: %w", err)
 	}
 
-	return acceptanceCriteria, nil
+	// Get paginated results
+	acceptanceCriteria, err := s.acceptanceCriteriaRepo.List(filterMap, "created_at DESC", limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get acceptance criteria by author: %w", err)
+	}
+
+	return acceptanceCriteria, totalCount, nil
 }
 
 // ValidateUserStoryHasAcceptanceCriteria validates that a user story has at least one acceptance criteria

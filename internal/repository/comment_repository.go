@@ -49,6 +49,25 @@ func (r *commentRepository) GetByParent(parentID uuid.UUID) ([]models.Comment, e
 	return comments, nil
 }
 
+// GetByParentWithPagination retrieves replies to a parent comment with pagination
+func (r *commentRepository) GetByParentWithPagination(parentID uuid.UUID, limit, offset int) ([]models.Comment, int64, error) {
+	var comments []models.Comment
+	var totalCount int64
+
+	// Get total count
+	if err := r.GetDB().Model(&models.Comment{}).Where("parent_comment_id = ?", parentID).Count(&totalCount).Error; err != nil {
+		return nil, 0, r.handleDBError(err)
+	}
+
+	// Get paginated results
+	if err := r.GetDB().Preload("Author").Where("parent_comment_id = ?", parentID).
+		Order("created_at ASC").Limit(limit).Offset(offset).Find(&comments).Error; err != nil {
+		return nil, 0, r.handleDBError(err)
+	}
+
+	return comments, totalCount, nil
+}
+
 // GetThreaded retrieves comments in threaded format for an entity
 func (r *commentRepository) GetThreaded(entityType models.EntityType, entityID uuid.UUID) ([]models.Comment, error) {
 	var comments []models.Comment

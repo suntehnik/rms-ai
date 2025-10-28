@@ -197,8 +197,8 @@ func (ps *PromptService) Activate(ctx context.Context, id uuid.UUID) error {
 			return fmt.Errorf("failed to find prompt: %w", err)
 		}
 
-		// Deactivate all prompts
-		if err := tx.Model(&models.Prompt{}).Update("is_active", false).Error; err != nil {
+		// Deactivate all prompts (add WHERE clause to satisfy GORM safety requirements)
+		if err := tx.Model(&models.Prompt{}).Where("is_active = ?", true).Update("is_active", false).Error; err != nil {
 			return fmt.Errorf("failed to deactivate prompts: %w", err)
 		}
 
