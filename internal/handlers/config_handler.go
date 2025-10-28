@@ -14,35 +14,20 @@ import (
 
 // Response types for Swagger documentation
 
-// RequirementTypeListResponse represents the response for listing requirement types
-type RequirementTypeListResponse struct {
-	RequirementTypes []models.RequirementType `json:"requirement_types"`
-	Count            int                      `json:"count"`
-}
+// RequirementTypeListResponse represents the standardized response for listing requirement types
+type RequirementTypeListResponse = ListResponse[models.RequirementType]
 
-// RelationshipTypeListResponse represents the response for listing relationship types
-type RelationshipTypeListResponse struct {
-	RelationshipTypes []models.RelationshipType `json:"relationship_types"`
-	Count             int                       `json:"count"`
-}
+// RelationshipTypeListResponse represents the standardized response for listing relationship types
+type RelationshipTypeListResponse = ListResponse[models.RelationshipType]
 
-// StatusModelListResponse represents the response for listing status models
-type StatusModelListResponse struct {
-	StatusModels []models.StatusModel `json:"status_models"`
-	Count        int                  `json:"count"`
-}
+// StatusModelListResponse represents the standardized response for listing status models
+type StatusModelListResponse = ListResponse[models.StatusModel]
 
-// StatusListResponse represents the response for listing statuses
-type StatusListResponse struct {
-	Statuses []models.Status `json:"statuses"`
-	Count    int             `json:"count"`
-}
+// StatusListResponse represents the standardized response for listing statuses
+type StatusListResponse = ListResponse[models.Status]
 
-// StatusTransitionListResponse represents the response for listing status transitions
-type StatusTransitionListResponse struct {
-	Transitions []models.StatusTransition `json:"transitions"`
-	Count       int                       `json:"count"`
-}
+// StatusTransitionListResponse represents the standardized response for listing status transitions
+type StatusTransitionListResponse = ListResponse[models.StatusTransition]
 
 // ConfigHandler handles HTTP requests for configuration operations
 type ConfigHandler struct {
@@ -294,7 +279,7 @@ func (h *ConfigHandler) ListRequirementTypes(c *gin.Context) {
 		}
 	}
 
-	requirementTypes, err := h.configService.ListRequirementTypes(filters)
+	requirementTypes, totalCount, err := h.configService.ListRequirementTypes(filters)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to list requirement types",
@@ -302,10 +287,7 @@ func (h *ConfigHandler) ListRequirementTypes(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"requirement_types": requirementTypes,
-		"count":             len(requirementTypes),
-	})
+	SendListResponse(c, requirementTypes, totalCount, filters.Limit, filters.Offset)
 }
 
 // Relationship Type handlers
@@ -546,7 +528,7 @@ func (h *ConfigHandler) ListRelationshipTypes(c *gin.Context) {
 		}
 	}
 
-	relationshipTypes, err := h.configService.ListRelationshipTypes(filters)
+	relationshipTypes, totalCount, err := h.configService.ListRelationshipTypes(filters)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to list relationship types",
@@ -554,10 +536,7 @@ func (h *ConfigHandler) ListRelationshipTypes(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"relationship_types": relationshipTypes,
-		"count":              len(relationshipTypes),
-	})
+	SendListResponse(c, relationshipTypes, totalCount, filters.Limit, filters.Offset)
 }
 
 // Status Model handlers
@@ -801,7 +780,7 @@ func (h *ConfigHandler) ListStatusModels(c *gin.Context) {
 		}
 	}
 
-	statusModels, err := h.configService.ListStatusModels(filters)
+	statusModels, totalCount, err := h.configService.ListStatusModels(filters)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to list status models",
@@ -809,10 +788,7 @@ func (h *ConfigHandler) ListStatusModels(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"status_models": statusModels,
-		"count":         len(statusModels),
-	})
+	SendListResponse(c, statusModels, totalCount, filters.Limit, filters.Offset)
 }
 
 // GetDefaultStatusModel handles GET /api/v1/config/status-models/default/:entity_type
@@ -1076,7 +1052,7 @@ func (h *ConfigHandler) ListStatusesByModel(c *gin.Context) {
 		return
 	}
 
-	statuses, err := h.configService.ListStatusesByModel(id)
+	statuses, totalCount, err := h.configService.ListStatusesByModel(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to list statuses",
@@ -1084,10 +1060,10 @@ func (h *ConfigHandler) ListStatusesByModel(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"statuses": statuses,
-		"count":    len(statuses),
-	})
+	// For this endpoint, we don't have explicit limit/offset parameters, so use defaults
+	limit := len(statuses) // Use actual count as limit since we're returning all
+	offset := 0
+	SendListResponse(c, statuses, totalCount, limit, offset)
 }
 
 // Status Transition handlers
@@ -1316,7 +1292,7 @@ func (h *ConfigHandler) ListStatusTransitionsByModel(c *gin.Context) {
 		return
 	}
 
-	transitions, err := h.configService.ListStatusTransitionsByModel(id)
+	transitions, totalCount, err := h.configService.ListStatusTransitionsByModel(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to list status transitions",
@@ -1324,8 +1300,8 @@ func (h *ConfigHandler) ListStatusTransitionsByModel(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"transitions": transitions,
-		"count":       len(transitions),
-	})
+	// For this endpoint, we don't have explicit limit/offset parameters, so use defaults
+	limit := len(transitions) // Use actual count as limit since we're returning all
+	offset := 0
+	SendListResponse(c, transitions, totalCount, limit, offset)
 }

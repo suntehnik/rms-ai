@@ -762,7 +762,9 @@ func (h *RequirementHandler) DeleteRelationship(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Requirement UUID or reference ID" example("123e4567-e89b-12d3-a456-426614174000")
-// @Success 200 {object} map[string]interface{} "Successfully retrieved relationships list with count"
+// @Param limit query integer false "Maximum number of results" minimum(1) maximum(100) example(50)
+// @Param offset query integer false "Number of results to skip" minimum(0) example(0)
+// @Success 200 {object} handlers.RequirementRelationshipListResponse "Successfully retrieved relationships list with pagination"
 // @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Requirement not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
@@ -770,9 +772,28 @@ func (h *RequirementHandler) DeleteRelationship(c *gin.Context) {
 func (h *RequirementHandler) GetRelationshipsByRequirement(c *gin.Context) {
 	idParam := c.Param("id")
 
+	// Parse pagination parameters
+	var limit, offset int
+	var err error
+
+	if limitStr := c.Query("limit"); limitStr != "" {
+		if limit, err = strconv.Atoi(limitStr); err != nil || limit < 1 || limit > 100 {
+			limit = 50 // Default limit
+		}
+	} else {
+		limit = 50 // Default limit
+	}
+
+	if offsetStr := c.Query("offset"); offsetStr != "" {
+		if offset, err = strconv.Atoi(offsetStr); err != nil || offset < 0 {
+			offset = 0 // Default offset
+		}
+	} else {
+		offset = 0 // Default offset
+	}
+
 	// Try to parse as UUID first, then as reference ID
 	var requirementID uuid.UUID
-	var err error
 
 	if id, parseErr := uuid.Parse(idParam); parseErr == nil {
 		requirementID = id
@@ -798,7 +819,7 @@ func (h *RequirementHandler) GetRelationshipsByRequirement(c *gin.Context) {
 		return
 	}
 
-	relationships, err := h.requirementService.GetRelationshipsByRequirement(requirementID)
+	relationships, totalCount, err := h.requirementService.GetRelationshipsByRequirementWithPagination(requirementID, limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to get relationships",
@@ -806,10 +827,7 @@ func (h *RequirementHandler) GetRelationshipsByRequirement(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"relationships": relationships,
-		"count":         len(relationships),
-	})
+	SendListResponse(c, relationships, totalCount, limit, offset)
 }
 
 // SearchRequirements handles GET /api/v1/requirements/search
@@ -820,7 +838,9 @@ func (h *RequirementHandler) GetRelationshipsByRequirement(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param q query string true "Search query text" example("authentication validation")
-// @Success 200 {object} map[string]interface{} "Successfully retrieved search results with count and query"
+// @Param limit query integer false "Maximum number of results" minimum(1) maximum(100) example(50)
+// @Param offset query integer false "Number of results to skip" minimum(0) example(0)
+// @Success 200 {object} handlers.RequirementListResponse "Successfully retrieved search results with pagination"
 // @Failure 400 {object} map[string]interface{} "Search query parameter 'q' is required"
 // @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
@@ -834,7 +854,27 @@ func (h *RequirementHandler) SearchRequirements(c *gin.Context) {
 		return
 	}
 
-	requirements, err := h.requirementService.SearchRequirements(searchText)
+	// Parse pagination parameters
+	var limit, offset int
+	var err error
+
+	if limitStr := c.Query("limit"); limitStr != "" {
+		if limit, err = strconv.Atoi(limitStr); err != nil || limit < 1 || limit > 100 {
+			limit = 50 // Default limit
+		}
+	} else {
+		limit = 50 // Default limit
+	}
+
+	if offsetStr := c.Query("offset"); offsetStr != "" {
+		if offset, err = strconv.Atoi(offsetStr); err != nil || offset < 0 {
+			offset = 0 // Default offset
+		}
+	} else {
+		offset = 0 // Default offset
+	}
+
+	requirements, totalCount, err := h.requirementService.SearchRequirementsWithPagination(searchText, limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to search requirements",
@@ -842,9 +882,5 @@ func (h *RequirementHandler) SearchRequirements(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"requirements": requirements,
-		"count":        len(requirements),
-		"query":        searchText,
-	})
+	SendListResponse(c, requirements, totalCount, limit, offset)
 }

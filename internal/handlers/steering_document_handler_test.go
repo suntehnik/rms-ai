@@ -57,6 +57,11 @@ func (m *MockSteeringDocumentService) GetSteeringDocumentsByEpicID(epicID uuid.U
 	return args.Get(0).([]models.SteeringDocument), args.Error(1)
 }
 
+func (m *MockSteeringDocumentService) GetSteeringDocumentsByEpicIDWithPagination(epicID uuid.UUID, limit, offset int, currentUser *models.User) ([]models.SteeringDocument, int64, error) {
+	args := m.Called(epicID, limit, offset, currentUser)
+	return args.Get(0).([]models.SteeringDocument), args.Get(1).(int64), args.Error(2)
+}
+
 func (m *MockSteeringDocumentService) LinkSteeringDocumentToEpic(steeringDocumentID, epicID uuid.UUID, currentUser *models.User) error {
 	args := m.Called(steeringDocumentID, epicID, currentUser)
 	return args.Error(0)

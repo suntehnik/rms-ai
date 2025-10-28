@@ -231,6 +231,9 @@ func (m *MockConfigRequirementRepository) HasRelationships(id uuid.UUID) (bool, 
 func (m *MockConfigRequirementRepository) SearchByText(searchText string) ([]models.Requirement, error) {
 	return nil, nil
 }
+func (m *MockConfigRequirementRepository) SearchByTextWithPagination(searchText string, limit, offset int) ([]models.Requirement, int64, error) {
+	return nil, 0, nil
+}
 
 type MockConfigRequirementRelationshipRepository struct {
 	mock.Mock
@@ -286,6 +289,9 @@ func (m *MockConfigRequirementRelationshipRepository) GetByRequirement(requireme
 }
 func (m *MockConfigRequirementRelationshipRepository) ExistsRelationship(sourceID, targetID, typeID uuid.UUID) (bool, error) {
 	return false, nil
+}
+func (m *MockConfigRequirementRelationshipRepository) GetByRequirementWithPagination(requirementID uuid.UUID, limit, offset int) ([]models.RequirementRelationship, int64, error) {
+	return nil, 0, nil
 }
 
 func TestConfigService_CreateRequirementType(t *testing.T) {

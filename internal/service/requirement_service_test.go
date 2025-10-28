@@ -142,6 +142,11 @@ func (m *MockRequirementRepository) SearchByText(searchText string) ([]models.Re
 	return args.Get(0).([]models.Requirement), args.Error(1)
 }
 
+func (m *MockRequirementRepository) SearchByTextWithPagination(searchText string, limit, offset int) ([]models.Requirement, int64, error) {
+	args := m.Called(searchText, limit, offset)
+	return args.Get(0).([]models.Requirement), args.Get(1).(int64), args.Error(2)
+}
+
 // MockRequirementTypeRepository is a mock implementation of RequirementTypeRepository
 type MockRequirementTypeRepository struct {
 	mock.Mock
@@ -422,6 +427,11 @@ func (m *MockRequirementRelationshipRepository) GetByType(typeID uuid.UUID) ([]m
 func (m *MockRequirementRelationshipRepository) ExistsRelationship(sourceID, targetID, typeID uuid.UUID) (bool, error) {
 	args := m.Called(sourceID, targetID, typeID)
 	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockRequirementRelationshipRepository) GetByRequirementWithPagination(requirementID uuid.UUID, limit, offset int) ([]models.RequirementRelationship, int64, error) {
+	args := m.Called(requirementID, limit, offset)
+	return args.Get(0).([]models.RequirementRelationship), args.Get(1).(int64), args.Error(2)
 }
 
 func TestRequirementService_CreateRequirement(t *testing.T) {

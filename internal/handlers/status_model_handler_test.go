@@ -51,9 +51,9 @@ func (m *MockConfigServiceForStatusModel) DeleteStatusModel(id uuid.UUID, force 
 	return args.Error(0)
 }
 
-func (m *MockConfigServiceForStatusModel) ListStatusModels(filters service.StatusModelFilters) ([]models.StatusModel, error) {
+func (m *MockConfigServiceForStatusModel) ListStatusModels(filters service.StatusModelFilters) ([]models.StatusModel, int64, error) {
 	args := m.Called(filters)
-	return args.Get(0).([]models.StatusModel), args.Error(1)
+	return args.Get(0).([]models.StatusModel), args.Get(1).(int64), args.Error(2)
 }
 
 func (m *MockConfigServiceForStatusModel) ListStatusModelsByEntityType(entityType models.EntityType) ([]models.StatusModel, error) {
@@ -81,9 +81,9 @@ func (m *MockConfigServiceForStatusModel) DeleteStatus(id uuid.UUID, force bool)
 	return args.Error(0)
 }
 
-func (m *MockConfigServiceForStatusModel) ListStatusesByModel(statusModelID uuid.UUID) ([]models.Status, error) {
+func (m *MockConfigServiceForStatusModel) ListStatusesByModel(statusModelID uuid.UUID) ([]models.Status, int64, error) {
 	args := m.Called(statusModelID)
-	return args.Get(0).([]models.Status), args.Error(1)
+	return args.Get(0).([]models.Status), args.Get(1).(int64), args.Error(2)
 }
 
 func (m *MockConfigServiceForStatusModel) CreateStatusTransition(req service.CreateStatusTransitionRequest) (*models.StatusTransition, error) {
@@ -106,9 +106,9 @@ func (m *MockConfigServiceForStatusModel) DeleteStatusTransition(id uuid.UUID) e
 	return args.Error(0)
 }
 
-func (m *MockConfigServiceForStatusModel) ListStatusTransitionsByModel(statusModelID uuid.UUID) ([]models.StatusTransition, error) {
+func (m *MockConfigServiceForStatusModel) ListStatusTransitionsByModel(statusModelID uuid.UUID) ([]models.StatusTransition, int64, error) {
 	args := m.Called(statusModelID)
-	return args.Get(0).([]models.StatusTransition), args.Error(1)
+	return args.Get(0).([]models.StatusTransition), args.Get(1).(int64), args.Error(2)
 }
 
 func (m *MockConfigServiceForStatusModel) ValidateStatusTransition(entityType models.EntityType, fromStatus, toStatus string) error {
@@ -142,9 +142,9 @@ func (m *MockConfigServiceForStatusModel) DeleteRequirementType(id uuid.UUID, fo
 	return args.Error(0)
 }
 
-func (m *MockConfigServiceForStatusModel) ListRequirementTypes(filters service.RequirementTypeFilters) ([]models.RequirementType, error) {
+func (m *MockConfigServiceForStatusModel) ListRequirementTypes(filters service.RequirementTypeFilters) ([]models.RequirementType, int64, error) {
 	args := m.Called(filters)
-	return args.Get(0).([]models.RequirementType), args.Error(1)
+	return args.Get(0).([]models.RequirementType), args.Get(1).(int64), args.Error(2)
 }
 
 func (m *MockConfigServiceForStatusModel) CreateRelationshipType(req service.CreateRelationshipTypeRequest) (*models.RelationshipType, error) {
@@ -172,9 +172,9 @@ func (m *MockConfigServiceForStatusModel) DeleteRelationshipType(id uuid.UUID, f
 	return args.Error(0)
 }
 
-func (m *MockConfigServiceForStatusModel) ListRelationshipTypes(filters service.RelationshipTypeFilters) ([]models.RelationshipType, error) {
+func (m *MockConfigServiceForStatusModel) ListRelationshipTypes(filters service.RelationshipTypeFilters) ([]models.RelationshipType, int64, error) {
 	args := m.Called(filters)
-	return args.Get(0).([]models.RelationshipType), args.Error(1)
+	return args.Get(0).([]models.RelationshipType), args.Get(1).(int64), args.Error(2)
 }
 
 func (m *MockConfigServiceForStatusModel) ValidateRequirementType(typeID uuid.UUID) error {
@@ -369,7 +369,7 @@ func TestListStatusModels(t *testing.T) {
 		}
 
 		filters := service.StatusModelFilters{}
-		mockService.On("ListStatusModels", filters).Return(expectedModels, nil)
+		mockService.On("ListStatusModels", filters).Return(expectedModels, int64(2), nil)
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -379,10 +379,11 @@ func TestListStatusModels(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 
-		var response map[string]interface{}
+		var response ListResponse[models.StatusModel]
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
-		assert.Equal(t, float64(2), response["count"])
+		assert.Equal(t, int64(2), response.TotalCount)
+		assert.Len(t, response.Data, 2)
 
 		mockService.AssertExpectations(t)
 	})
@@ -402,7 +403,7 @@ func TestListStatusModels(t *testing.T) {
 		filters := service.StatusModelFilters{
 			EntityType: models.EntityTypeEpic,
 		}
-		mockService.On("ListStatusModels", filters).Return(expectedModels, nil)
+		mockService.On("ListStatusModels", filters).Return(expectedModels, int64(1), nil)
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -412,10 +413,11 @@ func TestListStatusModels(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 
-		var response map[string]interface{}
+		var response ListResponse[models.StatusModel]
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
-		assert.Equal(t, float64(1), response["count"])
+		assert.Equal(t, int64(1), response.TotalCount)
+		assert.Len(t, response.Data, 1)
 
 		mockService.AssertExpectations(t)
 	})

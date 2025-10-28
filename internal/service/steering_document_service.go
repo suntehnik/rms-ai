@@ -26,6 +26,7 @@ type SteeringDocumentService interface {
 	ListSteeringDocuments(filters SteeringDocumentFilters, currentUser *models.User) ([]models.SteeringDocument, int64, error)
 	SearchSteeringDocuments(query string, currentUser *models.User) ([]models.SteeringDocument, error)
 	GetSteeringDocumentsByEpicID(epicID uuid.UUID, currentUser *models.User) ([]models.SteeringDocument, error)
+	GetSteeringDocumentsByEpicIDWithPagination(epicID uuid.UUID, limit, offset int, currentUser *models.User) ([]models.SteeringDocument, int64, error)
 	LinkSteeringDocumentToEpic(steeringDocumentID, epicID uuid.UUID, currentUser *models.User) error
 	UnlinkSteeringDocumentFromEpic(steeringDocumentID, epicID uuid.UUID, currentUser *models.User) error
 }
@@ -331,6 +332,40 @@ func (s *steeringDocumentService) GetSteeringDocumentsByEpicID(epicID uuid.UUID,
 	}
 
 	return s.steeringDocumentRepo.GetByEpicID(epicID)
+}
+
+// GetSteeringDocumentsByEpicIDWithPagination retrieves steering documents linked to a specific epic with pagination
+func (s *steeringDocumentService) GetSteeringDocumentsByEpicIDWithPagination(epicID uuid.UUID, limit, offset int, currentUser *models.User) ([]models.SteeringDocument, int64, error) {
+	// Authorization check: Only authenticated users can view steering documents
+	if !currentUser.CanRead() {
+		return nil, 0, ErrUnauthorizedAccess
+	}
+
+	// Verify epic exists
+	_, err := s.epicRepo.GetByID(epicID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, 0, ErrEpicNotFound
+		}
+		return nil, 0, fmt.Errorf("failed to get epic: %w", err)
+	}
+
+	// Set default limit if not specified
+	if limit <= 0 {
+		limit = 50
+	}
+
+	// Set maximum limit
+	if limit > 100 {
+		limit = 100
+	}
+
+	// Ensure offset is not negative
+	if offset < 0 {
+		offset = 0
+	}
+
+	return s.steeringDocumentRepo.GetByEpicIDWithPagination(epicID, limit, offset)
 }
 
 // LinkSteeringDocumentToEpic creates a link between a steering document and an epic

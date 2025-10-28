@@ -102,6 +102,13 @@ func (r *statusRepository) Exists(id uuid.UUID) (bool, error) {
 	return count > 0, err
 }
 
+// CountByStatusModelID counts statuses for a specific status model
+func (r *statusRepository) CountByStatusModelID(statusModelID uuid.UUID) (int64, error) {
+	var count int64
+	err := r.db.Model(&models.Status{}).Where("status_model_id = ?", statusModelID).Count(&count).Error
+	return count, err
+}
+
 // ExistsByName checks if a status exists by name within a status model
 func (r *statusRepository) ExistsByName(statusModelID uuid.UUID, name string) (bool, error) {
 	var count int64

@@ -505,8 +505,8 @@ func (h *CommentHandler) GetCommentsByStatus(c *gin.Context) {
 // @Param id path string true "Parent comment ID" format(uuid)
 // @Param limit query int false "Maximum number of replies to return (1-100)" minimum(1) maximum(100) default(50)
 // @Param offset query int false "Number of replies to skip for pagination" minimum(0) default(0)
-// @Success 200 {object} map[string]interface{} "Successfully retrieved comment replies" example({"data": [{"id": "123e4567-e89b-12d3-a456-426614174001", "content": "I agree with this point", "parent_comment_id": "123e4567-e89b-12d3-a456-426614174000", "author_id": "456e7890-e89b-12d3-a456-426614174002", "created_at": "2024-01-15T10:30:00Z", "is_resolved": false, "is_reply": true, "depth": 1}], "total_count": 1, "limit": 50, "offset": 0})
-// @Failure 400 {object} map[string]string "Invalid comment ID format"
+// @Success 200 {object} handlers.CommentListResponse "Successfully retrieved comment replies"
+// @Failure 400 {object} map[string]string "Invalid comment ID format or pagination parameters"
 // @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Parent comment not found"
 // @Failure 500 {object} map[string]string "Internal server error"
@@ -522,23 +522,21 @@ func (h *CommentHandler) GetCommentReplies(c *gin.Context) {
 		return
 	}
 
-	// First verify the parent comment exists
-	_, err = h.commentService.GetComment(id)
-	if err != nil {
-		if errors.Is(err, service.ErrCommentNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Comment not found",
-			})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to get comment",
-			})
-		}
+	// Parse pagination parameters
+	var pagination PaginationParams
+	if err := c.ShouldBindQuery(&pagination); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid pagination parameters",
+			"details": err.Error(),
+		})
 		return
 	}
 
-	// Get replies through the comment service
-	replies, err := h.commentService.GetCommentReplies(id)
+	// Set default values for pagination
+	pagination.SetDefaults()
+
+	// Get paginated replies through the comment service
+	replies, totalCount, err := h.commentService.GetCommentRepliesWithPagination(id, pagination.Limit, pagination.Offset)
 	if err != nil {
 		if errors.Is(err, service.ErrCommentNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -552,12 +550,8 @@ func (h *CommentHandler) GetCommentReplies(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data":        replies,
-		"total_count": len(replies),
-		"limit":       len(replies), // For now, return all replies without pagination
-		"offset":      0,
-	})
+	// Send standardized list response
+	SendListResponse(c, replies, totalCount, pagination.Limit, pagination.Offset)
 }
 
 // CreateCommentReply handles POST /api/v1/comments/:id/replies

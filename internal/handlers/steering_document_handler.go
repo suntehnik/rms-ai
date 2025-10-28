@@ -710,14 +710,16 @@ func (h *SteeringDocumentHandler) UnlinkSteeringDocumentFromEpic(c *gin.Context)
 }
 
 // GetEpicSteeringDocuments handles GET /api/v1/epics/:id/steering-documents
-// @Summary Get steering documents linked to an epic
-// @Description Retrieve all steering documents that are linked to a specific epic. Returns an array of steering documents associated with the epic. Requires authentication with JWT token.
+// @Summary Get steering documents linked to an epic with pagination
+// @Description Retrieve steering documents that are linked to a specific epic with pagination support. Returns a standardized paginated response with steering documents associated with the epic. Requires authentication with JWT token.
 // @Tags epics
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Epic UUID or reference ID" example("123e4567-e89b-12d3-a456-426614174000")
-// @Success 200 {array} models.SteeringDocument "Successfully retrieved steering documents for epic"
+// @Param limit query integer false "Maximum number of results to return" minimum(1) maximum(100) default(50) example(20)
+// @Param offset query integer false "Number of results to skip for pagination" minimum(0) default(0) example(0)
+// @Success 200 {object} handlers.SteeringDocumentListResponse "Successfully retrieved steering documents for epic"
 // @Failure 400 {object} map[string]interface{} "Invalid epic ID format"
 // @Failure 401 {object} map[string]interface{} "Authentication required - missing or invalid JWT token"
 // @Failure 404 {object} map[string]interface{} "Epic not found"
@@ -736,6 +738,15 @@ func (h *SteeringDocumentHandler) GetEpicSteeringDocuments(c *gin.Context) {
 			},
 		})
 		return
+	}
+
+	// Parse pagination parameters
+	var paginationParams PaginationParams
+	if err := c.ShouldBindQuery(&paginationParams); err != nil {
+		// If binding fails, use defaults
+		paginationParams.SetDefaults()
+	} else {
+		paginationParams.SetDefaults()
 	}
 
 	// Parse epic_id (try UUID first, then reference ID)
@@ -766,7 +777,12 @@ func (h *SteeringDocumentHandler) GetEpicSteeringDocuments(c *gin.Context) {
 		epicID = epic.ID
 	}
 
-	docs, err := h.steeringDocumentService.GetSteeringDocumentsByEpicID(epicID, currentUser)
+	docs, totalCount, err := h.steeringDocumentService.GetSteeringDocumentsByEpicIDWithPagination(
+		epicID,
+		paginationParams.Limit,
+		paginationParams.Offset,
+		currentUser,
+	)
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrEpicNotFound):
@@ -774,6 +790,13 @@ func (h *SteeringDocumentHandler) GetEpicSteeringDocuments(c *gin.Context) {
 				"error": gin.H{
 					"code":    "ENTITY_NOT_FOUND",
 					"message": "Epic not found",
+				},
+			})
+		case errors.Is(err, service.ErrUnauthorizedAccess):
+			c.JSON(http.StatusForbidden, gin.H{
+				"error": gin.H{
+					"code":    "INSUFFICIENT_PERMISSIONS",
+					"message": "Insufficient permissions to view steering documents",
 				},
 			})
 		default:
@@ -787,5 +810,5 @@ func (h *SteeringDocumentHandler) GetEpicSteeringDocuments(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, docs)
+	SendListResponse(c, docs, totalCount, paginationParams.Limit, paginationParams.Offset)
 }

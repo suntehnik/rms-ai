@@ -325,13 +325,15 @@ func (h *AcceptanceCriteriaHandler) ListAcceptanceCriteria(c *gin.Context) {
 
 // GetAcceptanceCriteriaByUserStory handles GET /api/v1/user-stories/:id/acceptance-criteria
 // @Summary Get acceptance criteria for a user story
-// @Description Retrieve all acceptance criteria that belong to a specific user story. This endpoint provides a list of testable conditions that define when the user story is considered complete.
+// @Description Retrieve all acceptance criteria that belong to a specific user story with pagination support. This endpoint provides a list of testable conditions that define when the user story is considered complete.
 // @Tags user-stories
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "User story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
-// @Success 200 {object} map[string]interface{} "Successfully retrieved acceptance criteria list with count"
+// @Param limit query integer false "Maximum number of results" minimum(1) maximum(100) example(50)
+// @Param offset query integer false "Number of results to skip" minimum(0) example(0)
+// @Success 200 {object} handlers.AcceptanceCriteriaListResponse "Successfully retrieved acceptance criteria list with standardized pagination format"
 // @Failure 400 {object} map[string]interface{} "Invalid user story ID format (UUID required)"
 // @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "User story not found"
@@ -355,7 +357,31 @@ func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteriaByUserStory(c *gin.Cont
 		return
 	}
 
-	acceptanceCriteria, err := h.acceptanceCriteriaService.GetAcceptanceCriteriaByUserStory(userStoryID)
+	// Parse pagination parameters
+	var params PaginationParams
+	if limit := c.Query("limit"); limit != "" {
+		if l, err := strconv.Atoi(limit); err == nil && l > 0 && l <= 100 {
+			params.Limit = l
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid limit parameter (must be between 1 and 100)",
+			})
+			return
+		}
+	}
+	if offset := c.Query("offset"); offset != "" {
+		if o, err := strconv.Atoi(offset); err == nil && o >= 0 {
+			params.Offset = o
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid offset parameter (must be >= 0)",
+			})
+			return
+		}
+	}
+	params.SetDefaults()
+
+	acceptanceCriteria, totalCount, err := h.acceptanceCriteriaService.GetAcceptanceCriteriaByUserStory(userStoryID, params.Limit, params.Offset)
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrUserStoryNotFound):
@@ -370,21 +396,21 @@ func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteriaByUserStory(c *gin.Cont
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"acceptance_criteria": acceptanceCriteria,
-		"count":               len(acceptanceCriteria),
-	})
+	// Use standardized list response format
+	SendListResponse(c, acceptanceCriteria, totalCount, params.Limit, params.Offset)
 }
 
 // GetAcceptanceCriteriaByAuthor handles GET /api/v1/users/:id/acceptance-criteria
 // @Summary Get acceptance criteria by author
-// @Description Retrieve all acceptance criteria created by a specific user. This endpoint helps track which testable conditions were authored by each team member.
+// @Description Retrieve all acceptance criteria created by a specific user with pagination support. This endpoint helps track which testable conditions were authored by each team member.
 // @Tags users
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Author UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
-// @Success 200 {object} map[string]interface{} "Successfully retrieved acceptance criteria list with count"
+// @Param limit query integer false "Maximum number of results" minimum(1) maximum(100) example(50)
+// @Param offset query integer false "Number of results to skip" minimum(0) example(0)
+// @Success 200 {object} handlers.AcceptanceCriteriaListResponse "Successfully retrieved acceptance criteria list with standardized pagination format"
 // @Failure 400 {object} map[string]interface{} "Invalid author ID format"
 // @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 404 {object} map[string]interface{} "Author not found"
@@ -402,7 +428,31 @@ func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteriaByAuthor(c *gin.Context
 		return
 	}
 
-	acceptanceCriteria, err := h.acceptanceCriteriaService.GetAcceptanceCriteriaByAuthor(authorID)
+	// Parse pagination parameters
+	var params PaginationParams
+	if limit := c.Query("limit"); limit != "" {
+		if l, err := strconv.Atoi(limit); err == nil && l > 0 && l <= 100 {
+			params.Limit = l
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid limit parameter (must be between 1 and 100)",
+			})
+			return
+		}
+	}
+	if offset := c.Query("offset"); offset != "" {
+		if o, err := strconv.Atoi(offset); err == nil && o >= 0 {
+			params.Offset = o
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid offset parameter (must be >= 0)",
+			})
+			return
+		}
+	}
+	params.SetDefaults()
+
+	acceptanceCriteria, totalCount, err := h.acceptanceCriteriaService.GetAcceptanceCriteriaByAuthor(authorID, params.Limit, params.Offset)
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrUserNotFound):
@@ -417,8 +467,6 @@ func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteriaByAuthor(c *gin.Context
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"acceptance_criteria": acceptanceCriteria,
-		"count":               len(acceptanceCriteria),
-	})
+	// Use standardized list response format
+	SendListResponse(c, acceptanceCriteria, totalCount, params.Limit, params.Offset)
 }

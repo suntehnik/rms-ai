@@ -173,7 +173,7 @@ func (rh *ResourceHandler) handleUserStoryResource(_ context.Context, parsedURI 
 		return rh.formatRequirementsResource(parsedURI, requirements), nil
 	case "acceptance-criteria":
 		// Return acceptance criteria for this user story
-		acceptanceCriteria, err := rh.acceptanceCriteriaService.GetAcceptanceCriteriaByUserStory(userStory.ID)
+		acceptanceCriteria, _, err := rh.acceptanceCriteriaService.GetAcceptanceCriteriaByUserStory(userStory.ID, 100, 0)
 		if err != nil {
 			return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get acceptance criteria: %v", err))
 		}

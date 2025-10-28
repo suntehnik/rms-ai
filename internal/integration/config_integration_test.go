@@ -148,7 +148,7 @@ func TestConfigIntegration_RequirementTypeLifecycle(t *testing.T) {
 		err = json.Unmarshal(w.Body.Bytes(), &listResponse)
 		require.NoError(t, err)
 
-		count := listResponse["count"].(float64)
+		count := listResponse["total_count"].(float64)
 		assert.True(t, count >= 6) // 5 default + 1 created
 
 		// 5. Delete the requirement type
@@ -335,7 +335,7 @@ func TestConfigIntegration_RelationshipTypeLifecycle(t *testing.T) {
 		err = json.Unmarshal(w.Body.Bytes(), &listResponse)
 		require.NoError(t, err)
 
-		count := listResponse["count"].(float64)
+		count := listResponse["total_count"].(float64)
 		assert.True(t, count >= 6) // 5 default + 1 created
 
 		// 5. Delete the relationship type
@@ -431,7 +431,7 @@ func TestConfigIntegration_FilteringAndPagination(t *testing.T) {
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
 
-		types := response["requirement_types"].([]interface{})
+		types := response["data"].([]interface{})
 		assert.True(t, len(types) <= 2)
 
 		// Test with ordering
@@ -445,7 +445,7 @@ func TestConfigIntegration_FilteringAndPagination(t *testing.T) {
 		err = json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
 
-		types = response["requirement_types"].([]interface{})
+		types = response["data"].([]interface{})
 		assert.True(t, len(types) >= 5) // Should have at least the default types
 	})
 
@@ -462,7 +462,7 @@ func TestConfigIntegration_FilteringAndPagination(t *testing.T) {
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
 
-		types := response["relationship_types"].([]interface{})
+		types := response["data"].([]interface{})
 		assert.True(t, len(types) <= 3)
 	})
 }

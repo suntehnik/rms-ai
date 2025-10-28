@@ -44,7 +44,7 @@ func (r *requirementRepository) Create(requirement *models.Requirement) error {
 
 		// Check if it's a duplicate key error on reference_id
 		if errors.Is(err, ErrDuplicateKey) ||
-			(err != nil && (strings.Contains(strings.ToLower(err.Error()), "unique constraint") ||
+			((strings.Contains(strings.ToLower(err.Error()), "unique constraint") ||
 				strings.Contains(strings.ToLower(err.Error()), "duplicate key") ||
 				strings.Contains(strings.ToLower(err.Error()), "reference_id"))) {
 			// Clear the reference ID and retry
@@ -204,4 +204,27 @@ func (r *requirementRepository) SearchByText(searchText string) ([]models.Requir
 	}
 
 	return requirements, nil
+}
+
+// SearchByTextWithPagination performs full-text search on requirements with pagination
+func (r *requirementRepository) SearchByTextWithPagination(searchText string, limit, offset int) ([]models.Requirement, int64, error) {
+	var requirements []models.Requirement
+	var totalCount int64
+
+	// Use LIKE for compatibility with SQLite (tests) and PostgreSQL
+	searchPattern := "%" + searchText + "%"
+
+	// Get total count
+	if err := r.GetDB().Model(&models.Requirement{}).Where("title LIKE ? OR description LIKE ? OR reference_id LIKE ?",
+		searchPattern, searchPattern, searchPattern).Count(&totalCount).Error; err != nil {
+		return nil, 0, r.handleDBError(err)
+	}
+
+	// Get paginated results
+	if err := r.GetDB().Where("title LIKE ? OR description LIKE ? OR reference_id LIKE ?",
+		searchPattern, searchPattern, searchPattern).Limit(limit).Offset(offset).Find(&requirements).Error; err != nil {
+		return nil, 0, r.handleDBError(err)
+	}
+
+	return requirements, totalCount, nil
 }

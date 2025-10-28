@@ -17,7 +17,7 @@ type ConfigService interface {
 	GetRequirementTypeByName(name string) (*models.RequirementType, error)
 	UpdateRequirementType(id uuid.UUID, req UpdateRequirementTypeRequest) (*models.RequirementType, error)
 	DeleteRequirementType(id uuid.UUID, force bool) error
-	ListRequirementTypes(filters RequirementTypeFilters) ([]models.RequirementType, error)
+	ListRequirementTypes(filters RequirementTypeFilters) ([]models.RequirementType, int64, error)
 
 	// Relationship Type operations
 	CreateRelationshipType(req CreateRelationshipTypeRequest) (*models.RelationshipType, error)
@@ -25,7 +25,7 @@ type ConfigService interface {
 	GetRelationshipTypeByName(name string) (*models.RelationshipType, error)
 	UpdateRelationshipType(id uuid.UUID, req UpdateRelationshipTypeRequest) (*models.RelationshipType, error)
 	DeleteRelationshipType(id uuid.UUID, force bool) error
-	ListRelationshipTypes(filters RelationshipTypeFilters) ([]models.RelationshipType, error)
+	ListRelationshipTypes(filters RelationshipTypeFilters) ([]models.RelationshipType, int64, error)
 
 	// Status Model operations
 	CreateStatusModel(req CreateStatusModelRequest) (*models.StatusModel, error)
@@ -34,7 +34,7 @@ type ConfigService interface {
 	GetDefaultStatusModelByEntityType(entityType models.EntityType) (*models.StatusModel, error)
 	UpdateStatusModel(id uuid.UUID, req UpdateStatusModelRequest) (*models.StatusModel, error)
 	DeleteStatusModel(id uuid.UUID, force bool) error
-	ListStatusModels(filters StatusModelFilters) ([]models.StatusModel, error)
+	ListStatusModels(filters StatusModelFilters) ([]models.StatusModel, int64, error)
 	ListStatusModelsByEntityType(entityType models.EntityType) ([]models.StatusModel, error)
 
 	// Status operations
@@ -42,14 +42,14 @@ type ConfigService interface {
 	GetStatusByID(id uuid.UUID) (*models.Status, error)
 	UpdateStatus(id uuid.UUID, req UpdateStatusRequest) (*models.Status, error)
 	DeleteStatus(id uuid.UUID, force bool) error
-	ListStatusesByModel(statusModelID uuid.UUID) ([]models.Status, error)
+	ListStatusesByModel(statusModelID uuid.UUID) ([]models.Status, int64, error)
 
 	// Status Transition operations
 	CreateStatusTransition(req CreateStatusTransitionRequest) (*models.StatusTransition, error)
 	GetStatusTransitionByID(id uuid.UUID) (*models.StatusTransition, error)
 	UpdateStatusTransition(id uuid.UUID, req UpdateStatusTransitionRequest) (*models.StatusTransition, error)
 	DeleteStatusTransition(id uuid.UUID) error
-	ListStatusTransitionsByModel(statusModelID uuid.UUID) ([]models.StatusTransition, error)
+	ListStatusTransitionsByModel(statusModelID uuid.UUID) ([]models.StatusTransition, int64, error)
 
 	// Validation operations
 	ValidateRequirementType(typeID uuid.UUID) error
@@ -302,7 +302,7 @@ func (s *configService) DeleteRequirementType(id uuid.UUID, force bool) error {
 }
 
 // ListRequirementTypes lists requirement types with optional filtering
-func (s *configService) ListRequirementTypes(filters RequirementTypeFilters) ([]models.RequirementType, error) {
+func (s *configService) ListRequirementTypes(filters RequirementTypeFilters) ([]models.RequirementType, int64, error) {
 	filterMap := make(map[string]interface{})
 
 	orderBy := "name"
@@ -320,7 +320,19 @@ func (s *configService) ListRequirementTypes(filters RequirementTypeFilters) ([]
 		offset = filters.Offset
 	}
 
-	return s.requirementTypeRepo.List(filterMap, orderBy, limit, offset)
+	// Get the data
+	data, err := s.requirementTypeRepo.List(filterMap, orderBy, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Get the total count
+	totalCount, err := s.requirementTypeRepo.Count(filterMap)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return data, totalCount, nil
 }
 
 // Relationship Type operations
@@ -436,7 +448,7 @@ func (s *configService) DeleteRelationshipType(id uuid.UUID, force bool) error {
 }
 
 // ListRelationshipTypes lists relationship types with optional filtering
-func (s *configService) ListRelationshipTypes(filters RelationshipTypeFilters) ([]models.RelationshipType, error) {
+func (s *configService) ListRelationshipTypes(filters RelationshipTypeFilters) ([]models.RelationshipType, int64, error) {
 	filterMap := make(map[string]interface{})
 
 	orderBy := "name"
@@ -454,7 +466,19 @@ func (s *configService) ListRelationshipTypes(filters RelationshipTypeFilters) (
 		offset = filters.Offset
 	}
 
-	return s.relationshipTypeRepo.List(filterMap, orderBy, limit, offset)
+	// Get the data
+	data, err := s.relationshipTypeRepo.List(filterMap, orderBy, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Get the total count
+	totalCount, err := s.relationshipTypeRepo.Count(filterMap)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return data, totalCount, nil
 }
 
 // Validation operations
@@ -604,7 +628,7 @@ func (s *configService) DeleteStatusModel(id uuid.UUID, force bool) error {
 }
 
 // ListStatusModels lists status models with optional filtering
-func (s *configService) ListStatusModels(filters StatusModelFilters) ([]models.StatusModel, error) {
+func (s *configService) ListStatusModels(filters StatusModelFilters) ([]models.StatusModel, int64, error) {
 	filterMap := make(map[string]interface{})
 
 	if filters.EntityType != "" {
@@ -626,7 +650,19 @@ func (s *configService) ListStatusModels(filters StatusModelFilters) ([]models.S
 		offset = filters.Offset
 	}
 
-	return s.statusModelRepo.List(filterMap, orderBy, limit, offset)
+	// Get the data
+	data, err := s.statusModelRepo.List(filterMap, orderBy, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Get the total count
+	totalCount, err := s.statusModelRepo.Count(filterMap)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return data, totalCount, nil
 }
 
 // ListStatusModelsByEntityType lists status models for a specific entity type
@@ -750,8 +786,20 @@ func (s *configService) DeleteStatus(id uuid.UUID, force bool) error {
 }
 
 // ListStatusesByModel lists statuses for a specific status model
-func (s *configService) ListStatusesByModel(statusModelID uuid.UUID) ([]models.Status, error) {
-	return s.statusRepo.GetByStatusModelID(statusModelID)
+func (s *configService) ListStatusesByModel(statusModelID uuid.UUID) ([]models.Status, int64, error) {
+	// Get the data
+	data, err := s.statusRepo.GetByStatusModelID(statusModelID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Get the total count
+	totalCount, err := s.statusRepo.CountByStatusModelID(statusModelID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return data, totalCount, nil
 }
 
 // Status Transition operations
@@ -863,8 +911,20 @@ func (s *configService) DeleteStatusTransition(id uuid.UUID) error {
 }
 
 // ListStatusTransitionsByModel lists status transitions for a specific status model
-func (s *configService) ListStatusTransitionsByModel(statusModelID uuid.UUID) ([]models.StatusTransition, error) {
-	return s.statusTransitionRepo.GetByStatusModelID(statusModelID)
+func (s *configService) ListStatusTransitionsByModel(statusModelID uuid.UUID) ([]models.StatusTransition, int64, error) {
+	// Get the data
+	data, err := s.statusTransitionRepo.GetByStatusModelID(statusModelID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Get the total count
+	totalCount, err := s.statusTransitionRepo.CountByStatusModelID(statusModelID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return data, totalCount, nil
 }
 
 // ValidateStatusTransition validates that a status transition is allowed

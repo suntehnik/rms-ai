@@ -195,6 +195,41 @@ func (r *steeringDocumentRepository) GetByEpicID(epicID uuid.UUID) ([]models.Ste
 	return docs, nil
 }
 
+// GetByEpicIDWithPagination retrieves steering documents linked to an epic with pagination
+func (r *steeringDocumentRepository) GetByEpicIDWithPagination(epicID uuid.UUID, limit, offset int) ([]models.SteeringDocument, int64, error) {
+	var docs []models.SteeringDocument
+	var totalCount int64
+
+	// Count total records
+	countQuery := r.db.Model(&models.SteeringDocument{}).
+		Joins("JOIN epic_steering_documents esd ON steering_documents.id = esd.steering_document_id").
+		Where("esd.epic_id = ?", epicID)
+
+	if err := countQuery.Count(&totalCount).Error; err != nil {
+		return nil, 0, fmt.Errorf("failed to count steering documents by epic ID: %w", err)
+	}
+
+	// Get paginated results
+	query := r.db.
+		Preload("Creator").
+		Joins("JOIN epic_steering_documents esd ON steering_documents.id = esd.steering_document_id").
+		Where("esd.epic_id = ?", epicID).
+		Order("steering_documents.created_at DESC")
+
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+
+	if err := query.Find(&docs).Error; err != nil {
+		return nil, 0, fmt.Errorf("failed to get steering documents by epic ID with pagination: %w", err)
+	}
+
+	return docs, totalCount, nil
+}
+
 // LinkToEpic creates a link between a steering document and an epic
 func (r *steeringDocumentRepository) LinkToEpic(steeringDocumentID, epicID uuid.UUID) error {
 	link := models.EpicSteeringDocument{

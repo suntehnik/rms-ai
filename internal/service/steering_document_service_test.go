@@ -71,6 +71,11 @@ func (m *MockSteeringDocumentRepository) GetByEpicID(epicID uuid.UUID) ([]models
 	return args.Get(0).([]models.SteeringDocument), args.Error(1)
 }
 
+func (m *MockSteeringDocumentRepository) GetByEpicIDWithPagination(epicID uuid.UUID, limit, offset int) ([]models.SteeringDocument, int64, error) {
+	args := m.Called(epicID, limit, offset)
+	return args.Get(0).([]models.SteeringDocument), args.Get(1).(int64), args.Error(2)
+}
+
 func (m *MockSteeringDocumentRepository) LinkToEpic(steeringDocumentID, epicID uuid.UUID) error {
 	args := m.Called(steeringDocumentID, epicID)
 	return args.Error(0)

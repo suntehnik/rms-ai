@@ -296,9 +296,9 @@ func (suite *AcceptanceCriteriaIntegrationTestSuite) TestGetAcceptanceCriteriaBy
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	suite.Require().NoError(err)
 
-	assert.Equal(suite.T(), float64(2), response["count"])
+	assert.Equal(suite.T(), float64(2), response["total_count"])
 
-	criteria := response["acceptance_criteria"].([]any)
+	criteria := response["data"].([]any)
 	assert.Len(suite.T(), criteria, 2)
 }
 
