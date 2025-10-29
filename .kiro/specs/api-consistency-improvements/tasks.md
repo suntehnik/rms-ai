@@ -61,6 +61,8 @@
   - Update service layer to include preloads by default
   - _Requirements: 2.7_
 
+
+- [ ] 3. Consolidate handlers
 - [ ] 3.1 Consolidate acceptance criteria creation handlers
   - Remove unused `CreateAcceptanceCriteria` handler if it exists
   - Rename `CreateAcceptanceCriteriaInUserStory` to `CreateAcceptanceCriteria` in `internal/handlers/acceptance_criteria_handler.go`
@@ -78,6 +80,7 @@
   - Modify existing `CreateComment` method to handle all entity types
   - _Requirements: 3.3, 3.4, 3.5, 3.6_
 
+- [ ] 4. Error handling and reporting
 - [ ] 4.1 Create centralized error message templates
   - Create error message templates in `internal/service/errors.go`
   - Add `NotFound`, `InvalidID`, and `DeletionConflict` message functions
@@ -118,6 +121,8 @@
   - Ensure consistent error message format across all handlers
   - _Requirements: 4.6_
 
+- [ ] 5. Update service methods 
+
 - [ ] 5.1 Update service methods to support standardized pagination
   - Modify service layer methods to return total count along with data
   - Ensure all list methods support limit/offset parameters
@@ -130,6 +135,7 @@
   - Update repository calls to include preload specifications
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7_
 
+- [ ] 6. Update tests and docs 
 - [ ]* 6.1 Update handler tests for new response formats
   - Update existing handler tests to expect new standardized response format
   - Add tests for preloading functionality
@@ -142,7 +148,7 @@
   - Test preloading functionality
   - _Requirements: All requirements_
 
-- [ ]* 6.3 Update API documentation
+- [ ] 6.3 Update API documentation
   - Update OpenAPI specifications to reflect new response formats
   - Update error message documentation
   - Update handler consolidation documentation
