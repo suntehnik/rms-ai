@@ -532,7 +532,7 @@ func TestUserStoryService_ListUserStories(t *testing.T) {
 		}
 
 		mockUserStoryRepo.On("Count", expectedFilters).Return(int64(2), nil)
-		mockUserStoryRepo.On("ListWithIncludes", expectedFilters, []string{"Creator", "Assignee", "Epic"}, "priority ASC", 10, 0).Return(expectedUserStories, nil)
+		mockUserStoryRepo.On("ListWithIncludes", expectedFilters, []string{"Epic", "Creator", "Assignee"}, "priority ASC", 10, 0).Return(expectedUserStories, nil)
 
 		result, count, err := service.ListUserStories(filters)
 
@@ -553,7 +553,7 @@ func TestUserStoryService_ListUserStories(t *testing.T) {
 		expectedFilters := map[string]interface{}{}
 
 		mockUserStoryRepo.On("Count", expectedFilters).Return(int64(1), nil)
-		mockUserStoryRepo.On("ListWithIncludes", expectedFilters, []string{"Creator", "Assignee", "Epic"}, "created_at DESC", 50, 0).Return(expectedUserStories, nil)
+		mockUserStoryRepo.On("ListWithIncludes", expectedFilters, []string{"Epic", "Creator", "Assignee"}, "created_at DESC", 50, 0).Return(expectedUserStories, nil)
 
 		result, count, err := service.ListUserStories(filters)
 
