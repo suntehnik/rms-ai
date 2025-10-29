@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/google/uuid"
@@ -430,6 +431,9 @@ func (s *userStoryService) ListUserStories(filters UserStoryFilters) ([]models.U
 	for include := range includes {
 		finalIncludes = append(finalIncludes, include)
 	}
+	
+	// Fix fluky unit tests
+	sort.Strings(finalIncludes)
 
 	// Always use the method with includes since we have default preloads
 	userStories, err := s.userStoryRepo.ListWithIncludes(filterMap, finalIncludes, orderBy, limit, filters.Offset)
