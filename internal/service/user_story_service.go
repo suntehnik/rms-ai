@@ -264,7 +264,7 @@ func (s *userStoryService) CreateUserStory(req CreateUserStoryRequest) (*models.
 	return userStory, nil
 }
 
-// GetUserStoryByID retrieves a user story by its ID with creator and assignee populated
+// GetUserStoryByID retrieves a user story by its ID with creator, assignee, and epic populated
 func (s *userStoryService) GetUserStoryByID(id uuid.UUID) (*models.UserStory, error) {
 	userStory, err := s.userStoryRepo.GetByIDWithUsers(id)
 	if err != nil {
@@ -276,7 +276,7 @@ func (s *userStoryService) GetUserStoryByID(id uuid.UUID) (*models.UserStory, er
 	return userStory, nil
 }
 
-// GetUserStoryByReferenceID retrieves a user story by its reference ID with creator and assignee populated
+// GetUserStoryByReferenceID retrieves a user story by its reference ID with creator, assignee, and epic populated
 func (s *userStoryService) GetUserStoryByReferenceID(referenceID string) (*models.UserStory, error) {
 	userStory, err := s.userStoryRepo.GetByReferenceIDWithUsers(referenceID)
 	if err != nil {
@@ -431,7 +431,7 @@ func (s *userStoryService) ListUserStories(filters UserStoryFilters) ([]models.U
 	for include := range includes {
 		finalIncludes = append(finalIncludes, include)
 	}
-	
+
 	// Fix fluky unit tests
 	sort.Strings(finalIncludes)
 
