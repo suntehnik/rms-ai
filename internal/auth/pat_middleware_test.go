@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"product-requirements-management/internal/config"
+	"product-requirements-management/internal/logger"
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/service"
 
@@ -118,6 +120,12 @@ func TestPATMiddleware_InvalidBearerFormat(t *testing.T) {
 
 func TestPATMiddleware_ValidPATToken(t *testing.T) {
 	gin.SetMode(gin.TestMode)
+
+	// Initialize logger for tests
+	logger.Init(&config.LogConfig{
+		Level:  "error", // Use error level to reduce test noise
+		Format: "text",
+	})
 
 	// Setup
 	authService := NewService("test-secret", time.Hour)

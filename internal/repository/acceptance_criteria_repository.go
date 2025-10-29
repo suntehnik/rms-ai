@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
@@ -53,4 +55,67 @@ func (r *acceptanceCriteriaRepository) CountByUserStory(userStoryID uuid.UUID) (
 		return 0, r.handleDBError(err)
 	}
 	return count, nil
+}
+
+// GetByIDWithPreloads retrieves acceptance criteria by its ID with UserStory and Author preloaded
+func (r *acceptanceCriteriaRepository) GetByIDWithPreloads(id uuid.UUID) (*models.AcceptanceCriteria, error) {
+	var criteria models.AcceptanceCriteria
+	if err := r.GetDB().
+		Preload("UserStory").
+		Preload("Author").
+		Where("id = ?", id).First(&criteria).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, r.handleDBError(err)
+	}
+	return &criteria, nil
+}
+
+// GetByReferenceIDWithPreloads retrieves acceptance criteria by its reference ID with UserStory and Author preloaded
+func (r *acceptanceCriteriaRepository) GetByReferenceIDWithPreloads(referenceID string) (*models.AcceptanceCriteria, error) {
+	var criteria models.AcceptanceCriteria
+	if err := r.GetDB().
+		Preload("UserStory").
+		Preload("Author").
+		Where("reference_id = ?", referenceID).First(&criteria).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, r.handleDBError(err)
+	}
+	return &criteria, nil
+}
+
+// ListWithPreloads retrieves acceptance criteria with UserStory and Author preloaded
+func (r *acceptanceCriteriaRepository) ListWithPreloads(filters map[string]interface{}, orderBy string, limit, offset int) ([]models.AcceptanceCriteria, error) {
+	var criteria []models.AcceptanceCriteria
+
+	query := r.GetDB().
+		Preload("UserStory").
+		Preload("Author")
+
+	// Apply filters
+	for key, value := range filters {
+		query = query.Where(key+" = ?", value)
+	}
+
+	// Apply ordering
+	if orderBy != "" {
+		query = query.Order(orderBy)
+	}
+
+	// Apply pagination
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+
+	if err := query.Find(&criteria).Error; err != nil {
+		return nil, r.handleDBError(err)
+	}
+
+	return criteria, nil
 }

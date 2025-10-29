@@ -176,8 +176,8 @@ func (s *patService) ListUserPATs(ctx context.Context, userID uuid.UUID, limit, 
 		offset = 0
 	}
 
-	// Get paginated tokens
-	tokens, total, err := s.patRepo.GetByUserIDWithPagination(userID, limit, offset)
+	// Get paginated tokens with User preloaded
+	tokens, total, err := s.patRepo.GetByUserIDWithPaginationAndPreloads(userID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list user PATs: %w", err)
 	}

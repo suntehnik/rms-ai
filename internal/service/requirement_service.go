@@ -185,9 +185,9 @@ func (s *requirementService) CreateRequirement(req CreateRequirementRequest) (*m
 	return requirement, nil
 }
 
-// GetRequirementByID retrieves a requirement by its ID
+// GetRequirementByID retrieves a requirement by its ID with all relationships preloaded
 func (s *requirementService) GetRequirementByID(id uuid.UUID) (*models.Requirement, error) {
-	requirement, err := s.requirementRepo.GetByID(id)
+	requirement, err := s.requirementRepo.GetByIDWithPreloads(id)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return nil, ErrRequirementNotFound
@@ -312,7 +312,7 @@ func (s *requirementService) DeleteRequirement(id uuid.UUID, force bool) error {
 	return nil
 }
 
-// ListRequirements retrieves requirements with optional filtering
+// ListRequirements retrieves requirements with optional filtering and all relationships preloaded
 func (s *requirementService) ListRequirements(filters RequirementFilters) ([]models.Requirement, int64, error) {
 	// Build filter map
 	filterMap := make(map[string]interface{})
@@ -357,7 +357,8 @@ func (s *requirementService) ListRequirements(filters RequirementFilters) ([]mod
 		limit = filters.Limit
 	}
 
-	requirements, err := s.requirementRepo.List(filterMap, orderBy, limit, filters.Offset)
+	// Always use the method with preloads to include all relationships by default
+	requirements, err := s.requirementRepo.ListWithPreloads(filterMap, orderBy, limit, filters.Offset)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to list requirements: %w", err)
 	}

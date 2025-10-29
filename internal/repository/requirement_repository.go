@@ -44,9 +44,9 @@ func (r *requirementRepository) Create(requirement *models.Requirement) error {
 
 		// Check if it's a duplicate key error on reference_id
 		if errors.Is(err, ErrDuplicateKey) ||
-			((strings.Contains(strings.ToLower(err.Error()), "unique constraint") ||
+			(strings.Contains(strings.ToLower(err.Error()), "unique constraint") ||
 				strings.Contains(strings.ToLower(err.Error()), "duplicate key") ||
-				strings.Contains(strings.ToLower(err.Error()), "reference_id"))) {
+				strings.Contains(strings.ToLower(err.Error()), "reference_id")) {
 			// Clear the reference ID and retry
 			requirement.ReferenceID = ""
 			continue
@@ -227,4 +227,76 @@ func (r *requirementRepository) SearchByTextWithPagination(searchText string, li
 	}
 
 	return requirements, totalCount, nil
+}
+
+// GetByIDWithPreloads retrieves a requirement by its ID with all relationships preloaded
+func (r *requirementRepository) GetByIDWithPreloads(id uuid.UUID) (*models.Requirement, error) {
+	var requirement models.Requirement
+	if err := r.GetDB().
+		Preload("Creator").
+		Preload("Assignee").
+		Preload("UserStory").
+		Preload("AcceptanceCriteria").
+		Preload("Type").
+		Where("id = ?", id).First(&requirement).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, r.handleDBError(err)
+	}
+	return &requirement, nil
+}
+
+// GetByReferenceIDWithPreloads retrieves a requirement by its reference ID with all relationships preloaded
+func (r *requirementRepository) GetByReferenceIDWithPreloads(referenceID string) (*models.Requirement, error) {
+	var requirement models.Requirement
+	if err := r.GetDB().
+		Preload("Creator").
+		Preload("Assignee").
+		Preload("UserStory").
+		Preload("AcceptanceCriteria").
+		Preload("Type").
+		Where("reference_id = ?", referenceID).First(&requirement).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, r.handleDBError(err)
+	}
+	return &requirement, nil
+}
+
+// ListWithPreloads retrieves requirements with all relationships preloaded
+func (r *requirementRepository) ListWithPreloads(filters map[string]interface{}, orderBy string, limit, offset int) ([]models.Requirement, error) {
+	var requirements []models.Requirement
+
+	query := r.GetDB().
+		Preload("Creator").
+		Preload("Assignee").
+		Preload("UserStory").
+		Preload("AcceptanceCriteria").
+		Preload("Type")
+
+	// Apply filters
+	for key, value := range filters {
+		query = query.Where(key+" = ?", value)
+	}
+
+	// Apply ordering
+	if orderBy != "" {
+		query = query.Order(orderBy)
+	}
+
+	// Apply pagination
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+
+	if err := query.Find(&requirements).Error; err != nil {
+		return nil, r.handleDBError(err)
+	}
+
+	return requirements, nil
 }

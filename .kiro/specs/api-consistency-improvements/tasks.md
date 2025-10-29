@@ -32,29 +32,31 @@
   - Modify `GetEpicSteeringDocuments` method in `internal/handlers/steering_document_handler.go` to return `ListResponse[models.SteeringDocument]`
   - _Requirements: 1.11_
 
-- [ ] 2.1 Update epic handlers to include default preloads
+- [x] 2. Default preloads
+
+- [x] 2.1 Update epic handlers to include default preloads
   - Modify `ListEpics` method in `internal/handlers/epic_handler.go` to preload Creator and Assignee
   - Update service layer to include preloads by default
   - _Requirements: 2.1_
 
-- [ ] 2.2 Update user story handlers to include default preloads
+- [x] 2.2 Update user story handlers to include default preloads
   - Modify `ListUserStories` method in `internal/handlers/user_story_handler.go` to preload Creator, Assignee, and Epic
   - Update service layer to include preloads by default
   - _Requirements: 2.2_
 
-- [ ] 2.3 Update requirement handlers to include default preloads
+- [x] 2.3 Update requirement handlers to include default preloads
   - Modify `GetRequirement` method in `internal/handlers/requirement_handler.go` to preload Creator, Assignee, UserStory, AcceptanceCriteria, Type
   - Modify `ListRequirements` method in `internal/handlers/requirement_handler.go` to preload all relationships
   - Update service layer to include preloads by default
   - _Requirements: 2.3, 2.4_
 
-- [ ] 2.4 Update acceptance criteria handlers to include default preloads
+- [x] 2.4 Update acceptance criteria handlers to include default preloads
   - Modify `GetAcceptanceCriteria` method in `internal/handlers/acceptance_criteria_handler.go` to preload UserStory and Author
   - Modify `ListAcceptanceCriteria` method in `internal/handlers/acceptance_criteria_handler.go` to preload relationships
   - Update service layer to include preloads by default
   - _Requirements: 2.5, 2.6_
 
-- [ ] 2.5 Update PAT handlers to include default preloads
+- [x] 2.5 Update PAT handlers to include default preloads
   - Modify `ListPATs` method in `internal/handlers/pat_handler.go` to preload User entity
   - Update service layer to include preloads by default
   - _Requirements: 2.7_

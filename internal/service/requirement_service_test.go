@@ -147,6 +147,27 @@ func (m *MockRequirementRepository) SearchByTextWithPagination(searchText string
 	return args.Get(0).([]models.Requirement), args.Get(1).(int64), args.Error(2)
 }
 
+func (m *MockRequirementRepository) GetByIDWithPreloads(id uuid.UUID) (*models.Requirement, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Requirement), args.Error(1)
+}
+
+func (m *MockRequirementRepository) GetByReferenceIDWithPreloads(referenceID string) (*models.Requirement, error) {
+	args := m.Called(referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Requirement), args.Error(1)
+}
+
+func (m *MockRequirementRepository) ListWithPreloads(filters map[string]interface{}, orderBy string, limit, offset int) ([]models.Requirement, error) {
+	args := m.Called(filters, orderBy, limit, offset)
+	return args.Get(0).([]models.Requirement), args.Error(1)
+}
+
 // MockRequirementTypeRepository is a mock implementation of RequirementTypeRepository
 type MockRequirementTypeRepository struct {
 	mock.Mock
@@ -581,7 +602,7 @@ func TestRequirementService_GetRequirementByID(t *testing.T) {
 			Title: "Test Requirement",
 		}
 
-		mockRequirementRepo.On("GetByID", requirementID).Return(expectedRequirement, nil)
+		mockRequirementRepo.On("GetByIDWithPreloads", requirementID).Return(expectedRequirement, nil)
 
 		result, err := service.GetRequirementByID(requirementID)
 
@@ -596,7 +617,7 @@ func TestRequirementService_GetRequirementByID(t *testing.T) {
 	t.Run("requirement not found", func(t *testing.T) {
 		requirementID := uuid.New()
 
-		mockRequirementRepo.On("GetByID", requirementID).Return(nil, repository.ErrNotFound)
+		mockRequirementRepo.On("GetByIDWithPreloads", requirementID).Return(nil, repository.ErrNotFound)
 
 		result, err := service.GetRequirementByID(requirementID)
 

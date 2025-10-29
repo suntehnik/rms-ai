@@ -97,6 +97,9 @@ type AcceptanceCriteriaRepository interface {
 	GetByAuthor(authorID uuid.UUID) ([]AcceptanceCriteria, error)
 	HasRequirements(id uuid.UUID) (bool, error)
 	CountByUserStory(userStoryID uuid.UUID) (int64, error)
+	GetByIDWithPreloads(id uuid.UUID) (*AcceptanceCriteria, error)
+	GetByReferenceIDWithPreloads(referenceID string) (*AcceptanceCriteria, error)
+	ListWithPreloads(filters map[string]interface{}, orderBy string, limit, offset int) ([]AcceptanceCriteria, error)
 }
 
 // RequirementRepository defines requirement-specific repository operations
@@ -113,6 +116,9 @@ type RequirementRepository interface {
 	HasRelationships(id uuid.UUID) (bool, error)
 	SearchByText(searchText string) ([]Requirement, error)
 	SearchByTextWithPagination(searchText string, limit, offset int) ([]Requirement, int64, error)
+	GetByIDWithPreloads(id uuid.UUID) (*Requirement, error)
+	GetByReferenceIDWithPreloads(referenceID string) (*Requirement, error)
+	ListWithPreloads(filters map[string]interface{}, orderBy string, limit, offset int) ([]Requirement, error)
 }
 
 // RequirementTypeRepository defines requirement type-specific repository operations
@@ -200,6 +206,7 @@ type PersonalAccessTokenRepository interface {
 	Repository[PersonalAccessToken]
 	GetByUserID(userID uuid.UUID) ([]PersonalAccessToken, error)
 	GetByUserIDWithPagination(userID uuid.UUID, limit, offset int) ([]PersonalAccessToken, int64, error)
+	GetByUserIDWithPaginationAndPreloads(userID uuid.UUID, limit, offset int) ([]PersonalAccessToken, int64, error)
 	GetHashesByPrefix(prefix string) ([]PersonalAccessToken, error)
 	UpdateLastUsed(id uuid.UUID, lastUsedAt *time.Time) error
 	DeleteExpired() (int64, error)
