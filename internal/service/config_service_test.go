@@ -234,6 +234,15 @@ func (m *MockConfigRequirementRepository) SearchByText(searchText string) ([]mod
 func (m *MockConfigRequirementRepository) SearchByTextWithPagination(searchText string, limit, offset int) ([]models.Requirement, int64, error) {
 	return nil, 0, nil
 }
+func (m *MockConfigRequirementRepository) GetByIDWithPreloads(id uuid.UUID) (*models.Requirement, error) {
+	return nil, nil
+}
+func (m *MockConfigRequirementRepository) GetByReferenceIDWithPreloads(referenceID string) (*models.Requirement, error) {
+	return nil, nil
+}
+func (m *MockConfigRequirementRepository) ListWithPreloads(filters map[string]interface{}, orderBy string, limit, offset int) ([]models.Requirement, error) {
+	return nil, nil
+}
 
 type MockConfigRequirementRelationshipRepository struct {
 	mock.Mock

@@ -121,6 +121,11 @@ func (m *MockPATRepository) ExistsByUserIDAndName(userID uuid.UUID, name string)
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MockPATRepository) GetByUserIDWithPaginationAndPreloads(userID uuid.UUID, limit, offset int) ([]models.PersonalAccessToken, int64, error) {
+	args := m.Called(userID, limit, offset)
+	return args.Get(0).([]models.PersonalAccessToken), args.Get(1).(int64), args.Error(2)
+}
+
 // Note: MockUserRepository is already defined in epic_service_test.go
 
 // MockTokenGenerator is a mock implementation of TokenGenerator
@@ -308,7 +313,7 @@ func TestListUserPATs_Success(t *testing.T) {
 
 	// Setup mocks
 	mockUserRepo.On("GetByID", user.ID).Return(user, nil)
-	mockPATRepo.On("GetByUserIDWithPagination", user.ID, 50, 0).Return(tokens, int64(2), nil)
+	mockPATRepo.On("GetByUserIDWithPaginationAndPreloads", user.ID, 50, 0).Return(tokens, int64(2), nil)
 
 	// Execute
 	result, err := service.ListUserPATs(ctx, user.ID, 0, 0)

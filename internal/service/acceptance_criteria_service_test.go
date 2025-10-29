@@ -119,6 +119,30 @@ func (m *MockAcceptanceCriteriaRepository) CountByUserStory(userStoryID uuid.UUI
 	return args.Get(0).(int64), args.Error(1)
 }
 
+func (m *MockAcceptanceCriteriaRepository) GetByIDWithPreloads(id uuid.UUID) (*models.AcceptanceCriteria, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.AcceptanceCriteria), args.Error(1)
+}
+
+func (m *MockAcceptanceCriteriaRepository) GetByReferenceIDWithPreloads(referenceID string) (*models.AcceptanceCriteria, error) {
+	args := m.Called(referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.AcceptanceCriteria), args.Error(1)
+}
+
+func (m *MockAcceptanceCriteriaRepository) ListWithPreloads(filters map[string]interface{}, orderBy string, limit, offset int) ([]models.AcceptanceCriteria, error) {
+	args := m.Called(filters, orderBy, limit, offset)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]models.AcceptanceCriteria), args.Error(1)
+}
+
 func TestAcceptanceCriteriaService_CreateAcceptanceCriteria(t *testing.T) {
 	mockAcceptanceCriteriaRepo := new(MockAcceptanceCriteriaRepository)
 	mockUserStoryRepo := new(MockUserStoryRepository)
@@ -230,7 +254,7 @@ func TestAcceptanceCriteriaService_GetAcceptanceCriteriaByID(t *testing.T) {
 			name: "successful retrieval",
 			id:   acceptanceCriteriaID,
 			setupMocks: func() {
-				mockAcceptanceCriteriaRepo.On("GetByID", acceptanceCriteriaID).Return(expectedAcceptanceCriteria, nil)
+				mockAcceptanceCriteriaRepo.On("GetByIDWithPreloads", acceptanceCriteriaID).Return(expectedAcceptanceCriteria, nil)
 			},
 			expectedError: nil,
 		},
@@ -238,7 +262,7 @@ func TestAcceptanceCriteriaService_GetAcceptanceCriteriaByID(t *testing.T) {
 			name: "acceptance criteria not found",
 			id:   acceptanceCriteriaID,
 			setupMocks: func() {
-				mockAcceptanceCriteriaRepo.On("GetByID", acceptanceCriteriaID).Return(nil, repository.ErrNotFound)
+				mockAcceptanceCriteriaRepo.On("GetByIDWithPreloads", acceptanceCriteriaID).Return(nil, repository.ErrNotFound)
 			},
 			expectedError: ErrAcceptanceCriteriaNotFound,
 		},
