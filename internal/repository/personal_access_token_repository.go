@@ -56,6 +56,32 @@ func (r *personalAccessTokenRepository) GetByUserIDWithPagination(userID uuid.UU
 	return tokens, total, nil
 }
 
+// GetByUserIDWithPaginationAndPreloads retrieves personal access tokens for a user with pagination and User preloaded
+func (r *personalAccessTokenRepository) GetByUserIDWithPaginationAndPreloads(userID uuid.UUID, limit, offset int) ([]models.PersonalAccessToken, int64, error) {
+	var tokens []models.PersonalAccessToken
+	var total int64
+
+	// Get total count
+	if err := r.GetDB().Model(&models.PersonalAccessToken{}).Where("user_id = ?", userID).Count(&total).Error; err != nil {
+		return nil, 0, r.handleDBError(err)
+	}
+
+	// Get paginated results with User preloaded
+	query := r.GetDB().Preload("User").Where("user_id = ?", userID).Order("created_at DESC")
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+
+	if err := query.Find(&tokens).Error; err != nil {
+		return nil, 0, r.handleDBError(err)
+	}
+
+	return tokens, total, nil
+}
+
 // GetHashesByPrefix retrieves all token hashes that match a given prefix for authentication
 func (r *personalAccessTokenRepository) GetHashesByPrefix(prefix string) ([]models.PersonalAccessToken, error) {
 	var tokens []models.PersonalAccessToken

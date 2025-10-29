@@ -100,9 +100,9 @@ func (s *acceptanceCriteriaService) CreateAcceptanceCriteria(req CreateAcceptanc
 	return acceptanceCriteria, nil
 }
 
-// GetAcceptanceCriteriaByID retrieves acceptance criteria by its ID
+// GetAcceptanceCriteriaByID retrieves acceptance criteria by its ID with UserStory and Author preloaded
 func (s *acceptanceCriteriaService) GetAcceptanceCriteriaByID(id uuid.UUID) (*models.AcceptanceCriteria, error) {
-	acceptanceCriteria, err := s.acceptanceCriteriaRepo.GetByID(id)
+	acceptanceCriteria, err := s.acceptanceCriteriaRepo.GetByIDWithPreloads(id)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return nil, ErrAcceptanceCriteriaNotFound
@@ -187,7 +187,7 @@ func (s *acceptanceCriteriaService) DeleteAcceptanceCriteria(id uuid.UUID, force
 	return nil
 }
 
-// ListAcceptanceCriteria retrieves acceptance criteria with optional filtering
+// ListAcceptanceCriteria retrieves acceptance criteria with optional filtering and relationships preloaded
 func (s *acceptanceCriteriaService) ListAcceptanceCriteria(filters AcceptanceCriteriaFilters) ([]models.AcceptanceCriteria, int64, error) {
 	// Build filter map
 	filterMap := make(map[string]interface{})
@@ -217,7 +217,8 @@ func (s *acceptanceCriteriaService) ListAcceptanceCriteria(filters AcceptanceCri
 		limit = filters.Limit
 	}
 
-	acceptanceCriteria, err := s.acceptanceCriteriaRepo.List(filterMap, orderBy, limit, filters.Offset)
+	// Always use the method with preloads to include UserStory and Author by default
+	acceptanceCriteria, err := s.acceptanceCriteriaRepo.ListWithPreloads(filterMap, orderBy, limit, filters.Offset)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to list acceptance criteria: %w", err)
 	}

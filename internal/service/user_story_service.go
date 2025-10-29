@@ -413,14 +413,26 @@ func (s *userStoryService) ListUserStories(filters UserStoryFilters) ([]models.U
 		limit = filters.Limit
 	}
 
-	// Use the new method with includes if specified, otherwise use the regular method
-	var userStories []models.UserStory
-	if len(filters.Include) > 0 {
-		userStories, err = s.userStoryRepo.ListWithIncludes(filterMap, filters.Include, orderBy, limit, filters.Offset)
-	} else {
-		userStories, err = s.userStoryRepo.List(filterMap, orderBy, limit, filters.Offset)
+	// Always include default preloads (Creator, Assignee, and Epic)
+	defaultIncludes := []string{"Creator", "Assignee", "Epic"}
+
+	// Merge with any additional includes specified in filters
+	includes := make(map[string]bool)
+	for _, include := range defaultIncludes {
+		includes[include] = true
+	}
+	for _, include := range filters.Include {
+		includes[include] = true
 	}
 
+	// Convert back to slice
+	finalIncludes := make([]string, 0, len(includes))
+	for include := range includes {
+		finalIncludes = append(finalIncludes, include)
+	}
+
+	// Always use the method with includes since we have default preloads
+	userStories, err := s.userStoryRepo.ListWithIncludes(filterMap, finalIncludes, orderBy, limit, filters.Offset)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to list user stories: %w", err)
 	}

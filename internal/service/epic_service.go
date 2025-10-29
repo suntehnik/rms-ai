@@ -367,14 +367,26 @@ func (s *epicService) ListEpics(filters EpicFilters) ([]models.Epic, int64, erro
 		limit = filters.Limit
 	}
 
-	// Use the new method with includes if specified, otherwise use the regular method
-	var epics []models.Epic
-	if len(filters.Include) > 0 {
-		epics, err = s.epicRepo.ListWithIncludes(filterMap, filters.Include, orderBy, limit, filters.Offset)
-	} else {
-		epics, err = s.epicRepo.List(filterMap, orderBy, limit, filters.Offset)
+	// Always include default preloads (Creator and Assignee)
+	defaultIncludes := []string{"Creator", "Assignee"}
+
+	// Merge with any additional includes specified in filters
+	includes := make(map[string]bool)
+	for _, include := range defaultIncludes {
+		includes[include] = true
+	}
+	for _, include := range filters.Include {
+		includes[include] = true
 	}
 
+	// Convert back to slice
+	finalIncludes := make([]string, 0, len(includes))
+	for include := range includes {
+		finalIncludes = append(finalIncludes, include)
+	}
+
+	// Always use the method with includes since we have default preloads
+	epics, err := s.epicRepo.ListWithIncludes(filterMap, finalIncludes, orderBy, limit, filters.Offset)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to list epics: %w", err)
 	}
