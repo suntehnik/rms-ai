@@ -27,30 +27,39 @@ func NewAcceptanceCriteriaHandler(acceptanceCriteriaService service.AcceptanceCr
 	}
 }
 
-// CreateAcceptanceCriteria handles POST /api/v1/user-stories/:id/acceptance-criteria
-// @Summary Create acceptance criteria within a user story
-// @Description Create new acceptance criteria that belongs to the specified user story. This is a nested resource creation that establishes the parent-child relationship between user story and acceptance criteria. The user story ID from the URL path will be used as the parent.
-// @Tags user-stories
+// CreateAcceptanceCriteria handles both POST /api/v1/acceptance-criteria and POST /api/v1/user-stories/:id/acceptance-criteria
+// @Summary Create acceptance criteria (standalone or within a user story)
+// @Description Create new acceptance criteria. When called via /api/v1/user-stories/:id/acceptance-criteria, the user story ID from the URL path will be used as the parent. When called via /api/v1/acceptance-criteria, the user_story_id must be provided in the request body.
+// @Tags acceptance-criteria,user-stories
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param id path string true "User story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
-// @Param acceptance_criteria body service.CreateAcceptanceCriteriaRequest true "Acceptance criteria creation request (user_story_id will be set from path parameter)"
-// @Success 201 {object} models.AcceptanceCriteria "Successfully created acceptance criteria within user story"
+// @Param id path string false "User story UUID (only for nested creation)" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param acceptance_criteria body service.CreateAcceptanceCriteriaRequest true "Acceptance criteria creation request"
+// @Success 201 {object} models.AcceptanceCriteria "Successfully created acceptance criteria"
 // @Failure 400 {object} map[string]interface{} "Invalid user story ID format, request body, user story not found, or author not found"
 // @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/acceptance-criteria [post]
 // @Router /api/v1/user-stories/{id}/acceptance-criteria [post]
 func (h *AcceptanceCriteriaHandler) CreateAcceptanceCriteria(c *gin.Context) {
+	// Check if this is a nested creation (user story ID in path)
 	userStoryIDParam := c.Param("id")
+	var isNestedCreation bool
+	var userStoryID uuid.UUID
+	var err error
 
-	// Parse user story ID
-	userStoryID, err := uuid.Parse(userStoryIDParam)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid user story ID format",
-		})
-		return
+	if userStoryIDParam != "" {
+		// This is nested creation: POST /api/v1/user-stories/:id/acceptance-criteria
+		isNestedCreation = true
+		if id, parseErr := uuid.Parse(userStoryIDParam); parseErr == nil {
+			userStoryID = id
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid user story ID format",
+			})
+			return
+		}
 	}
 
 	var req service.CreateAcceptanceCriteriaRequest
@@ -71,9 +80,13 @@ func (h *AcceptanceCriteriaHandler) CreateAcceptanceCriteria(c *gin.Context) {
 		return
 	}
 
-	// Set user story ID from URL parameter and author ID from context
-	req.UserStoryID = userStoryID
+	// Set the author ID from the authenticated user
 	req.AuthorID = uuid.MustParse(authorID)
+
+	// For nested creation, override the user story ID from the URL path
+	if isNestedCreation {
+		req.UserStoryID = userStoryID
+	}
 
 	acceptanceCriteria, err := h.acceptanceCriteriaService.CreateAcceptanceCriteria(req)
 	if err != nil {

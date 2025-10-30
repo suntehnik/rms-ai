@@ -219,7 +219,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 			userStories.GET("/:id/acceptance-criteria", acceptanceCriteriaHandler.GetAcceptanceCriteriaByUserStory)
 			userStories.POST("/:id/acceptance-criteria", acceptanceCriteriaHandler.CreateAcceptanceCriteria)
 			userStories.GET("/:id/requirements", userStoryHandler.GetUserStoryWithRequirements)
-			userStories.POST("/:id/requirements", requirementHandler.CreateRequirementInUserStory)
+			userStories.POST("/:id/requirements", requirementHandler.CreateRequirement)
 			userStories.PATCH("/:id/status", userStoryHandler.ChangeUserStoryStatus)
 			userStories.PATCH("/:id/assign", userStoryHandler.AssignUserStory)
 			// Comprehensive deletion routes
@@ -231,6 +231,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 		acceptanceCriteria := v1.Group("/acceptance-criteria")
 		acceptanceCriteria.Use(authService.Middleware()) // Add authentication middleware
 		{
+			acceptanceCriteria.POST("", acceptanceCriteriaHandler.CreateAcceptanceCriteria)
 			acceptanceCriteria.GET("", acceptanceCriteriaHandler.ListAcceptanceCriteria)
 			acceptanceCriteria.GET("/:id", acceptanceCriteriaHandler.GetAcceptanceCriteria)
 			acceptanceCriteria.PUT("/:id", acceptanceCriteriaHandler.UpdateAcceptanceCriteria)
@@ -370,28 +371,28 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 		// Entity comment routes - these need to be added to each entity group
 		// Epic comments
 		epics.GET("/:id/comments", commentHandler.GetEpicComments)
-		epics.POST("/:id/comments", commentHandler.CreateEpicComment)
+		epics.POST("/:id/comments", commentHandler.CreateComment)
 		epics.POST("/:id/comments/inline", commentHandler.CreateEpicInlineComment)
 		epics.GET("/:id/comments/inline/visible", commentHandler.GetEpicVisibleInlineComments)
 		epics.POST("/:id/comments/inline/validate", commentHandler.ValidateEpicInlineComments)
 
 		// User Story comments
 		userStories.GET("/:id/comments", commentHandler.GetUserStoryComments)
-		userStories.POST("/:id/comments", commentHandler.CreateUserStoryComment)
+		userStories.POST("/:id/comments", commentHandler.CreateComment)
 		userStories.POST("/:id/comments/inline", commentHandler.CreateUserStoryInlineComment)
 		userStories.GET("/:id/comments/inline/visible", commentHandler.GetUserStoryVisibleInlineComments)
 		userStories.POST("/:id/comments/inline/validate", commentHandler.ValidateUserStoryInlineComments)
 
 		// Acceptance Criteria comments
 		acceptanceCriteria.GET("/:id/comments", commentHandler.GetAcceptanceCriteriaComments)
-		acceptanceCriteria.POST("/:id/comments", commentHandler.CreateAcceptanceCriteriaComment)
+		acceptanceCriteria.POST("/:id/comments", commentHandler.CreateComment)
 		acceptanceCriteria.POST("/:id/comments/inline", commentHandler.CreateAcceptanceCriteriaInlineComment)
 		acceptanceCriteria.GET("/:id/comments/inline/visible", commentHandler.GetAcceptanceCriteriaVisibleInlineComments)
 		acceptanceCriteria.POST("/:id/comments/inline/validate", commentHandler.ValidateAcceptanceCriteriaInlineComments)
 
 		// Requirement comments
 		requirements.GET("/:id/comments", commentHandler.GetRequirementComments)
-		requirements.POST("/:id/comments", commentHandler.CreateRequirementComment)
+		requirements.POST("/:id/comments", commentHandler.CreateComment)
 		requirements.POST("/:id/comments/inline", commentHandler.CreateRequirementInlineComment)
 		requirements.GET("/:id/comments/inline/visible", commentHandler.GetRequirementVisibleInlineComments)
 		requirements.POST("/:id/comments/inline/validate", commentHandler.ValidateRequirementInlineComments)

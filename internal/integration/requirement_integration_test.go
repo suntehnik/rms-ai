@@ -95,7 +95,7 @@ func (suite *RequirementIntegrationTestSuite) SetupSuite() {
 		v1.POST("/requirements/relationships", suite.requirementHandler.CreateRelationship)
 		v1.DELETE("/requirement-relationships/:id", suite.requirementHandler.DeleteRelationship)
 		v1.GET("/requirements/search", suite.requirementHandler.SearchRequirements)
-		v1.POST("/user-stories/:id/requirements", suite.requirementHandler.CreateRequirementInUserStory)
+		v1.POST("/user-stories/:id/requirements", suite.requirementHandler.CreateRequirement)
 	}
 }
 

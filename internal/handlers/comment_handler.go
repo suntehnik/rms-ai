@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -26,14 +27,13 @@ func NewCommentHandler(commentService service.CommentService) *CommentHandler {
 	}
 }
 
-// CreateComment handles POST /api/v1/:entityType/:id/comments
+// CreateComment handles POST /api/v1/{entity_type}/{id}/comments for all entity types
 // @Summary Create a new comment on an entity
-// @Description Create a new comment (general or inline) on any entity type (epic, user_story, acceptance_criteria, requirement). Supports threaded discussions through parent_comment_id.
+// @Description Create a new comment (general or inline) on any entity type (epic, user_story, acceptance_criteria, requirement). Supports threaded discussions through parent_comment_id. This consolidated method handles all entity types through a single interface.
 // @Tags comments
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param entityType path string true "Entity type" Enums(epic,user_story,acceptance_criteria,requirement)
 // @Param id path string true "Entity ID" format(uuid)
 // @Param comment body service.CreateCommentRequest true "Comment creation request"
 // @Success 201 {object} service.CommentResponse "Successfully created comment"
@@ -41,13 +41,31 @@ func NewCommentHandler(commentService service.CommentService) *CommentHandler {
 // @Failure 401 {object} map[string]string "Authentication required"
 // @Failure 404 {object} map[string]string "Entity not found or parent comment not found"
 // @Failure 500 {object} map[string]string "Internal server error"
-// @Router /api/v1/{entityType}/{id}/comments [post]
+// @Router /api/v1/epics/{id}/comments [post]
+// @Router /api/v1/user-stories/{id}/comments [post]
+// @Router /api/v1/acceptance-criteria/{id}/comments [post]
+// @Router /api/v1/requirements/{id}/comments [post]
 func (h *CommentHandler) CreateComment(c *gin.Context) {
-	entityTypeParam := c.Param("entityType")
 	entityIDParam := c.Param("id")
 
-	// Parse entity type
-	entityType := models.EntityType(entityTypeParam)
+	// Determine entity type from the route path
+	path := c.FullPath()
+	var entityType models.EntityType
+	switch {
+	case strings.Contains(path, "/epics/"):
+		entityType = models.EntityTypeEpic
+	case strings.Contains(path, "/user-stories/"):
+		entityType = models.EntityTypeUserStory
+	case strings.Contains(path, "/acceptance-criteria/"):
+		entityType = models.EntityTypeAcceptanceCriteria
+	case strings.Contains(path, "/requirements/"):
+		entityType = models.EntityTypeRequirement
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid entity type in route",
+		})
+		return
+	}
 
 	// Parse entity ID
 	entityID, err := uuid.Parse(entityIDParam)
@@ -1229,170 +1247,6 @@ func (h *CommentHandler) validateInlineCommentsForEntity(c *gin.Context, entityT
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Inline comments validated successfully",
 	})
-}
-
-// Entity-specific comment handlers that determine entity type from route context
-
-// CreateEpicComment handles POST /api/v1/epics/:id/comments
-// @Summary Create a new comment on an epic
-// @Description Create a new comment (general or inline) on a specific epic. Supports threaded discussions through parent_comment_id.
-// @Tags epics,comments
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "Epic ID" format(uuid)
-// @Param comment body service.CreateCommentRequest true "Comment creation request"
-// @Success 201 {object} service.CommentResponse "Successfully created epic comment"
-// @Failure 400 {object} map[string]string "Invalid request - malformed epic ID, missing required fields, or invalid inline comment data"
-// @Failure 401 {object} map[string]string "Authentication required"
-// @Failure 404 {object} map[string]string "Epic not found or parent comment not found"
-// @Failure 500 {object} map[string]string "Internal server error"
-// @Router /api/v1/epics/{id}/comments [post]
-func (h *CommentHandler) CreateEpicComment(c *gin.Context) {
-	h.createCommentForEntity(c, models.EntityTypeEpic)
-}
-
-// CreateUserStoryComment handles POST /api/v1/user-stories/:id/comments
-// @Summary Create a new comment on a user story
-// @Description Create a new comment (general or inline) on a specific user story. Supports threaded discussions through parent_comment_id.
-// @Tags user-stories,comments
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "User Story ID" format(uuid)
-// @Param comment body service.CreateCommentRequest true "Comment creation request"
-// @Success 201 {object} service.CommentResponse "Successfully created user story comment"
-// @Failure 400 {object} map[string]string "Invalid request - malformed user story ID, missing required fields, or invalid inline comment data"
-// @Failure 401 {object} map[string]string "Authentication required"
-// @Failure 404 {object} map[string]string "User story not found or parent comment not found"
-// @Failure 500 {object} map[string]string "Internal server error"
-// @Router /api/v1/user-stories/{id}/comments [post]
-func (h *CommentHandler) CreateUserStoryComment(c *gin.Context) {
-	h.createCommentForEntity(c, models.EntityTypeUserStory)
-}
-
-// CreateAcceptanceCriteriaComment handles POST /api/v1/acceptance-criteria/:id/comments
-// @Summary Create a new comment on acceptance criteria
-// @Description Create a new comment (general or inline) on specific acceptance criteria. Supports threaded discussions through parent_comment_id.
-// @Tags acceptance-criteria,comments
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "Acceptance Criteria ID" format(uuid)
-// @Param comment body service.CreateCommentRequest true "Comment creation request"
-// @Success 201 {object} service.CommentResponse "Successfully created acceptance criteria comment"
-// @Failure 400 {object} map[string]string "Invalid request - malformed acceptance criteria ID, missing required fields, or invalid inline comment data"
-// @Failure 401 {object} map[string]string "Authentication required"
-// @Failure 404 {object} map[string]string "Acceptance criteria not found or parent comment not found"
-// @Failure 500 {object} map[string]string "Internal server error"
-// @Router /api/v1/acceptance-criteria/{id}/comments [post]
-func (h *CommentHandler) CreateAcceptanceCriteriaComment(c *gin.Context) {
-	h.createCommentForEntity(c, models.EntityTypeAcceptanceCriteria)
-}
-
-// CreateRequirementComment handles POST /api/v1/requirements/:id/comments
-// @Summary Create a new comment on a requirement
-// @Description Create a new comment (general or inline) on a specific requirement. Supports threaded discussions through parent_comment_id.
-// @Tags requirements,comments
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "Requirement ID" format(uuid)
-// @Param comment body service.CreateCommentRequest true "Comment creation request"
-// @Success 201 {object} service.CommentResponse "Successfully created requirement comment"
-// @Failure 400 {object} map[string]string "Invalid request - malformed requirement ID, missing required fields, or invalid inline comment data"
-// @Failure 401 {object} map[string]string "Authentication required"
-// @Failure 404 {object} map[string]string "Requirement not found or parent comment not found"
-// @Failure 500 {object} map[string]string "Internal server error"
-// @Router /api/v1/requirements/{id}/comments [post]
-func (h *CommentHandler) CreateRequirementComment(c *gin.Context) {
-	h.createCommentForEntity(c, models.EntityTypeRequirement)
-}
-
-// createCommentForEntity is a helper function for entity-specific comment creation
-func (h *CommentHandler) createCommentForEntity(c *gin.Context, entityType models.EntityType) {
-	entityIDParam := c.Param("id")
-
-	// Parse entity ID
-	entityID, err := uuid.Parse(entityIDParam)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid entity ID format",
-		})
-		return
-	}
-
-	var req service.CreateCommentRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request body",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	// Get current user ID from JWT token context
-	authorID, ok := auth.GetCurrentUserID(c)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "User authentication required",
-		})
-		return
-	}
-
-	// Set entity type, ID, and author ID from context
-	req.EntityType = entityType
-	req.EntityID = entityID
-	req.AuthorID = uuid.MustParse(authorID)
-
-	comment, err := h.commentService.CreateComment(req)
-	if err != nil {
-		switch {
-		case errors.Is(err, service.ErrCommentInvalidEntityType):
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Invalid entity type",
-			})
-		case errors.Is(err, service.ErrCommentEntityNotFound):
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Entity not found",
-			})
-		case errors.Is(err, service.ErrCommentAuthorNotFound):
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Author not found",
-			})
-		case errors.Is(err, service.ErrParentCommentNotFound):
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Parent comment not found",
-			})
-		case errors.Is(err, service.ErrParentCommentWrongEntity):
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Parent comment must be on the same entity",
-			})
-		case errors.Is(err, service.ErrEmptyContent):
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Content cannot be empty",
-			})
-		case errors.Is(err, service.ErrInvalidInlineCommentData):
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Inline comments require linked_text, text_position_start, and text_position_end",
-			})
-		case errors.Is(err, service.ErrInvalidTextPosition):
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Invalid text position: start must be >= 0 and end must be >= start",
-			})
-		case errors.Is(err, service.ErrEmptyLinkedText):
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Linked text cannot be empty for inline comments",
-			})
-		default:
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to create comment",
-			})
-		}
-		return
-	}
-
-	c.JSON(http.StatusCreated, comment)
 }
 
 // GetEpicComments handles GET /api/v1/epics/:id/comments
