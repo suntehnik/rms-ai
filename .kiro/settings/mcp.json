@@ -1,11 +1,16 @@
 {
   "mcpServers": {
-    "requirements-mcp": {
-      "command": "/Users/divaletin/development/product-requirements/bin/requirements-mcp-server",
+    "spexus": {
+      "command": "/usr/local/bin/spexus-mcp",
+      "args": [
+        "-config",
+        "/Users/divaletin/.spexus/config.json.app.spexus.ai"
+      ],
       "disabled": false,
       "autoApprove": [
-        "update_epic",
-        "create_user_story"
+        "search_global",
+        "search_global",
+        "search_requirements"
       ]
     }
   }

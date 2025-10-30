@@ -105,6 +105,7 @@ func TestResourceHandler_ConvertRequirementsURI(t *testing.T) {
 				userStoryService:          nil, // Not needed for these tests
 				requirementService:        nil, // Not needed for these tests
 				acceptanceCriteriaService: nil, // Not needed for these tests
+				requirementTypeRepo:       nil, // Not needed for these tests
 				uriParser:                 NewURIParser(),
 			}
 
@@ -149,6 +150,7 @@ func TestResourceHandler_HandleResourcesRead_WithRequirementsURI(t *testing.T) {
 		userStoryService:          nil,
 		requirementService:        nil,
 		acceptanceCriteriaService: nil,
+		requirementTypeRepo:       nil,
 		uriParser:                 NewURIParser(),
 	}
 
@@ -198,6 +200,7 @@ func TestResourceHandler_HandleResourcesRead_WithRequirementsURI_ReferenceID(t *
 		userStoryService:          nil,
 		requirementService:        nil,
 		acceptanceCriteriaService: nil,
+		requirementTypeRepo:       nil,
 		uriParser:                 NewURIParser(),
 	}
 

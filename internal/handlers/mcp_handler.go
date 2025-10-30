@@ -13,6 +13,7 @@ import (
 	"product-requirements-management/internal/jsonrpc"
 	"product-requirements-management/internal/logger"
 	"product-requirements-management/internal/models"
+	"product-requirements-management/internal/repository"
 	"product-requirements-management/internal/service"
 
 	"github.com/gin-gonic/gin"
@@ -40,9 +41,10 @@ func NewMCPHandler(
 	steeringDocumentService service.SteeringDocumentService,
 	promptService *service.PromptService,
 	resourceService service.ResourceService,
+	requirementTypeRepo repository.RequirementTypeRepository,
 ) *MCPHandler {
 	processor := jsonrpc.NewProcessor()
-	resourceHandler := NewResourceHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService, promptService)
+	resourceHandler := NewResourceHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService, promptService, requirementTypeRepo)
 	toolsHandler := NewToolsHandler(epicService, userStoryService, requirementService, searchService, steeringDocumentService, promptService)
 	promptsHandler := NewPromptsHandler(promptService, epicService, userStoryService, requirementService, acceptanceCriteriaService, logger.Logger)
 	mcpLogger := NewMCPLogger()

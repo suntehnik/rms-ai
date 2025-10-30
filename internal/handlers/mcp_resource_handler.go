@@ -8,6 +8,7 @@ import (
 
 	"product-requirements-management/internal/jsonrpc"
 	"product-requirements-management/internal/models"
+	"product-requirements-management/internal/repository"
 	"product-requirements-management/internal/service"
 
 	"github.com/google/uuid"
@@ -20,6 +21,7 @@ type ResourceHandler struct {
 	requirementService        service.RequirementService
 	acceptanceCriteriaService service.AcceptanceCriteriaService
 	promptService             *service.PromptService
+	requirementTypeRepo       repository.RequirementTypeRepository
 	uriParser                 *URIParser
 }
 
@@ -30,6 +32,7 @@ func NewResourceHandler(
 	requirementService service.RequirementService,
 	acceptanceCriteriaService service.AcceptanceCriteriaService,
 	promptService *service.PromptService,
+	requirementTypeRepo repository.RequirementTypeRepository,
 ) *ResourceHandler {
 	return &ResourceHandler{
 		epicService:               epicService,
@@ -37,6 +40,7 @@ func NewResourceHandler(
 		requirementService:        requirementService,
 		acceptanceCriteriaService: acceptanceCriteriaService,
 		promptService:             promptService,
+		requirementTypeRepo:       requirementTypeRepo,
 		uriParser:                 NewURIParser(),
 	}
 }
@@ -779,6 +783,8 @@ func (rh *ResourceHandler) handleCollectionResource(ctx context.Context, uri str
 		return rh.handleRequirementsCollection(ctx, uri)
 	case "acceptance-criteria":
 		return rh.handleAcceptanceCriteriaCollection(ctx, uri)
+	case "requirements-types":
+		return rh.handleRequirementTypesCollection(ctx, uri)
 	case "prompts":
 		return rh.handlePromptsCollection(ctx, uri)
 	default:
@@ -1119,4 +1125,49 @@ func (rh *ResourceHandler) handleActivePromptResource(ctx context.Context, uri s
 			},
 		},
 	}, nil
+}
+
+// handleRequirementTypesCollection handles requirements://requirements-types collection resource
+// Requirements: REQ-038 - Типы требований должны отображаться в виде ресурса requirements://requirements-types
+// Requirements: REQ-039 - Система должна возвращать список типов требований в определённом формате
+func (rh *ResourceHandler) handleRequirementTypesCollection(_ context.Context, uri string) (interface{}, error) {
+	// Get all requirement types using the repository
+	requirementTypes, err := rh.requirementTypeRepo.List(nil, "name ASC", 1000, 0)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get requirement types: %v", err))
+	}
+
+	// Format as collection resource according to REQ-039 format
+	return rh.formatRequirementTypesCollectionResource(uri, requirementTypes), nil
+}
+
+// formatRequirementTypesCollectionResource formats a collection of requirement types as a resource response
+// Requirements: REQ-039 - Система должна возвращать список типов требований в определённом формате
+func (rh *ResourceHandler) formatRequirementTypesCollectionResource(uri string, requirementTypes []models.RequirementType) *ResourceResponse {
+	requirementTypesData := make([]any, len(requirementTypes))
+	for i, rt := range requirementTypes {
+		// Format according to REQ-039: { "id": "uuid", "name": "string", "description": "string" }
+		requirementTypesData[i] = map[string]any{
+			"id":          rt.ID,
+			"name":        rt.Name,
+			"description": rt.Description,
+		}
+	}
+
+	contents := map[string]any{
+		"requirement_types": requirementTypesData,
+		"count":             len(requirementTypes),
+	}
+
+	contentsJSON, _ := json.Marshal(contents)
+
+	return &ResourceResponse{
+		Contents: []ResourceContents{
+			{
+				URI:      uri,
+				MimeType: "application/json",
+				Text:     string(contentsJSON),
+			},
+		},
+	}
 }
