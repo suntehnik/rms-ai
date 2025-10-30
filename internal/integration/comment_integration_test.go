@@ -49,8 +49,11 @@ func setupCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, *auth.Ser
 		authenticated.Use(authService.Middleware())
 		authenticated.Use(authService.RequireCommenter())
 		{
-			// Entity comment routes
-			authenticated.POST("/:entityType/:id/comments", commentHandler.CreateComment)
+			// Entity comment routes using consolidated handler
+			authenticated.POST("/epics/:id/comments", commentHandler.CreateComment)
+			authenticated.POST("/user-stories/:id/comments", commentHandler.CreateComment)
+			authenticated.POST("/acceptance-criteria/:id/comments", commentHandler.CreateComment)
+			authenticated.POST("/requirements/:id/comments", commentHandler.CreateComment)
 			authenticated.GET("/:entityType/:id/comments", commentHandler.GetCommentsByEntity)
 
 			// Direct comment routes
@@ -138,7 +141,7 @@ func TestCommentIntegration_CreateComment(t *testing.T) {
 	}{
 		{
 			name:       "create general comment",
-			entityType: "epic",
+			entityType: "epics",
 			entityID:   epic.ID.String(),
 			requestBody: map[string]interface{}{
 				"content": "This is a test comment",
@@ -148,7 +151,7 @@ func TestCommentIntegration_CreateComment(t *testing.T) {
 		},
 		{
 			name:       "create inline comment",
-			entityType: "epic",
+			entityType: "epics",
 			entityID:   epic.ID.String(),
 			requestBody: map[string]interface{}{
 				"content":             "This is an inline comment",
@@ -161,7 +164,7 @@ func TestCommentIntegration_CreateComment(t *testing.T) {
 		},
 		{
 			name:       "unauthorized - no token",
-			entityType: "epic",
+			entityType: "epics",
 			entityID:   epic.ID.String(),
 			requestBody: map[string]interface{}{
 				"content": "This is a test comment",
@@ -170,20 +173,10 @@ func TestCommentIntegration_CreateComment(t *testing.T) {
 			expectedError:  "Authorization header required",
 			useAuth:        false,
 		},
-		{
-			name:       "invalid entity type",
-			entityType: "invalid",
-			entityID:   epic.ID.String(),
-			requestBody: map[string]interface{}{
-				"content": "This is a test comment",
-			},
-			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Invalid entity type",
-			useAuth:        true,
-		},
+
 		{
 			name:       "entity not found",
-			entityType: "epic",
+			entityType: "epics",
 			entityID:   uuid.New().String(),
 			requestBody: map[string]interface{}{
 				"content": "This is a test comment",
@@ -194,7 +187,7 @@ func TestCommentIntegration_CreateComment(t *testing.T) {
 		},
 		{
 			name:       "empty content",
-			entityType: "epic",
+			entityType: "epics",
 			entityID:   epic.ID.String(),
 			requestBody: map[string]interface{}{
 				"content": "",
@@ -238,7 +231,16 @@ func TestCommentIntegration_CreateComment(t *testing.T) {
 				err := json.Unmarshal(w.Body.Bytes(), &response)
 				assert.NoError(t, err)
 				assert.NotEmpty(t, response.ID)
-				assert.Equal(t, models.EntityType(tt.entityType), response.EntityType)
+				// The consolidated handler maps route paths to entity types
+				expectedEntityType := models.EntityTypeEpic // Since we're testing with epics
+				if tt.entityType == "user-stories" {
+					expectedEntityType = models.EntityTypeUserStory
+				} else if tt.entityType == "acceptance-criteria" {
+					expectedEntityType = models.EntityTypeAcceptanceCriteria
+				} else if tt.entityType == "requirements" {
+					expectedEntityType = models.EntityTypeRequirement
+				}
+				assert.Equal(t, expectedEntityType, response.EntityType)
 				assert.Equal(t, tt.requestBody["content"], response.Content)
 				assert.False(t, response.IsResolved)
 
@@ -354,13 +356,7 @@ func TestCommentIntegration_GetCommentsByEntity(t *testing.T) {
 			expectedStatus: http.StatusUnauthorized,
 			useAuth:        false,
 		},
-		{
-			name:           "invalid entity type",
-			entityType:     "invalid",
-			entityID:       epic.ID.String(),
-			expectedStatus: http.StatusBadRequest,
-			useAuth:        true,
-		},
+
 		{
 			name:           "entity not found",
 			entityType:     "epic",

@@ -28,21 +28,41 @@ func NewRequirementHandler(requirementService service.RequirementService) *Requi
 	}
 }
 
-// CreateRequirement handles POST /api/v1/requirements
-// @Summary Create a new requirement
-// @Description Create a new detailed requirement with specified properties. Requires a valid user story ID, creator, and requirement type. The assignee defaults to the creator if not specified. Requires User or Administrator role.
-// @Tags requirements
+// CreateRequirement handles both POST /api/v1/requirements and POST /api/v1/user-stories/:id/requirements
+// @Summary Create a requirement (standalone or within a user story)
+// @Description Create a new detailed requirement. When called via /api/v1/user-stories/:id/requirements, the user story ID from the URL path will be used as the parent. When called via /api/v1/requirements, the user_story_id must be provided in the request body.
+// @Tags requirements,user-stories
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param requirement body service.CreateRequirementRequest true "Requirement creation request with all required fields"
+// @Param id path string false "User story UUID (only for nested creation)" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
+// @Param requirement body service.CreateRequirementRequest true "Requirement creation request"
 // @Success 201 {object} models.Requirement "Successfully created requirement"
-// @Failure 400 {object} map[string]interface{} "Invalid request body, creator/assignee not found, user story not found, requirement type not found, acceptance criteria not found, or invalid priority"
+// @Failure 400 {object} map[string]interface{} "Invalid user story ID format, request body, creator/assignee not found, user story not found, requirement type not found, acceptance criteria not found, or invalid priority"
 // @Failure 401 {object} map[string]interface{} "Authentication required"
-// @Failure 403 {object} map[string]interface{} "User or Administrator role required"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/requirements [post]
+// @Router /api/v1/user-stories/{id}/requirements [post]
 func (h *RequirementHandler) CreateRequirement(c *gin.Context) {
+	// Check if this is a nested creation (user story ID in path)
+	userStoryIDParam := c.Param("id")
+	var isNestedCreation bool
+	var userStoryID uuid.UUID
+	var err error
+
+	if userStoryIDParam != "" {
+		// This is nested creation: POST /api/v1/user-stories/:id/requirements
+		isNestedCreation = true
+		if id, parseErr := uuid.Parse(userStoryIDParam); parseErr == nil {
+			userStoryID = id
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid user story ID format",
+			})
+			return
+		}
+	}
+
 	var req service.CreateRequirementRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -64,107 +84,9 @@ func (h *RequirementHandler) CreateRequirement(c *gin.Context) {
 	// Set the creator ID from the authenticated user
 	req.CreatorID = uuid.MustParse(creatorID)
 
-	requirement, err := h.requirementService.CreateRequirement(req)
-	if err != nil {
-		switch {
-		case errors.Is(err, service.ErrUserNotFound):
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Creator or assignee not found",
-			})
-		case errors.Is(err, service.ErrUserStoryNotFound):
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "User story not found",
-			})
-		case errors.Is(err, service.ErrRequirementTypeNotFound):
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Requirement type not found",
-			})
-		case errors.Is(err, service.ErrAcceptanceCriteriaNotFound):
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Acceptance criteria not found",
-			})
-		case errors.Is(err, service.ErrInvalidPriority):
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Invalid priority value",
-			})
-		default:
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to create requirement",
-			})
-		}
-		return
-	}
-
-	c.JSON(http.StatusCreated, requirement)
-}
-
-// CreateRequirementInUserStory handles POST /api/v1/user-stories/:id/requirements
-// @Summary Create a requirement within a user story
-// @Description Create a new detailed requirement that belongs to the specified user story. This is a nested resource creation that establishes the parent-child relationship between user story and requirement. The user story ID from the URL path will be used as the parent.
-// @Tags user-stories
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "User story UUID" format(uuid) example("123e4567-e89b-12d3-a456-426614174000")
-// @Param requirement body object true "Requirement creation request (user_story_id will be set from path parameter)" example({"creator_id":"123e4567-e89b-12d3-a456-426614174001","priority":2,"type_id":"123e4567-e89b-12d3-a456-426614174002","title":"User authentication validation","description":"The system must validate user credentials against the database"})
-// @Success 201 {object} models.Requirement "Successfully created requirement within user story"
-// @Failure 400 {object} map[string]interface{} "Invalid user story ID format, request body, creator/assignee not found, user story not found, requirement type not found, acceptance criteria not found, or invalid priority"
-// @Failure 401 {object} map[string]interface{} "Authentication required"
-// @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /api/v1/user-stories/{id}/requirements [post]
-func (h *RequirementHandler) CreateRequirementInUserStory(c *gin.Context) {
-	userStoryIDParam := c.Param("id")
-
-	// Try to parse as UUID first, then as reference ID
-	var userStoryID uuid.UUID
-	var err error
-
-	if id, parseErr := uuid.Parse(userStoryIDParam); parseErr == nil {
-		userStoryID = id
-	} else {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid user story ID format",
-		})
-		return
-	}
-
-	// Use a struct without required UserStoryID and CreatorID for this endpoint
-	var reqBody struct {
-		AcceptanceCriteriaID *uuid.UUID      `json:"acceptance_criteria_id,omitempty"`
-		AssigneeID           *uuid.UUID      `json:"assignee_id,omitempty"`
-		Priority             models.Priority `json:"priority" binding:"required,min=1,max=4"`
-		TypeID               uuid.UUID       `json:"type_id" binding:"required"`
-		Title                string          `json:"title" binding:"required,max=500"`
-		Description          *string         `json:"description,omitempty"`
-	}
-
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request body",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	// Get current user ID from JWT token context
-	creatorID, ok := auth.GetCurrentUserID(c)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "User authentication required",
-		})
-		return
-	}
-
-	// Create the full request with user story ID from URL and creator ID from context
-	req := service.CreateRequirementRequest{
-		UserStoryID:          userStoryID,
-		AcceptanceCriteriaID: reqBody.AcceptanceCriteriaID,
-		CreatorID:            uuid.MustParse(creatorID),
-		AssigneeID:           reqBody.AssigneeID,
-		Priority:             reqBody.Priority,
-		TypeID:               reqBody.TypeID,
-		Title:                reqBody.Title,
-		Description:          reqBody.Description,
+	// For nested creation, override the user story ID from the URL path
+	if isNestedCreation {
+		req.UserStoryID = userStoryID
 	}
 
 	requirement, err := h.requirementService.CreateRequirement(req)

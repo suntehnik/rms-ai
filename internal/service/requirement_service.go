@@ -197,9 +197,9 @@ func (s *requirementService) GetRequirementByID(id uuid.UUID) (*models.Requireme
 	return requirement, nil
 }
 
-// GetRequirementByReferenceID retrieves a requirement by its reference ID
+// GetRequirementByReferenceID retrieves a requirement by its reference ID with all relationships preloaded
 func (s *requirementService) GetRequirementByReferenceID(referenceID string) (*models.Requirement, error) {
-	requirement, err := s.requirementRepo.GetByReferenceID(referenceID)
+	requirement, err := s.requirementRepo.GetByReferenceIDWithPreloads(referenceID)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return nil, ErrRequirementNotFound

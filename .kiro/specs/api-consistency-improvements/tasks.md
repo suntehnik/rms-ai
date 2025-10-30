@@ -62,19 +62,19 @@
   - _Requirements: 2.7_
 
 
-- [ ] 3. Consolidate handlers
-- [ ] 3.1 Consolidate acceptance criteria creation handlers
+- [x] 3. Consolidate handlers
+- [x] 3.1 Consolidate acceptance criteria creation handlers
   - Remove unused `CreateAcceptanceCriteria` handler if it exists
   - Rename `CreateAcceptanceCriteriaInUserStory` to `CreateAcceptanceCriteria` in `internal/handlers/acceptance_criteria_handler.go`
   - Update routing to use consolidated handler
   - _Requirements: 3.1_
 
-- [ ] 3.2 Consolidate requirement creation handlers
+- [x] 3.2 Consolidate requirement creation handlers
   - Rename `CreateRequirementInUserStory` to `CreateRequirement` in `internal/handlers/requirement_handler.go`
   - Update routing to use consolidated handler for nested creation
   - _Requirements: 3.2_
 
-- [ ] 3.3 Consolidate comment creation handlers
+- [x] 3.3 Consolidate comment creation handlers
   - Replace `CreateEpicComment`, `CreateUserStoryComment`, `CreateAcceptanceCriteriaComment`, `CreateRequirementComment` with single `CreateComment` method
   - Update routing to use parameterized entity type routing
   - Modify existing `CreateComment` method to handle all entity types

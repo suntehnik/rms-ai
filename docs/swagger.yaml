@@ -2360,72 +2360,6 @@ paths:
       summary: Get all comments for an entity
       tags:
       - comments
-    post:
-      consumes:
-      - application/json
-      description: Create a new comment (general or inline) on any entity type (epic,
-        user_story, acceptance_criteria, requirement). Supports threaded discussions
-        through parent_comment_id.
-      parameters:
-      - description: Entity type
-        enum:
-        - epic
-        - user_story
-        - acceptance_criteria
-        - requirement
-        in: path
-        name: entityType
-        required: true
-        type: string
-      - description: Entity ID
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Comment creation request
-        in: body
-        name: comment
-        required: true
-        schema:
-          $ref: '#/definitions/product-requirements-management_internal_service.CreateCommentRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Successfully created comment
-          schema:
-            $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
-        "400":
-          description: Invalid request - malformed entity ID, invalid entity type,
-            missing required fields, or invalid inline comment data
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Authentication required
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Entity not found or parent comment not found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Create a new comment on an entity
-      tags:
-      - comments
   /api/v1/{entityType}/{id}/comments/inline:
     post:
       consumes:
@@ -2683,6 +2617,49 @@ paths:
       summary: List acceptance criteria with filtering and pagination
       tags:
       - acceptance-criteria
+    post:
+      consumes:
+      - application/json
+      description: Create new acceptance criteria. When called via /api/v1/user-stories/:id/acceptance-criteria,
+        the user story ID from the URL path will be used as the parent. When called
+        via /api/v1/acceptance-criteria, the user_story_id must be provided in the
+        request body.
+      parameters:
+      - description: Acceptance criteria creation request
+        in: body
+        name: acceptance_criteria
+        required: true
+        schema:
+          $ref: '#/definitions/product-requirements-management_internal_service.CreateAcceptanceCriteriaRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created acceptance criteria
+          schema:
+            $ref: '#/definitions/product-requirements-management_internal_models.AcceptanceCriteria'
+        "400":
+          description: Invalid user story ID format, request body, user story not
+            found, or author not found
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create acceptance criteria (standalone or within a user story)
+      tags:
+      - acceptance-criteria
+      - user-stories
   /api/v1/acceptance-criteria/{id}:
     delete:
       consumes:
@@ -2901,10 +2878,12 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new comment (general or inline) on specific acceptance
-        criteria. Supports threaded discussions through parent_comment_id.
+      description: Create a new comment (general or inline) on any entity type (epic,
+        user_story, acceptance_criteria, requirement). Supports threaded discussions
+        through parent_comment_id. This consolidated method handles all entity types
+        through a single interface.
       parameters:
-      - description: Acceptance Criteria ID
+      - description: Entity ID
         format: uuid
         in: path
         name: id
@@ -2920,12 +2899,12 @@ paths:
       - application/json
       responses:
         "201":
-          description: Successfully created acceptance criteria comment
+          description: Successfully created comment
           schema:
             $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
         "400":
-          description: Invalid request - malformed acceptance criteria ID, missing
-            required fields, or invalid inline comment data
+          description: Invalid request - malformed entity ID, invalid entity type,
+            missing required fields, or invalid inline comment data
           schema:
             additionalProperties:
               type: string
@@ -2937,7 +2916,7 @@ paths:
               type: string
             type: object
         "404":
-          description: Acceptance criteria not found or parent comment not found
+          description: Entity not found or parent comment not found
           schema:
             additionalProperties:
               type: string
@@ -2950,9 +2929,8 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Create a new comment on acceptance criteria
+      summary: Create a new comment on an entity
       tags:
-      - acceptance-criteria
       - comments
   /api/v1/acceptance-criteria/{id}/comments/inline:
     post:
@@ -5272,10 +5250,12 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new comment (general or inline) on a specific epic. Supports
-        threaded discussions through parent_comment_id.
+      description: Create a new comment (general or inline) on any entity type (epic,
+        user_story, acceptance_criteria, requirement). Supports threaded discussions
+        through parent_comment_id. This consolidated method handles all entity types
+        through a single interface.
       parameters:
-      - description: Epic ID
+      - description: Entity ID
         format: uuid
         in: path
         name: id
@@ -5291,12 +5271,12 @@ paths:
       - application/json
       responses:
         "201":
-          description: Successfully created epic comment
+          description: Successfully created comment
           schema:
             $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
         "400":
-          description: Invalid request - malformed epic ID, missing required fields,
-            or invalid inline comment data
+          description: Invalid request - malformed entity ID, invalid entity type,
+            missing required fields, or invalid inline comment data
           schema:
             additionalProperties:
               type: string
@@ -5308,7 +5288,7 @@ paths:
               type: string
             type: object
         "404":
-          description: Epic not found or parent comment not found
+          description: Entity not found or parent comment not found
           schema:
             additionalProperties:
               type: string
@@ -5321,9 +5301,8 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Create a new comment on an epic
+      summary: Create a new comment on an entity
       tags:
-      - epics
       - comments
   /api/v1/epics/{id}/comments/inline:
     post:
@@ -6294,11 +6273,12 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new detailed requirement with specified properties. Requires
-        a valid user story ID, creator, and requirement type. The assignee defaults
-        to the creator if not specified. Requires User or Administrator role.
+      description: Create a new detailed requirement. When called via /api/v1/user-stories/:id/requirements,
+        the user story ID from the URL path will be used as the parent. When called
+        via /api/v1/requirements, the user_story_id must be provided in the request
+        body.
       parameters:
-      - description: Requirement creation request with all required fields
+      - description: Requirement creation request
         in: body
         name: requirement
         required: true
@@ -6312,19 +6292,14 @@ paths:
           schema:
             $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
         "400":
-          description: Invalid request body, creator/assignee not found, user story
-            not found, requirement type not found, acceptance criteria not found,
-            or invalid priority
+          description: Invalid user story ID format, request body, creator/assignee
+            not found, user story not found, requirement type not found, acceptance
+            criteria not found, or invalid priority
           schema:
             additionalProperties: true
             type: object
         "401":
           description: Authentication required
-          schema:
-            additionalProperties: true
-            type: object
-        "403":
-          description: User or Administrator role required
           schema:
             additionalProperties: true
             type: object
@@ -6335,9 +6310,10 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Create a new requirement
+      summary: Create a requirement (standalone or within a user story)
       tags:
       - requirements
+      - user-stories
   /api/v1/requirements/{id}:
     delete:
       consumes:
@@ -6610,10 +6586,12 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new comment (general or inline) on a specific requirement.
-        Supports threaded discussions through parent_comment_id.
+      description: Create a new comment (general or inline) on any entity type (epic,
+        user_story, acceptance_criteria, requirement). Supports threaded discussions
+        through parent_comment_id. This consolidated method handles all entity types
+        through a single interface.
       parameters:
-      - description: Requirement ID
+      - description: Entity ID
         format: uuid
         in: path
         name: id
@@ -6629,12 +6607,12 @@ paths:
       - application/json
       responses:
         "201":
-          description: Successfully created requirement comment
+          description: Successfully created comment
           schema:
             $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
         "400":
-          description: Invalid request - malformed requirement ID, missing required
-            fields, or invalid inline comment data
+          description: Invalid request - malformed entity ID, invalid entity type,
+            missing required fields, or invalid inline comment data
           schema:
             additionalProperties:
               type: string
@@ -6646,7 +6624,7 @@ paths:
               type: string
             type: object
         "404":
-          description: Requirement not found or parent comment not found
+          description: Entity not found or parent comment not found
           schema:
             additionalProperties:
               type: string
@@ -6659,9 +6637,8 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Create a new comment on a requirement
+      summary: Create a new comment on an entity
       tags:
-      - requirements
       - comments
   /api/v1/requirements/{id}/comments/inline:
     post:
@@ -7746,20 +7723,18 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create new acceptance criteria that belongs to the specified user
-        story. This is a nested resource creation that establishes the parent-child
-        relationship between user story and acceptance criteria. The user story ID
-        from the URL path will be used as the parent.
+      description: Create new acceptance criteria. When called via /api/v1/user-stories/:id/acceptance-criteria,
+        the user story ID from the URL path will be used as the parent. When called
+        via /api/v1/acceptance-criteria, the user_story_id must be provided in the
+        request body.
       parameters:
-      - description: User story UUID
+      - description: User story UUID (only for nested creation)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
         format: uuid
         in: path
         name: id
-        required: true
         type: string
-      - description: Acceptance criteria creation request (user_story_id will be set
-          from path parameter)
+      - description: Acceptance criteria creation request
         in: body
         name: acceptance_criteria
         required: true
@@ -7769,7 +7744,7 @@ paths:
       - application/json
       responses:
         "201":
-          description: Successfully created acceptance criteria within user story
+          description: Successfully created acceptance criteria
           schema:
             $ref: '#/definitions/product-requirements-management_internal_models.AcceptanceCriteria'
         "400":
@@ -7790,8 +7765,9 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Create acceptance criteria within a user story
+      summary: Create acceptance criteria (standalone or within a user story)
       tags:
+      - acceptance-criteria
       - user-stories
   /api/v1/user-stories/{id}/assign:
     patch:
@@ -7915,10 +7891,12 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new comment (general or inline) on a specific user story.
-        Supports threaded discussions through parent_comment_id.
+      description: Create a new comment (general or inline) on any entity type (epic,
+        user_story, acceptance_criteria, requirement). Supports threaded discussions
+        through parent_comment_id. This consolidated method handles all entity types
+        through a single interface.
       parameters:
-      - description: User Story ID
+      - description: Entity ID
         format: uuid
         in: path
         name: id
@@ -7934,12 +7912,12 @@ paths:
       - application/json
       responses:
         "201":
-          description: Successfully created user story comment
+          description: Successfully created comment
           schema:
             $ref: '#/definitions/product-requirements-management_internal_service.CommentResponse'
         "400":
-          description: Invalid request - malformed user story ID, missing required
-            fields, or invalid inline comment data
+          description: Invalid request - malformed entity ID, invalid entity type,
+            missing required fields, or invalid inline comment data
           schema:
             additionalProperties:
               type: string
@@ -7951,7 +7929,7 @@ paths:
               type: string
             type: object
         "404":
-          description: User story not found or parent comment not found
+          description: Entity not found or parent comment not found
           schema:
             additionalProperties:
               type: string
@@ -7964,9 +7942,8 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Create a new comment on a user story
+      summary: Create a new comment on an entity
       tags:
-      - user-stories
       - comments
   /api/v1/user-stories/{id}/comments/inline:
     post:
@@ -8173,30 +8150,28 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new detailed requirement that belongs to the specified
-        user story. This is a nested resource creation that establishes the parent-child
-        relationship between user story and requirement. The user story ID from the
-        URL path will be used as the parent.
+      description: Create a new detailed requirement. When called via /api/v1/user-stories/:id/requirements,
+        the user story ID from the URL path will be used as the parent. When called
+        via /api/v1/requirements, the user_story_id must be provided in the request
+        body.
       parameters:
-      - description: User story UUID
+      - description: User story UUID (only for nested creation)
         example: '"123e4567-e89b-12d3-a456-426614174000"'
         format: uuid
         in: path
         name: id
-        required: true
         type: string
-      - description: Requirement creation request (user_story_id will be set from
-          path parameter)
+      - description: Requirement creation request
         in: body
         name: requirement
         required: true
         schema:
-          type: object
+          $ref: '#/definitions/product-requirements-management_internal_service.CreateRequirementRequest'
       produces:
       - application/json
       responses:
         "201":
-          description: Successfully created requirement within user story
+          description: Successfully created requirement
           schema:
             $ref: '#/definitions/product-requirements-management_internal_models.Requirement'
         "400":
@@ -8218,8 +8193,9 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Create a requirement within a user story
+      summary: Create a requirement (standalone or within a user story)
       tags:
+      - requirements
       - user-stories
   /api/v1/user-stories/{id}/status:
     patch:

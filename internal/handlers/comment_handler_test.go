@@ -162,25 +162,25 @@ func setupGinRouter(handler *CommentHandler, authService *auth.Service) *gin.Eng
 			epics := authenticated.Group("/epics")
 			{
 				epics.GET("/:id/comments", handler.GetEpicComments)
-				epics.POST("/:id/comments", handler.CreateEpicComment)
+				epics.POST("/:id/comments", handler.CreateComment)
 			}
 
 			userStories := authenticated.Group("/user-stories")
 			{
 				userStories.GET("/:id/comments", handler.GetUserStoryComments)
-				userStories.POST("/:id/comments", handler.CreateUserStoryComment)
+				userStories.POST("/:id/comments", handler.CreateComment)
 			}
 
 			acceptanceCriteria := authenticated.Group("/acceptance-criteria")
 			{
 				acceptanceCriteria.GET("/:id/comments", handler.GetAcceptanceCriteriaComments)
-				acceptanceCriteria.POST("/:id/comments", handler.CreateAcceptanceCriteriaComment)
+				acceptanceCriteria.POST("/:id/comments", handler.CreateComment)
 			}
 
 			requirements := authenticated.Group("/requirements")
 			{
 				requirements.GET("/:id/comments", handler.GetRequirementComments)
-				requirements.POST("/:id/comments", handler.CreateRequirementComment)
+				requirements.POST("/:id/comments", handler.CreateComment)
 			}
 		}
 	}
