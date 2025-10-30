@@ -20,6 +20,7 @@ func TestSetupResourceService(t *testing.T) {
 		mockEpicRepo,
 		mockUserStoryRepo,
 		mockRequirementRepo,
+		nil, // mockRequirementTypeRepo
 		nil, // Test nil logger handling
 	)
 
@@ -49,6 +50,7 @@ func TestSetupResourceService_ProviderRegistration(t *testing.T) {
 		mockEpicRepo,
 		mockUserStoryRepo,
 		mockRequirementRepo,
+		nil, // mockRequirementTypeRepo
 		logger,
 	)
 
@@ -61,7 +63,7 @@ func TestSetupResourceService_ProviderRegistration(t *testing.T) {
 	assert.True(t, ok, "Registry should be of type ResourceRegistryImpl")
 
 	// Verify that all 4 providers were registered (epic, user story, requirement, search)
-	assert.Len(t, registryImpl.providers, 4, "Should have 4 providers registered")
+	assert.Len(t, registryImpl.providers, 5, "Should have 4 providers registered")
 
 	// Verify provider names
 	providerNames := make([]string, len(registryImpl.providers))
@@ -69,7 +71,7 @@ func TestSetupResourceService_ProviderRegistration(t *testing.T) {
 		providerNames[i] = provider.GetProviderName()
 	}
 
-	expectedProviders := []string{"epic_provider", "user_story_provider", "requirement_provider", "search_provider"}
+	expectedProviders := []string{"epic_provider", "user_story_provider", "requirement_provider", "requirement_type_provider", "search_provider"}
 	assert.ElementsMatch(t, expectedProviders, providerNames, "Should have all expected providers")
 }
 
@@ -113,6 +115,7 @@ func TestSetupResourceService_NilLoggerHandling(t *testing.T) {
 		mockEpicRepo,
 		mockUserStoryRepo,
 		mockRequirementRepo,
+		nil,
 		nil, // Explicitly test nil logger
 	)
 

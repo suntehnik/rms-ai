@@ -13,6 +13,7 @@ func SetupResourceService(
 	epicRepo repository.EpicRepository,
 	userStoryRepo repository.UserStoryRepository,
 	requirementRepo repository.RequirementRepository,
+	requirementTypeRepo repository.RequirementTypeRepository,
 	logger *logrus.Logger,
 ) ResourceService {
 	// Handle nil logger case (e.g., in tests where logger might not be initialized)
@@ -45,6 +46,12 @@ func SetupResourceService(
 	registry.RegisterProvider(requirementProvider)
 	logger.WithField("provider", requirementProvider.GetProviderName()).Debug("Registered requirement resource provider")
 
+	// Requirement type resource provider - provides requirement types collection resource
+	// Requirements: REQ-038 - Типы требований должны отображаться в виде ресурса requirements://requirements-types
+	requirementTypeProvider := NewRequirementTypeResourceProvider(requirementTypeRepo, logger)
+	registry.RegisterProvider(requirementTypeProvider)
+	logger.WithField("provider", requirementTypeProvider.GetProviderName()).Debug("Registered requirement type resource provider")
+
 	// Search resource provider - provides search template resources (no database dependency)
 	searchProvider := NewSearchResourceProvider(logger)
 	registry.RegisterProvider(searchProvider)
@@ -56,11 +63,12 @@ func SetupResourceService(
 	logger.WithFields(logrus.Fields{
 		"component":       "resource_setup",
 		"operation":       "SetupResourceService",
-		"providers_count": 4,
+		"providers_count": 5,
 		"providers": []string{
 			epicProvider.GetProviderName(),
 			userStoryProvider.GetProviderName(),
 			requirementProvider.GetProviderName(),
+			requirementTypeProvider.GetProviderName(),
 			searchProvider.GetProviderName(),
 		},
 	}).Info("Successfully initialized MCP resource service with all providers")
@@ -88,6 +96,7 @@ func SetupResourceServiceForMCPHandler(repos *repository.Repositories, logger *l
 		repos.Epic,
 		repos.UserStory,
 		repos.Requirement,
+		repos.RequirementType,
 		logger,
 	)
 

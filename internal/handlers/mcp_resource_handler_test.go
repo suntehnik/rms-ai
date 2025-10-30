@@ -10,7 +10,7 @@ import (
 )
 
 func TestResourceHandler_HandleResourcesRead_InvalidParams(t *testing.T) {
-	handler := NewResourceHandler(nil, nil, nil, nil, nil)
+	handler := NewResourceHandler(nil, nil, nil, nil, nil, nil)
 
 	tests := []struct {
 		name   string
@@ -54,7 +54,7 @@ func TestResourceHandler_HandleResourcesRead_InvalidParams(t *testing.T) {
 }
 
 func TestResourceHandler_URIParser(t *testing.T) {
-	handler := NewResourceHandler(nil, nil, nil, nil, nil)
+	handler := NewResourceHandler(nil, nil, nil, nil, nil, nil)
 
 	tests := []struct {
 		name        string
@@ -126,7 +126,7 @@ func TestResourceHandler_URIParser(t *testing.T) {
 }
 
 func TestResourceHandler_NewResourceHandler(t *testing.T) {
-	handler := NewResourceHandler(nil, nil, nil, nil, nil)
+	handler := NewResourceHandler(nil, nil, nil, nil, nil, nil)
 
 	assert.NotNil(t, handler)
 	assert.NotNil(t, handler.uriParser)
