@@ -95,6 +95,7 @@ func (suite *RequirementIntegrationTestSuite) SetupSuite() {
 		v1.POST("/requirements/relationships", suite.requirementHandler.CreateRelationship)
 		v1.DELETE("/requirement-relationships/:id", suite.requirementHandler.DeleteRelationship)
 		v1.GET("/requirements/search", suite.requirementHandler.SearchRequirements)
+		// Use consolidated handler for nested creation
 		v1.POST("/user-stories/:id/requirements", suite.requirementHandler.CreateRequirement)
 	}
 }
@@ -209,6 +210,7 @@ func (suite *RequirementIntegrationTestSuite) TestCreateRequirement() {
 
 func (suite *RequirementIntegrationTestSuite) TestCreateRequirementInUserStory() {
 	reqBody := service.CreateRequirementRequest{
+		UserStoryID: suite.testUserStory.ID, // Required for validation, will be overridden by handler
 		CreatorID:   suite.testUser.ID,
 		Priority:    models.PriorityMedium,
 		TypeID:      suite.testRequirementType.ID,
