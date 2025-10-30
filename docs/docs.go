@@ -783,6 +783,65 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create new acceptance criteria. When called via /api/v1/user-stories/:id/acceptance-criteria, the user story ID from the URL path will be used as the parent. When called via /api/v1/acceptance-criteria, the user_story_id must be provided in the request body.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "acceptance-criteria",
+                    "user-stories"
+                ],
+                "summary": "Create acceptance criteria (standalone or within a user story)",
+                "parameters": [
+                    {
+                        "description": "Acceptance criteria creation request",
+                        "name": "acceptance_criteria",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateAcceptanceCriteriaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created acceptance criteria",
+                        "schema": {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.AcceptanceCriteria"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user story ID format, request body, user story not found, or author not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
             }
         },
         "/api/v1/acceptance-criteria/{id}": {
@@ -1094,7 +1153,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Create a new comment (general or inline) on specific acceptance criteria. Supports threaded discussions through parent_comment_id.",
+                "description": "Create a new comment (general or inline) on any entity type (epic, user_story, acceptance_criteria, requirement). Supports threaded discussions through parent_comment_id. This consolidated method handles all entity types through a single interface.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1102,15 +1161,14 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "acceptance-criteria",
                     "comments"
                 ],
-                "summary": "Create a new comment on acceptance criteria",
+                "summary": "Create a new comment on an entity",
                 "parameters": [
                     {
                         "type": "string",
                         "format": "uuid",
-                        "description": "Acceptance Criteria ID",
+                        "description": "Entity ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1127,13 +1185,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Successfully created acceptance criteria comment",
+                        "description": "Successfully created comment",
                         "schema": {
                             "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid request - malformed acceptance criteria ID, missing required fields, or invalid inline comment data",
+                        "description": "Invalid request - malformed entity ID, invalid entity type, missing required fields, or invalid inline comment data",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1151,7 +1209,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Acceptance criteria not found or parent comment not found",
+                        "description": "Entity not found or parent comment not found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -4536,7 +4594,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Create a new comment (general or inline) on a specific epic. Supports threaded discussions through parent_comment_id.",
+                "description": "Create a new comment (general or inline) on any entity type (epic, user_story, acceptance_criteria, requirement). Supports threaded discussions through parent_comment_id. This consolidated method handles all entity types through a single interface.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4544,15 +4602,14 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "epics",
                     "comments"
                 ],
-                "summary": "Create a new comment on an epic",
+                "summary": "Create a new comment on an entity",
                 "parameters": [
                     {
                         "type": "string",
                         "format": "uuid",
-                        "description": "Epic ID",
+                        "description": "Entity ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -4569,13 +4626,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Successfully created epic comment",
+                        "description": "Successfully created comment",
                         "schema": {
                             "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid request - malformed epic ID, missing required fields, or invalid inline comment data",
+                        "description": "Invalid request - malformed entity ID, invalid entity type, missing required fields, or invalid inline comment data",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -4593,7 +4650,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Epic not found or parent comment not found",
+                        "description": "Entity not found or parent comment not found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -6028,7 +6085,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Create a new detailed requirement with specified properties. Requires a valid user story ID, creator, and requirement type. The assignee defaults to the creator if not specified. Requires User or Administrator role.",
+                "description": "Create a new detailed requirement. When called via /api/v1/user-stories/:id/requirements, the user story ID from the URL path will be used as the parent. When called via /api/v1/requirements, the user_story_id must be provided in the request body.",
                 "consumes": [
                     "application/json"
                 ],
@@ -6036,12 +6093,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "requirements"
+                    "requirements",
+                    "user-stories"
                 ],
-                "summary": "Create a new requirement",
+                "summary": "Create a requirement (standalone or within a user story)",
                 "parameters": [
                     {
-                        "description": "Requirement creation request with all required fields",
+                        "description": "Requirement creation request",
                         "name": "requirement",
                         "in": "body",
                         "required": true,
@@ -6058,7 +6116,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid request body, creator/assignee not found, user story not found, requirement type not found, acceptance criteria not found, or invalid priority",
+                        "description": "Invalid user story ID format, request body, creator/assignee not found, user story not found, requirement type not found, acceptance criteria not found, or invalid priority",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -6066,13 +6124,6 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Authentication required",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "403": {
-                        "description": "User or Administrator role required",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -6616,7 +6667,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Create a new comment (general or inline) on a specific requirement. Supports threaded discussions through parent_comment_id.",
+                "description": "Create a new comment (general or inline) on any entity type (epic, user_story, acceptance_criteria, requirement). Supports threaded discussions through parent_comment_id. This consolidated method handles all entity types through a single interface.",
                 "consumes": [
                     "application/json"
                 ],
@@ -6624,15 +6675,14 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "requirements",
                     "comments"
                 ],
-                "summary": "Create a new comment on a requirement",
+                "summary": "Create a new comment on an entity",
                 "parameters": [
                     {
                         "type": "string",
                         "format": "uuid",
-                        "description": "Requirement ID",
+                        "description": "Entity ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -6649,13 +6699,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Successfully created requirement comment",
+                        "description": "Successfully created comment",
                         "schema": {
                             "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid request - malformed requirement ID, missing required fields, or invalid inline comment data",
+                        "description": "Invalid request - malformed entity ID, invalid entity type, missing required fields, or invalid inline comment data",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -6673,7 +6723,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Requirement not found or parent comment not found",
+                        "description": "Entity not found or parent comment not found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -8061,7 +8111,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Create new acceptance criteria that belongs to the specified user story. This is a nested resource creation that establishes the parent-child relationship between user story and acceptance criteria. The user story ID from the URL path will be used as the parent.",
+                "description": "Create new acceptance criteria. When called via /api/v1/user-stories/:id/acceptance-criteria, the user story ID from the URL path will be used as the parent. When called via /api/v1/acceptance-criteria, the user_story_id must be provided in the request body.",
                 "consumes": [
                     "application/json"
                 ],
@@ -8069,21 +8119,21 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
+                    "acceptance-criteria",
                     "user-stories"
                 ],
-                "summary": "Create acceptance criteria within a user story",
+                "summary": "Create acceptance criteria (standalone or within a user story)",
                 "parameters": [
                     {
                         "type": "string",
                         "format": "uuid",
                         "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
-                        "description": "User story UUID",
+                        "description": "User story UUID (only for nested creation)",
                         "name": "id",
-                        "in": "path",
-                        "required": true
+                        "in": "path"
                     },
                     {
-                        "description": "Acceptance criteria creation request (user_story_id will be set from path parameter)",
+                        "description": "Acceptance criteria creation request",
                         "name": "acceptance_criteria",
                         "in": "body",
                         "required": true,
@@ -8094,7 +8144,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Successfully created acceptance criteria within user story",
+                        "description": "Successfully created acceptance criteria",
                         "schema": {
                             "$ref": "#/definitions/product-requirements-management_internal_models.AcceptanceCriteria"
                         }
@@ -8299,7 +8349,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Create a new comment (general or inline) on a specific user story. Supports threaded discussions through parent_comment_id.",
+                "description": "Create a new comment (general or inline) on any entity type (epic, user_story, acceptance_criteria, requirement). Supports threaded discussions through parent_comment_id. This consolidated method handles all entity types through a single interface.",
                 "consumes": [
                     "application/json"
                 ],
@@ -8307,15 +8357,14 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "user-stories",
                     "comments"
                 ],
-                "summary": "Create a new comment on a user story",
+                "summary": "Create a new comment on an entity",
                 "parameters": [
                     {
                         "type": "string",
                         "format": "uuid",
-                        "description": "User Story ID",
+                        "description": "Entity ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -8332,13 +8381,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Successfully created user story comment",
+                        "description": "Successfully created comment",
                         "schema": {
                             "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid request - malformed user story ID, missing required fields, or invalid inline comment data",
+                        "description": "Invalid request - malformed entity ID, invalid entity type, missing required fields, or invalid inline comment data",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -8356,7 +8405,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "User story not found or parent comment not found",
+                        "description": "Entity not found or parent comment not found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -8678,7 +8727,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Create a new detailed requirement that belongs to the specified user story. This is a nested resource creation that establishes the parent-child relationship between user story and requirement. The user story ID from the URL path will be used as the parent.",
+                "description": "Create a new detailed requirement. When called via /api/v1/user-stories/:id/requirements, the user story ID from the URL path will be used as the parent. When called via /api/v1/requirements, the user_story_id must be provided in the request body.",
                 "consumes": [
                     "application/json"
                 ],
@@ -8686,32 +8735,32 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
+                    "requirements",
                     "user-stories"
                 ],
-                "summary": "Create a requirement within a user story",
+                "summary": "Create a requirement (standalone or within a user story)",
                 "parameters": [
                     {
                         "type": "string",
                         "format": "uuid",
                         "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
-                        "description": "User story UUID",
+                        "description": "User story UUID (only for nested creation)",
                         "name": "id",
-                        "in": "path",
-                        "required": true
+                        "in": "path"
                     },
                     {
-                        "description": "Requirement creation request (user_story_id will be set from path parameter)",
+                        "description": "Requirement creation request",
                         "name": "requirement",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateRequirementRequest"
                         }
                     }
                 ],
                 "responses": {
                     "201": {
-                        "description": "Successfully created requirement within user story",
+                        "description": "Successfully created requirement",
                         "schema": {
                             "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
                         }
@@ -8988,100 +9037,6 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Entity not found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Create a new comment (general or inline) on any entity type (epic, user_story, acceptance_criteria, requirement). Supports threaded discussions through parent_comment_id.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "comments"
-                ],
-                "summary": "Create a new comment on an entity",
-                "parameters": [
-                    {
-                        "enum": [
-                            "epic",
-                            "user_story",
-                            "acceptance_criteria",
-                            "requirement"
-                        ],
-                        "type": "string",
-                        "description": "Entity type",
-                        "name": "entityType",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "Entity ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Comment creation request",
-                        "name": "comment",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CreateCommentRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Successfully created comment",
-                        "schema": {
-                            "$ref": "#/definitions/product-requirements-management_internal_service.CommentResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request - malformed entity ID, invalid entity type, missing required fields, or invalid inline comment data",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Authentication required",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Entity not found or parent comment not found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
