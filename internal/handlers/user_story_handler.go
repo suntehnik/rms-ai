@@ -472,6 +472,7 @@ func (h *UserStoryHandler) ListUserStories(c *gin.Context) {
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/user-stories/{id}/acceptance-criteria [get]
 func (h *UserStoryHandler) GetUserStoryWithAcceptanceCriteria(c *gin.Context) {
+	// TODO: should accept reference_id like US-001
 	idParam := c.Param("id")
 
 	// Try to parse as UUID first, then as reference ID
@@ -519,6 +520,7 @@ func (h *UserStoryHandler) GetUserStoryWithAcceptanceCriteria(c *gin.Context) {
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/user-stories/{id}/requirements [get]
 func (h *UserStoryHandler) GetUserStoryWithRequirements(c *gin.Context) {
+	// TODO: should accept reference_id like US-001
 	idParam := c.Param("id")
 
 	// Try to parse as UUID first, then as reference ID
@@ -568,13 +570,21 @@ func (h *UserStoryHandler) GetUserStoryWithRequirements(c *gin.Context) {
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/user-stories/{id}/status [patch]
 func (h *UserStoryHandler) ChangeUserStoryStatus(c *gin.Context) {
+	// TODO: should accept reference_id like US-001
 	idParam := c.Param("id")
 
-	// Parse ID (UUID only for status changes)
-	id, err := uuid.Parse(idParam)
+	var userStory *models.UserStory
+	var err error
+
+	if id, parseErr := uuid.Parse(idParam); parseErr == nil {
+		userStory, err = h.userStoryService.GetUserStoryByID(id)
+	} else {
+		// For reference ID, first get the user story, then get with requirements
+		userStory, err = h.userStoryService.GetUserStoryByReferenceID(idParam)
+	}
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid user story ID format",
+			"error": "User story not found",
 		})
 		return
 	}
@@ -591,7 +601,7 @@ func (h *UserStoryHandler) ChangeUserStoryStatus(c *gin.Context) {
 		return
 	}
 
-	userStory, err := h.userStoryService.ChangeUserStoryStatus(id, req.Status)
+	userStory, err = h.userStoryService.ChangeUserStoryStatus(userStory.ID, req.Status)
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrUserStoryNotFound):

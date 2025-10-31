@@ -109,3 +109,15 @@ func (ph *PromptsHandler) HandlePromptsGet(ctx context.Context, params interface
 	ph.logger.WithField("name", req.Name).Info("Successfully retrieved prompt definition")
 	return definition, nil
 }
+
+// HasPrompts implements mcp.PromptProvider interface
+func (h *PromptsHandler) HasPrompts(ctx context.Context) bool {
+	// Always return true as we have prompts available through the prompt service
+	return true
+}
+
+// SupportsListChanged implements mcp.PromptProvider interface
+func (h *PromptsHandler) SupportsListChanged(ctx context.Context) bool {
+	// Return true to indicate we support list change notifications
+	return true
+}

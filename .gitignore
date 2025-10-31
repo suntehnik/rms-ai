@@ -72,3 +72,6 @@ temp/
 browser-control-mcp/
 *_key*
 prompts/
+
+bruno/
+.roo/
