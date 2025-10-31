@@ -53,7 +53,7 @@ func TestGetSupportedTools(t *testing.T) {
 	tools := GetSupportedTools()
 
 	// Verify we have the expected number of tools
-	assert.Len(t, tools, 22)
+	assert.Len(t, tools, 23)
 
 	// Verify all expected tools are present
 	expectedTools := []string{

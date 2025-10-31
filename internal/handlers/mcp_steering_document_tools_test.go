@@ -1,35 +1,24 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
-	"net/http/httptest"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"product-requirements-management/internal/auth"
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/service"
 )
 
 // Mock services are defined in other test files in this package
 
-// createContextWithUser creates a context with a Gin context that has the user set
-func createContextWithUser(user *models.User) context.Context {
-	gin.SetMode(gin.TestMode)
-	c, _ := gin.CreateTestContext(httptest.NewRecorder())
-	c.Set(auth.UserContextKey, user)
-	return context.WithValue(context.Background(), "gin_context", c)
-}
-
 func TestMCPToolsHandler_handleListSteeringDocuments_Success(t *testing.T) {
 	mockEpicService := &MockEpicService{}
 	mockUserStoryService := &MockUserStoryService{}
 	mockRequirementService := &MockRequirementService{}
+	mockAcceptanceCriteriaService := &MockAcceptanceCriteriaService{}
 	mockSearchService := &MockSearchService{}
 	mockSteeringDocumentService := &MockSteeringDocumentService{}
 
@@ -37,6 +26,7 @@ func TestMCPToolsHandler_handleListSteeringDocuments_Success(t *testing.T) {
 		mockEpicService,
 		mockUserStoryService,
 		mockRequirementService,
+		mockAcceptanceCriteriaService,
 		mockSearchService,
 		mockSteeringDocumentService,
 		nil, // promptService
@@ -121,6 +111,7 @@ func TestMCPToolsHandler_handleCreateSteeringDocument_Success(t *testing.T) {
 	mockEpicService := &MockEpicService{}
 	mockUserStoryService := &MockUserStoryService{}
 	mockRequirementService := &MockRequirementService{}
+	mockAcceptanceCriteriaService := &MockAcceptanceCriteriaService{}
 	mockSearchService := &MockSearchService{}
 	mockSteeringDocumentService := &MockSteeringDocumentService{}
 
@@ -128,6 +119,7 @@ func TestMCPToolsHandler_handleCreateSteeringDocument_Success(t *testing.T) {
 		mockEpicService,
 		mockUserStoryService,
 		mockRequirementService,
+		mockAcceptanceCriteriaService,
 		mockSearchService,
 		mockSteeringDocumentService,
 		nil, // promptService
@@ -187,6 +179,7 @@ func TestMCPToolsHandler_handleGetSteeringDocument_ByUUID_Success(t *testing.T) 
 	mockEpicService := &MockEpicService{}
 	mockUserStoryService := &MockUserStoryService{}
 	mockRequirementService := &MockRequirementService{}
+	mockAcceptanceCriteriaService := &MockAcceptanceCriteriaService{}
 	mockSearchService := &MockSearchService{}
 	mockSteeringDocumentService := &MockSteeringDocumentService{}
 
@@ -194,6 +187,7 @@ func TestMCPToolsHandler_handleGetSteeringDocument_ByUUID_Success(t *testing.T) 
 		mockEpicService,
 		mockUserStoryService,
 		mockRequirementService,
+		mockAcceptanceCriteriaService,
 		mockSearchService,
 		mockSteeringDocumentService,
 		nil, // promptService
@@ -246,6 +240,7 @@ func TestMCPToolsHandler_handleGetSteeringDocument_ByReferenceID_Success(t *test
 	mockEpicService := &MockEpicService{}
 	mockUserStoryService := &MockUserStoryService{}
 	mockRequirementService := &MockRequirementService{}
+	mockAcceptanceCriteriaService := &MockAcceptanceCriteriaService{}
 	mockSearchService := &MockSearchService{}
 	mockSteeringDocumentService := &MockSteeringDocumentService{}
 
@@ -253,6 +248,7 @@ func TestMCPToolsHandler_handleGetSteeringDocument_ByReferenceID_Success(t *test
 		mockEpicService,
 		mockUserStoryService,
 		mockRequirementService,
+		mockAcceptanceCriteriaService,
 		mockSearchService,
 		mockSteeringDocumentService,
 		nil, // promptService
@@ -305,6 +301,7 @@ func TestMCPToolsHandler_handleUpdateSteeringDocument_Success(t *testing.T) {
 	mockEpicService := &MockEpicService{}
 	mockUserStoryService := &MockUserStoryService{}
 	mockRequirementService := &MockRequirementService{}
+	mockAcceptanceCriteriaService := &MockAcceptanceCriteriaService{}
 	mockSearchService := &MockSearchService{}
 	mockSteeringDocumentService := &MockSteeringDocumentService{}
 
@@ -312,6 +309,7 @@ func TestMCPToolsHandler_handleUpdateSteeringDocument_Success(t *testing.T) {
 		mockEpicService,
 		mockUserStoryService,
 		mockRequirementService,
+		mockAcceptanceCriteriaService,
 		mockSearchService,
 		mockSteeringDocumentService,
 		nil, // promptService
@@ -372,6 +370,7 @@ func TestMCPToolsHandler_handleLinkSteeringToEpic_Success(t *testing.T) {
 	mockEpicService := &MockEpicService{}
 	mockUserStoryService := &MockUserStoryService{}
 	mockRequirementService := &MockRequirementService{}
+	mockAcceptanceCriteriaService := &MockAcceptanceCriteriaService{}
 	mockSearchService := &MockSearchService{}
 	mockSteeringDocumentService := &MockSteeringDocumentService{}
 
@@ -379,6 +378,7 @@ func TestMCPToolsHandler_handleLinkSteeringToEpic_Success(t *testing.T) {
 		mockEpicService,
 		mockUserStoryService,
 		mockRequirementService,
+		mockAcceptanceCriteriaService,
 		mockSearchService,
 		mockSteeringDocumentService,
 		nil, // promptService
@@ -427,6 +427,7 @@ func TestMCPToolsHandler_handleUnlinkSteeringFromEpic_Success(t *testing.T) {
 	mockEpicService := &MockEpicService{}
 	mockUserStoryService := &MockUserStoryService{}
 	mockRequirementService := &MockRequirementService{}
+	mockAcceptanceCriteriaService := &MockAcceptanceCriteriaService{}
 	mockSearchService := &MockSearchService{}
 	mockSteeringDocumentService := &MockSteeringDocumentService{}
 
@@ -434,6 +435,7 @@ func TestMCPToolsHandler_handleUnlinkSteeringFromEpic_Success(t *testing.T) {
 		mockEpicService,
 		mockUserStoryService,
 		mockRequirementService,
+		mockAcceptanceCriteriaService,
 		mockSearchService,
 		mockSteeringDocumentService,
 		nil, // promptService
@@ -482,6 +484,7 @@ func TestMCPToolsHandler_handleGetEpicSteeringDocuments_Success(t *testing.T) {
 	mockEpicService := &MockEpicService{}
 	mockUserStoryService := &MockUserStoryService{}
 	mockRequirementService := &MockRequirementService{}
+	mockAcceptanceCriteriaService := &MockAcceptanceCriteriaService{}
 	mockSearchService := &MockSearchService{}
 	mockSteeringDocumentService := &MockSteeringDocumentService{}
 
@@ -489,6 +492,7 @@ func TestMCPToolsHandler_handleGetEpicSteeringDocuments_Success(t *testing.T) {
 		mockEpicService,
 		mockUserStoryService,
 		mockRequirementService,
+		mockAcceptanceCriteriaService,
 		mockSearchService,
 		mockSteeringDocumentService,
 		nil, // promptService
@@ -551,6 +555,7 @@ func TestMCPToolsHandler_handleCreateSteeringDocument_ValidationError(t *testing
 	mockEpicService := &MockEpicService{}
 	mockUserStoryService := &MockUserStoryService{}
 	mockRequirementService := &MockRequirementService{}
+	mockAcceptanceCriteriaService := &MockAcceptanceCriteriaService{}
 	mockSearchService := &MockSearchService{}
 	mockSteeringDocumentService := &MockSteeringDocumentService{}
 
@@ -558,6 +563,7 @@ func TestMCPToolsHandler_handleCreateSteeringDocument_ValidationError(t *testing
 		mockEpicService,
 		mockUserStoryService,
 		mockRequirementService,
+		mockAcceptanceCriteriaService,
 		mockSearchService,
 		mockSteeringDocumentService,
 		nil, // promptService
@@ -597,6 +603,7 @@ func TestMCPToolsHandler_handleGetSteeringDocument_NotFound(t *testing.T) {
 	mockEpicService := &MockEpicService{}
 	mockUserStoryService := &MockUserStoryService{}
 	mockRequirementService := &MockRequirementService{}
+	mockAcceptanceCriteriaService := &MockAcceptanceCriteriaService{}
 	mockSearchService := &MockSearchService{}
 	mockSteeringDocumentService := &MockSteeringDocumentService{}
 
@@ -604,6 +611,7 @@ func TestMCPToolsHandler_handleGetSteeringDocument_NotFound(t *testing.T) {
 		mockEpicService,
 		mockUserStoryService,
 		mockRequirementService,
+		mockAcceptanceCriteriaService,
 		mockSearchService,
 		mockSteeringDocumentService,
 		nil, // promptService

@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
@@ -16,12 +17,13 @@ import (
 
 // ToolsHandler handles MCP tools/call requests for CRUD operations
 type ToolsHandler struct {
-	epicService             service.EpicService
-	userStoryService        service.UserStoryService
-	requirementService      service.RequirementService
-	searchService           service.SearchServiceInterface
-	steeringDocumentService service.SteeringDocumentService
-	promptService           *service.PromptService
+	epicService               service.EpicService
+	userStoryService          service.UserStoryService
+	requirementService        service.RequirementService
+	acceptanceCriteriaService service.AcceptanceCriteriaService
+	searchService             service.SearchServiceInterface
+	steeringDocumentService   service.SteeringDocumentService
+	promptService             *service.PromptService
 }
 
 // NewToolsHandler creates a new tools handler instance
@@ -29,17 +31,19 @@ func NewToolsHandler(
 	epicService service.EpicService,
 	userStoryService service.UserStoryService,
 	requirementService service.RequirementService,
+	acceptanceCriteriaService service.AcceptanceCriteriaService,
 	searchService service.SearchServiceInterface,
 	steeringDocumentService service.SteeringDocumentService,
 	promptService *service.PromptService,
 ) *ToolsHandler {
 	return &ToolsHandler{
-		epicService:             epicService,
-		userStoryService:        userStoryService,
-		requirementService:      requirementService,
-		searchService:           searchService,
-		steeringDocumentService: steeringDocumentService,
-		promptService:           promptService,
+		epicService:               epicService,
+		userStoryService:          userStoryService,
+		requirementService:        requirementService,
+		acceptanceCriteriaService: acceptanceCriteriaService,
+		searchService:             searchService,
+		steeringDocumentService:   steeringDocumentService,
+		promptService:             promptService,
 	}
 }
 
@@ -106,6 +110,8 @@ func (h *ToolsHandler) HandleToolsCall(ctx context.Context, params interface{}) 
 		return h.handleCreateRequirement(ctx, arguments)
 	case "update_requirement":
 		return h.handleUpdateRequirement(ctx, arguments)
+	case "create_acceptance_criteria":
+		return h.handleCreateAcceptanceCriteria(ctx, arguments)
 	case "create_relationship":
 		return h.handleCreateRelationship(ctx, arguments)
 	case "search_global":
@@ -1513,6 +1519,75 @@ func (h *ToolsHandler) handleGetActivePrompt(ctx context.Context, _ map[string]i
 			{
 				Type: "text",
 				Text: string(jsonData),
+			},
+		},
+	}, nil
+}
+
+// handleCreateAcceptanceCriteria handles the create_acceptance_criteria tool
+func (h *ToolsHandler) handleCreateAcceptanceCriteria(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+	// Get current user from context
+	user, err := getUserFromContext(ctx)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to get user from context: %v", err))
+	}
+
+	// Validate required arguments
+	userStoryIDStr, ok := args["user_story_id"].(string)
+	if !ok || userStoryIDStr == "" {
+		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid 'user_story_id' argument")
+	}
+
+	description, ok := args["description"].(string)
+	if !ok || description == "" {
+		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid 'description' argument")
+	}
+
+	// Validate description length
+	if len(description) > 50000 {
+		return nil, jsonrpc.NewInvalidParamsError("Description exceeds maximum length of 50000 characters")
+	}
+
+	var userStoryID uuid.UUID
+
+	// Try to parse as UUID first, then as reference ID
+	if userStoryID, err = uuid.Parse(userStoryIDStr); err != nil {
+		// Try to get by reference ID
+		userStory, err := h.userStoryService.GetUserStoryByReferenceID(userStoryIDStr)
+		if err != nil {
+			return nil, jsonrpc.NewInvalidParamsError("User story not found")
+		}
+		userStoryID = userStory.ID
+	}
+
+	// Create the acceptance criteria
+	req := service.CreateAcceptanceCriteriaRequest{
+		UserStoryID: userStoryID,
+		AuthorID:    user.ID,
+		Description: description,
+	}
+
+	acceptanceCriteria, err := h.acceptanceCriteriaService.CreateAcceptanceCriteria(req)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrUserStoryNotFound):
+			return nil, jsonrpc.NewInvalidParamsError("User story not found")
+		case errors.Is(err, service.ErrUserNotFound):
+			return nil, jsonrpc.NewJSONRPCError(-32001, "Authentication required", nil)
+		default:
+			return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to create acceptance criteria: %v", err))
+		}
+	}
+
+	return &ToolResponse{
+		Content: []ContentItem{
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Successfully created acceptance criteria %s", acceptanceCriteria.ReferenceID),
+			},
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Acceptance criteria data: %+v", acceptanceCriteria),
 			},
 		},
 	}, nil

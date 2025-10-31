@@ -46,7 +46,7 @@ func NewMCPHandler(
 ) *MCPHandler {
 	processor := jsonrpc.NewProcessor()
 	resourceHandler := NewResourceHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService, promptService, requirementTypeRepo)
-	toolsHandler := NewToolsHandler(epicService, userStoryService, requirementService, searchService, steeringDocumentService, promptService)
+	toolsHandler := NewToolsHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService, searchService, steeringDocumentService, promptService)
 	promptsHandler := NewPromptsHandler(promptService, epicService, userStoryService, requirementService, acceptanceCriteriaService, logger.Logger)
 	initializeHandler := NewInitializeHandler(toolsHandler, promptsHandler, promptService, logger.Logger)
 	mcpLogger := NewMCPLogger()
