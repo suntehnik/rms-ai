@@ -1517,3 +1517,15 @@ func (h *ToolsHandler) handleGetActivePrompt(ctx context.Context, _ map[string]i
 		},
 	}, nil
 }
+
+// HasTools implements mcp.ToolProvider interface
+func (h *ToolsHandler) HasTools(ctx context.Context) bool {
+	// Always return true as we have tools available
+	return true
+}
+
+// SupportsListChanged implements mcp.ToolProvider interface
+func (h *ToolsHandler) SupportsListChanged(ctx context.Context) bool {
+	// Return true to indicate we support list change notifications
+	return true
+}

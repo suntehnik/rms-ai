@@ -22,13 +22,14 @@ import (
 
 // MCPHandler handles MCP (Model Context Protocol) requests
 type MCPHandler struct {
-	processor       *jsonrpc.Processor
-	resourceHandler *ResourceHandler
-	toolsHandler    *ToolsHandler
-	promptsHandler  *PromptsHandler
-	mcpLogger       *MCPLogger
-	errorMapper     *jsonrpc.ErrorMapper
-	resourceService service.ResourceService
+	processor         *jsonrpc.Processor
+	resourceHandler   *ResourceHandler
+	toolsHandler      *ToolsHandler
+	promptsHandler    *PromptsHandler
+	initializeHandler *InitializeHandler
+	mcpLogger         *MCPLogger
+	errorMapper       *jsonrpc.ErrorMapper
+	resourceService   service.ResourceService
 }
 
 // NewMCPHandler creates a new MCP handler instance
@@ -47,6 +48,7 @@ func NewMCPHandler(
 	resourceHandler := NewResourceHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService, promptService, requirementTypeRepo)
 	toolsHandler := NewToolsHandler(epicService, userStoryService, requirementService, searchService, steeringDocumentService, promptService)
 	promptsHandler := NewPromptsHandler(promptService, epicService, userStoryService, requirementService, acceptanceCriteriaService, logger.Logger)
+	initializeHandler := NewInitializeHandler(toolsHandler, promptsHandler, promptService, logger.Logger)
 	mcpLogger := NewMCPLogger()
 	errorMapper := jsonrpc.NewErrorMapper()
 
@@ -55,17 +57,18 @@ func NewMCPHandler(
 
 	// Create handler instance
 	handler := &MCPHandler{
-		processor:       processor,
-		resourceHandler: resourceHandler,
-		toolsHandler:    toolsHandler,
-		promptsHandler:  promptsHandler,
-		mcpLogger:       mcpLogger,
-		errorMapper:     errorMapper,
-		resourceService: resourceService,
+		processor:         processor,
+		resourceHandler:   resourceHandler,
+		toolsHandler:      toolsHandler,
+		promptsHandler:    promptsHandler,
+		initializeHandler: initializeHandler,
+		mcpLogger:         mcpLogger,
+		errorMapper:       errorMapper,
+		resourceService:   resourceService,
 	}
 
 	// Register MCP methods with enhanced error handling
-	processor.RegisterHandler("initialize", handler.wrapHandler("initialize", handleInitialize))
+	processor.RegisterHandler("initialize", handler.wrapHandler("initialize", handler.initializeHandler.HandleInitializeFromParams))
 	processor.RegisterHandler("ping", handler.wrapHandler("ping", handlePing))
 	processor.RegisterHandler("tools/list", handler.wrapHandler("tools/list", handleToolsList))
 	processor.RegisterHandler("tools/call", handler.wrapHandler("tools/call", toolsHandler.HandleToolsCall))
@@ -178,24 +181,6 @@ func (h *MCPHandler) Process(c *gin.Context) {
 }
 
 // MCP method handlers
-
-// handleInitialize handles the MCP initialize method
-func handleInitialize(ctx context.Context, params interface{}) (interface{}, error) {
-	// Basic MCP initialization response
-	return map[string]interface{}{
-		"protocolVersion": "2025-03-26",
-		"capabilities": map[string]interface{}{
-			"tools": map[string]interface{}{
-				"listChanged": true,
-			},
-			"resources": map[string]interface{}{},
-		},
-		"serverInfo": map[string]interface{}{
-			"name":    "product-requirements-mcp-server",
-			"version": "1.0.0",
-		},
-	}, nil
-}
 
 // handlePing handles the MCP ping method for connectivity testing
 func handlePing(ctx context.Context, params interface{}) (interface{}, error) {

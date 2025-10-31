@@ -676,11 +676,17 @@ func TestUserStoryHandler_ChangeUserStoryStatus(t *testing.T) {
 			"status": newStatus,
 		}
 
+		currentUserStory := &models.UserStory{
+			ID:     userStoryID,
+			Status: models.UserStoryStatusDraft,
+		}
+
 		expectedUserStory := &models.UserStory{
 			ID:     userStoryID,
 			Status: newStatus,
 		}
 
+		mockService.On("GetUserStoryByID", currentUserStory.ID).Return(currentUserStory, nil)
 		mockService.On("ChangeUserStoryStatus", userStoryID, newStatus).Return(expectedUserStory, nil)
 
 		jsonBody, _ := json.Marshal(reqBody)
@@ -704,6 +710,12 @@ func TestUserStoryHandler_ChangeUserStoryStatus(t *testing.T) {
 			"status": newStatus,
 		}
 
+		currentUserStory := &models.UserStory{
+			ID:     userStoryID,
+			Status: models.UserStoryStatusDraft,
+		}
+
+		mockService.On("GetUserStoryByID", currentUserStory.ID).Return(currentUserStory, nil)
 		mockService.On("ChangeUserStoryStatus", userStoryID, newStatus).Return(nil, service.ErrInvalidStatusTransition)
 
 		jsonBody, _ := json.Marshal(reqBody)
