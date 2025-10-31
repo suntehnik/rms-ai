@@ -12,6 +12,8 @@ import (
 	"product-requirements-management/internal/auth"
 	"product-requirements-management/internal/jsonrpc"
 	"product-requirements-management/internal/logger"
+	"product-requirements-management/internal/mcp/schemas"
+	"product-requirements-management/internal/mcp/tools"
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/repository"
 	"product-requirements-management/internal/service"
@@ -24,7 +26,7 @@ import (
 type MCPHandler struct {
 	processor         *jsonrpc.Processor
 	resourceHandler   *ResourceHandler
-	toolsHandler      *ToolsHandler
+	toolsHandler      *tools.Handler
 	promptsHandler    *PromptsHandler
 	initializeHandler *InitializeHandler
 	mcpLogger         *MCPLogger
@@ -46,7 +48,7 @@ func NewMCPHandler(
 ) *MCPHandler {
 	processor := jsonrpc.NewProcessor()
 	resourceHandler := NewResourceHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService, promptService, requirementTypeRepo)
-	toolsHandler := NewToolsHandler(epicService, userStoryService, requirementService, searchService, steeringDocumentService, promptService)
+	toolsHandler := tools.NewHandler(epicService, userStoryService, requirementService, searchService, steeringDocumentService, promptService)
 	promptsHandler := NewPromptsHandler(promptService, epicService, userStoryService, requirementService, acceptanceCriteriaService, logger.Logger)
 	initializeHandler := NewInitializeHandler(toolsHandler, promptsHandler, promptService, logger.Logger)
 	mcpLogger := NewMCPLogger()
@@ -192,7 +194,7 @@ func handlePing(ctx context.Context, params interface{}) (interface{}, error) {
 // handleToolsList handles the tools/list method
 func handleToolsList(ctx context.Context, params interface{}) (interface{}, error) {
 	// Return comprehensive tool definitions
-	tools := GetSupportedTools()
+	tools := schemas.GetSupportedTools()
 	return map[string]interface{}{
 		"tools": tools,
 	}, nil

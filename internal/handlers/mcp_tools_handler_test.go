@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"product-requirements-management/internal/mcp/schemas"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -50,7 +51,7 @@ func TestToolsHandler_BasicFunctionality(t *testing.T) {
 }
 
 func TestGetSupportedTools(t *testing.T) {
-	tools := GetSupportedTools()
+	tools := schemas.GetSupportedTools()
 
 	// Verify we have the expected number of tools
 	assert.Len(t, tools, 22)
@@ -68,7 +69,7 @@ func TestGetSupportedTools(t *testing.T) {
 		"search_requirements",
 	}
 
-	toolNames := GetToolNames()
+	toolNames := schemas.GetToolNames()
 	for _, expectedTool := range expectedTools {
 		assert.Contains(t, toolNames, expectedTool)
 	}
@@ -84,19 +85,19 @@ func TestGetSupportedTools(t *testing.T) {
 
 func TestGetToolByName(t *testing.T) {
 	// Test existing tool
-	tool := GetToolByName("create_epic")
+	tool := schemas.GetToolByName("create_epic")
 	assert.NotNil(t, tool)
 	assert.Equal(t, "create_epic", tool.Name)
 
 	// Test non-existing tool
-	tool = GetToolByName("non_existent_tool")
+	tool = schemas.GetToolByName("non_existent_tool")
 	assert.Nil(t, tool)
 }
 
 func TestToolSchemaValidation(t *testing.T) {
 	t.Skip("STD MCP tool is failing this test - shoould review carefully list STD tool")
 	// Test that all tools have proper JSON schema structure
-	tools := GetSupportedTools()
+	tools := schemas.GetSupportedTools()
 
 	for _, tool := range tools {
 		t.Run(tool.Name, func(t *testing.T) {
