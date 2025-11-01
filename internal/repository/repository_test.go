@@ -24,7 +24,7 @@ func setupRepositoryTestDB(t *testing.T) *gorm.DB {
 
 func TestNewRepositories(t *testing.T) {
 	db := setupRepositoryTestDB(t)
-	repos := NewRepositories(db)
+	repos := NewRepositories(db, nil)
 
 	// Verify all repositories are created
 	assert.NotNil(t, repos.User)
@@ -40,7 +40,7 @@ func TestNewRepositories(t *testing.T) {
 
 func TestRepositories_WithTransaction(t *testing.T) {
 	db := setupRepositoryTestDB(t)
-	repos := NewRepositories(db)
+	repos := NewRepositories(db, nil)
 
 	// Test successful transaction
 	var createdUser *models.User
@@ -71,7 +71,7 @@ func TestRepositories_WithTransaction(t *testing.T) {
 
 func TestRepositories_WithTransaction_Rollback(t *testing.T) {
 	db := setupRepositoryTestDB(t)
-	repos := NewRepositories(db)
+	repos := NewRepositories(db, nil)
 
 	// Test transaction rollback
 	err := repos.WithTransaction(func(txRepos *Repositories) error {
@@ -100,7 +100,7 @@ func TestRepositories_WithTransaction_Rollback(t *testing.T) {
 
 func TestRepositories_IntegrationWorkflow(t *testing.T) {
 	db := setupRepositoryTestDB(t)
-	repos := NewRepositories(db)
+	repos := NewRepositories(db, nil)
 
 	// Seed default data
 	err := models.SeedDefaultData(db)

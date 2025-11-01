@@ -1,9 +1,13 @@
 package repository
 
 import (
+	"context"
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
 	"product-requirements-management/internal/models"
@@ -12,12 +16,14 @@ import (
 // userStoryRepository implements UserStoryRepository interface
 type userStoryRepository struct {
 	*BaseRepository[models.UserStory]
+	Redis *redis.Client
 }
 
 // NewUserStoryRepository creates a new user story repository instance
-func NewUserStoryRepository(db *gorm.DB) UserStoryRepository {
+func NewUserStoryRepository(db *gorm.DB, redis *redis.Client) UserStoryRepository {
 	return &userStoryRepository{
 		BaseRepository: NewBaseRepository[models.UserStory](db),
+		Redis:          redis,
 	}
 }
 
@@ -203,4 +209,35 @@ func (r *userStoryRepository) ListWithIncludes(filters map[string]interface{}, i
 	}
 
 	return userStories, nil
+}
+
+// GetUUIDByReferenceID retrieves only the UUID of a user story by its reference ID for efficient UUID-only queries
+func (r *userStoryRepository) GetUUIDByReferenceID(referenceID string) (uuid.UUID, error) {
+	cacheKey := fmt.Sprintf("user_story_ref:%s", referenceID)
+	ctx := context.Background()
+	// Try Redis cache first if available
+	if r.Redis != nil {
+		if cachedUUID, err := r.Redis.Get(ctx, cacheKey).Result(); err == nil {
+			if parsedUUID, parseErr := uuid.Parse(cachedUUID); parseErr == nil {
+				return parsedUUID, nil
+			}
+		}
+	}
+
+	// Fallback to repository/database
+	var userStoryID uuid.UUID
+	if err := r.GetDB().Model(&models.UserStory{}).
+		Select("id").
+		Where("reference_id = ?", referenceID).
+		First(&userStoryID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return uuid.Nil, ErrNotFound
+		}
+
+		return uuid.Nil, r.handleDBError(err)
+	}
+	if r.Redis != nil {
+		r.Redis.Set(ctx, cacheKey, userStoryID.String(), time.Hour)
+	}
+	return userStoryID, nil
 }

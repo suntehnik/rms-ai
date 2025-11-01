@@ -19,7 +19,7 @@ func TestSearchIntegration_ComprehensiveSearch(t *testing.T) {
 	defer testDB.Cleanup(t)
 
 	// Setup repositories
-	repos := repository.NewRepositories(testDB.DB)
+	repos := repository.NewRepositories(testDB.DB, nil)
 
 	// Setup search service
 	searchService := service.NewSearchService(

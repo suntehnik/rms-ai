@@ -1,0 +1,15 @@
+{
+  "image": "ghcr.io/suntehnik/rms-ai",
+  "version": "main-faa7004",
+  "latest_tag": "ghcr.io/suntehnik/rms-ai:latest",
+  "version_tag": "ghcr.io/suntehnik/rms-ai:main-faa7004",
+  "git_commit": "faa7004813dd3cc01859f30cf341b0a37ba11d2f",
+  "git_branch": "main",
+  "git_tag": "",
+  "build_date": "2025-11-01T08:50:35Z",
+  "registry": "ghcr.io",
+  "repository": "suntehnik/rms-ai",
+  "build_type": "multi-platform",
+  "platforms": "linux/amd64,linux/arm64",
+  "buildx_enabled": true
+}

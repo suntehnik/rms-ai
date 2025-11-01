@@ -27,7 +27,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	router.GET("/live", livenessCheck)
 
 	// Initialize repositories
-	repos := repository.NewRepositories(db.Postgres)
+	repos := repository.NewRepositories(db.Postgres, db.Redis)
 
 	// Initialize Redis client (optional)
 	var redisClient *database.RedisClient

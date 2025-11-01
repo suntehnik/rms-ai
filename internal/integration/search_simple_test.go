@@ -17,7 +17,7 @@ func TestSearchIntegration_BasicFunctionality(t *testing.T) {
 	defer testDB.Cleanup(t)
 
 	// Setup repositories
-	repos := repository.NewRepositories(testDB.DB)
+	repos := repository.NewRepositories(testDB.DB, nil)
 
 	// Setup search service
 	searchService := service.NewSearchService(
@@ -58,7 +58,7 @@ func TestSearchIntegration_CacheInvalidation(t *testing.T) {
 	defer testDB.Cleanup(t)
 
 	// Setup repositories
-	repos := repository.NewRepositories(testDB.DB)
+	repos := repository.NewRepositories(testDB.DB, nil)
 
 	// Setup search service without Redis
 	searchService := service.NewSearchService(
@@ -82,7 +82,7 @@ func TestSearchIntegration_PrepareSearchQuery(t *testing.T) {
 	defer testDB.Cleanup(t)
 
 	// Setup repositories
-	repos := repository.NewRepositories(testDB.DB)
+	repos := repository.NewRepositories(testDB.DB, nil)
 
 	// Setup search service
 	searchService := service.NewSearchService(
@@ -116,7 +116,7 @@ func TestSearchIntegration_FilterValidation(t *testing.T) {
 	defer testDB.Cleanup(t)
 
 	// Setup repositories
-	repos := repository.NewRepositories(testDB.DB)
+	repos := repository.NewRepositories(testDB.DB, nil)
 
 	// Setup search service
 	searchService := service.NewSearchService(

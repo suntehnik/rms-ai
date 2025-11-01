@@ -28,7 +28,7 @@ func setupCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, *auth.Ser
 	db := testDatabase.DB
 
 	// Initialize repositories
-	repos := repository.NewRepositories(db)
+	repos := repository.NewRepositories(db, nil)
 
 	// Initialize services
 	commentService := service.NewCommentService(repos)

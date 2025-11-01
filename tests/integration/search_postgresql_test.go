@@ -38,7 +38,7 @@ func TestSearchIntegration_PostgreSQL(t *testing.T) {
 	require.NoError(t, err)
 
 	// Setup repositories
-	repos := repository.NewRepositories(db)
+	repos := repository.NewRepositories(db, nil)
 
 	// Setup real search service with PostgreSQL full-text search
 	searchService := service.NewSearchService(
