@@ -1,4 +1,4 @@
-package handlers
+package schemas
 
 // ToolDefinition represents a tool definition with its schema
 type ToolDefinition struct {

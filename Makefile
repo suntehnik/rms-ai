@@ -167,7 +167,7 @@ test: test-unit test-integration test-e2e
 # Run unit tests only (fast, SQLite)
 test-unit:
 	@echo "🧪 Running unit tests..."
-	go test -v ./internal/models/... ./internal/repository/... ./internal/service/... ./internal/handlers/... ./tests/unit/...
+	go test -v ./internal/models/... ./internal/repository/... ./internal/service/... ./internal/handlers/... ./tests/unit/... ./internal/mcp/...
 	@echo "✅ Unit tests completed"
 
 # Run integration tests (requires database setup)
@@ -185,7 +185,7 @@ test-e2e:
 # Run only fast tests (unit tests with short flag)
 test-fast:
 	@echo "⚡ Running fast tests only..."
-	go test -short -v ./internal/models/... ./internal/repository/... ./internal/service/... ./internal/handlers/... ./tests/unit/...
+	go test -short -v ./internal/models/... ./internal/repository/... ./internal/service/... ./internal/handlers/... ./tests/unit/... ./internal/mcp/...
 
 # Run tests with coverage (all types)
 test-coverage: test-unit-coverage test-integration-coverage
