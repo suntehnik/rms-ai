@@ -1,54 +1,11 @@
 package handlers
 
 import (
-	"context"
 	"product-requirements-management/internal/mcp/schemas"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
-
-func TestToolsHandler_BasicFunctionality(t *testing.T) {
-	// Test basic parameter validation without complex mocking
-	handler := &ToolsHandler{}
-
-	tests := []struct {
-		name          string
-		params        interface{}
-		expectedError string
-	}{
-		{
-			name:          "invalid parameters format",
-			params:        "invalid",
-			expectedError: "Invalid params",
-		},
-		{
-			name: "missing tool name",
-			params: map[string]interface{}{
-				"arguments": map[string]interface{}{},
-			},
-			expectedError: "Invalid params",
-		},
-		{
-			name: "invalid tool name",
-			params: map[string]interface{}{
-				"name":      "invalid_tool",
-				"arguments": map[string]interface{}{},
-			},
-			expectedError: "Method not found",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := handler.HandleToolsCall(context.Background(), tt.params)
-
-			assert.Error(t, err)
-			assert.Contains(t, err.Error(), tt.expectedError)
-			assert.Nil(t, result)
-		})
-	}
-}
 
 func TestGetSupportedTools(t *testing.T) {
 	tools := schemas.GetSupportedTools()

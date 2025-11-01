@@ -243,13 +243,13 @@ This implementation plan converts the monolithic `ToolsHandler` structure into a
   - Clean up any unused dependencies or imports
   - _Requirements: FR5_
 
-- [ ] 11.1 Remove legacy files
+- [x] 11.1 Remove legacy files
   - Delete `internal/handlers/mcp_tools_handler.go`
   - Delete `internal/handlers/mcp_tool_schemas.go`
   - Update any remaining references to old handler locations
   - _Requirements: FR5_
 
-- [ ] 11.2 Update imports and references
+- [x] 11.2 Update imports and references
   - Update all imports to use new `internal/mcp/tools` package
   - Update any documentation or comments referencing old structure
   - Ensure no broken imports or references remain
