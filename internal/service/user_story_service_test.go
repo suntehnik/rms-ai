@@ -169,6 +169,11 @@ func (m *MockUserStoryRepository) ListWithIncludes(filters map[string]interface{
 	return args.Get(0).([]models.UserStory), args.Error(1)
 }
 
+func (m *MockUserStoryRepository) GetUUIDByReferenceID(referenceID string) (uuid.UUID, error) {
+	args := m.Called(referenceID)
+	return args.Get(0).(uuid.UUID), args.Error(1)
+}
+
 func TestUserStoryService_CreateUserStory(t *testing.T) {
 	mockUserStoryRepo := new(MockUserStoryRepository)
 	mockEpicRepo := new(MockEpicRepository)
@@ -559,7 +564,6 @@ func TestUserStoryService_ListUserStories(t *testing.T) {
 		// mockUserStoryRepo.On("ListWithIncludes", expectedFilters, []string{"Assignee", "Creator", "Epic"}, "created_at DESC", 50, 0).Return(expectedUserStories, nil)
 		// mockUserStoryRepo.On("ListWithIncludes", expectedFilters, []string{"Assignee", "Epic", "Creator"}, "created_at DESC", 50, 0).Return(expectedUserStories, nil)
 		// mockUserStoryRepo.On("ListWithIncludes", expectedFilters, []string{"Creator", "Epic", "Assignee"}, "created_at DESC", 50, 0).Return(expectedUserStories, nil)
-
 
 		result, count, err := service.ListUserStories(filters)
 

@@ -103,6 +103,11 @@ func (m *MockUserStoryService) AssignUserStory(id uuid.UUID, assigneeID uuid.UUI
 	return args.Get(0).(*models.UserStory), args.Error(1)
 }
 
+func (m *MockUserStoryService) GetUUIDByReferenceID(referenceID string) (uuid.UUID, error) {
+	args := m.Called(referenceID)
+	return args.Get(0).(uuid.UUID), args.Error(1)
+}
+
 func setupUserStoryRouter(handler *UserStoryHandler) (*gin.Engine, *auth.Service) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()

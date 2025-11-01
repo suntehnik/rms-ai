@@ -251,7 +251,7 @@ type NavigationTestData struct {
 // setupNavigationTestData creates test data for navigation tests
 func setupNavigationTestData(t *testing.T, testDB *TestDatabase, user *models.User) *NavigationTestData {
 	// Create repositories
-	repos := repository.NewRepositories(testDB.DB)
+	repos := repository.NewRepositories(testDB.DB, nil)
 
 	// Get or create requirement type
 	reqType, err := repos.RequirementType.GetByName("Functional")

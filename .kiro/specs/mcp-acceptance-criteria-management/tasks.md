@@ -4,72 +4,65 @@ Convert the feature design into a series of prompts for a code-generation LLM th
 
 ## Task List
 
-- [x] 1. Create MCP tool structure and JSON schema definition
-  - Implement `AcceptanceCriteriaTool` struct following existing MCP tool patterns
-  - Define JSON schema for tool parameters (user_story_id, description)
-  - Implement tool discovery method that returns tool definition
-  - _Requirements: REQ-036, REQ-037_
+- [x] 1. Extend UserStoryService with reference ID resolution method
+  - Add `GetUUIDByReferenceID(referenceID string) (uuid.UUID, error)` method to UserStoryService interface
+  - Implement the method in userStoryService struct with Redis caching support
+  - Add corresponding repository method `GetUUIDByReferenceID` for efficient UUID-only queries
+  - _Requirements: REQ-036 (user story identifier resolution)_
 
-- [ ] 2. Implement core MCP tool execution logic
-  - [ ] 2.1 Implement JSON-RPC request parsing and validation
-    - Parse MCP tool call parameters from JSON-RPC request
-    - Validate required fields (user_story_id, description)
-    - Implement field-level validation (description max 50000 chars)
+- [ ] 2. Create AcceptanceCriteriaHandler following existing MCP tool patterns
+  - [ ] 2.1 Create acceptance criteria handler structure
+    - Implement `AcceptanceCriteriaHandler` struct following existing handler patterns (UserStoryHandler, EpicHandler)
+    - Define `create_acceptance_criteria` tool with JSON schema validation
+    - Implement `GetSupportedTools()` and `HandleTool()` methods per ToolHandler interface
     - _Requirements: REQ-036, REQ-037_
 
-  - [ ] 2.2 Implement user story identifier resolution
-    - Add method to resolve user story by UUID or reference ID (US-XXX)
-    - Handle both UUID format and reference ID format validation
-    - Return appropriate JSON-RPC errors for invalid identifiers
-    - _Requirements: REQ-036_
-
-  - [ ] 2.3 Implement acceptance criteria creation logic
-    - Extract authenticated user ID from Gin context using existing auth patterns
-    - Create acceptance criteria using existing service layer
-    - Handle service layer errors and map to JSON-RPC error codes
+  - [ ] 2.2 Implement tool execution logic with validation
+    - Parse and validate JSON-RPC request parameters (user_story_id, description)
+    - Implement user story identifier resolution (UUID or US-XXX reference ID format)
+    - Validate description field constraints (required, max 50000 characters)
+    - Extract authenticated user ID from context using existing auth patterns
     - _Requirements: REQ-036, REQ-037_
 
-- [ ] 3. Implement JSON-RPC response formatting
-  - [ ] 3.1 Create structured response objects
-    - Implement response structure with all acceptance criteria fields
-    - Format timestamps and UUIDs for JSON serialization
-    - Include auto-generated reference ID in response
+  - [ ] 2.3 Implement acceptance criteria creation and response formatting
+    - Create acceptance criteria using existing AcceptanceCriteriaService
+    - Format structured JSON-RPC response with all acceptance criteria fields
+    - Map service errors to appropriate JSON-RPC error codes (-32602 for validation, -32001 for auth)
+    - Return success response with auto-generated reference ID and metadata
     - _Requirements: REQ-036, REQ-037_
 
-  - [ ] 3.2 Implement comprehensive error handling
-    - Map service errors to appropriate JSON-RPC error codes
-    - Create detailed error messages for validation failures
-    - Handle authentication and authorization errors
+- [ ] 3. Integrate AcceptanceCriteriaHandler with MCP infrastructure
+  - [ ] 3.1 Register handler in MCP tools handler
+    - Add AcceptanceCriteriaHandler to main Handler struct in `internal/mcp/tools/handler.go`
+    - Update NewHandler constructor to initialize AcceptanceCriteriaHandler
+    - Register acceptance criteria tools in tool routing map
+    - Update GetAllSupportedTools to include acceptance criteria tools
     - _Requirements: REQ-036, REQ-037_
 
-- [ ] 4. Integrate MCP tool with existing MCP handler
-  - [ ] 4.1 Register acceptance criteria tool with MCP handler
-    - Add tool to existing MCP handler's tool registry
-    - Ensure tool is discoverable via tools/list method
-    - Verify tool execution via tools/call method
+  - [ ] 3.2 Update MCP server capabilities
+    - Ensure acceptance criteria tools are discoverable via tools/list method
+    - Verify tool execution works via tools/call method
+    - Test integration with existing MCP JSON-RPC infrastructure
     - _Requirements: REQ-036, REQ-037_
 
-  - [ ] 4.2 Update MCP capabilities and tool provider
-    - Ensure acceptance criteria tool is included in server capabilities
-    - Update tool provider to include new tool
-    - Verify integration with existing MCP infrastructure
+- [ ] 4. Write comprehensive tests for acceptance criteria MCP tool
+  - [ ] 4.1 Write unit tests for AcceptanceCriteriaHandler
+    - Test user story identifier validation (UUID and US-XXX reference ID formats)
+    - Test description field validation (required field, max 50000 characters)
+    - Test error handling for invalid user story identifiers and validation failures
+    - Test authentication context extraction and error scenarios
     - _Requirements: REQ-036, REQ-037_
 
-- [ ] 5. Write comprehensive tests for MCP tool
-  - [ ] 5.1 Write unit tests for tool validation logic
-    - Test user story identifier validation (UUID and reference ID formats)
-    - Test description field validation (required, max length)
-    - Test error handling for invalid inputs
+  - [ ]* 4.2 Write integration tests for MCP tool execution
+    - Test complete JSON-RPC request/response cycle with real database
+    - Test authentication integration with existing PAT middleware
+    - Test database persistence and reference ID generation
+    - Test error scenarios with proper JSON-RPC error code mapping
     - _Requirements: REQ-036, REQ-037_
 
-  - [ ]* 5.2 Write integration tests for MCP tool execution
-    - Test complete JSON-RPC request/response cycle
-    - Test authentication integration with existing middleware
-    - Test database persistence through service layer
-    - _Requirements: REQ-036, REQ-037_
-
-  - [ ] 5.3 Write MCP protocol compliance tests
-    - Test tool discovery via tools/list endpoint
-    - Test tool execution via tools/call endpoint
-    - Test JSON-RPC 2.0 format compliance
+  - [ ] 4.3 Write MCP protocol compliance tests
+    - Test tool discovery via tools/list endpoint returns acceptance criteria tools
+    - Test tool execution via tools/call endpoint with valid and invalid parameters
+    - Test JSON-RPC 2.0 format compliance for requests and responses
+    - Verify integration with existing MCP server infrastructure
     - _Requirements: REQ-036, REQ-037_

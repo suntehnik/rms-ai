@@ -24,7 +24,7 @@ func BenchmarkSearchService_Search(b *testing.B) {
 	defer cleanupBenchmarkDB(db)
 
 	// Setup repositories
-	repos := repository.NewRepositories(db)
+	repos := repository.NewRepositories(db, nil)
 
 	// Setup search service
 	searchService := NewSearchService(
@@ -107,7 +107,7 @@ func BenchmarkSearchService_SearchWithPagination(b *testing.B) {
 	db := setupBenchmarkDB(b)
 	defer cleanupBenchmarkDB(db)
 
-	repos := repository.NewRepositories(db)
+	repos := repository.NewRepositories(db, nil)
 	searchService := NewSearchService(db, nil, repos.Epic, repos.UserStory, repos.AcceptanceCriteria, repos.Requirement, repos.SteeringDocument)
 
 	user := createBenchmarkUser(b, db)
