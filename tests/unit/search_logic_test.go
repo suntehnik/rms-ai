@@ -33,7 +33,7 @@ func TestSearchLogic(t *testing.T) {
 	require.NoError(t, err)
 
 	// Setup repositories
-	repos := repository.NewRepositories(db)
+	repos := repository.NewRepositories(db, nil)
 
 	// Create mock search service that uses LIKE queries instead of full-text search
 	searchService := NewMockSearchService(db, repos)

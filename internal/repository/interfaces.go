@@ -88,6 +88,7 @@ type UserStoryRepository interface {
 	GetByReferenceIDWithUsers(referenceID string) (*UserStory, error)
 	GetByReferenceIDWithUsersCaseInsensitive(referenceID string) (*UserStory, error)
 	ListWithIncludes(filters map[string]interface{}, includes []string, orderBy string, limit, offset int) ([]UserStory, error)
+	GetUUIDByReferenceID(referenceID string) (uuid.UUID, error)
 }
 
 // AcceptanceCriteriaRepository defines acceptance criteria-specific repository operations

@@ -38,7 +38,7 @@ func ExampleUsage() {
 	}
 
 	// Create repositories
-	repos := NewRepositories(db)
+	repos := NewRepositories(db, nil)
 
 	// Example workflow: Create User -> Epic -> UserStory -> AcceptanceCriteria -> Requirement
 	err = repos.WithTransaction(func(txRepos *Repositories) error {

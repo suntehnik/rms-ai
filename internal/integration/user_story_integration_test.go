@@ -43,7 +43,7 @@ func (suite *UserStoryIntegrationTestSuite) SetupSuite() {
 	// Setup repositories
 	suite.userRepo = repository.NewUserRepository(suite.db)
 	suite.epicRepo = repository.NewEpicRepository(suite.db)
-	suite.userStoryRepo = repository.NewUserStoryRepository(suite.db)
+	suite.userStoryRepo = repository.NewUserStoryRepository(suite.db, nil)
 
 	// Setup services
 	suite.userStoryService = service.NewUserStoryService(suite.userStoryRepo, suite.epicRepo, suite.userRepo)

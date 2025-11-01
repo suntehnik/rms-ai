@@ -51,7 +51,7 @@ func (suite *RequirementIntegrationTestSuite) SetupSuite() {
 	// Setup repositories
 	suite.userRepo = repository.NewUserRepository(suite.db)
 	suite.epicRepo = repository.NewEpicRepository(suite.db)
-	suite.userStoryRepo = repository.NewUserStoryRepository(suite.db)
+	suite.userStoryRepo = repository.NewUserStoryRepository(suite.db, nil)
 	suite.acceptanceCriteriaRepo = repository.NewAcceptanceCriteriaRepository(suite.db)
 	suite.requirementRepo = repository.NewRequirementRepository(suite.db)
 	suite.requirementTypeRepo = repository.NewRequirementTypeRepository(suite.db)

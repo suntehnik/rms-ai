@@ -66,7 +66,7 @@ func TestEpicRepository_GetWithUserStories(t *testing.T) {
 	db := setupEpicTestDB(t)
 	epicRepo := NewEpicRepository(db)
 	userRepo := NewUserRepository(db)
-	userStoryRepo := NewUserStoryRepository(db)
+	userStoryRepo := NewUserStoryRepository(db, nil)
 
 	epic, user := createTestEpic(t, epicRepo, userRepo, "Test Epic", models.EpicStatusBacklog, models.PriorityHigh)
 
@@ -155,7 +155,7 @@ func TestEpicRepository_HasUserStories(t *testing.T) {
 	db := setupEpicTestDB(t)
 	epicRepo := NewEpicRepository(db)
 	userRepo := NewUserRepository(db)
-	userStoryRepo := NewUserStoryRepository(db)
+	userStoryRepo := NewUserStoryRepository(db, nil)
 
 	epic, user := createTestEpic(t, epicRepo, userRepo, "Test Epic", models.EpicStatusBacklog, models.PriorityHigh)
 

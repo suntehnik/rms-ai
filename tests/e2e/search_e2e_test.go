@@ -498,7 +498,7 @@ func setupE2EEnvironment(t *testing.T) *E2EEnvironment {
 	require.NoError(t, err)
 
 	// Setup repositories
-	repos := repository.NewRepositories(db)
+	repos := repository.NewRepositories(db, nil)
 
 	// Setup services
 	var redisClientForService *redis.Client

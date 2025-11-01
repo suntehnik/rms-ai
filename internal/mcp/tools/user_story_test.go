@@ -99,6 +99,11 @@ func (m *MockUserStoryService) AssignUserStory(id uuid.UUID, assigneeID uuid.UUI
 	return args.Get(0).(*models.UserStory), args.Error(1)
 }
 
+func (m *MockUserStoryService) GetUUIDByReferenceID(referenceID string) (uuid.UUID, error) {
+	args := m.Called(referenceID)
+	return args.Get(0).(uuid.UUID), args.Error(1)
+}
+
 func TestUserStoryHandler_GetSupportedTools(t *testing.T) {
 	handler := NewUserStoryHandler(nil, nil)
 	tools := handler.GetSupportedTools()

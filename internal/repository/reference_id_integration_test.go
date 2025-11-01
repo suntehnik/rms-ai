@@ -81,7 +81,7 @@ func TestReferenceIDLookupIntegration(t *testing.T) {
 
 	// Test User Story Repository
 	t.Run("UserStory Repository", func(t *testing.T) {
-		userStoryRepo := NewUserStoryRepository(db)
+		userStoryRepo := NewUserStoryRepository(db, nil)
 		epicRepo := NewEpicRepository(db)
 
 		// Create epic first
@@ -126,7 +126,7 @@ func TestReferenceIDLookupIntegration(t *testing.T) {
 	// Test Acceptance Criteria Repository
 	t.Run("AcceptanceCriteria Repository", func(t *testing.T) {
 		acRepo := NewAcceptanceCriteriaRepository(db)
-		userStoryRepo := NewUserStoryRepository(db)
+		userStoryRepo := NewUserStoryRepository(db, nil)
 		epicRepo := NewEpicRepository(db)
 
 		// Create epic and user story first
@@ -181,7 +181,7 @@ func TestReferenceIDLookupIntegration(t *testing.T) {
 	// Test Requirement Repository
 	t.Run("Requirement Repository", func(t *testing.T) {
 		reqRepo := NewRequirementRepository(db)
-		userStoryRepo := NewUserStoryRepository(db)
+		userStoryRepo := NewUserStoryRepository(db, nil)
 		epicRepo := NewEpicRepository(db)
 
 		// Create epic and user story first

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
@@ -23,11 +24,11 @@ type Repositories struct {
 }
 
 // NewRepositories creates a new instance of all repositories
-func NewRepositories(db *gorm.DB) *Repositories {
+func NewRepositories(db *gorm.DB, redis *redis.Client) *Repositories {
 	return &Repositories{
 		User:                    NewUserRepository(db),
 		Epic:                    NewEpicRepository(db),
-		UserStory:               NewUserStoryRepository(db),
+		UserStory:               NewUserStoryRepository(db, redis),
 		AcceptanceCriteria:      NewAcceptanceCriteriaRepository(db),
 		Requirement:             NewRequirementRepository(db),
 		RequirementType:         NewRequirementTypeRepository(db),
@@ -50,7 +51,7 @@ func (r *Repositories) WithTransaction(fn func(*Repositories) error) error {
 		txRepos := &Repositories{
 			User:                    NewUserRepository(tx),
 			Epic:                    NewEpicRepository(tx),
-			UserStory:               NewUserStoryRepository(tx),
+			UserStory:               NewUserStoryRepository(tx, nil),
 			AcceptanceCriteria:      NewAcceptanceCriteriaRepository(tx),
 			Requirement:             NewRequirementRepository(tx),
 			RequirementType:         NewRequirementTypeRepository(tx),

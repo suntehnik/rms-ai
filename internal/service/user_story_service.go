@@ -32,6 +32,7 @@ type UserStoryService interface {
 	GetUserStoriesByEpic(epicID uuid.UUID) ([]models.UserStory, error)
 	ChangeUserStoryStatus(id uuid.UUID, newStatus models.UserStoryStatus) (*models.UserStory, error)
 	AssignUserStory(id uuid.UUID, assigneeID uuid.UUID) (*models.UserStory, error)
+	GetUUIDByReferenceID(referenceID string) (uuid.UUID, error)
 }
 
 // CreateUserStoryRequest represents the request to create a user story
@@ -534,4 +535,9 @@ func (s *userStoryService) AssignUserStory(id uuid.UUID, assigneeID uuid.UUID) (
 	}
 
 	return userStory, nil
+}
+
+// GetUUIDByReferenceID resolves a user story reference ID to UUID with Redis caching support
+func (s *userStoryService) GetUUIDByReferenceID(referenceID string) (uuid.UUID, error) {
+	return s.userStoryRepo.GetUUIDByReferenceID(referenceID)
 }
