@@ -10,12 +10,13 @@ import (
 // Handler is the main facade that routes MCP tool calls to appropriate domain handlers
 type Handler struct {
 	// Domain-specific handlers
-	epicHandler             *EpicHandler
-	userStoryHandler        *UserStoryHandler
-	requirementHandler      *RequirementHandler
-	searchHandler           *SearchHandler
-	steeringDocumentHandler *SteeringDocumentHandler
-	promptHandler           *PromptHandler
+	epicHandler               *EpicHandler
+	userStoryHandler          *UserStoryHandler
+	requirementHandler        *RequirementHandler
+	acceptanceCriteriaHandler *AcceptanceCriteriaHandler
+	searchHandler             *SearchHandler
+	steeringDocumentHandler   *SteeringDocumentHandler
+	promptHandler             *PromptHandler
 
 	// Tool routing map for O(1) lookup performance
 	toolRoutes map[string]ToolHandler
@@ -26,6 +27,7 @@ func NewHandler(
 	epicService service.EpicService,
 	userStoryService service.UserStoryService,
 	requirementService service.RequirementService,
+	acceptanceCriteriaService service.AcceptanceCriteriaService,
 	searchService service.SearchServiceInterface,
 	steeringDocumentService service.SteeringDocumentService,
 	promptService PromptServiceInterface,
@@ -34,6 +36,7 @@ func NewHandler(
 	epicHandler := NewEpicHandler(epicService)
 	userStoryHandler := NewUserStoryHandler(userStoryService, epicService)
 	requirementHandler := NewRequirementHandler(requirementService, userStoryService)
+	acceptanceCriteriaHandler := NewAcceptanceCriteriaHandler(acceptanceCriteriaService, userStoryService)
 	searchHandler := NewSearchHandler(searchService, requirementService)
 	steeringDocumentHandler := NewSteeringDocumentHandler(steeringDocumentService, epicService)
 	promptHandler := NewPromptHandler(promptService)
@@ -56,6 +59,11 @@ func NewHandler(
 		toolRoutes[tool] = requirementHandler
 	}
 
+	// Register Acceptance Criteria tools
+	for _, tool := range acceptanceCriteriaHandler.GetSupportedTools() {
+		toolRoutes[tool] = acceptanceCriteriaHandler
+	}
+
 	// Register Search tools
 	for _, tool := range searchHandler.GetSupportedTools() {
 		toolRoutes[tool] = searchHandler
@@ -72,13 +80,14 @@ func NewHandler(
 	}
 
 	return &Handler{
-		epicHandler:             epicHandler,
-		userStoryHandler:        userStoryHandler,
-		requirementHandler:      requirementHandler,
-		searchHandler:           searchHandler,
-		steeringDocumentHandler: steeringDocumentHandler,
-		promptHandler:           promptHandler,
-		toolRoutes:              toolRoutes,
+		epicHandler:               epicHandler,
+		userStoryHandler:          userStoryHandler,
+		requirementHandler:        requirementHandler,
+		acceptanceCriteriaHandler: acceptanceCriteriaHandler,
+		searchHandler:             searchHandler,
+		steeringDocumentHandler:   steeringDocumentHandler,
+		promptHandler:             promptHandler,
+		toolRoutes:                toolRoutes,
 	}
 }
 

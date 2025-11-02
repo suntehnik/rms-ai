@@ -597,6 +597,29 @@ func GetSupportedTools() []ToolDefinition {
 				"properties": map[string]interface{}{},
 			},
 		},
+		{
+			Name:        "create_acceptance_criteria",
+			Title:       "Create Acceptance Criteria",
+			Description: "Create acceptance criteria for a user story using either UUID or reference ID. The author is automatically set to the authenticated user.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"user_story_id": map[string]interface{}{
+						"type":        "string",
+						"description": "User story UUID or reference ID (e.g., US-001). Supports both UUID format and reference ID format.",
+						"pattern":     "^(US-\\d+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
+					},
+					"description": map[string]interface{}{
+						"type":        "string",
+						"description": "Detailed description of the acceptance criteria. Must not be empty and cannot exceed 50000 characters.",
+						"maxLength":   50000,
+						"minLength":   1,
+					},
+				},
+				"required":             []string{"user_story_id", "description"},
+				"additionalProperties": false,
+			},
+		},
 	}
 }
 
