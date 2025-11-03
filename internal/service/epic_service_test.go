@@ -11,6 +11,7 @@ import (
 
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/repository"
+	"product-requirements-management/internal/validation"
 )
 
 // MockEpicRepository is a mock implementation of EpicRepository
@@ -496,7 +497,7 @@ func TestEpicService_ChangeEpicStatus(t *testing.T) {
 				}
 				epicRepo.On("GetByID", mock.AnythingOfType("uuid.UUID")).Return(epic, nil)
 			},
-			expectedError: ErrInvalidEpicStatus,
+			expectedError: &validation.StatusValidationError{},
 		},
 	}
 
@@ -513,7 +514,12 @@ func TestEpicService_ChangeEpicStatus(t *testing.T) {
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
-				assert.True(t, errors.Is(err, tt.expectedError))
+				// Check if it's a StatusValidationError
+				if _, ok := tt.expectedError.(*validation.StatusValidationError); ok {
+					assert.IsType(t, &validation.StatusValidationError{}, err)
+				} else {
+					assert.True(t, errors.Is(err, tt.expectedError))
+				}
 				assert.Nil(t, epic)
 			} else {
 				assert.NoError(t, err)

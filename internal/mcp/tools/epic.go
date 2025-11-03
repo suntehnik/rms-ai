@@ -2,6 +2,7 @@ package tools
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -10,6 +11,7 @@ import (
 	"product-requirements-management/internal/mcp/types"
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/service"
+	"product-requirements-management/internal/validation"
 )
 
 // EpicHandler handles MCP tools for Epic domain operations
@@ -145,6 +147,25 @@ func (h *EpicHandler) Update(ctx context.Context, args map[string]interface{}) (
 	// Update the epic
 	epic, err := h.epicService.UpdateEpic(epicID, req)
 	if err != nil {
+		// Check for status validation errors and provide specific error messages
+		if statusErr, ok := validation.GetStatusValidationError(err); ok {
+			return nil, jsonrpc.NewInvalidParamsError(statusErr.Message)
+		}
+
+		// Check for entity not found errors
+		if errors.Is(err, service.ErrEpicNotFound) {
+			return nil, jsonrpc.NewInvalidParamsError("Epic not found")
+		}
+
+		// Check for other validation errors
+		if errors.Is(err, service.ErrInvalidPriority) {
+			return nil, jsonrpc.NewInvalidParamsError("Invalid priority value")
+		}
+
+		if errors.Is(err, service.ErrUserNotFound) {
+			return nil, jsonrpc.NewInvalidParamsError("Assignee user not found")
+		}
+
 		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to update epic: %v", err))
 	}
 

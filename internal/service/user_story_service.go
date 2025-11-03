@@ -10,6 +10,7 @@ import (
 
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/repository"
+	"product-requirements-management/internal/validation"
 )
 
 var (
@@ -166,9 +167,10 @@ type UserStoryFilters struct {
 
 // userStoryService implements UserStoryService interface
 type userStoryService struct {
-	userStoryRepo repository.UserStoryRepository
-	epicRepo      repository.EpicRepository
-	userRepo      repository.UserRepository
+	userStoryRepo   repository.UserStoryRepository
+	epicRepo        repository.EpicRepository
+	userRepo        repository.UserRepository
+	statusValidator validation.StatusValidator
 }
 
 // NewUserStoryService creates a new user story service instance
@@ -178,9 +180,10 @@ func NewUserStoryService(
 	userRepo repository.UserRepository,
 ) UserStoryService {
 	return &userStoryService{
-		userStoryRepo: userStoryRepo,
-		epicRepo:      epicRepo,
-		userRepo:      userRepo,
+		userStoryRepo:   userStoryRepo,
+		epicRepo:        epicRepo,
+		userRepo:        userRepo,
+		statusValidator: validation.NewStatusValidator(),
 	}
 }
 
@@ -318,9 +321,12 @@ func (s *userStoryService) UpdateUserStory(id uuid.UUID, req UpdateUserStoryRequ
 	}
 
 	if req.Status != nil {
-		if !userStory.IsValidStatus(*req.Status) {
-			return nil, ErrInvalidUserStoryStatus
+		// Validate status using centralized validator
+		if err := s.statusValidator.ValidateUserStoryStatus(string(*req.Status)); err != nil {
+			return nil, err
 		}
+
+		// Check status transition rules
 		if !userStory.CanTransitionTo(*req.Status) {
 			return nil, ErrInvalidStatusTransition
 		}
@@ -496,8 +502,9 @@ func (s *userStoryService) ChangeUserStoryStatus(id uuid.UUID, newStatus models.
 		return nil, fmt.Errorf("failed to get user story: %w", err)
 	}
 
-	if !userStory.IsValidStatus(newStatus) {
-		return nil, ErrInvalidUserStoryStatus
+	// Validate status using centralized validator
+	if err := s.statusValidator.ValidateUserStoryStatus(string(newStatus)); err != nil {
+		return nil, err
 	}
 
 	if !userStory.CanTransitionTo(newStatus) {

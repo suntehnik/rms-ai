@@ -708,11 +708,149 @@ if __name__ == "__main__":
     demonstrate_caching()
 ```
 
+## Status Management Workflows
+
+### 6. Complete Status Management Workflow
+
+This example demonstrates managing entity status throughout the development lifecycle.
+
+```python
+import requests
+import json
+from typing import Dict, List
+
+class StatusWorkflowManager:
+    def __init__(self, base_url: str, token: str):
+        self.base_url = base_url
+        self.token = token
+        self.headers = {
+            'Authorization': f'Bearer {token}',
+            'Content-Type': 'application/json'
+        }
+        self.request_id = 1
+    
+    def _make_request(self, method: str, params: Dict) -> Dict:
+        payload = {
+            "jsonrpc": "2.0",
+            "id": self.request_id,
+            "method": method,
+            "params": params
+        }
+        self.request_id += 1
+        
+        response = requests.post(
+            f"{self.base_url}/api/v1/mcp",
+            headers=self.headers,
+            json=payload
+        )
+        return response.json()
+    
+    def update_entity_status(self, entity_type: str, entity_id: str, status: str) -> Dict:
+        """Update status for any entity type"""
+        tool_name = f"update_{entity_type}"
+        id_field = f"{entity_type}_id"
+        
+        result = self._make_request("tools/call", {
+            "name": tool_name,
+            "arguments": {
+                id_field: entity_id,
+                "status": status
+            }
+        })
+        
+        if "error" in result:
+            return {
+                "success": False,
+                "error": result["error"]["message"],
+                "entity_type": entity_type,
+                "entity_id": entity_id,
+                "requested_status": status
+            }
+        
+        entity_data = result["result"]["content"][1]["data"]
+        return {
+            "success": True,
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+            "old_status": "unknown",  # Would need to track this
+            "new_status": entity_data["status"],
+            "message": result["result"]["content"][0]["text"]
+        }
+    
+    def execute_development_workflow(self, epic_id: str, user_story_id: str, requirement_id: str) -> List[Dict]:
+        """Execute a complete development workflow with status transitions"""
+        workflow_steps = [
+            # Planning Phase
+            {"entity_type": "epic", "entity_id": epic_id, "status": "Draft", "phase": "Planning"},
+            {"entity_type": "user_story", "entity_id": user_story_id, "status": "Draft", "phase": "Planning"},
+            {"entity_type": "requirement", "entity_id": requirement_id, "status": "Draft", "phase": "Planning"},
+            
+            # Development Phase
+            {"entity_type": "epic", "entity_id": epic_id, "status": "In Progress", "phase": "Development"},
+            {"entity_type": "user_story", "entity_id": user_story_id, "status": "In Progress", "phase": "Development"},
+            {"entity_type": "requirement", "entity_id": requirement_id, "status": "Active", "phase": "Development"},
+            
+            # Completion Phase
+            {"entity_type": "user_story", "entity_id": user_story_id, "status": "Done", "phase": "Completion"},
+            {"entity_type": "epic", "entity_id": epic_id, "status": "Done", "phase": "Completion"},
+        ]
+        
+        results = []
+        for step in workflow_steps:
+            print(f"🔄 {step['phase']}: Updating {step['entity_type']} {step['entity_id']} to {step['status']}")
+            
+            result = self.update_entity_status(
+                step["entity_type"],
+                step["entity_id"], 
+                step["status"]
+            )
+            
+            result["phase"] = step["phase"]
+            results.append(result)
+            
+            if result["success"]:
+                print(f"✅ {result['message']}")
+            else:
+                print(f"❌ Error: {result['error']}")
+                break  # Stop workflow on error
+        
+        return results
+
+# Usage example
+def demonstrate_status_workflow():
+    manager = StatusWorkflowManager(
+        "http://localhost:8080",
+        "mcp_pat_your_token_here"
+    )
+    
+    print("=== Status Management Workflow Demo ===")
+    
+    # Execute complete development workflow
+    print("\n1. Executing Development Workflow:")
+    workflow_results = manager.execute_development_workflow(
+        epic_id="EP-001",
+        user_story_id="US-001", 
+        requirement_id="REQ-001"
+    )
+    
+    # Show workflow summary
+    successful_transitions = [r for r in workflow_results if r["success"]]
+    failed_transitions = [r for r in workflow_results if not r["success"]]
+    
+    print(f"\n📊 Workflow Summary:")
+    print(f"   Successful transitions: {len(successful_transitions)}")
+    print(f"   Failed transitions: {len(failed_transitions)}")
+
+if __name__ == "__main__":
+    demonstrate_status_workflow()
+```
+
 This comprehensive examples document provides practical, working code examples for:
 
 1. **Basic Workflows** - Complete feature development and requirement analysis
 2. **Advanced Integration** - Automated validation and quality checking
 3. **Error Handling** - Robust client with retry logic and comprehensive error handling
 4. **Performance Optimization** - Caching strategies and batch operations
+5. **Status Management** - Complete workflow management with status transitions
 
 Each example is production-ready and demonstrates best practices for integrating with the MCP API. The examples progress from simple to complex, showing how to build sophisticated applications on top of the MCP API.

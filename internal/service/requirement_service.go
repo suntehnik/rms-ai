@@ -8,6 +8,7 @@ import (
 
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/repository"
+	"product-requirements-management/internal/validation"
 )
 
 var (
@@ -93,6 +94,7 @@ type requirementService struct {
 	userStoryRepo               repository.UserStoryRepository
 	acceptanceCriteriaRepo      repository.AcceptanceCriteriaRepository
 	userRepo                    repository.UserRepository
+	statusValidator             validation.StatusValidator
 }
 
 // NewRequirementService creates a new requirement service instance
@@ -113,6 +115,7 @@ func NewRequirementService(
 		userStoryRepo:               userStoryRepo,
 		acceptanceCriteriaRepo:      acceptanceCriteriaRepo,
 		userRepo:                    userRepo,
+		statusValidator:             validation.NewStatusValidator(),
 	}
 }
 
@@ -248,9 +251,12 @@ func (s *requirementService) UpdateRequirement(id uuid.UUID, req UpdateRequireme
 	}
 
 	if req.Status != nil {
-		if !requirement.IsValidStatus(*req.Status) {
-			return nil, ErrInvalidRequirementStatus
+		// Validate status using centralized validator
+		if err := s.statusValidator.ValidateRequirementStatus(string(*req.Status)); err != nil {
+			return nil, err
 		}
+
+		// Check status transition rules
 		if !requirement.CanTransitionTo(*req.Status) {
 			return nil, ErrInvalidStatusTransition
 		}
@@ -405,8 +411,9 @@ func (s *requirementService) ChangeRequirementStatus(id uuid.UUID, newStatus mod
 		return nil, fmt.Errorf("failed to get requirement: %w", err)
 	}
 
-	if !requirement.IsValidStatus(newStatus) {
-		return nil, ErrInvalidRequirementStatus
+	// Validate status using centralized validator
+	if err := s.statusValidator.ValidateRequirementStatus(string(newStatus)); err != nil {
+		return nil, err
 	}
 
 	if !requirement.CanTransitionTo(newStatus) {

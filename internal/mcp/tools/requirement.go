@@ -2,12 +2,14 @@ package tools
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"product-requirements-management/internal/jsonrpc"
 	"product-requirements-management/internal/mcp/types"
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/service"
+	"product-requirements-management/internal/validation"
 
 	"github.com/google/uuid"
 )
@@ -181,9 +183,33 @@ func (h *RequirementHandler) Update(ctx context.Context, args map[string]interfa
 		}
 	}
 
+	if status, ok := getStringArg(args, "status"); ok && status != "" {
+		requirementStatus := models.RequirementStatus(status)
+		req.Status = &requirementStatus
+	}
+
 	// Update the requirement
 	requirement, err := h.requirementService.UpdateRequirement(requirementID, req)
 	if err != nil {
+		// Check for status validation errors and provide specific error messages
+		if statusErr, ok := validation.GetStatusValidationError(err); ok {
+			return nil, jsonrpc.NewInvalidParamsError(statusErr.Message)
+		}
+
+		// Check for entity not found errors
+		if errors.Is(err, service.ErrRequirementNotFound) {
+			return nil, jsonrpc.NewInvalidParamsError("Requirement not found")
+		}
+
+		// Check for other validation errors
+		if errors.Is(err, service.ErrInvalidPriority) {
+			return nil, jsonrpc.NewInvalidParamsError("Invalid priority value")
+		}
+
+		if errors.Is(err, service.ErrUserNotFound) {
+			return nil, jsonrpc.NewInvalidParamsError("Assignee user not found")
+		}
+
 		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to update requirement: %v", err))
 	}
 
