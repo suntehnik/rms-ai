@@ -508,6 +508,14 @@ func TestUserStoryHandler_Update_ValidParameters(t *testing.T) {
 			},
 			expected: expectedUserStory,
 		},
+		{
+			name: "update with status parameter",
+			args: map[string]interface{}{
+				"user_story_id": userStoryID.String(),
+				"status":        "In Progress",
+			},
+			expected: expectedUserStory,
+		},
 	}
 
 	for _, tt := range tests {

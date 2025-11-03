@@ -535,6 +535,14 @@ func TestRequirementHandler_Update_ValidParameters(t *testing.T) {
 			},
 			expected: expectedRequirement,
 		},
+		{
+			name: "update with status parameter",
+			args: map[string]interface{}{
+				"requirement_id": requirementID.String(),
+				"status":         "Active",
+			},
+			expected: expectedRequirement,
+		},
 	}
 
 	for _, tt := range tests {

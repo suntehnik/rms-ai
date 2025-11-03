@@ -8,6 +8,7 @@ import (
 
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/repository"
+	"product-requirements-management/internal/validation"
 )
 
 var (
@@ -169,15 +170,17 @@ type AssignEpicRequest struct {
 
 // epicService implements EpicService interface
 type epicService struct {
-	epicRepo repository.EpicRepository
-	userRepo repository.UserRepository
+	epicRepo        repository.EpicRepository
+	userRepo        repository.UserRepository
+	statusValidator validation.StatusValidator
 }
 
 // NewEpicService creates a new epic service instance
 func NewEpicService(epicRepo repository.EpicRepository, userRepo repository.UserRepository) EpicService {
 	return &epicService{
-		epicRepo: epicRepo,
-		userRepo: userRepo,
+		epicRepo:        epicRepo,
+		userRepo:        userRepo,
+		statusValidator: validation.NewStatusValidator(),
 	}
 }
 
@@ -277,9 +280,12 @@ func (s *epicService) UpdateEpic(id uuid.UUID, req UpdateEpicRequest) (*models.E
 	}
 
 	if req.Status != nil {
-		if !epic.IsValidStatus(*req.Status) {
-			return nil, ErrInvalidEpicStatus
+		// Validate status using centralized validator
+		if err := s.statusValidator.ValidateEpicStatus(string(*req.Status)); err != nil {
+			return nil, err
 		}
+
+		// Check status transition rules
 		if !epic.CanTransitionTo(*req.Status) {
 			return nil, ErrInvalidStatusTransition
 		}
@@ -416,8 +422,9 @@ func (s *epicService) ChangeEpicStatus(id uuid.UUID, newStatus models.EpicStatus
 		return nil, fmt.Errorf("failed to get epic: %w", err)
 	}
 
-	if !epic.IsValidStatus(newStatus) {
-		return nil, ErrInvalidEpicStatus
+	// Validate status using centralized validator
+	if err := s.statusValidator.ValidateEpicStatus(string(newStatus)); err != nil {
+		return nil, err
 	}
 
 	if !epic.CanTransitionTo(newStatus) {
