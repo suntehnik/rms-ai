@@ -1,5 +1,7 @@
 package schemas
 
+import "product-requirements-management/internal/validation"
+
 // ToolDefinition represents a tool definition with its schema
 type ToolDefinition struct {
 	Name        string      `json:"name"`
@@ -79,7 +81,7 @@ func GetSupportedTools() []ToolDefinition {
 					"status": map[string]interface{}{
 						"type":        "string",
 						"description": "New status of the epic (Backlog, Draft, In Progress, Done, Cancelled)",
-						"enum":        []string{"Backlog", "Draft", "In Progress", "Done", "Cancelled"},
+						"enum":        validation.GetValidEpicStatuses(),
 					},
 				},
 				"required": []string{"epic_id"},
@@ -153,6 +155,11 @@ func GetSupportedTools() []ToolDefinition {
 						"type":        "string",
 						"description": "UUID of the user to assign the user story to (empty string to unassign)",
 						"format":      "uuid",
+					},
+					"status": map[string]interface{}{
+						"type":        "string",
+						"description": "New status of the user story (Backlog, Draft, In Progress, Done, Cancelled)",
+						"enum":        validation.GetValidUserStoryStatuses(),
 					},
 				},
 				"required": []string{"user_story_id"},
@@ -236,6 +243,11 @@ func GetSupportedTools() []ToolDefinition {
 						"type":        "string",
 						"description": "UUID of the user to assign the requirement to (empty string to unassign)",
 						"format":      "uuid",
+					},
+					"status": map[string]interface{}{
+						"type":        "string",
+						"description": "New status of the requirement (Draft, Active, Obsolete)",
+						"enum":        validation.GetValidRequirementStatuses(),
 					},
 				},
 				"required": []string{"requirement_id"},
