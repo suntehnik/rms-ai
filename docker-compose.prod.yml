@@ -5,6 +5,8 @@ services:
     image: ghcr.io/suntehnik/frontend-requirements-system:latest
     platform: linux/amd64
     command: "cp -r /usr/share/nginx/html /usr/share/nginx/html-target"
+    environment:
+      - API_URL=${API_URL}
     volumes: 
       - nginx-static:/usr/share/nginx/html-target
   app:
