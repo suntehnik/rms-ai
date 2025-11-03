@@ -133,6 +133,16 @@ Update an existing epic in the requirements management system.
 | `description` | string | ✗ | New description (max 50,000 characters) |
 | `priority` | integer | ✗ | New priority level (1-4) |
 | `assignee_id` | string | ✗ | UUID of assignee (empty string to unassign) |
+| `status` | string | ✗ | New status (Backlog, Draft, In Progress, Done, Cancelled) |
+
+#### Status Values
+
+Epic status can be updated to one of the following values:
+- `Backlog` - Initial state for new epics
+- `Draft` - Epic is being planned and refined
+- `In Progress` - Epic is actively being worked on
+- `Done` - Epic is completed
+- `Cancelled` - Epic is cancelled and will not be completed
 
 #### Example Request
 
@@ -147,8 +157,41 @@ Update an existing epic in the requirements management system.
       "epic_id": "EP-001",
       "title": "Enhanced User Authentication System",
       "description": "Implement comprehensive user authentication with OAuth2 and SAML support",
-      "priority": 1
+      "priority": 1,
+      "status": "In Progress"
     }
+  }
+}
+```
+
+#### Example Response
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Successfully updated epic EP-001: Enhanced User Authentication System"
+      },
+      {
+        "type": "data",
+        "data": {
+          "id": "epic-uuid-here",
+          "reference_id": "EP-001",
+          "title": "Enhanced User Authentication System",
+          "description": "Implement comprehensive user authentication with OAuth2 and SAML support",
+          "status": "In Progress",
+          "priority": 1,
+          "creator_id": "current-user-uuid",
+          "assignee_id": "123e4567-e89b-12d3-a456-426614174000",
+          "created_at": "2024-01-01T00:00:00Z",
+          "updated_at": "2024-01-01T12:30:00Z"
+        }
+      }
+    ]
   }
 }
 ```
@@ -206,6 +249,16 @@ Update an existing user story.
 | `description` | string | ✗ | New description (max 50,000 characters) |
 | `priority` | integer | ✗ | New priority level (1-4) |
 | `assignee_id` | string | ✗ | UUID of assignee (empty string to unassign) |
+| `status` | string | ✗ | New status (Backlog, Draft, In Progress, Done, Cancelled) |
+
+#### Status Values
+
+User story status can be updated to one of the following values:
+- `Backlog` - Initial state for new user stories
+- `Draft` - User story is being refined
+- `In Progress` - User story is actively being developed
+- `Done` - User story is completed
+- `Cancelled` - User story is cancelled
 
 #### Example Request
 
@@ -220,8 +273,42 @@ Update an existing user story.
       "user_story_id": "US-001",
       "title": "Secure User Login with Multi-Factor Authentication",
       "description": "As a registered user, I want to securely log in with my email, password, and optional MFA, so that I can access my account with confidence",
-      "priority": 1
+      "priority": 1,
+      "status": "In Progress"
     }
+  }
+}
+```
+
+#### Example Response
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Successfully updated user story US-001: Secure User Login with Multi-Factor Authentication"
+      },
+      {
+        "type": "data",
+        "data": {
+          "id": "user-story-uuid-here",
+          "reference_id": "US-001",
+          "title": "Secure User Login with Multi-Factor Authentication",
+          "description": "As a registered user, I want to securely log in with my email, password, and optional MFA, so that I can access my account with confidence",
+          "status": "In Progress",
+          "priority": 1,
+          "epic_id": "epic-uuid",
+          "creator_id": "current-user-uuid",
+          "assignee_id": "123e4567-e89b-12d3-a456-426614174000",
+          "created_at": "2024-01-01T00:00:00Z",
+          "updated_at": "2024-01-01T12:30:00Z"
+        }
+      }
+    ]
   }
 }
 ```
@@ -282,6 +369,14 @@ Update an existing requirement.
 | `description` | string | ✗ | New description (max 50,000 characters) |
 | `priority` | integer | ✗ | New priority level (1-4) |
 | `assignee_id` | string | ✗ | UUID of assignee (empty string to unassign) |
+| `status` | string | ✗ | New status (Draft, Active, Obsolete) |
+
+#### Status Values
+
+Requirement status can be updated to one of the following values:
+- `Draft` - Initial state for new requirements
+- `Active` - Requirement is approved and active
+- `Obsolete` - Requirement is no longer valid
 
 #### Example Request
 
@@ -296,8 +391,43 @@ Update an existing requirement.
       "requirement_id": "REQ-001",
       "title": "Enhanced password validation with complexity scoring",
       "description": "The system shall enforce a comprehensive password policy with complexity scoring, requiring minimum 12 characters, character diversity, and rejection of common patterns, dictionary words, and personal information.",
-      "priority": 1
+      "priority": 1,
+      "status": "Active"
     }
+  }
+}
+```
+
+#### Example Response
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 6,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Successfully updated requirement REQ-001: Enhanced password validation with complexity scoring"
+      },
+      {
+        "type": "data",
+        "data": {
+          "id": "requirement-uuid-here",
+          "reference_id": "REQ-001",
+          "title": "Enhanced password validation with complexity scoring",
+          "description": "The system shall enforce a comprehensive password policy with complexity scoring, requiring minimum 12 characters, character diversity, and rejection of common patterns, dictionary words, and personal information.",
+          "status": "Active",
+          "priority": 1,
+          "user_story_id": "user-story-uuid",
+          "type_id": "functional-type-uuid",
+          "creator_id": "current-user-uuid",
+          "assignee_id": "123e4567-e89b-12d3-a456-426614174000",
+          "created_at": "2024-01-01T00:00:00Z",
+          "updated_at": "2024-01-01T12:30:00Z"
+        }
+      }
+    ]
   }
 }
 ```
@@ -561,6 +691,57 @@ curl -X POST http://localhost:8080/api/v1/mcp \
       }
     }
   }'
+
+# 4. Update Epic Status to In Progress
+curl -X POST http://localhost:8080/api/v1/mcp \
+  -H "Authorization: Bearer mcp_pat_your_token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+      "name": "update_epic",
+      "arguments": {
+        "epic_id": "EP-001",
+        "status": "In Progress"
+      }
+    }
+  }'
+
+# 5. Update User Story Status to In Progress
+curl -X POST http://localhost:8080/api/v1/mcp \
+  -H "Authorization: Bearer mcp_pat_your_token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+      "name": "update_user_story",
+      "arguments": {
+        "user_story_id": "US-001",
+        "status": "In Progress"
+      }
+    }
+  }'
+
+# 6. Update Requirement Status to Active
+curl -X POST http://localhost:8080/api/v1/mcp \
+  -H "Authorization: Bearer mcp_pat_your_token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 6,
+    "method": "tools/call",
+    "params": {
+      "name": "update_requirement",
+      "arguments": {
+        "requirement_id": "REQ-001",
+        "status": "Active"
+      }
+    }
+  }'
 ```
 
 ### Searching and Analysis
@@ -600,6 +781,96 @@ curl -X POST http://localhost:8080/api/v1/mcp \
     }
   }'
 ```
+
+## Status Management
+
+### Overview
+
+The MCP API supports status management for epics, user stories, and requirements through the update tools. Status changes enable workflow management and lifecycle tracking for all entity types.
+
+### Status Workflows
+
+#### Epic Status Workflow
+```
+Backlog → Draft → In Progress → Done
+    ↓         ↓         ↓
+Cancelled ← Cancelled ← Cancelled
+```
+
+#### User Story Status Workflow
+```
+Backlog → Draft → In Progress → Done
+    ↓         ↓         ↓
+Cancelled ← Cancelled ← Cancelled
+```
+
+#### Requirement Status Workflow
+```
+Draft → Active → Obsolete
+```
+
+### Status Update Examples
+
+#### Update Epic Status
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "update_epic",
+    "arguments": {
+      "epic_id": "EP-001",
+      "status": "In Progress"
+    }
+  }
+}
+```
+
+#### Update User Story Status
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/call",
+  "params": {
+    "name": "update_user_story",
+    "arguments": {
+      "user_story_id": "US-001",
+      "status": "Done"
+    }
+  }
+}
+```
+
+#### Update Requirement Status
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "update_requirement",
+    "arguments": {
+      "requirement_id": "REQ-001",
+      "status": "Active"
+    }
+  }
+}
+```
+
+### Status Validation
+
+The API validates status values against allowed enums for each entity type:
+
+- **Epic**: Backlog, Draft, In Progress, Done, Cancelled
+- **User Story**: Backlog, Draft, In Progress, Done, Cancelled  
+- **Requirement**: Draft, Active, Obsolete
+
+Invalid status values will result in validation errors with helpful messages indicating the valid options.
 
 ## Error Handling
 
@@ -657,6 +928,20 @@ curl -X POST http://localhost:8080/api/v1/mcp \
     "code": -32603,
     "message": "Internal error",
     "data": "Failed to create user story: epic not found"
+  }
+}
+```
+
+#### Invalid Status Value
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "error": {
+    "code": -32602,
+    "message": "Invalid params",
+    "data": "Invalid status 'InvalidStatus' for epic. Valid statuses are: Backlog, Draft, In Progress, Done, Cancelled"
   }
 }
 ```

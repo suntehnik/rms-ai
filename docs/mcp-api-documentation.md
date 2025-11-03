@@ -135,7 +135,10 @@ Update an existing epic.
 - `epic_id` (string): UUID or reference ID (EP-XXX)
 
 **Optional Parameters:**
-- `title`, `description`, `priority`, `assignee_id`
+- `title`, `description`, `priority`, `assignee_id`, `status`
+
+**Status Values:**
+- `Backlog`, `Draft`, `In Progress`, `Done`, `Cancelled`
 
 #### 3. create_user_story
 Create a new user story within an epic.
@@ -156,7 +159,10 @@ Update an existing user story.
 - `user_story_id` (string): UUID or reference ID (US-XXX)
 
 **Optional Parameters:**
-- `title`, `description`, `priority`, `assignee_id`
+- `title`, `description`, `priority`, `assignee_id`, `status`
+
+**Status Values:**
+- `Backlog`, `Draft`, `In Progress`, `Done`, `Cancelled`
 
 #### 5. create_requirement
 Create a new requirement within a user story.
@@ -179,7 +185,10 @@ Update an existing requirement.
 - `requirement_id` (string): UUID or reference ID (REQ-XXX)
 
 **Optional Parameters:**
-- `title`, `description`, `priority`, `assignee_id`
+- `title`, `description`, `priority`, `assignee_id`, `status`
+
+**Status Values:**
+- `Draft`, `Active`, `Obsolete`
 
 #### 7. create_relationship
 Create a relationship between two requirements.
@@ -351,13 +360,30 @@ curl -X POST http://localhost:8080/api/v1/mcp \
     }
   }'
 
-# 5. Search for authentication-related items
+# 5. Update epic status to In Progress
 curl -X POST http://localhost:8080/api/v1/mcp \
   -H "Authorization: Bearer mcp_pat_your_token" \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
     "id": 5,
+    "method": "tools/call",
+    "params": {
+      "name": "update_epic",
+      "arguments": {
+        "epic_id": "'$EPIC_ID'",
+        "status": "In Progress"
+      }
+    }
+  }'
+
+# 6. Search for authentication-related items
+curl -X POST http://localhost:8080/api/v1/mcp \
+  -H "Authorization: Bearer mcp_pat_your_token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 6,
     "method": "tools/call",
     "params": {
       "name": "search_global",
@@ -449,6 +475,7 @@ if __name__ == "__main__":
 ### Support
 
 For additional support:
+- Check the [MCP Status Management Guide](mcp-status-management-guide.md) for detailed status workflow information
 - Check the [MCP Testing Guide](mcp-testing-guide.md)
 - Review server logs for detailed error information
 - Validate your JSON-RPC requests against the specification

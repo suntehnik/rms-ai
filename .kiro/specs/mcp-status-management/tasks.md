@@ -68,7 +68,7 @@
     - _Requirements: 5.1, 5.3, 5.4, 7.4, 7.5_
 
 - [ ] 5. Implement comprehensive testing
-  - [ ] 5.1 Create unit tests for status validation
+  - [x] 5.1 Create unit tests for status validation
     - Test valid status values for each entity type
     - Test invalid status values and error responses
     - Test case-insensitive status validation
@@ -97,7 +97,7 @@
     - _Requirements: 5.5, 6.5, 7.5_
 
 - [ ] 6. Documentation and deployment preparation
-  - [ ] 6.1 Update API documentation
+  - [x] 6.1 Update API documentation
     - Document new status parameters in MCP tool schemas
     - Add examples of status update requests and responses
     - Document error conditions and response formats
