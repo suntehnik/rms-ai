@@ -105,17 +105,18 @@ func (m *MockUserStoryService) GetUUIDByReferenceID(referenceID string) (uuid.UU
 }
 
 func TestUserStoryHandler_GetSupportedTools(t *testing.T) {
-	handler := NewUserStoryHandler(nil, nil)
+	handler := NewUserStoryHandler(nil, nil, nil)
 	tools := handler.GetSupportedTools()
 
-	expected := []string{"create_user_story", "update_user_story"}
+	expected := []string{"create_user_story", "update_user_story", "get_user_story_requirements"}
 	assert.Equal(t, expected, tools)
 }
 
 func TestUserStoryHandler_HandleTool(t *testing.T) {
 	mockUserStoryService := &MockUserStoryService{}
 	mockEpicService := &MockEpicService{}
-	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService)
+	mockRequirementService := &MockRequirementService{}
+	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService, mockRequirementService)
 
 	tests := []struct {
 		name        string
@@ -131,6 +132,11 @@ func TestUserStoryHandler_HandleTool(t *testing.T) {
 			name:        "valid update_user_story tool",
 			toolName:    "update_user_story",
 			expectError: true, // Will error due to missing context/args, but tool routing works
+		},
+		{
+			name:        "valid get_user_story_requirements tool",
+			toolName:    "get_user_story_requirements",
+			expectError: true, // Will error due to placeholder implementation, but tool routing works
 		},
 		{
 			name:        "invalid tool name",
@@ -155,7 +161,8 @@ func TestUserStoryHandler_HandleTool(t *testing.T) {
 func TestUserStoryHandler_Create_ValidationErrors(t *testing.T) {
 	mockUserStoryService := &MockUserStoryService{}
 	mockEpicService := &MockEpicService{}
-	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService)
+	mockRequirementService := &MockRequirementService{}
+	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService, mockRequirementService)
 
 	tests := []struct {
 		name string
@@ -198,7 +205,8 @@ func TestUserStoryHandler_Create_ValidationErrors(t *testing.T) {
 func TestUserStoryHandler_Update_ValidationErrors(t *testing.T) {
 	mockUserStoryService := &MockUserStoryService{}
 	mockEpicService := &MockEpicService{}
-	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService)
+	mockRequirementService := &MockRequirementService{}
+	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService, mockRequirementService)
 
 	tests := []struct {
 		name string
@@ -229,18 +237,21 @@ func TestUserStoryHandler_Update_ValidationErrors(t *testing.T) {
 func TestNewUserStoryHandler(t *testing.T) {
 	mockUserStoryService := &MockUserStoryService{}
 	mockEpicService := &MockEpicService{}
-	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService)
+	mockRequirementService := &MockRequirementService{}
+	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService, mockRequirementService)
 
 	assert.NotNil(t, handler)
 	assert.Equal(t, mockUserStoryService, handler.userStoryService)
 	assert.Equal(t, mockEpicService, handler.epicService)
+	assert.Equal(t, mockRequirementService, handler.requirementService)
 }
 
 // TestUserStoryHandler_Create_ValidParameters tests user story creation with valid parameters
 func TestUserStoryHandler_Create_ValidParameters(t *testing.T) {
 	mockUserStoryService := &MockUserStoryService{}
 	mockEpicService := &MockEpicService{}
-	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService)
+	mockRequirementService := &MockRequirementService{}
+	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService, mockRequirementService)
 
 	// Create test user
 	user := &models.User{
@@ -338,7 +349,8 @@ func TestUserStoryHandler_Create_ValidParameters(t *testing.T) {
 func TestUserStoryHandler_Create_EpicReferenceIDResolution(t *testing.T) {
 	mockUserStoryService := &MockUserStoryService{}
 	mockEpicService := &MockEpicService{}
-	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService)
+	mockRequirementService := &MockRequirementService{}
+	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService, mockRequirementService)
 
 	user := &models.User{
 		ID:       uuid.New(),
@@ -435,7 +447,8 @@ func TestUserStoryHandler_Create_EpicReferenceIDResolution(t *testing.T) {
 func TestUserStoryHandler_Create_ServiceErrors(t *testing.T) {
 	mockUserStoryService := &MockUserStoryService{}
 	mockEpicService := &MockEpicService{}
-	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService)
+	mockRequirementService := &MockRequirementService{}
+	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService, mockRequirementService)
 
 	user := &models.User{
 		ID:       uuid.New(),
@@ -465,7 +478,8 @@ func TestUserStoryHandler_Create_ServiceErrors(t *testing.T) {
 func TestUserStoryHandler_Update_ValidParameters(t *testing.T) {
 	mockUserStoryService := &MockUserStoryService{}
 	mockEpicService := &MockEpicService{}
-	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService)
+	mockRequirementService := &MockRequirementService{}
+	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService, mockRequirementService)
 
 	userStoryID := uuid.New()
 	expectedUserStory := &models.UserStory{
@@ -545,7 +559,8 @@ func TestUserStoryHandler_Update_ValidParameters(t *testing.T) {
 func TestUserStoryHandler_Update_ReferenceIDResolution(t *testing.T) {
 	mockUserStoryService := &MockUserStoryService{}
 	mockEpicService := &MockEpicService{}
-	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService)
+	mockRequirementService := &MockRequirementService{}
+	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService, mockRequirementService)
 
 	userStoryID := uuid.New()
 	expectedUserStory := &models.UserStory{
@@ -611,7 +626,8 @@ func TestUserStoryHandler_Update_ReferenceIDResolution(t *testing.T) {
 func TestUserStoryHandler_Update_ServiceErrors(t *testing.T) {
 	mockUserStoryService := &MockUserStoryService{}
 	mockEpicService := &MockEpicService{}
-	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService)
+	mockRequirementService := &MockRequirementService{}
+	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService, mockRequirementService)
 
 	userStoryID := uuid.New()
 	args := map[string]interface{}{
@@ -633,7 +649,8 @@ func TestUserStoryHandler_Update_ServiceErrors(t *testing.T) {
 func TestUserStoryHandler_HandleTool_ErrorHandling(t *testing.T) {
 	mockUserStoryService := &MockUserStoryService{}
 	mockEpicService := &MockEpicService{}
-	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService)
+	mockRequirementService := &MockRequirementService{}
+	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService, mockRequirementService)
 
 	tests := []struct {
 		name        string

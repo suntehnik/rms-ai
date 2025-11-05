@@ -16,15 +16,17 @@ import (
 
 // UserStoryHandler handles MCP tool calls for User Story operations
 type UserStoryHandler struct {
-	userStoryService service.UserStoryService
-	epicService      service.EpicService
+	userStoryService   service.UserStoryService
+	epicService        service.EpicService
+	requirementService service.RequirementService
 }
 
 // NewUserStoryHandler creates a new UserStoryHandler instance
-func NewUserStoryHandler(userStoryService service.UserStoryService, epicService service.EpicService) *UserStoryHandler {
+func NewUserStoryHandler(userStoryService service.UserStoryService, epicService service.EpicService, requirementService service.RequirementService) *UserStoryHandler {
 	return &UserStoryHandler{
-		userStoryService: userStoryService,
-		epicService:      epicService,
+		userStoryService:   userStoryService,
+		epicService:        epicService,
+		requirementService: requirementService,
 	}
 }
 
@@ -33,6 +35,7 @@ func (h *UserStoryHandler) GetSupportedTools() []string {
 	return []string{
 		"create_user_story",
 		"update_user_story",
+		"get_user_story_requirements",
 	}
 }
 
@@ -43,6 +46,8 @@ func (h *UserStoryHandler) HandleTool(ctx context.Context, toolName string, args
 		return h.Create(ctx, args)
 	case "update_user_story":
 		return h.Update(ctx, args)
+	case "get_user_story_requirements":
+		return h.GetRequirements(ctx, args)
 	default:
 		return nil, jsonrpc.NewMethodNotFoundError(fmt.Sprintf("Unknown tool: %s", toolName))
 	}
@@ -196,4 +201,62 @@ func (h *UserStoryHandler) Update(ctx context.Context, args map[string]interface
 
 	message := fmt.Sprintf("Successfully updated user story %s: %s", userStory.ReferenceID, userStory.Title)
 	return types.CreateDataResponse(message, userStory), nil
+}
+
+// GetRequirements handles the get_user_story_requirements tool
+func (h *UserStoryHandler) GetRequirements(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+	// Validate required arguments using existing validateRequiredArgs helper
+	if err := validateRequiredArgs(args, []string{"user_story"}); err != nil {
+		return nil, err
+	}
+
+	userStoryIDStr, _ := getStringArg(args, "user_story")
+	if userStoryIDStr == "" {
+		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid 'user_story' argument")
+	}
+
+	// Parse user story ID using existing parseUUIDOrReferenceID helper
+	var userStoryID uuid.UUID
+	if userStory, err := h.userStoryService.GetUserStoryByReferenceID(userStoryIDStr); err == nil && userStory != nil {
+		userStoryID = userStory.ID
+	} else {
+		return nil, jsonrpc.NewInvalidParamsError("User story not found")
+	}
+
+	// Call getRequirementsWithRelatedData helper method
+	requirements, err := h.getRequirementsWithRelatedData(ctx, userStoryID)
+	if err != nil {
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to retrieve requirements: %v", err))
+	}
+
+	var message string
+
+	// Handle empty requirements case with appropriate message
+	if len(requirements) == 0 {
+		message = fmt.Sprintf("Found 0 requirements for user story %s.\n\nNo requirements are currently linked to this user story.", userStoryIDStr)
+	} else {
+		message = fmt.Sprintf("Found %d requirements for user story %s.", len(requirements), userStoryIDStr)
+	}
+
+	// Return response using types.CreateSuccessResponse
+	return types.CreateDataResponse(message, requirements), nil
+}
+
+// getRequirementsWithRelatedData retrieves requirements with all related data preloaded
+func (h *UserStoryHandler) getRequirementsWithRelatedData(_ context.Context, userStoryID uuid.UUID) ([]models.Requirement, error) {
+	// Create RequirementFilters with UserStoryID filter
+	filters := service.RequirementFilters{
+		UserStoryID: &userStoryID,
+		// Set Include parameter to "type,creator,assignee" for preloading - this is handled by the service layer
+		// Set OrderBy to "priority ASC, created_at DESC" for proper sorting
+		OrderBy: "priority ASC, created_at DESC",
+	}
+
+	// Call requirementService.ListRequirements with filters
+	requirements, _, err := h.requirementService.ListRequirements(filters)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list requirements: %w", err)
+	}
+
+	return requirements, nil
 }
