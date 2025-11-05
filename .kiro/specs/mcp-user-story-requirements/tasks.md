@@ -40,7 +40,7 @@
   - Update all callers of NewHandler to provide RequirementService
   - _Requirements: REQ-048_
 
-- [ ]* 6. Write unit tests for GetRequirements method
+- [x] 6. Write unit tests for GetRequirements method
   - Test successful requirements retrieval with valid user story reference
   - Test empty requirements case
   - Test invalid user story reference format

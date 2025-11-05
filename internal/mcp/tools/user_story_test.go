@@ -3,12 +3,14 @@ package tools
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"product-requirements-management/internal/jsonrpc"
 	"product-requirements-management/internal/mcp/types"
 	"product-requirements-management/internal/models"
 	"product-requirements-management/internal/service"
@@ -686,4 +688,242 @@ func TestUserStoryHandler_HandleTool_ErrorHandling(t *testing.T) {
 			assert.Contains(t, err.Error(), tt.expectError)
 		})
 	}
+}
+
+// TestUserStoryHandler_GetRequirements_Success tests successful requirements retrieval
+func TestUserStoryHandler_GetRequirements_Success(t *testing.T) {
+	mockUserStoryService := &MockUserStoryService{}
+	mockEpicService := &MockEpicService{}
+	mockRequirementService := &MockRequirementService{}
+	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService, mockRequirementService)
+
+	userStoryID := uuid.New()
+	userStory := &models.UserStory{
+		ID:          userStoryID,
+		ReferenceID: "US-001",
+		Title:       "Test User Story",
+	}
+
+	requirements := []models.Requirement{
+		{
+			ID:          uuid.New(),
+			ReferenceID: "REQ-001",
+			Title:       "First Requirement",
+			Priority:    models.PriorityCritical,
+			Status:      models.RequirementStatusActive,
+			UserStoryID: userStoryID,
+		},
+		{
+			ID:          uuid.New(),
+			ReferenceID: "REQ-002",
+			Title:       "Second Requirement",
+			Priority:    models.PriorityHigh,
+			Status:      models.RequirementStatusDraft,
+			UserStoryID: userStoryID,
+		},
+	}
+
+	tests := []struct {
+		name     string
+		args     map[string]interface{}
+		expected []models.Requirement
+	}{
+		{
+			name: "get requirements with user story reference ID",
+			args: map[string]interface{}{
+				"user_story": "US-001",
+			},
+			expected: requirements,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mock expectations
+			mockUserStoryService.
+				On("GetUserStoryByReferenceID", "US-001").Return(userStory, nil).
+				On("GetUserStoryByReferenceID", userStoryID.String()).Return(nil, jsonrpc.NewInvalidParamsError("User story not found")).
+				Maybe()
+			mockRequirementService.On("ListRequirements", mock.MatchedBy(func(filters service.RequirementFilters) bool {
+				return filters.UserStoryID != nil && *filters.UserStoryID == userStoryID
+			})).Return(tt.expected, int64(len(tt.expected)), nil).Once()
+
+			result, err := handler.GetRequirements(context.Background(), tt.args)
+
+			assert.NoError(t, err)
+			assert.NotNil(t, result)
+
+			// Verify response format
+			response, ok := result.(*types.ToolResponse)
+			assert.True(t, ok)
+			assert.Len(t, response.Content, 2) // Message + data
+			assert.Equal(t, "text", response.Content[0].Type)
+			assert.Contains(t, response.Content[0].Text, fmt.Sprintf("Found %d requirements", len(tt.expected)))
+
+			mockUserStoryService.AssertExpectations(t)
+			mockRequirementService.AssertExpectations(t)
+		})
+	}
+}
+
+// TestUserStoryHandler_GetRequirements_EmptyResults tests empty requirements case
+func TestUserStoryHandler_GetRequirements_EmptyResults(t *testing.T) {
+	mockUserStoryService := &MockUserStoryService{}
+	mockEpicService := &MockEpicService{}
+	mockRequirementService := &MockRequirementService{}
+	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService, mockRequirementService)
+
+	userStoryID := uuid.New()
+	userStory := &models.UserStory{
+		ID:          userStoryID,
+		ReferenceID: "US-001",
+		Title:       "Test User Story",
+	}
+
+	args := map[string]interface{}{
+		"user_story": "US-001",
+	}
+
+	// Setup mock expectations
+	mockUserStoryService.On("GetUserStoryByReferenceID", "US-001").Return(userStory, nil).Once()
+	mockRequirementService.On("ListRequirements", mock.MatchedBy(func(filters service.RequirementFilters) bool {
+		return filters.UserStoryID != nil && *filters.UserStoryID == userStoryID
+	})).Return([]models.Requirement{}, int64(0), nil).Once()
+
+	result, err := handler.GetRequirements(context.Background(), args)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+
+	// Verify response format
+	response, ok := result.(*types.ToolResponse)
+	assert.True(t, ok)
+	assert.Len(t, response.Content, 2) // Message + data
+	assert.Equal(t, "text", response.Content[0].Type)
+	assert.Contains(t, response.Content[0].Text, "Found 0 requirements for user story US-001")
+	assert.Contains(t, response.Content[0].Text, "No requirements are currently linked")
+
+	mockUserStoryService.AssertExpectations(t)
+	mockRequirementService.AssertExpectations(t)
+}
+
+// TestUserStoryHandler_GetRequirements_ValidationErrors tests input validation errors
+func TestUserStoryHandler_GetRequirements_ValidationErrors(t *testing.T) {
+	mockUserStoryService := &MockUserStoryService{}
+	mockEpicService := &MockEpicService{}
+	mockRequirementService := &MockRequirementService{}
+	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService, mockRequirementService)
+
+	tests := []struct {
+		name        string
+		args        map[string]interface{}
+		expectError string
+	}{
+		{
+			name:        "missing user_story argument",
+			args:        map[string]interface{}{},
+			expectError: "Invalid params",
+		},
+		{
+			name: "empty user_story argument",
+			args: map[string]interface{}{
+				"user_story": "",
+			},
+			expectError: "Invalid params",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := handler.GetRequirements(context.Background(), tt.args)
+
+			assert.Error(t, err)
+			assert.Nil(t, result)
+			assert.Contains(t, err.Error(), tt.expectError)
+		})
+	}
+}
+
+// TestUserStoryHandler_GetRequirements_UserStoryNotFound tests user story not found scenario
+func TestUserStoryHandler_GetRequirements_UserStoryNotFound(t *testing.T) {
+	mockUserStoryService := &MockUserStoryService{}
+	mockEpicService := &MockEpicService{}
+	mockRequirementService := &MockRequirementService{}
+	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService, mockRequirementService)
+
+	tests := []struct {
+		name        string
+		args        map[string]interface{}
+		setupMocks  func()
+		expectError string
+	}{
+		{
+			name: "invalid user story reference ID",
+			args: map[string]interface{}{
+				"user_story": "US-999",
+			},
+			setupMocks: func() {
+				mockUserStoryService.On("GetUserStoryByReferenceID", "US-999").Return(nil, errors.New("user story not found")).Once()
+			},
+			expectError: "Invalid params",
+		},
+		{
+			name: "invalid user story UUID format",
+			args: map[string]interface{}{
+				"user_story": "invalid-uuid",
+			},
+			setupMocks: func() {
+				mockUserStoryService.On("GetUserStoryByReferenceID", "invalid-uuid").Return(nil, errors.New("user story not found")).Once()
+			},
+			expectError: "Invalid params",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupMocks()
+
+			result, err := handler.GetRequirements(context.Background(), tt.args)
+
+			assert.Error(t, err)
+			assert.Nil(t, result)
+			assert.Contains(t, err.Error(), tt.expectError)
+
+			mockUserStoryService.AssertExpectations(t)
+		})
+	}
+}
+
+// TestUserStoryHandler_GetRequirements_ServiceError tests service error handling
+func TestUserStoryHandler_GetRequirements_ServiceError(t *testing.T) {
+	mockUserStoryService := &MockUserStoryService{}
+	mockEpicService := &MockEpicService{}
+	mockRequirementService := &MockRequirementService{}
+	handler := NewUserStoryHandler(mockUserStoryService, mockEpicService, mockRequirementService)
+
+	userStoryID := uuid.New()
+	userStory := &models.UserStory{
+		ID:          userStoryID,
+		ReferenceID: "US-001",
+		Title:       "Test User Story",
+	}
+
+	args := map[string]interface{}{
+		"user_story": "US-001",
+	}
+
+	// Setup mock expectations
+	mockUserStoryService.On("GetUserStoryByReferenceID", "US-001").Return(userStory, nil).Once()
+	mockRequirementService.On("ListRequirements", mock.MatchedBy(func(filters service.RequirementFilters) bool {
+		return filters.UserStoryID != nil && *filters.UserStoryID == userStoryID
+	})).Return([]models.Requirement{}, int64(0), fmt.Errorf("failed to list requirements: %w", errors.New("database error"))).Once()
+
+	result, err := handler.GetRequirements(context.Background(), args)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "Internal error")
+
+	mockUserStoryService.AssertExpectations(t)
+	mockRequirementService.AssertExpectations(t)
 }
