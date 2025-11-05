@@ -11,7 +11,7 @@ func TestGetSupportedTools(t *testing.T) {
 	tools := schemas.GetSupportedTools()
 
 	// Verify we have the expected number of tools
-	assert.Len(t, tools, 23)
+	assert.Len(t, tools, 24)
 
 	// Verify all expected tools are present
 	expectedTools := []string{
@@ -25,6 +25,7 @@ func TestGetSupportedTools(t *testing.T) {
 		"search_global",
 		"search_requirements",
 		"create_acceptance_criteria",
+		"get_user_story_requirements",
 	}
 
 	toolNames := schemas.GetToolNames()

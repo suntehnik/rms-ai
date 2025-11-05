@@ -632,6 +632,21 @@ func GetSupportedTools() []ToolDefinition {
 				"additionalProperties": false,
 			},
 		},
+		{
+			Name:        "get_user_story_requirements",
+			Title:       "Get User Story Requirements",
+			Description: "Get all requirements linked to a specific user story with their related data (type, creator, assignee)",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"user_story": map[string]interface{}{
+						"type":        "string",
+						"description": "User story reference ID (e.g., US-001) to retrieve requirements for",
+					},
+				},
+				"required": []string{"user_story"},
+			},
+		},
 	}
 }
 

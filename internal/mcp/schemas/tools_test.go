@@ -101,6 +101,28 @@ func TestGetToolByName_StatusTools(t *testing.T) {
 	updateEpicTool := GetToolByName("update_epic")
 	assert.NotNil(t, updateEpicTool, "should be able to get update_epic tool by name")
 
+	// Test get_user_story_requirements tool
+	getUserStoryRequirementsTool := GetToolByName("get_user_story_requirements")
+	assert.NotNil(t, getUserStoryRequirementsTool, "should be able to get get_user_story_requirements tool by name")
+	assert.Equal(t, "Get User Story Requirements", getUserStoryRequirementsTool.Title)
+	assert.Equal(t, "Get all requirements linked to a specific user story with their related data (type, creator, assignee)", getUserStoryRequirementsTool.Description)
+
+	// Verify schema structure for get_user_story_requirements
+	schema, ok := getUserStoryRequirementsTool.InputSchema.(map[string]interface{})
+	assert.True(t, ok, "InputSchema should be a map")
+
+	properties, ok := schema["properties"].(map[string]interface{})
+	assert.True(t, ok, "properties should exist in schema")
+
+	userStoryParam, ok := properties["user_story"].(map[string]interface{})
+	assert.True(t, ok, "user_story parameter should exist")
+	assert.Equal(t, "string", userStoryParam["type"])
+	assert.Equal(t, "User story reference ID (e.g., US-001) to retrieve requirements for", userStoryParam["description"])
+
+	required, ok := schema["required"].([]string)
+	assert.True(t, ok, "required should be a string array")
+	assert.Contains(t, required, "user_story", "user_story should be required")
+
 	// Test non-existent tool
 	nonExistentTool := GetToolByName("non_existent_tool")
 	assert.Nil(t, nonExistentTool, "should return nil for non-existent tool")

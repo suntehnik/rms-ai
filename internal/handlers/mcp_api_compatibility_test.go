@@ -15,14 +15,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestMCPAPICompatibility_AllTools tests all 22 MCP tools through JSON-RPC interface
+// TestMCPAPICompatibility_AllTools tests all 24 MCP tools through JSON-RPC interface
 func TestMCPAPICompatibility_AllTools(t *testing.T) {
 	// Set up test environment
 	gin.SetMode(gin.TestMode)
 
 	// Get all supported tools
 	tools := schemas.GetSupportedTools()
-	assert.Len(t, tools, 23, "Expected exactly 22 MCP tools")
+	assert.Len(t, tools, 24, "Expected exactly 24 MCP tools")
 
 	// Test each tool schema for API compatibility
 	for _, tool := range tools {
@@ -346,7 +346,7 @@ func TestMCPAPICompatibility_ToolsList(t *testing.T) {
 	assert.Contains(t, result, "tools")
 
 	tools := result["tools"].([]interface{})
-	assert.Len(t, tools, 23, "Should have exactly 22 tools")
+	assert.Len(t, tools, 24, "Should have exactly 24 tools")
 
 	// Verify each tool has required fields
 	for _, tool := range tools {
