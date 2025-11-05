@@ -34,7 +34,7 @@ func NewHandler(
 ) *Handler {
 	// Initialize domain handlers
 	epicHandler := NewEpicHandler(epicService)
-	userStoryHandler := NewUserStoryHandler(userStoryService, epicService)
+	userStoryHandler := NewUserStoryHandler(userStoryService, epicService, requirementService)
 	requirementHandler := NewRequirementHandler(requirementService, userStoryService)
 	acceptanceCriteriaHandler := NewAcceptanceCriteriaHandler(acceptanceCriteriaService, userStoryService)
 	searchHandler := NewSearchHandler(searchService, requirementService)

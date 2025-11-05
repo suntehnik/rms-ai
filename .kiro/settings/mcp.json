@@ -10,7 +10,9 @@
       "autoApprove": [
         "search_global",
         "search_global",
-        "search_requirements"
+        "search_requirements",
+        "create_requirement",
+        "create_acceptance_criteria"
       ]
     }
   }
