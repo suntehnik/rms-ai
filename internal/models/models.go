@@ -21,6 +21,7 @@ func AllModels() []interface{} {
 		&StatusTransition{},
 		&PersonalAccessToken{},
 		&SteeringDocument{},
+		&Prompt{},
 	}
 }
 

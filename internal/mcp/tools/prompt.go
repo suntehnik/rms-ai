@@ -102,12 +102,22 @@ func (h *PromptHandler) Create(ctx context.Context, args map[string]interface{})
 		description = &desc
 	}
 
+	var role *models.MCPRole
+	if roleStr, ok := getStringArg(args, "role"); ok && roleStr != "" {
+		if err := models.ValidateMCPRole(roleStr); err != nil {
+			return nil, jsonrpc.NewInvalidParamsError(fmt.Sprintf("Invalid role: %v", err))
+		}
+		mcpRole := models.MCPRole(roleStr)
+		role = &mcpRole
+	}
+
 	// Create the prompt
 	req := service.CreatePromptRequest{
 		Name:        name,
 		Title:       title,
 		Description: description,
 		Content:     content,
+		Role:        role,
 	}
 
 	prompt, err := h.promptService.Create(ctx, &req, user.ID)
@@ -171,6 +181,13 @@ func (h *PromptHandler) Update(ctx context.Context, args map[string]interface{})
 	}
 	if content, ok := getStringArg(args, "content"); ok && content != "" {
 		req.Content = &content
+	}
+	if roleStr, ok := getStringArg(args, "role"); ok && roleStr != "" {
+		if err := models.ValidateMCPRole(roleStr); err != nil {
+			return nil, jsonrpc.NewInvalidParamsError(fmt.Sprintf("Invalid role: %v", err))
+		}
+		mcpRole := models.MCPRole(roleStr)
+		req.Role = &mcpRole
 	}
 
 	prompt, err := h.promptService.Update(ctx, promptID, &req)

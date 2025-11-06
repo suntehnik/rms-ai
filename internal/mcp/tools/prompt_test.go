@@ -116,35 +116,73 @@ func TestPromptHandler_HandleTool(t *testing.T) {
 	mockService := &MockPromptService{}
 	handler := NewPromptHandler(mockService)
 
+	promptUuid := uuid.New()
+	promptDescription := "test description"
+	prompt := models.Prompt{
+		ID:          promptUuid,
+		Name:        "Test Name",
+		Title:       "Test title",
+		Content:     "test content",
+		Description: &promptDescription,
+	}
+
 	tests := []struct {
 		name        string
 		toolName    string
 		expectError bool
+		arguments   map[string]interface{}
 		setupMock   func()
 	}{
 		{
 			name:        "valid create_prompt tool",
 			toolName:    "create_prompt",
-			expectError: true, // Will error due to missing context/args, but tool routing works
-			setupMock:   func() {},
+			expectError: false,
+			arguments: map[string]interface{}{
+				"name":        prompt.Name,
+				"title":       prompt.Title,
+				"content":     prompt.Content,
+				"description": prompt.Description,
+			},
+			setupMock: func() {
+				mockService.On("Create", mock.Anything, mock.Anything, mock.Anything).Return(&prompt, nil)
+			},
 		},
 		{
 			name:        "valid update_prompt tool",
 			toolName:    "update_prompt",
-			expectError: true, // Will error due to missing context/args, but tool routing works
-			setupMock:   func() {},
+			expectError: false,
+			arguments: map[string]interface{}{
+				"prompt_id":   promptUuid.String(),
+				"name":        prompt.Name,
+				"title":       prompt.Title,
+				"content":     prompt.Content,
+				"description": prompt.Description,
+			},
+			setupMock: func() {
+				mockService.On("Update", mock.Anything, prompt.ID, mock.Anything).Return(&prompt, nil)
+			},
 		},
 		{
 			name:        "valid delete_prompt tool",
 			toolName:    "delete_prompt",
-			expectError: true, // Will error due to missing context/args, but tool routing works
-			setupMock:   func() {},
+			expectError: false,
+			arguments: map[string]interface{}{
+				"prompt_id": promptUuid.String(),
+			},
+			setupMock: func() {
+				mockService.On("Delete", mock.Anything, prompt.ID).Return(nil)
+			},
 		},
 		{
 			name:        "valid activate_prompt tool",
 			toolName:    "activate_prompt",
-			expectError: true, // Will error due to missing context/args, but tool routing works
-			setupMock:   func() {},
+			expectError: false,
+			arguments: map[string]interface{}{
+				"prompt_id": promptUuid.String(),
+			},
+			setupMock: func() {
+				mockService.On("Activate", mock.Anything, prompt.ID).Return(nil)
+			},
 		},
 		{
 			name:        "valid list_prompts tool",
@@ -153,6 +191,7 @@ func TestPromptHandler_HandleTool(t *testing.T) {
 			setupMock: func() {
 				mockService.On("List", mock.Anything, 50, 0, (*uuid.UUID)(nil)).Return([]*models.Prompt{}, int64(0), nil).Once()
 			},
+			arguments: map[string]interface{}{},
 		},
 		{
 			name:        "valid get_active_prompt tool",
@@ -173,7 +212,10 @@ func TestPromptHandler_HandleTool(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMock()
-			_, err := handler.HandleTool(context.Background(), tt.toolName, map[string]interface{}{})
+			_, err := handler.HandleTool(createContextWithPromptUser(&models.User{
+				Username: "admin",
+				Role:     models.RoleAdministrator,
+			}), tt.toolName, tt.arguments)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -248,6 +290,16 @@ func TestPromptHandler_Create_ValidParameters(t *testing.T) {
 				"name":    "minimal-prompt",
 				"title":   "Minimal Prompt",
 				"content": "Minimal content",
+			},
+			expected: expectedPrompt,
+		},
+		{
+			name: "create prompt with role parameter",
+			args: map[string]interface{}{
+				"name":    "role-prompt",
+				"title":   "Role Prompt",
+				"content": "Role content",
+				"role":    "assistant",
 			},
 			expected: expectedPrompt,
 		},
@@ -350,6 +402,11 @@ func TestPromptHandler_Create_ValidationErrors(t *testing.T) {
 			args:        map[string]interface{}{"name": "test", "title": "Test", "content": ""},
 			expectError: "Invalid params",
 		},
+		{
+			name:        "invalid role",
+			args:        map[string]interface{}{"name": "test", "title": "Test", "content": "Test", "role": "system"},
+			expectError: "Invalid params",
+		},
 	}
 
 	for _, tt := range tests {
@@ -433,6 +490,15 @@ func TestPromptHandler_Update_ValidParameters(t *testing.T) {
 				"title":       "Updated Prompt",
 				"description": "Updated Description",
 				"content":     "Updated content",
+			},
+			expected: expectedPrompt,
+		},
+		{
+			name: "update with role parameter",
+			args: map[string]interface{}{
+				"prompt_id": promptID.String(),
+				"title":     "Updated Prompt",
+				"role":      "user",
 			},
 			expected: expectedPrompt,
 		},

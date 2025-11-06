@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -56,6 +57,11 @@ type Prompt struct {
 	// @Example "You are an expert requirements analyst..."
 	Content string `gorm:"type:text;not null" json:"content" validate:"required"`
 
+	// Role specifies the message role for MCP compliance
+	// @Description Role for MCP prompt messages (must be "user" or "assistant", defaults to "assistant")
+	// @Example "assistant"
+	Role MCPRole `gorm:"type:varchar(20);not null;default:'assistant'" json:"role" validate:"required"`
+
 	// IsActive indicates if this prompt is currently active
 	// @Description Whether this prompt is currently active (only one can be active at a time)
 	// @Example true
@@ -98,6 +104,11 @@ func (p *Prompt) BeforeCreate(tx *gorm.DB) error {
 		p.ReferenceID = referenceID
 	}
 
+	// Set default role if not specified
+	if p.Role == "" {
+		p.Role = MCPRoleAssistant
+	}
+
 	return nil
 }
 
@@ -130,6 +141,7 @@ func (p *Prompt) MarshalJSON() ([]byte, error) {
 		"name":         p.Name,
 		"title":        p.Title,
 		"content":      p.Content,
+		"role":         p.Role,
 		"is_active":    p.IsActive,
 		"creator_id":   p.CreatorID,
 		"created_at":   p.CreatedAt,
@@ -181,16 +193,114 @@ type MCPPromptDefinition struct {
 	Messages []PromptMessage `json:"messages"`
 }
 
-// PromptMessage represents a message in the MCP prompt format
-// @Description Message structure for MCP prompt protocol
-type PromptMessage struct {
-	// Role indicates the message role (system, user, assistant)
-	// @Description Role of the message sender
-	// @Example "system"
-	Role string `json:"role"`
+// MCPRole represents valid MCP message roles
+// @Description Valid roles for MCP prompt messages according to 2025-06-18 specification
+type MCPRole string
 
-	// Content is the message content
-	// @Description Content of the message
+const (
+	// MCPRoleUser represents a user message role
+	// @Description User role for MCP messages
+	MCPRoleUser MCPRole = "user"
+
+	// MCPRoleAssistant represents an assistant message role
+	// @Description Assistant role for MCP messages
+	MCPRoleAssistant MCPRole = "assistant"
+)
+
+// IsValid checks if the MCPRole is valid according to MCP specification
+func (r MCPRole) IsValid() bool {
+	return r == MCPRoleUser || r == MCPRoleAssistant
+}
+
+// String returns the string representation of MCPRole
+func (r MCPRole) String() string {
+	return string(r)
+}
+
+// ValidateMCPRole validates that a role string is a valid MCP role
+func ValidateMCPRole(role string) error {
+	mcpRole := MCPRole(role)
+	if !mcpRole.IsValid() {
+		return fmt.Errorf("invalid MCP role '%s': must be 'user' or 'assistant'", role)
+	}
+	return nil
+}
+
+// ValidateForMCP validates that a ContentChunk is MCP-compliant
+func (c *ContentChunk) ValidateForMCP() error {
+	if c.Type == "" {
+		return fmt.Errorf("content chunk type cannot be empty")
+	}
+
+	// For now, we only support "text" type
+	if c.Type != "text" {
+		return fmt.Errorf("unsupported content chunk type '%s': only 'text' is supported", c.Type)
+	}
+
+	if c.Type == "text" && c.Text == "" {
+		return fmt.Errorf("text content cannot be empty for type 'text'")
+	}
+
+	return nil
+}
+
+// ValidateForMCP validates that a PromptMessage is MCP-compliant
+func (pm *PromptMessage) ValidateForMCP() error {
+	// Validate role
+	if err := ValidateMCPRole(pm.Role); err != nil {
+		return err
+	}
+
+	// Validate content - check if it's empty (zero value)
+	if pm.Content.Type == "" && pm.Content.Text == "" {
+		return fmt.Errorf("message content cannot be empty")
+	}
+
+	// Validate the content chunk
+	if err := pm.Content.ValidateForMCP(); err != nil {
+		return fmt.Errorf("content chunk: %w", err)
+	}
+
+	return nil
+}
+
+// TransformContentToChunk transforms plain string content into structured ContentChunk
+func TransformContentToChunk(content string) ContentChunk {
+	if content == "" {
+		return ContentChunk{}
+	}
+
+	return ContentChunk{
+		Type: "text",
+		Text: content,
+	}
+}
+
+// ContentChunk represents a typed content object for MCP messages
+// @Description Structured content chunk for MCP message content array
+type ContentChunk struct {
+	// Type specifies the content type (e.g., "text")
+	// @Description Content type discriminator
+	// @Example "text"
+	Type string `json:"type" validate:"required"`
+
+	// Text contains the text content for type="text"
+	// @Description Text content (required when type="text")
 	// @Example "You are an expert requirements analyst..."
-	Content string `json:"content"`
+	Text string `json:"text,omitempty"`
+
+	// Future: additional fields for other content types can be added here
+}
+
+// PromptMessage represents a message in the MCP prompt format
+// @Description Message structure for MCP prompt protocol with structured content
+type PromptMessage struct {
+	// Role indicates the message role (user, assistant)
+	// @Description Role of the message sender (must be "user" or "assistant")
+	// @Example "assistant"
+	Role string `json:"role" validate:"required"`
+
+	// Content is the structured message content array
+	// @Description Array of typed content objects
+	Content ContentChunk `json:"content" validate:"required,min=1"`
 }
