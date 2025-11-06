@@ -511,6 +511,12 @@ func GetSupportedTools() []ToolDefinition {
 						"type":        "string",
 						"description": "The actual prompt content/instructions (required)",
 					},
+					"role": map[string]interface{}{
+						"type":        "string",
+						"description": "Message role for MCP compliance (optional, defaults to 'assistant')",
+						"enum":        []string{"user", "assistant"},
+						"default":     "assistant",
+					},
 				},
 				"required": []string{"name", "title", "content"},
 			},
@@ -539,6 +545,11 @@ func GetSupportedTools() []ToolDefinition {
 					"content": map[string]interface{}{
 						"type":        "string",
 						"description": "New prompt content/instructions (optional)",
+					},
+					"role": map[string]interface{}{
+						"type":        "string",
+						"description": "New message role for MCP compliance (optional)",
+						"enum":        []string{"user", "assistant"},
 					},
 				},
 				"required": []string{"prompt_id"},

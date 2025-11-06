@@ -14,35 +14,45 @@ import (
 
 // PromptService handles business logic for system prompts
 type PromptService struct {
-	db     *gorm.DB
-	logger *logrus.Logger
+	db        *gorm.DB
+	logger    *logrus.Logger
+	validator *PromptValidator
 }
 
 // NewPromptService creates a new PromptService instance
 func NewPromptService(db *gorm.DB, logger *logrus.Logger) *PromptService {
 	return &PromptService{
-		db:     db,
-		logger: logger,
+		db:        db,
+		logger:    logger,
+		validator: NewPromptValidator(),
 	}
 }
 
 // CreatePromptRequest represents the request to create a new prompt
 type CreatePromptRequest struct {
-	Name        string  `json:"name" validate:"required,max=255"`
-	Title       string  `json:"title" validate:"required,max=500"`
-	Description *string `json:"description,omitempty" validate:"omitempty,max=50000"`
-	Content     string  `json:"content" validate:"required"`
+	Name        string          `json:"name" validate:"required,max=255"`
+	Title       string          `json:"title" validate:"required,max=500"`
+	Description *string         `json:"description,omitempty" validate:"omitempty,max=50000"`
+	Content     string          `json:"content" validate:"required"`
+	Role        *models.MCPRole `json:"role,omitempty"`
 }
 
 // UpdatePromptRequest represents the request to update an existing prompt
 type UpdatePromptRequest struct {
-	Title       *string `json:"title,omitempty" validate:"omitempty,max=500"`
-	Description *string `json:"description,omitempty" validate:"omitempty,max=50000"`
-	Content     *string `json:"content,omitempty"`
+	Title       *string         `json:"title,omitempty" validate:"omitempty,max=500"`
+	Description *string         `json:"description,omitempty" validate:"omitempty,max=50000"`
+	Content     *string         `json:"content,omitempty"`
+	Role        *models.MCPRole `json:"role,omitempty"`
 }
 
 // Create creates a new prompt
 func (ps *PromptService) Create(ctx context.Context, req *CreatePromptRequest, creatorID uuid.UUID) (*models.Prompt, error) {
+	// Validate request for MCP compliance
+	if err := ps.validator.ValidateCreateRequest(req); err != nil {
+		ps.logValidationFailure(ctx, nil, "create_request", err)
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
+
 	prompt := &models.Prompt{
 		Name:        req.Name,
 		Title:       req.Title,
@@ -50,6 +60,11 @@ func (ps *PromptService) Create(ctx context.Context, req *CreatePromptRequest, c
 		Content:     req.Content,
 		CreatorID:   creatorID,
 		IsActive:    false, // New prompts are not active by default
+	}
+
+	// Set role if provided, otherwise let BeforeCreate set the default
+	if req.Role != nil {
+		prompt.Role = *req.Role
 	}
 
 	if err := ps.db.WithContext(ctx).Create(prompt).Error; err != nil {
@@ -151,6 +166,12 @@ func (ps *PromptService) List(ctx context.Context, limit, offset int, creatorID 
 
 // Update updates an existing prompt
 func (ps *PromptService) Update(ctx context.Context, id uuid.UUID, req *UpdatePromptRequest) (*models.Prompt, error) {
+	// Validate request for MCP compliance
+	if err := ps.validator.ValidateUpdateRequest(req); err != nil {
+		ps.logValidationFailure(ctx, &id, "update_request", err)
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
+
 	var prompt models.Prompt
 	if err := ps.db.WithContext(ctx).Where("id = ?", id).First(&prompt).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -169,6 +190,15 @@ func (ps *PromptService) Update(ctx context.Context, id uuid.UUID, req *UpdatePr
 	}
 	if req.Content != nil {
 		prompt.Content = *req.Content
+	}
+	if req.Role != nil {
+		prompt.Role = *req.Role
+	}
+
+	// Validate the updated prompt for MCP compliance before saving
+	if err := ps.validator.ValidateForMCP(&prompt); err != nil {
+		ps.logValidationFailure(ctx, &prompt.ID, "mcp_compliance", err)
+		return nil, fmt.Errorf("updated prompt validation failed: %w", err)
 	}
 
 	if err := ps.db.WithContext(ctx).Save(&prompt).Error; err != nil {
@@ -270,7 +300,19 @@ func (ps *PromptService) GetMCPPromptDescriptors(ctx context.Context) ([]*models
 func (ps *PromptService) GetMCPPromptDefinition(ctx context.Context, name string) (*models.MCPPromptDefinition, error) {
 	prompt, err := ps.GetByName(ctx, name)
 	if err != nil {
-		return nil, err
+		// Return MCP-compliant error for prompt not found
+		if errors.Is(err, ErrNotFound) {
+			return nil, fmt.Errorf("prompt '%s' not found", name)
+		}
+		// Return generic error for other issues
+		return nil, fmt.Errorf("failed to retrieve prompt: %w", err)
+	}
+
+	// Validate prompt for MCP compliance before generating response
+	if err := ps.validator.ValidateForMCP(prompt); err != nil {
+		ps.logValidationFailure(ctx, &prompt.ID, "mcp_definition_generation", err)
+		// Return MCP-compliant validation error
+		return nil, fmt.Errorf("invalid prompt data: %s", err.Error())
 	}
 
 	description := ""
@@ -278,16 +320,34 @@ func (ps *PromptService) GetMCPPromptDefinition(ctx context.Context, name string
 		description = *prompt.Description
 	}
 
+	// Transform content to structured format using validator helper
+	contentChunks := ps.validator.TransformContentToChunks(prompt.Content)
+
 	definition := &models.MCPPromptDefinition{
 		Name:        prompt.Name,
 		Description: description,
 		Messages: []models.PromptMessage{
 			{
-				Role:    "system",
-				Content: prompt.Content,
+				Role:    string(prompt.Role),
+				Content: contentChunks,
 			},
 		},
 	}
 
 	return definition, nil
+}
+
+// logValidationFailure logs validation failures with structured error information
+func (ps *PromptService) logValidationFailure(ctx context.Context, promptID *uuid.UUID, operation string, err error) {
+	fields := logrus.Fields{
+		"component": "prompt_service",
+		"operation": operation,
+		"error":     err.Error(),
+	}
+
+	if promptID != nil {
+		fields["prompt_id"] = *promptID
+	}
+
+	ps.logger.WithFields(fields).Error("MCP prompt validation failed")
 }
