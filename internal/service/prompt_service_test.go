@@ -57,7 +57,11 @@ func (mps *MockPromptService) GetMCPPromptDefinition(ctx context.Context, name s
 	}
 
 	// Transform content to structured format using validator helper
-	contentChunks := mps.validator.TransformContentToChunks(prompt.Content)
+	var contentChunk = models.ContentChunk{
+		Type: "text",
+		Text: prompt.Content,
+	}
+	//  := mps.validator.TransformContentToChunk(prompt.Content)
 
 	definition := &models.MCPPromptDefinition{
 		Name:        prompt.Name,
@@ -65,7 +69,7 @@ func (mps *MockPromptService) GetMCPPromptDefinition(ctx context.Context, name s
 		Messages: []models.PromptMessage{
 			{
 				Role:    string(prompt.Role),
-				Content: contentChunks,
+				Content: contentChunk,
 			},
 		},
 	}
@@ -102,9 +106,8 @@ func TestPromptService_GetMCPPromptDefinition_Success(t *testing.T) {
 	assert.Equal(t, "Test description", result.Description)
 	assert.Len(t, result.Messages, 1)
 	assert.Equal(t, "assistant", result.Messages[0].Role)
-	assert.Len(t, result.Messages[0].Content, 1)
-	assert.Equal(t, "text", result.Messages[0].Content[0].Type)
-	assert.Equal(t, "You are a helpful assistant", result.Messages[0].Content[0].Text)
+	assert.Equal(t, "text", result.Messages[0].Content.Type)
+	assert.Equal(t, "You are a helpful assistant", result.Messages[0].Content.Text)
 }
 
 func TestPromptService_GetMCPPromptDefinition_NotFound(t *testing.T) {
@@ -204,25 +207,21 @@ func TestPromptService_GetMCPPromptDefinition_ContentTransformation(t *testing.T
 	testCases := []struct {
 		name            string
 		content         string
-		expectedChunks  int
 		expectedContent string
 	}{
 		{
 			name:            "simple text content",
 			content:         "Hello world",
-			expectedChunks:  1,
 			expectedContent: "Hello world",
 		},
 		{
 			name:            "multiline content",
 			content:         "Line 1\nLine 2\nLine 3",
-			expectedChunks:  1,
 			expectedContent: "Line 1\nLine 2\nLine 3",
 		},
 		{
 			name:            "content with special characters",
 			content:         "Hello! @#$%^&*()_+ world?",
-			expectedChunks:  1,
 			expectedContent: "Hello! @#$%^&*()_+ world?",
 		},
 	}
@@ -249,9 +248,8 @@ func TestPromptService_GetMCPPromptDefinition_ContentTransformation(t *testing.T
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
 			assert.Len(t, result.Messages, 1)
-			assert.Len(t, result.Messages[0].Content, tc.expectedChunks)
-			assert.Equal(t, "text", result.Messages[0].Content[0].Type)
-			assert.Equal(t, tc.expectedContent, result.Messages[0].Content[0].Text)
+			assert.Equal(t, "text", result.Messages[0].Content.Type)
+			assert.Equal(t, tc.expectedContent, result.Messages[0].Content.Text)
 		})
 	}
 }
@@ -312,5 +310,5 @@ func TestPromptService_GetMCPPromptDefinition_UserRole(t *testing.T) {
 	assert.Equal(t, "user-prompt", result.Name)
 	assert.Len(t, result.Messages, 1)
 	assert.Equal(t, "user", result.Messages[0].Role)
-	assert.Equal(t, "Please help me with this task", result.Messages[0].Content[0].Text)
+	assert.Equal(t, "Please help me with this task", result.Messages[0].Content.Text)
 }

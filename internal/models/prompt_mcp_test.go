@@ -187,11 +187,9 @@ func TestPromptMessage_ValidateForMCP(t *testing.T) {
 			name: "valid message",
 			message: PromptMessage{
 				Role: "user",
-				Content: []ContentChunk{
-					{
-						Type: "text",
-						Text: "Hello world",
-					},
+				Content: ContentChunk{
+					Type: "text",
+					Text: "Hello world",
 				},
 			},
 			expectErr: false,
@@ -200,21 +198,19 @@ func TestPromptMessage_ValidateForMCP(t *testing.T) {
 			name: "invalid role",
 			message: PromptMessage{
 				Role: "system",
-				Content: []ContentChunk{
-					{
-						Type: "text",
-						Text: "Hello world",
-					},
+				Content: ContentChunk{
+					Type: "text",
+					Text: "Hello world",
 				},
 			},
 			expectErr: true,
 			errMsg:    "invalid MCP role 'system'",
 		},
 		{
-			name: "empty content array",
+			name: "empty content",
 			message: PromptMessage{
 				Role:    "user",
-				Content: []ContentChunk{},
+				Content: ContentChunk{},
 			},
 			expectErr: true,
 			errMsg:    "message content cannot be empty",
@@ -223,15 +219,13 @@ func TestPromptMessage_ValidateForMCP(t *testing.T) {
 			name: "invalid content chunk",
 			message: PromptMessage{
 				Role: "user",
-				Content: []ContentChunk{
-					{
-						Type: "text",
-						Text: "",
-					},
+				Content: ContentChunk{
+					Type: "text",
+					Text: "",
 				},
 			},
 			expectErr: true,
-			errMsg:    "content chunk 0",
+			errMsg:    "content chunk",
 		},
 	}
 
@@ -252,28 +246,26 @@ func TestTransformContentToChunks(t *testing.T) {
 	tests := []struct {
 		name     string
 		content  string
-		expected []ContentChunk
+		expected ContentChunk
 	}{
 		{
 			name:    "non-empty content",
 			content: "Hello world",
-			expected: []ContentChunk{
-				{
-					Type: "text",
-					Text: "Hello world",
-				},
+			expected: ContentChunk{
+				Type: "text",
+				Text: "Hello world",
 			},
 		},
 		{
 			name:     "empty content",
 			content:  "",
-			expected: []ContentChunk{},
+			expected: ContentChunk{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := TransformContentToChunks(tt.content)
+			result := TransformContentToChunk(tt.content)
 			assert.Equal(t, tt.expected, result)
 		})
 	}

@@ -320,16 +320,16 @@ func (ps *PromptService) GetMCPPromptDefinition(ctx context.Context, name string
 		description = *prompt.Description
 	}
 
-	// Transform content to structured format using validator helper
-	contentChunks := ps.validator.TransformContentToChunks(prompt.Content)
-
 	definition := &models.MCPPromptDefinition{
 		Name:        prompt.Name,
 		Description: description,
 		Messages: []models.PromptMessage{
 			{
-				Role:    string(prompt.Role),
-				Content: contentChunks,
+				Role: string(prompt.Role),
+				Content: models.ContentChunk{
+					Type: "text",
+					Text: prompt.Content,
+				},
 			},
 		},
 	}
@@ -338,7 +338,7 @@ func (ps *PromptService) GetMCPPromptDefinition(ctx context.Context, name string
 }
 
 // logValidationFailure logs validation failures with structured error information
-func (ps *PromptService) logValidationFailure(ctx context.Context, promptID *uuid.UUID, operation string, err error) {
+func (ps *PromptService) logValidationFailure(_ context.Context, promptID *uuid.UUID, operation string, err error) {
 	fields := logrus.Fields{
 		"component": "prompt_service",
 		"operation": operation,

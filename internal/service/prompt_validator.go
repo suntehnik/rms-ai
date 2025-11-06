@@ -35,22 +35,12 @@ func (v *PromptValidator) ValidateForMCP(prompt *models.Prompt) error {
 	}
 
 	// Validate that content can be transformed to valid ContentChunk array
-	contentChunks := models.TransformContentToChunks(prompt.Content)
-	if len(contentChunks) == 0 {
-		return fmt.Errorf("content transformation resulted in empty chunks")
-	}
-
-	// Validate each content chunk
-	for i, chunk := range contentChunks {
-		if err := chunk.ValidateForMCP(); err != nil {
-			return fmt.Errorf("content chunk %d validation failed: %w", i, err)
-		}
-	}
+	contentChunk := models.TransformContentToChunk(prompt.Content)
 
 	// Create a test PromptMessage to validate the complete structure
 	testMessage := &models.PromptMessage{
 		Role:    string(prompt.Role),
-		Content: contentChunks,
+		Content: contentChunk,
 	}
 
 	if err := testMessage.ValidateForMCP(); err != nil {
@@ -78,19 +68,6 @@ func (v *PromptValidator) ValidateCreateRequest(req *CreatePromptRequest) error 
 		return fmt.Errorf("content cannot be empty")
 	}
 
-	// Validate that content can be transformed to valid ContentChunk array
-	contentChunks := models.TransformContentToChunks(req.Content)
-	if len(contentChunks) == 0 {
-		return fmt.Errorf("content transformation resulted in empty chunks")
-	}
-
-	// Validate each content chunk
-	for i, chunk := range contentChunks {
-		if err := chunk.ValidateForMCP(); err != nil {
-			return fmt.Errorf("content chunk %d validation failed: %w", i, err)
-		}
-	}
-
 	return nil
 }
 
@@ -112,26 +89,7 @@ func (v *PromptValidator) ValidateUpdateRequest(req *UpdatePromptRequest) error 
 		if *req.Content == "" {
 			return fmt.Errorf("content cannot be empty")
 		}
-
-		// Validate that content can be transformed to valid ContentChunk array
-		contentChunks := models.TransformContentToChunks(*req.Content)
-		if len(contentChunks) == 0 {
-			return fmt.Errorf("content transformation resulted in empty chunks")
-		}
-
-		// Validate each content chunk
-		for i, chunk := range contentChunks {
-			if err := chunk.ValidateForMCP(); err != nil {
-				return fmt.Errorf("content chunk %d validation failed: %w", i, err)
-			}
-		}
 	}
 
 	return nil
-}
-
-// TransformContentToChunks is a helper method that transforms plain string content
-// into a ContentChunk array for MCP compliance
-func (v *PromptValidator) TransformContentToChunks(content string) []models.ContentChunk {
-	return models.TransformContentToChunks(content)
 }

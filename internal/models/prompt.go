@@ -251,32 +251,28 @@ func (pm *PromptMessage) ValidateForMCP() error {
 		return err
 	}
 
-	// Validate content array
-	if len(pm.Content) == 0 {
+	// Validate content - check if it's empty (zero value)
+	if pm.Content.Type == "" && pm.Content.Text == "" {
 		return fmt.Errorf("message content cannot be empty")
 	}
 
-	// Validate each content chunk
-	for i, chunk := range pm.Content {
-		if err := chunk.ValidateForMCP(); err != nil {
-			return fmt.Errorf("content chunk %d: %w", i, err)
-		}
+	// Validate the content chunk
+	if err := pm.Content.ValidateForMCP(); err != nil {
+		return fmt.Errorf("content chunk: %w", err)
 	}
 
 	return nil
 }
 
-// TransformContentToChunks transforms plain string content into structured ContentChunk array
-func TransformContentToChunks(content string) []ContentChunk {
+// TransformContentToChunk transforms plain string content into structured ContentChunk
+func TransformContentToChunk(content string) ContentChunk {
 	if content == "" {
-		return []ContentChunk{}
+		return ContentChunk{}
 	}
 
-	return []ContentChunk{
-		{
-			Type: "text",
-			Text: content,
-		},
+	return ContentChunk{
+		Type: "text",
+		Text: content,
 	}
 }
 
@@ -306,5 +302,5 @@ type PromptMessage struct {
 
 	// Content is the structured message content array
 	// @Description Array of typed content objects
-	Content []ContentChunk `json:"content" validate:"required,min=1"`
+	Content ContentChunk `json:"content" validate:"required,min=1"`
 }

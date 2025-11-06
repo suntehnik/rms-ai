@@ -42,7 +42,7 @@ The compliant implementation must:
 // Enhanced PromptMessage structure
 type PromptMessage struct {
     Role    string         `json:"role"`    // "user" or "assistant" only
-    Content []ContentChunk `json:"content"` // Array of typed content objects
+    Content ContentChunk `json:"content"` // Array of typed content objects
 }
 
 type ContentChunk struct {

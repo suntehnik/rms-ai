@@ -258,49 +258,6 @@ func TestPromptValidator_ValidateUpdateRequest(t *testing.T) {
 	}
 }
 
-func TestPromptValidator_TransformContentToChunks(t *testing.T) {
-	validator := NewPromptValidator()
-
-	tests := []struct {
-		name     string
-		content  string
-		expected []models.ContentChunk
-	}{
-		{
-			name:    "non-empty content",
-			content: "Hello world",
-			expected: []models.ContentChunk{
-				{
-					Type: "text",
-					Text: "Hello world",
-				},
-			},
-		},
-		{
-			name:     "empty content",
-			content:  "",
-			expected: []models.ContentChunk{},
-		},
-		{
-			name:    "multiline content",
-			content: "Line 1\nLine 2\nLine 3",
-			expected: []models.ContentChunk{
-				{
-					Type: "text",
-					Text: "Line 1\nLine 2\nLine 3",
-				},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := validator.TransformContentToChunks(tt.content)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
-
 func TestNewPromptValidator(t *testing.T) {
 	validator := NewPromptValidator()
 	assert.NotNil(t, validator)
