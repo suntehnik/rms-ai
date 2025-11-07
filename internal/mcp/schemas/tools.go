@@ -88,6 +88,56 @@ func GetSupportedTools() []ToolDefinition {
 			},
 		},
 		{
+			Name:        "list_epics",
+			Title:       "List Epics",
+			Description: "Retrieve epics with optional filters, pagination, and related entity includes.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"creator": map[string]interface{}{
+						"type":        "string",
+						"description": "Filter by creator name or use `me` for current user",
+						"format":      "uuid",
+					},
+					"assignee": map[string]interface{}{
+						"type":        "string",
+						"description": "Filter by assignee name or use `me` for current user",
+						"format":      "uuid",
+					},
+					"status": map[string]interface{}{
+						"type":        "string",
+						"description": "Filter by epic status",
+						"enum":        validation.GetValidEpicStatuses(),
+					},
+					"priority": map[string]interface{}{
+						"type":        "integer",
+						"description": "Filter by priority level (1=Critical, 2=High, 3=Medium, 4=Low)",
+						"minimum":     1,
+						"maximum":     4,
+					},
+					"include": map[string]interface{}{
+						"type":        "string",
+						"description": "Comma-separated list of related entities to include (e.g., \"creator,assignee,user_stories\")",
+					},
+					"order_by": map[string]interface{}{
+						"type":        "string",
+						"description": "Order results by field and direction (default: \"created_at DESC\")",
+					},
+					"limit": map[string]interface{}{
+						"type":        "integer",
+						"description": "Maximum number of results to return (default: 50, max: 100)",
+						"minimum":     1,
+						"maximum":     100,
+					},
+					"offset": map[string]interface{}{
+						"type":        "integer",
+						"description": "Number of results to skip for pagination",
+						"minimum":     0,
+					},
+				},
+			},
+		},
+		{
 			Name:        "create_user_story",
 			Title:       "Create User Story",
 			Description: "Create a new user story within an epic. The creator is automatically set to the authenticated user.",

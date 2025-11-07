@@ -37,6 +37,7 @@ type MCPHandler struct {
 // NewMCPHandler creates a new MCP handler instance
 func NewMCPHandler(
 	epicService service.EpicService,
+	userService service.UserService,
 	userStoryService service.UserStoryService,
 	requirementService service.RequirementService,
 	acceptanceCriteriaService service.AcceptanceCriteriaService,
@@ -48,7 +49,7 @@ func NewMCPHandler(
 ) *MCPHandler {
 	processor := jsonrpc.NewProcessor()
 	resourceHandler := NewResourceHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService, promptService, requirementTypeRepo)
-	toolsHandler := tools.NewHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService, searchService, steeringDocumentService, promptService)
+	toolsHandler := tools.NewHandler(epicService, userService, userStoryService, requirementService, acceptanceCriteriaService, searchService, steeringDocumentService, promptService)
 	promptsHandler := NewPromptsHandler(promptService, epicService, userStoryService, requirementService, acceptanceCriteriaService, logger.Logger)
 	initializeHandler := NewInitializeHandler(toolsHandler, promptsHandler, promptService, logger.Logger)
 	mcpLogger := NewMCPLogger()
@@ -103,6 +104,7 @@ func (h *MCPHandler) Process(c *gin.Context) {
 	// Create context with correlation ID
 	ctx := h.mcpLogger.WithCorrelationID(c.Request.Context())
 	ctx = context.WithValue(ctx, "gin_context", c)
+	c.Request = c.Request.WithContext(ctx)
 
 	// Log security event for MCP access
 	h.mcpLogger.LogSecurityEvent(ctx, "mcp_access_attempt", map[string]interface{}{
@@ -135,7 +137,7 @@ func (h *MCPHandler) Process(c *gin.Context) {
 	h.mcpLogger.LogRequestBody(ctx, method, body, user)
 
 	// Process the JSON-RPC request
-	responseData, err := h.processor.ProcessRequest(ctx, body)
+	responseData, err := h.processor.ProcessRequest(ctx, c, body)
 	duration := time.Since(startTime)
 
 	// Check if the response contains an error (JSON-RPC processor returns responseData even for errors)
@@ -428,43 +430,51 @@ func isValidationError(err error) bool {
 }
 
 // wrapHandler wraps a JSON-RPC handler with enhanced logging and error handling
-func (h *MCPHandler) wrapHandler(method string, handler func(context.Context, interface{}) (interface{}, error)) func(context.Context, interface{}) (interface{}, error) {
-	return func(ctx context.Context, params interface{}) (interface{}, error) {
+func (h *MCPHandler) wrapHandler(method string, handler func(context.Context, interface{}) (interface{}, error)) func(*gin.Context, interface{}) (interface{}, error) {
+	return func(c *gin.Context, params interface{}) (interface{}, error) {
 		startTime := time.Now()
+
+		requestCtx := c.Request.Context()
+		if requestCtx == nil {
+			requestCtx = context.Background()
+		}
 
 		// Extract user from context
 		var user *models.User
-		if ginCtx, ok := ctx.Value("gin_context").(*gin.Context); ok {
+		if ginCtx, ok := requestCtx.Value("gin_context").(*gin.Context); ok {
 			user = h.mcpLogger.GetUserFromGinContext(ginCtx)
+		}
+		if user == nil {
+			user = h.mcpLogger.GetUserFromGinContext(c)
 		}
 
 		// Log the request
-		h.mcpLogger.LogRequest(ctx, method, params, user)
+		h.mcpLogger.LogRequest(requestCtx, method, params, user)
 
 		// Execute the handler
-		result, err := handler(ctx, params)
+		result, err := handler(requestCtx, params)
 		duration := time.Since(startTime)
 
 		if err != nil {
 			// Log the error
-			h.mcpLogger.LogError(ctx, method, err, user)
-			h.mcpLogger.LogResponse(ctx, method, false, duration, user)
+			h.mcpLogger.LogError(requestCtx, method, err, user)
+			h.mcpLogger.LogResponse(requestCtx, method, false, duration, user)
 
 			// Map service layer error to JSON-RPC error
 			return nil, h.errorMapper.MapError(err)
 		}
 
 		// Log successful response
-		h.mcpLogger.LogResponse(ctx, method, true, duration, user)
+		h.mcpLogger.LogResponse(requestCtx, method, true, duration, user)
 
 		// Log audit event for operations that modify data
 		if h.isModifyingOperation(method) {
-			h.logAuditEventForOperation(ctx, method, params, result, user)
+			h.logAuditEventForOperation(requestCtx, method, params, result, user)
 		}
 
 		// Log performance metrics for slow operations
 		if duration > 100*time.Millisecond {
-			h.mcpLogger.LogPerformanceMetrics(ctx, method, duration, user, map[string]interface{}{
+			h.mcpLogger.LogPerformanceMetrics(requestCtx, method, duration, user, map[string]interface{}{
 				"slow_operation": true,
 			})
 		}

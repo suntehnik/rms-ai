@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Handler represents a JSON-RPC method handler
-type Handler func(ctx context.Context, params interface{}) (interface{}, error)
+type Handler func(c *gin.Context, params interface{}) (interface{}, error)
 
 // Processor handles JSON-RPC 2.0 request processing
 type Processor struct {
@@ -60,7 +62,7 @@ func (p *Processor) RegisterHandler(method string, handler Handler) {
 }
 
 // ProcessRequest processes a JSON-RPC request and returns a response
-func (p *Processor) ProcessRequest(ctx context.Context, requestData []byte) ([]byte, error) {
+func (p *Processor) ProcessRequest(ctx context.Context, ginCtx *gin.Context, requestData []byte) ([]byte, error) {
 	// Log the incoming request body
 	p.logger.Debug("JSON-RPC request body", "request", string(requestData))
 
@@ -82,7 +84,7 @@ func (p *Processor) ProcessRequest(ctx context.Context, requestData []byte) ([]b
 
 	// Check if it's a notification (no response expected)
 	if request.IsNotification() {
-		err := p.processNotification(ctx, request)
+		err := p.processNotification(ctx, ginCtx, request)
 		if err != nil {
 			p.logger.Error("Error processing notification", "method", request.Method, "error", err)
 		}
@@ -90,7 +92,7 @@ func (p *Processor) ProcessRequest(ctx context.Context, requestData []byte) ([]b
 	}
 
 	// Process the request and create response
-	response := p.processRequestWithResponse(ctx, request)
+	response := p.processRequestWithResponse(ctx, ginCtx, request)
 
 	// Marshal the response
 	responseData, err := json.Marshal(response)
@@ -112,7 +114,7 @@ func (p *Processor) ProcessRequest(ctx context.Context, requestData []byte) ([]b
 }
 
 // processRequestWithResponse processes a request that expects a response
-func (p *Processor) processRequestWithResponse(ctx context.Context, request *JSONRPCRequest) *JSONRPCResponse {
+func (p *Processor) processRequestWithResponse(ctx context.Context, ginCtx *gin.Context, request *JSONRPCRequest) *JSONRPCResponse {
 	// Find the handler
 	handler, exists := p.handlers[request.Method]
 	if !exists {
@@ -125,7 +127,7 @@ func (p *Processor) processRequestWithResponse(ctx context.Context, request *JSO
 	}
 
 	// Execute the handler
-	result, err := handler(ctx, request.Params)
+	result, err := handler(ginCtx, request.Params)
 	if err != nil {
 		p.logger.Error("Handler error", "method", request.Method, "error", err)
 		jsonrpcErr := p.errorMapper.MapError(err)
@@ -145,7 +147,7 @@ func (p *Processor) processRequestWithResponse(ctx context.Context, request *JSO
 }
 
 // processNotification processes a notification (no response)
-func (p *Processor) processNotification(ctx context.Context, request *JSONRPCRequest) error {
+func (p *Processor) processNotification(ctx context.Context, ginCtx *gin.Context, request *JSONRPCRequest) error {
 	// Find the handler
 	handler, exists := p.handlers[request.Method]
 	if !exists {
@@ -153,7 +155,7 @@ func (p *Processor) processNotification(ctx context.Context, request *JSONRPCReq
 	}
 
 	// Execute the handler
-	_, err := handler(ctx, request.Params)
+	_, err := handler(ginCtx, request.Params)
 	return err
 }
 
@@ -185,12 +187,12 @@ func NewBatchProcessor(processor *Processor) *BatchProcessor {
 }
 
 // ProcessBatch processes a batch of JSON-RPC requests
-func (bp *BatchProcessor) ProcessBatch(ctx context.Context, batchData []byte) ([]byte, error) {
+func (bp *BatchProcessor) ProcessBatch(ctx context.Context, ginCtx *gin.Context, batchData []byte) ([]byte, error) {
 	// Try to parse as array first
 	var requests []json.RawMessage
 	if err := json.Unmarshal(batchData, &requests); err != nil {
 		// Not a batch, process as single request
-		return bp.processor.ProcessRequest(ctx, batchData)
+		return bp.processor.ProcessRequest(ctx, ginCtx, batchData)
 	}
 
 	if len(requests) == 0 {
@@ -203,7 +205,7 @@ func (bp *BatchProcessor) ProcessBatch(ctx context.Context, batchData []byte) ([
 
 	// Process each request in the batch
 	for _, requestData := range requests {
-		responseData, err := bp.processor.ProcessRequest(ctx, requestData)
+		responseData, err := bp.processor.ProcessRequest(ctx, ginCtx, requestData)
 		if err != nil {
 			// This shouldn't happen as ProcessRequest handles errors internally
 			continue

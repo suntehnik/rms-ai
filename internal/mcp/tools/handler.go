@@ -25,6 +25,7 @@ type Handler struct {
 // NewHandler creates a new MCP tools handler with all domain handlers
 func NewHandler(
 	epicService service.EpicService,
+	userService service.UserService,
 	userStoryService service.UserStoryService,
 	requirementService service.RequirementService,
 	acceptanceCriteriaService service.AcceptanceCriteriaService,
@@ -33,7 +34,7 @@ func NewHandler(
 	promptService PromptServiceInterface,
 ) *Handler {
 	// Initialize domain handlers
-	epicHandler := NewEpicHandler(epicService)
+	epicHandler := NewEpicHandler(epicService, userService)
 	userStoryHandler := NewUserStoryHandler(userStoryService, epicService, requirementService)
 	requirementHandler := NewRequirementHandler(requirementService, userStoryService)
 	acceptanceCriteriaHandler := NewAcceptanceCriteriaHandler(acceptanceCriteriaService, userStoryService)

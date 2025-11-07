@@ -42,6 +42,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 
 	// Initialize services
 	epicService := service.NewEpicService(repos.Epic, repos.User)
+	userService := service.NewUserService(repos.User)
 	userStoryService := service.NewUserStoryService(repos.UserStory, repos.Epic, repos.User)
 	acceptanceCriteriaService := service.NewAcceptanceCriteriaService(repos.AcceptanceCriteria, repos.UserStory, repos.User)
 	requirementService := service.NewRequirementService(
@@ -143,7 +144,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	navigationHandler := handlers.NewNavigationHandler(navigationService)
 	steeringDocumentHandler := handlers.NewSteeringDocumentHandler(steeringDocumentService, epicService, repos.User)
 	promptHandler := handlers.NewPromptHandler(promptService, logger.Logger)
-	mcpHandler := handlers.NewMCPHandler(epicService, userStoryService, requirementService, acceptanceCriteriaService, searchService, steeringDocumentService, promptService, resourceService, repos.RequirementType)
+	mcpHandler := handlers.NewMCPHandler(epicService, userService, userStoryService, requirementService, acceptanceCriteriaService, searchService, steeringDocumentService, promptService, resourceService, repos.RequirementType)
 
 	// Authentication routes (no /api/v1 prefix for auth)
 	authGroup := router.Group("/auth")

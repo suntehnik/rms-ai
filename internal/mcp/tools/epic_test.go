@@ -20,6 +20,10 @@ type MockEpicService struct {
 	mock.Mock
 }
 
+type MockUserService struct {
+	mock.Mock
+}
+
 func (m *MockEpicService) CreateEpic(req service.CreateEpicRequest) (*models.Epic, error) {
 	args := m.Called(req)
 	if args.Get(0) == nil {
@@ -87,17 +91,25 @@ func (m *MockEpicService) AssignEpic(id uuid.UUID, assigneeID *uuid.UUID) (*mode
 	return args.Get(0).(*models.Epic), args.Error(1)
 }
 
+func (m *MockUserService) GetByName(name string) (*models.User, error) {
+	args := m.Called(name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.User), args.Error(1)
+}
+
 func TestEpicHandler_GetSupportedTools(t *testing.T) {
-	handler := NewEpicHandler(nil)
+	handler := NewEpicHandler(nil, nil)
 	tools := handler.GetSupportedTools()
 
-	expected := []string{"create_epic", "update_epic"}
+	expected := []string{"create_epic", "update_epic", "list_epic"}
 	assert.Equal(t, expected, tools)
 }
 
 func TestEpicHandler_HandleTool(t *testing.T) {
 	mockService := &MockEpicService{}
-	handler := NewEpicHandler(mockService)
+	handler := NewEpicHandler(mockService, nil)
 
 	tests := []struct {
 		name        string
@@ -136,7 +148,7 @@ func TestEpicHandler_HandleTool(t *testing.T) {
 
 func TestEpicHandler_Create_ValidationErrors(t *testing.T) {
 	mockService := &MockEpicService{}
-	handler := NewEpicHandler(mockService)
+	handler := NewEpicHandler(mockService, nil)
 
 	tests := []struct {
 		name string
@@ -170,7 +182,7 @@ func TestEpicHandler_Create_ValidationErrors(t *testing.T) {
 
 func TestEpicHandler_Update_ValidationErrors(t *testing.T) {
 	mockService := &MockEpicService{}
-	handler := NewEpicHandler(mockService)
+	handler := NewEpicHandler(mockService, nil)
 
 	tests := []struct {
 		name string
@@ -200,10 +212,12 @@ func TestEpicHandler_Update_ValidationErrors(t *testing.T) {
 
 func TestNewEpicHandler(t *testing.T) {
 	mockService := &MockEpicService{}
-	handler := NewEpicHandler(mockService)
+	mockUserService := &MockUserService{}
+	handler := NewEpicHandler(mockService, mockUserService)
 
 	assert.NotNil(t, handler)
 	assert.Equal(t, mockService, handler.epicService)
+	assert.Equal(t, mockUserService, handler.userService)
 }
 
 // Helper function to create a context with user
@@ -218,7 +232,7 @@ func createContextWithUser(user *models.User) context.Context {
 // TestEpicHandler_Create_ValidParameters tests epic creation with valid parameters
 func TestEpicHandler_Create_ValidParameters(t *testing.T) {
 	mockService := &MockEpicService{}
-	handler := NewEpicHandler(mockService)
+	handler := NewEpicHandler(mockService, nil)
 
 	// Create test user
 	user := &models.User{
@@ -299,7 +313,7 @@ func TestEpicHandler_Create_ValidParameters(t *testing.T) {
 // TestEpicHandler_Create_InvalidParameters tests epic creation with invalid parameters
 func TestEpicHandler_Create_InvalidParameters(t *testing.T) {
 	mockService := &MockEpicService{}
-	handler := NewEpicHandler(mockService)
+	handler := NewEpicHandler(mockService, nil)
 
 	user := &models.User{
 		ID:       uuid.New(),
@@ -359,7 +373,7 @@ func TestEpicHandler_Create_InvalidParameters(t *testing.T) {
 // TestEpicHandler_Create_ServiceErrors tests epic creation service layer errors
 func TestEpicHandler_Create_ServiceErrors(t *testing.T) {
 	mockService := &MockEpicService{}
-	handler := NewEpicHandler(mockService)
+	handler := NewEpicHandler(mockService, nil)
 
 	user := &models.User{
 		ID:       uuid.New(),
@@ -387,7 +401,7 @@ func TestEpicHandler_Create_ServiceErrors(t *testing.T) {
 // TestEpicHandler_Create_ContextErrors tests epic creation context errors
 func TestEpicHandler_Create_ContextErrors(t *testing.T) {
 	mockService := &MockEpicService{}
-	handler := NewEpicHandler(mockService)
+	handler := NewEpicHandler(mockService, nil)
 
 	args := map[string]interface{}{
 		"title":    "Test Epic",
@@ -424,7 +438,7 @@ func TestEpicHandler_Create_ContextErrors(t *testing.T) {
 // TestEpicHandler_Update_ValidParameters tests epic updates with valid parameters
 func TestEpicHandler_Update_ValidParameters(t *testing.T) {
 	mockService := &MockEpicService{}
-	handler := NewEpicHandler(mockService)
+	handler := NewEpicHandler(mockService, nil)
 
 	epicID := uuid.New()
 	expectedEpic := &models.Epic{
@@ -504,7 +518,7 @@ func TestEpicHandler_Update_ValidParameters(t *testing.T) {
 // TestEpicHandler_Update_ReferenceIDResolution tests epic updates with reference ID resolution
 func TestEpicHandler_Update_ReferenceIDResolution(t *testing.T) {
 	mockService := &MockEpicService{}
-	handler := NewEpicHandler(mockService)
+	handler := NewEpicHandler(mockService, nil)
 
 	epicID := uuid.New()
 	expectedEpic := &models.Epic{
@@ -581,7 +595,7 @@ func TestEpicHandler_Update_ReferenceIDResolution(t *testing.T) {
 // TestEpicHandler_Update_InvalidParameters tests epic updates with invalid parameters
 func TestEpicHandler_Update_InvalidParameters(t *testing.T) {
 	mockService := &MockEpicService{}
-	handler := NewEpicHandler(mockService)
+	handler := NewEpicHandler(mockService, nil)
 
 	tests := []struct {
 		name        string
@@ -623,7 +637,7 @@ func TestEpicHandler_Update_InvalidParameters(t *testing.T) {
 // TestEpicHandler_Update_ServiceErrors tests epic update service layer errors
 func TestEpicHandler_Update_ServiceErrors(t *testing.T) {
 	mockService := &MockEpicService{}
-	handler := NewEpicHandler(mockService)
+	handler := NewEpicHandler(mockService, nil)
 
 	epicID := uuid.New()
 	args := map[string]interface{}{
@@ -644,7 +658,7 @@ func TestEpicHandler_Update_ServiceErrors(t *testing.T) {
 // TestEpicHandler_HandleTool_ErrorHandling tests error handling in HandleTool method
 func TestEpicHandler_HandleTool_ErrorHandling(t *testing.T) {
 	mockService := &MockEpicService{}
-	handler := NewEpicHandler(mockService)
+	handler := NewEpicHandler(mockService, nil)
 
 	tests := []struct {
 		name        string

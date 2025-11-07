@@ -127,7 +127,7 @@ func TestMCPHandler_RequirementTypesResource(t *testing.T) {
 	resourceService := service.NewResourceService(registry, logger)
 
 	// Create MCP handler
-	handler := NewMCPHandler(nil, nil, nil, nil, nil, nil, nil, resourceService, mockRequirementTypeRepo)
+	handler := NewMCPHandler(nil, nil, nil, nil, nil, nil, nil, nil, resourceService, mockRequirementTypeRepo)
 
 	// Test resources/list to verify requirement types resource is included
 	t.Run("resources_list_includes_requirement_types", func(t *testing.T) {
