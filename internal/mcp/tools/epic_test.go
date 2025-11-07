@@ -103,7 +103,7 @@ func TestEpicHandler_GetSupportedTools(t *testing.T) {
 	handler := NewEpicHandler(nil, nil)
 	tools := handler.GetSupportedTools()
 
-	expected := []string{"create_epic", "update_epic", "list_epic"}
+	expected := []string{"create_epic", "update_epic", "list_epics"}
 	assert.Equal(t, expected, tools)
 }
 
