@@ -11,8 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-
-	"product-requirements-management/internal/config"
 )
 
 // TestPostgreSQLIntegration tests the models with actual PostgreSQL database
@@ -21,18 +19,6 @@ func TestPostgreSQLIntegration(t *testing.T) {
 	// Skip if not running integration tests
 	if testing.Short() {
 		t.Skip("Skipping integration test")
-	}
-
-	// Setup test database connection
-	cfg := &config.Config{
-		Database: config.DatabaseConfig{
-			Host:     "localhost",
-			Port:     "5432",
-			User:     "postgres",
-			Password: "postgres",
-			DBName:   "product_requirements_test",
-			SSLMode:  "disable",
-		},
 	}
 
 	dsn := "host=localhost user=postgres password=postgres dbname=product_requirements_test port=5432 sslmode=disable TimeZone=UTC"

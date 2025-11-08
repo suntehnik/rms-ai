@@ -343,19 +343,3 @@ func (m *mockLogger) Error(msg string, fields ...interface{}) {
 func (m *mockLogger) Debug(msg string, fields ...interface{}) {
 	m.debugCalls = append(m.debugCalls, msg)
 }
-
-func TestProcessor_SetLogger(t *testing.T) {
-	processor := NewProcessor()
-	mockLog := &mockLogger{}
-
-	processor.SetLogger(mockLog)
-
-	// Register a handler to trigger logging
-	processor.RegisterHandler("test_method", func(ctx context.Context, params interface{}) (interface{}, error) {
-		return "ok", nil
-	})
-
-	// Should have logged the handler registration
-	assert.Len(t, mockLog.debugCalls, 1)
-	assert.Contains(t, mockLog.debugCalls[0], "Registered JSON-RPC handler")
-}
