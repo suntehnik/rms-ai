@@ -11,7 +11,7 @@ func TestGetSupportedTools(t *testing.T) {
 	tools := schemas.GetSupportedTools()
 
 	// Verify we have the expected number of tools
-	assert.Len(t, tools, 24)
+	assert.Len(t, tools, 25)
 
 	// Verify all expected tools are present
 	expectedTools := []string{

@@ -4,16 +4,33 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+func createTestGinContext(baseCtx context.Context) (context.Context, *gin.Context) {
+	if baseCtx == nil {
+		baseCtx = context.Background()
+	}
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	req := httptest.NewRequest("POST", "/", nil)
+	ctxWithGin := context.WithValue(baseCtx, "gin_context", c)
+	req = req.WithContext(ctxWithGin)
+	c.Request = req
+
+	return ctxWithGin, c
+}
+
 func TestProcessor_RegisterHandler(t *testing.T) {
 	processor := NewProcessor()
 
-	handler := func(ctx context.Context, params interface{}) (interface{}, error) {
+	handler := func(c *gin.Context, params interface{}) (interface{}, error) {
 		return "test result", nil
 	}
 
@@ -30,14 +47,15 @@ func TestProcessor_ProcessRequest_Success(t *testing.T) {
 	processor := NewProcessor()
 
 	// Register a test handler
-	processor.RegisterHandler("test_method", func(ctx context.Context, params interface{}) (interface{}, error) {
+	processor.RegisterHandler("test_method", func(c *gin.Context, params interface{}) (interface{}, error) {
 		return map[string]interface{}{"status": "ok", "params": params}, nil
 	})
 
 	// Test request
 	requestData := `{"jsonrpc":"2.0","id":1,"method":"test_method","params":{"key":"value"}}`
 
-	responseData, err := processor.ProcessRequest(context.Background(), []byte(requestData))
+	ctx, ginCtx := createTestGinContext(context.Background())
+	responseData, err := processor.ProcessRequest(ctx, ginCtx, []byte(requestData))
 	require.NoError(t, err)
 	require.NotNil(t, responseData)
 
@@ -56,7 +74,8 @@ func TestProcessor_ProcessRequest_MethodNotFound(t *testing.T) {
 
 	requestData := `{"jsonrpc":"2.0","id":1,"method":"nonexistent_method"}`
 
-	responseData, err := processor.ProcessRequest(context.Background(), []byte(requestData))
+	ctx, ginCtx := createTestGinContext(context.Background())
+	responseData, err := processor.ProcessRequest(ctx, ginCtx, []byte(requestData))
 	require.NoError(t, err)
 	require.NotNil(t, responseData)
 
@@ -75,13 +94,14 @@ func TestProcessor_ProcessRequest_HandlerError(t *testing.T) {
 	processor := NewProcessor()
 
 	// Register a handler that returns an error
-	processor.RegisterHandler("error_method", func(ctx context.Context, params interface{}) (interface{}, error) {
+	processor.RegisterHandler("error_method", func(c *gin.Context, params interface{}) (interface{}, error) {
 		return nil, errors.New("handler error")
 	})
 
 	requestData := `{"jsonrpc":"2.0","id":1,"method":"error_method"}`
 
-	responseData, err := processor.ProcessRequest(context.Background(), []byte(requestData))
+	ctx, ginCtx := createTestGinContext(context.Background())
+	responseData, err := processor.ProcessRequest(ctx, ginCtx, []byte(requestData))
 	require.NoError(t, err)
 	require.NotNil(t, responseData)
 
@@ -102,7 +122,8 @@ func TestProcessor_ProcessRequest_ParseError(t *testing.T) {
 	// Invalid JSON
 	requestData := `{"jsonrpc":"2.0","id":1,"method":"test"`
 
-	responseData, err := processor.ProcessRequest(context.Background(), []byte(requestData))
+	ctx, ginCtx := createTestGinContext(context.Background())
+	responseData, err := processor.ProcessRequest(ctx, ginCtx, []byte(requestData))
 	require.NoError(t, err)
 	require.NotNil(t, responseData)
 
@@ -121,14 +142,15 @@ func TestProcessor_ProcessRequest_Notification(t *testing.T) {
 	processor := NewProcessor()
 
 	// Register a test handler
-	processor.RegisterHandler("notification_method", func(ctx context.Context, params interface{}) (interface{}, error) {
+	processor.RegisterHandler("notification_method", func(c *gin.Context, params interface{}) (interface{}, error) {
 		return "notification processed", nil
 	})
 
 	// Notification (no ID field)
 	requestData := `{"jsonrpc":"2.0","method":"notification_method","params":{"key":"value"}}`
 
-	responseData, err := processor.ProcessRequest(context.Background(), []byte(requestData))
+	ctx, ginCtx := createTestGinContext(context.Background())
+	responseData, err := processor.ProcessRequest(ctx, ginCtx, []byte(requestData))
 	require.NoError(t, err)
 	assert.Nil(t, responseData) // No response for notifications
 }
@@ -138,11 +160,11 @@ func TestBatchProcessor_ProcessBatch(t *testing.T) {
 	batchProcessor := NewBatchProcessor(processor)
 
 	// Register test handlers
-	processor.RegisterHandler("test_method", func(ctx context.Context, params interface{}) (interface{}, error) {
+	processor.RegisterHandler("test_method", func(c *gin.Context, params interface{}) (interface{}, error) {
 		return map[string]interface{}{"status": "ok"}, nil
 	})
 
-	processor.RegisterHandler("notification_method", func(ctx context.Context, params interface{}) (interface{}, error) {
+	processor.RegisterHandler("notification_method", func(c *gin.Context, params interface{}) (interface{}, error) {
 		return "notification processed", nil
 	})
 
@@ -153,7 +175,8 @@ func TestBatchProcessor_ProcessBatch(t *testing.T) {
 		{"jsonrpc":"2.0","id":2,"method":"test_method","params":{"key":"value2"}}
 	]`
 
-	responseData, err := batchProcessor.ProcessBatch(context.Background(), []byte(batchData))
+	ctx, ginCtx := createTestGinContext(context.Background())
+	responseData, err := batchProcessor.ProcessBatch(ctx, ginCtx, []byte(batchData))
 	require.NoError(t, err)
 	require.NotNil(t, responseData)
 
@@ -182,7 +205,8 @@ func TestBatchProcessor_ProcessBatch_EmptyBatch(t *testing.T) {
 	// Empty batch
 	batchData := `[]`
 
-	responseData, err := batchProcessor.ProcessBatch(context.Background(), []byte(batchData))
+	ctx, ginCtx := createTestGinContext(context.Background())
+	responseData, err := batchProcessor.ProcessBatch(ctx, ginCtx, []byte(batchData))
 	require.NoError(t, err)
 	require.NotNil(t, responseData)
 
@@ -201,14 +225,15 @@ func TestBatchProcessor_ProcessBatch_SingleRequest(t *testing.T) {
 	batchProcessor := NewBatchProcessor(processor)
 
 	// Register test handler
-	processor.RegisterHandler("test_method", func(ctx context.Context, params interface{}) (interface{}, error) {
+	processor.RegisterHandler("test_method", func(c *gin.Context, params interface{}) (interface{}, error) {
 		return map[string]interface{}{"status": "ok"}, nil
 	})
 
 	// Single request (not an array)
 	requestData := `{"jsonrpc":"2.0","id":1,"method":"test_method","params":{"key":"value"}}`
 
-	responseData, err := batchProcessor.ProcessBatch(context.Background(), []byte(requestData))
+	ctx, ginCtx := createTestGinContext(context.Background())
+	responseData, err := batchProcessor.ProcessBatch(ctx, ginCtx, []byte(requestData))
 	require.NoError(t, err)
 	require.NotNil(t, responseData)
 

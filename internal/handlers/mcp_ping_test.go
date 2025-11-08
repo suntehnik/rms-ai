@@ -21,7 +21,7 @@ func TestMCPHandler_Ping(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	// Create MCP handler with nil services (ping doesn't use them)
-	handler := NewMCPHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	handler := NewMCPHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	tests := []struct {
 		name           string
@@ -177,7 +177,7 @@ func TestMCPHandler_PingIntegration(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	// Create MCP handler with nil services (ping doesn't use them)
-	handler := NewMCPHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	handler := NewMCPHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	// Check that ping method is registered
 	methods := handler.processor.GetRegisteredMethods()
@@ -191,7 +191,7 @@ func TestMCPHandler_PingErrorHandling(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	// Create MCP handler with nil services (ping doesn't use them)
-	handler := NewMCPHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	handler := NewMCPHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	// Test invalid JSON-RPC request
 	req := httptest.NewRequest("POST", "/api/v1/mcp", strings.NewReader(`{invalid json`))

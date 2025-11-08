@@ -15,14 +15,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestMCPAPICompatibility_AllTools tests all 24 MCP tools through JSON-RPC interface
+// TestMCPAPICompatibility_AllTools tests all MCP tools through JSON-RPC interface
 func TestMCPAPICompatibility_AllTools(t *testing.T) {
 	// Set up test environment
 	gin.SetMode(gin.TestMode)
 
 	// Get all supported tools
 	tools := schemas.GetSupportedTools()
-	assert.Len(t, tools, 24, "Expected exactly 24 MCP tools")
+	assert.Len(t, tools, 25, "Expected exactly 25 MCP tools")
 
 	// Test each tool schema for API compatibility
 	for _, tool := range tools {
@@ -193,7 +193,7 @@ func createTestArgumentsForTool(toolName string) map[string]interface{} {
 func TestMCPAPICompatibility_ErrorScenarios(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	handler := NewMCPHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	handler := NewMCPHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	testUser := &models.User{
 		ID:       uuid.New(),
@@ -302,7 +302,7 @@ func TestMCPAPICompatibility_ErrorScenarios(t *testing.T) {
 func TestMCPAPICompatibility_ToolsList(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	handler := NewMCPHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	handler := NewMCPHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	testUser := &models.User{
 		ID:       uuid.New(),
@@ -346,7 +346,7 @@ func TestMCPAPICompatibility_ToolsList(t *testing.T) {
 	assert.Contains(t, result, "tools")
 
 	tools := result["tools"].([]interface{})
-	assert.Len(t, tools, 24, "Should have exactly 24 tools")
+	assert.Len(t, tools, 25, "Should have exactly 25 tools")
 
 	// Verify each tool has required fields
 	for _, tool := range tools {
