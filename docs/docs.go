@@ -9410,7 +9410,7 @@ const docTemplate = `{
         },
         "/auth/login": {
             "post": {
-                "description": "Authenticate user with username and password to receive JWT token",
+                "description": "Authenticate user with username and password to receive JWT token and refresh token",
                 "consumes": [
                     "application/json"
                 ],
@@ -9434,7 +9434,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful authentication with JWT token",
+                        "description": "Successful authentication with JWT token and refresh token",
                         "schema": {
                             "$ref": "#/definitions/internal_auth.LoginResponse"
                         }
@@ -9464,6 +9464,55 @@ const docTemplate = `{
                             "additionalProperties": {
                                 "type": "string"
                             }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "description": "Logout user and invalidate refresh token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "authentication"
+                ],
+                "summary": "User logout",
+                "parameters": [
+                    {
+                        "description": "Logout request",
+                        "name": "logout",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.LogoutRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully logged out"
+                    },
+                    "400": {
+                        "description": "Invalid request format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid refresh token",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.ErrorResponse"
                         }
                     }
                 }
@@ -9516,6 +9565,64 @@ const docTemplate = `{
                             "additionalProperties": {
                                 "type": "string"
                             }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "description": "Refresh an expired access token using a refresh token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "authentication"
+                ],
+                "summary": "Refresh access token",
+                "parameters": [
+                    {
+                        "description": "Refresh token request",
+                        "name": "refresh",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.RefreshRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully refreshed tokens",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.RefreshResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request format",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid or expired refresh token",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too many refresh attempts",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.ErrorResponse"
                         }
                     }
                 }
@@ -9957,6 +10064,36 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_auth.ErrorDetail": {
+            "description": "Detailed error information with code and message",
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "Error code for programmatic handling",
+                    "type": "string",
+                    "example": "INVALID_REFRESH_TOKEN"
+                },
+                "message": {
+                    "description": "Human-readable error message",
+                    "type": "string",
+                    "example": "Invalid refresh token"
+                }
+            }
+        },
+        "internal_auth.ErrorResponse": {
+            "description": "Standard error response format used across authentication endpoints",
+            "type": "object",
+            "properties": {
+                "error": {
+                    "description": "Error details including code and message",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/internal_auth.ErrorDetail"
+                        }
+                    ]
+                }
+            }
+        },
         "internal_auth.LoginRequest": {
             "description": "Request payload for user authentication",
             "type": "object",
@@ -9978,13 +10115,18 @@ const docTemplate = `{
             }
         },
         "internal_auth.LoginResponse": {
-            "description": "Response payload for successful authentication containing JWT token and user information",
+            "description": "Response payload for successful authentication containing JWT token, refresh token, and user information",
             "type": "object",
             "properties": {
                 "expires_at": {
                     "description": "Token expiration timestamp",
                     "type": "string",
                     "example": "2023-01-02T12:30:00Z"
+                },
+                "refresh_token": {
+                    "description": "Refresh token for obtaining new access tokens",
+                    "type": "string",
+                    "example": "dGhpc19pc19hX3JlZnJlc2hfdG9rZW4="
                 },
                 "token": {
                     "description": "JWT authentication token",
@@ -9998,6 +10140,55 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_auth.UserResponse"
                         }
                     ]
+                }
+            }
+        },
+        "internal_auth.LogoutRequest": {
+            "description": "Request payload for logging out and invalidating a refresh token",
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "description": "Refresh token to invalidate",
+                    "type": "string",
+                    "example": "dGhpc19pc19hX3JlZnJlc2hfdG9rZW4="
+                }
+            }
+        },
+        "internal_auth.RefreshRequest": {
+            "description": "Request payload for refreshing an expired access token using a refresh token",
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "description": "Refresh token obtained from login",
+                    "type": "string",
+                    "example": "dGhpc19pc19hX3JlZnJlc2hfdG9rZW4="
+                }
+            }
+        },
+        "internal_auth.RefreshResponse": {
+            "description": "Response payload for successful token refresh containing new access token and refresh token",
+            "type": "object",
+            "properties": {
+                "expires_at": {
+                    "description": "New token expiration timestamp",
+                    "type": "string",
+                    "example": "2023-01-02T12:30:00Z"
+                },
+                "refresh_token": {
+                    "description": "New refresh token (token rotation)",
+                    "type": "string",
+                    "example": "bmV3X3JlZnJlc2hfdG9rZW4="
+                },
+                "token": {
+                    "description": "New JWT authentication token",
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                 }
             }
         },

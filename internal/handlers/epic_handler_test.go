@@ -96,7 +96,8 @@ func setupEpicTestRouter() (*gin.Engine, *auth.Service) {
 	router := gin.New()
 
 	// Create auth service for testing
-	authService := auth.NewService("test-secret", time.Hour)
+	mockRefreshTokenRepo := &mockRefreshTokenRepository{}
+	authService := auth.NewService("test-secret", time.Hour, mockRefreshTokenRepo)
 
 	return router, authService
 }

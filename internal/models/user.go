@@ -40,6 +40,7 @@ type User struct {
 	Comments                   []Comment                 `gorm:"foreignKey:AuthorID" json:"-"`   // Comments authored by this user
 	CreatedRelationships       []RequirementRelationship `gorm:"foreignKey:CreatedBy" json:"-"`  // Requirement relationships created by this user
 	PersonalAccessTokens       []PersonalAccessToken     `gorm:"foreignKey:UserID" json:"-"`     // Personal access tokens owned by this user
+	RefreshTokens              []RefreshToken            `gorm:"foreignKey:UserID" json:"-"`     // Refresh tokens owned by this user
 }
 
 // BeforeCreate sets the ID if not already set

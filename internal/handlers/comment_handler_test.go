@@ -133,7 +133,8 @@ func (m *MockCommentService) GetCommentRepliesWithPagination(parentID uuid.UUID,
 func setupCommentHandler() (*CommentHandler, *MockCommentService, *auth.Service) {
 	mockService := &MockCommentService{}
 	handler := NewCommentHandler(mockService)
-	authService := auth.NewService("test-secret-key", 24*time.Hour)
+	mockRefreshTokenRepo := &mockRefreshTokenRepository{}
+	authService := auth.NewService("test-secret-key", 24*time.Hour, mockRefreshTokenRepo)
 	return handler, mockService, authService
 }
 

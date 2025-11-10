@@ -32,7 +32,8 @@ func setupCommentIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, *auth.Ser
 
 	// Initialize services
 	commentService := service.NewCommentService(repos)
-	authService := auth.NewService("test-secret-key", 24*time.Hour)
+	mockRefreshTokenRepo := &mockRefreshTokenRepository{}
+	authService := auth.NewService("test-secret-key", 24*time.Hour, mockRefreshTokenRepo)
 
 	// Initialize handlers
 	commentHandler := handlers.NewCommentHandler(commentService)

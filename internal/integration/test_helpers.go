@@ -16,6 +16,45 @@ import (
 	"product-requirements-management/internal/models"
 )
 
+// mockRefreshTokenRepository is a minimal mock for testing
+type mockRefreshTokenRepository struct{}
+
+func (m *mockRefreshTokenRepository) Create(token *models.RefreshToken) error {
+	return nil
+}
+
+func (m *mockRefreshTokenRepository) FindByTokenHash(tokenHash string) (*models.RefreshToken, error) {
+	return nil, nil
+}
+
+func (m *mockRefreshTokenRepository) FindByUserID(userID uuid.UUID) ([]*models.RefreshToken, error) {
+	return nil, nil
+}
+
+func (m *mockRefreshTokenRepository) FindAll() ([]*models.RefreshToken, error) {
+	return nil, nil
+}
+
+func (m *mockRefreshTokenRepository) Update(token *models.RefreshToken) error {
+	return nil
+}
+
+func (m *mockRefreshTokenRepository) Delete(id uuid.UUID) error {
+	return nil
+}
+
+func (m *mockRefreshTokenRepository) DeleteByUserID(userID uuid.UUID) error {
+	return nil
+}
+
+func (m *mockRefreshTokenRepository) DeleteExpired() (int64, error) {
+	return 0, nil
+}
+
+func (m *mockRefreshTokenRepository) GetDB() *gorm.DB {
+	return nil
+}
+
 // TestAuthContext holds authentication context for tests
 type TestAuthContext struct {
 	AuthService *auth.Service
@@ -29,7 +68,8 @@ type TestAuthContext struct {
 func SetupTestAuth(t *testing.T, db *gorm.DB) *TestAuthContext {
 	// Create auth service with test JWT secret
 	jwtSecret := "test-jwt-secret-key-for-integration-tests"
-	authService := auth.NewService(jwtSecret, 24*time.Hour)
+	mockRefreshTokenRepo := &mockRefreshTokenRepository{}
+	authService := auth.NewService(jwtSecret, 24*time.Hour, mockRefreshTokenRepo)
 
 	// Create test user
 	testUser := &models.User{

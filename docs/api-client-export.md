@@ -24,14 +24,26 @@ This document provides a comprehensive API reference for implementing a web UI c
 ## Authentication
 
 ### JWT Token Authentication
-All API endpoints (except login) require a JWT token in the Authorization header:
+All API endpoints (except login, refresh, and health checks) require a JWT token in the Authorization header:
 ```
 Authorization: Bearer <jwt_token>
 ```
 
+### Session Management with Refresh Tokens
+
+The authentication system uses JWT access tokens for API requests and refresh tokens for maintaining sessions without re-authentication. Access tokens are short-lived (configurable, typically 15-60 minutes), while refresh tokens are long-lived (30 days).
+
+**Authentication Flow:**
+1. Login with credentials to receive both access token and refresh token
+2. Use access token for API requests
+3. When access token expires, use refresh token to obtain new tokens
+4. Logout to invalidate refresh token and end session
+
 ### Auth Endpoints
 
 #### POST /auth/login
+Authenticate user and receive JWT access token and refresh token.
+
 ```typescript
 interface LoginRequest {
   username: string;
@@ -39,11 +51,132 @@ interface LoginRequest {
 }
 
 interface LoginResponse {
-  token: string;
-  expires_at: string;
-  user: UserResponse;
+  token: string;              // JWT access token for API requests
+  refresh_token: string;      // Refresh token for obtaining new access tokens
+  expires_at: string;         // Access token expiration timestamp (ISO-8601)
+  user: UserResponse;         // Authenticated user information
 }
 ```
+
+**Example Request:**
+```typescript
+const response = await fetch('/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    username: 'john_doe',
+    password: 'password123'
+  })
+});
+
+const data: LoginResponse = await response.json();
+// Store both tokens securely
+localStorage.setItem('access_token', data.token);
+localStorage.setItem('refresh_token', data.refresh_token);
+```
+
+**Response Codes:**
+- `200` - Successful authentication
+- `400` - Invalid request format
+- `401` - Invalid credentials
+- `500` - Internal server error
+
+#### POST /auth/refresh
+Refresh an expired access token using a refresh token. This endpoint implements token rotation - each refresh returns a new access token AND a new refresh token, invalidating the old refresh token.
+
+```typescript
+interface RefreshRequest {
+  refresh_token: string;      // Current refresh token
+}
+
+interface RefreshResponse {
+  token: string;              // New JWT access token
+  refresh_token: string;      // New refresh token (token rotation)
+  expires_at: string;         // New access token expiration timestamp (ISO-8601)
+}
+```
+
+**Example Request:**
+```typescript
+const refreshToken = localStorage.getItem('refresh_token');
+
+const response = await fetch('/auth/refresh', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    refresh_token: refreshToken
+  })
+});
+
+if (response.ok) {
+  const data: RefreshResponse = await response.json();
+  // Update stored tokens
+  localStorage.setItem('access_token', data.token);
+  localStorage.setItem('refresh_token', data.refresh_token);
+} else if (response.status === 401) {
+  // Refresh token expired or invalid - redirect to login
+  window.location.href = '/login';
+}
+```
+
+**Response Codes:**
+- `200` - Successfully refreshed tokens
+- `400` - Invalid request format (ErrorResponse)
+- `401` - Invalid or expired refresh token (ErrorResponse)
+- `429` - Too many refresh attempts (ErrorResponse with Retry-After header)
+- `500` - Internal server error (ErrorResponse)
+
+**Error Response Format:**
+```typescript
+interface ErrorResponse {
+  error: {
+    code: string;           // Error code for programmatic handling
+    message: string;        // Human-readable error message
+  };
+}
+```
+
+**Error Codes:**
+- `VALIDATION_ERROR` - Request validation failed
+- `REFRESH_TOKEN_EXPIRED` - Refresh token has expired
+- `INVALID_REFRESH_TOKEN` - Invalid or revoked refresh token
+- `RATE_LIMIT_EXCEEDED` - Too many refresh attempts (includes Retry-After header)
+- `INTERNAL_ERROR` - Server-side error
+
+#### POST /auth/logout
+Logout user and invalidate refresh token to end the session.
+
+```typescript
+interface LogoutRequest {
+  refresh_token: string;      // Refresh token to invalidate
+}
+```
+
+**Example Request:**
+```typescript
+const refreshToken = localStorage.getItem('refresh_token');
+
+const response = await fetch('/auth/logout', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    refresh_token: refreshToken
+  })
+});
+
+if (response.status === 204) {
+  // Successfully logged out - clear stored tokens
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  window.location.href = '/login';
+}
+```
+
+**Response Codes:**
+- `204` - Successfully logged out (no content)
+- `400` - Invalid request format (ErrorResponse)
+- `401` - Invalid refresh token (ErrorResponse)
+- `500` - Internal server error (ErrorResponse)
 
 #### GET /auth/profile
 Get current user profile (requires authentication)
@@ -62,6 +195,188 @@ interface ChangePasswordRequest {
 - `GET /auth/users/:id` - Get user
 - `PUT /auth/users/:id` - Update user
 - `DELETE /auth/users/:id` - Delete user
+
+### Client Integration Examples
+
+#### Automatic Token Refresh
+Implement automatic token refresh when access token expires:
+
+```typescript
+class ApiClient {
+  private accessToken: string | null = null;
+  private refreshToken: string | null = null;
+
+  constructor() {
+    this.accessToken = localStorage.getItem('access_token');
+    this.refreshToken = localStorage.getItem('refresh_token');
+  }
+
+  async request(url: string, options: RequestInit = {}): Promise<Response> {
+    // Add access token to request
+    const headers = {
+      ...options.headers,
+      'Authorization': `Bearer ${this.accessToken}`
+    };
+
+    let response = await fetch(url, { ...options, headers });
+
+    // If 401, try to refresh token
+    if (response.status === 401 && this.refreshToken) {
+      const refreshed = await this.refreshAccessToken();
+      
+      if (refreshed) {
+        // Retry original request with new token
+        headers['Authorization'] = `Bearer ${this.accessToken}`;
+        response = await fetch(url, { ...options, headers });
+      } else {
+        // Refresh failed - redirect to login
+        window.location.href = '/login';
+      }
+    }
+
+    return response;
+  }
+
+  async refreshAccessToken(): Promise<boolean> {
+    try {
+      const response = await fetch('/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: this.refreshToken })
+      });
+
+      if (response.ok) {
+        const data: RefreshResponse = await response.json();
+        this.accessToken = data.token;
+        this.refreshToken = data.refresh_token;
+        localStorage.setItem('access_token', data.token);
+        localStorage.setItem('refresh_token', data.refresh_token);
+        return true;
+      }
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+    }
+
+    return false;
+  }
+
+  async login(username: string, password: string): Promise<boolean> {
+    try {
+      const response = await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      if (response.ok) {
+        const data: LoginResponse = await response.json();
+        this.accessToken = data.token;
+        this.refreshToken = data.refresh_token;
+        localStorage.setItem('access_token', data.token);
+        localStorage.setItem('refresh_token', data.refresh_token);
+        return true;
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+    }
+
+    return false;
+  }
+
+  async logout(): Promise<void> {
+    if (this.refreshToken) {
+      try {
+        await fetch('/auth/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: this.refreshToken })
+        });
+      } catch (error) {
+        console.error('Logout request failed:', error);
+      }
+    }
+
+    // Clear tokens regardless of API response
+    this.accessToken = null;
+    this.refreshToken = null;
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+  }
+}
+
+// Usage
+const api = new ApiClient();
+
+// Login
+await api.login('john_doe', 'password123');
+
+// Make authenticated requests
+const response = await api.request('/api/v1/epics');
+
+// Logout
+await api.logout();
+```
+
+#### Proactive Token Refresh
+Refresh token before it expires to avoid interruptions:
+
+```typescript
+class TokenManager {
+  private refreshTimer: number | null = null;
+
+  startAutoRefresh(expiresAt: string) {
+    // Refresh 5 minutes before expiration
+    const expiresAtMs = new Date(expiresAt).getTime();
+    const refreshAtMs = expiresAtMs - (5 * 60 * 1000);
+    const delayMs = refreshAtMs - Date.now();
+
+    if (delayMs > 0) {
+      this.refreshTimer = window.setTimeout(() => {
+        this.refreshToken();
+      }, delayMs);
+    }
+  }
+
+  stopAutoRefresh() {
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+      this.refreshTimer = null;
+    }
+  }
+
+  async refreshToken() {
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (!refreshToken) return;
+
+    try {
+      const response = await fetch('/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken })
+      });
+
+      if (response.ok) {
+        const data: RefreshResponse = await response.json();
+        localStorage.setItem('access_token', data.token);
+        localStorage.setItem('refresh_token', data.refresh_token);
+        
+        // Schedule next refresh
+        this.startAutoRefresh(data.expires_at);
+      } else {
+        // Refresh failed - redirect to login
+        window.location.href = '/login';
+      }
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      window.location.href = '/login';
+    }
+  }
+}
+```
+
+### Health Check Endpoints (Public)
+- `GET /ready` - Readiness check (no authentication required)
+- `GET /live` - Liveness check (no authentication required)
 
 ---
 
@@ -321,6 +636,40 @@ interface UserResponse {
   role: 'Administrator' | 'User' | 'Commenter';
   created_at: string;
   updated_at: string;
+}
+
+// Authentication Types
+interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+interface LoginResponse {
+  token: string;              // JWT access token for API requests
+  refresh_token: string;      // Refresh token for obtaining new access tokens
+  expires_at: string;         // Access token expiration timestamp (ISO-8601)
+  user: UserResponse;         // Authenticated user information
+}
+
+interface RefreshRequest {
+  refresh_token: string;      // Current refresh token
+}
+
+interface RefreshResponse {
+  token: string;              // New JWT access token
+  refresh_token: string;      // New refresh token (token rotation)
+  expires_at: string;         // New access token expiration timestamp (ISO-8601)
+}
+
+interface LogoutRequest {
+  refresh_token: string;      // Refresh token to invalidate
+}
+
+interface ErrorResponse {
+  error: {
+    code: string;             // Error code for programmatic handling
+    message: string;          // Human-readable error message
+  };
 }
 
 // Epic Types

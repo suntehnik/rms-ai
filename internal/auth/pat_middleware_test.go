@@ -75,7 +75,7 @@ func TestPATMiddleware_MissingAuthorizationHeader(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	// Setup
-	authService := NewService("test-secret", time.Hour)
+	authService := NewService("test-secret", time.Hour, nil)
 	mockPATService := &MockPATService{}
 
 	router := gin.New()
@@ -98,7 +98,7 @@ func TestPATMiddleware_InvalidBearerFormat(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	// Setup
-	authService := NewService("test-secret", time.Hour)
+	authService := NewService("test-secret", time.Hour, nil)
 	mockPATService := &MockPATService{}
 
 	router := gin.New()
@@ -128,7 +128,7 @@ func TestPATMiddleware_ValidPATToken(t *testing.T) {
 	})
 
 	// Setup
-	authService := NewService("test-secret", time.Hour)
+	authService := NewService("test-secret", time.Hour, nil)
 	mockPATService := &MockPATService{}
 
 	testUser := &models.User{
@@ -179,7 +179,7 @@ func TestPATMiddleware_InvalidPATToken(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	// Setup
-	authService := NewService("test-secret", time.Hour)
+	authService := NewService("test-secret", time.Hour, nil)
 	mockPATService := &MockPATService{}
 
 	mockPATService.On("ValidateToken", mock.Anything, "mcp_pat_invalidtoken").Return(nil, errors.New("invalid token"))
@@ -206,7 +206,7 @@ func TestPATMiddleware_JWTFallback(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	// Setup
-	authService := NewService("test-secret", time.Hour)
+	authService := NewService("test-secret", time.Hour, nil)
 	mockPATService := &MockPATService{}
 
 	// Create a valid JWT token
@@ -253,7 +253,7 @@ func TestPATMiddleware_InvalidJWTToken(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	// Setup
-	authService := NewService("test-secret", time.Hour)
+	authService := NewService("test-secret", time.Hour, nil)
 	mockPATService := &MockPATService{}
 
 	router := gin.New()

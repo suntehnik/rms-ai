@@ -19,11 +19,45 @@ type LoginRequest struct {
 }
 
 // LoginResponse represents a login response
-// @Description Response payload for successful authentication containing JWT token and user information
+// @Description Response payload for successful authentication containing JWT token, refresh token, and user information
 type LoginResponse struct {
-	Token     string       `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."` // JWT authentication token
-	User      UserResponse `json:"user"`                                                    // Authenticated user information
-	ExpiresAt time.Time    `json:"expires_at" example:"2023-01-02T12:30:00Z"`               // Token expiration timestamp
+	Token        string       `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`  // JWT authentication token
+	RefreshToken string       `json:"refresh_token" example:"dGhpc19pc19hX3JlZnJlc2hfdG9rZW4="` // Refresh token for obtaining new access tokens
+	User         UserResponse `json:"user"`                                                     // Authenticated user information
+	ExpiresAt    time.Time    `json:"expires_at" example:"2023-01-02T12:30:00Z"`                // Token expiration timestamp
+}
+
+// RefreshRequest represents a token refresh request
+// @Description Request payload for refreshing an expired access token using a refresh token
+type RefreshRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required" example:"dGhpc19pc19hX3JlZnJlc2hfdG9rZW4="` // Refresh token obtained from login
+}
+
+// RefreshResponse represents a token refresh response
+// @Description Response payload for successful token refresh containing new access token and refresh token
+type RefreshResponse struct {
+	Token        string    `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."` // New JWT authentication token
+	RefreshToken string    `json:"refresh_token" example:"bmV3X3JlZnJlc2hfdG9rZW4="`        // New refresh token (token rotation)
+	ExpiresAt    time.Time `json:"expires_at" example:"2023-01-02T12:30:00Z"`               // New token expiration timestamp
+}
+
+// LogoutRequest represents a logout request
+// @Description Request payload for logging out and invalidating a refresh token
+type LogoutRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required" example:"dGhpc19pc19hX3JlZnJlc2hfdG9rZW4="` // Refresh token to invalidate
+}
+
+// ErrorResponse represents an error response
+// @Description Standard error response format used across authentication endpoints
+type ErrorResponse struct {
+	Error ErrorDetail `json:"error"` // Error details including code and message
+}
+
+// ErrorDetail represents error details
+// @Description Detailed error information with code and message
+type ErrorDetail struct {
+	Code    string `json:"code" example:"INVALID_REFRESH_TOKEN"`    // Error code for programmatic handling
+	Message string `json:"message" example:"Invalid refresh token"` // Human-readable error message
 }
 
 // UserResponse represents a user in API responses
@@ -77,12 +111,12 @@ func NewHandlers(service *Service, db *gorm.DB) *Handlers {
 
 // Login handles user login
 // @Summary User login
-// @Description Authenticate user with username and password to receive JWT token
+// @Description Authenticate user with username and password to receive JWT token and refresh token
 // @Tags authentication
 // @Accept json
 // @Produce json
 // @Param login body LoginRequest true "Login credentials"
-// @Success 200 {object} LoginResponse "Successful authentication with JWT token"
+// @Success 200 {object} LoginResponse "Successful authentication with JWT token and refresh token"
 // @Failure 400 {object} map[string]string "Invalid request format"
 // @Failure 401 {object} map[string]string "Invalid credentials"
 // @Failure 500 {object} map[string]string "Internal server error"
@@ -115,8 +149,16 @@ func (h *Handlers) Login(c *gin.Context) {
 		return
 	}
 
+	// Generate refresh token
+	refreshToken, err := h.service.GenerateRefreshToken(c.Request.Context(), &user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token"})
+		return
+	}
+
 	response := LoginResponse{
-		Token: token,
+		Token:        token,
+		RefreshToken: refreshToken,
 		User: UserResponse{
 			ID:        user.ID.String(),
 			Username:  user.Username,
@@ -129,6 +171,111 @@ func (h *Handlers) Login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
+}
+
+// RefreshToken handles token refresh
+// @Summary Refresh access token
+// @Description Refresh an expired access token using a refresh token
+// @Tags authentication
+// @Accept json
+// @Produce json
+// @Param refresh body RefreshRequest true "Refresh token request"
+// @Success 200 {object} RefreshResponse "Successfully refreshed tokens"
+// @Failure 400 {object} ErrorResponse "Invalid request format"
+// @Failure 401 {object} ErrorResponse "Invalid or expired refresh token"
+// @Failure 429 {object} ErrorResponse "Too many refresh attempts"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /auth/refresh [post]
+func (h *Handlers) RefreshToken(c *gin.Context) {
+	var req RefreshRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error: ErrorDetail{
+				Code:    "VALIDATION_ERROR",
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
+	// Validate refresh token and get user
+	user, newRefreshToken, err := h.service.ValidateRefreshToken(c.Request.Context(), req.RefreshToken)
+	if err != nil {
+		if err == ErrTokenExpired {
+			c.JSON(http.StatusUnauthorized, ErrorResponse{
+				Error: ErrorDetail{
+					Code:    "REFRESH_TOKEN_EXPIRED",
+					Message: "Refresh token has expired",
+				},
+			})
+			return
+		}
+		c.JSON(http.StatusUnauthorized, ErrorResponse{
+			Error: ErrorDetail{
+				Code:    "INVALID_REFRESH_TOKEN",
+				Message: "Invalid or revoked refresh token",
+			},
+		})
+		return
+	}
+
+	// Generate new access token
+	accessToken, err := h.service.GenerateToken(user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Error: ErrorDetail{
+				Code:    "INTERNAL_ERROR",
+				Message: "Failed to generate access token",
+			},
+		})
+		return
+	}
+
+	response := RefreshResponse{
+		Token:        accessToken,
+		RefreshToken: newRefreshToken,
+		ExpiresAt:    time.Now().Add(h.service.tokenDuration),
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// Logout handles user logout
+// @Summary User logout
+// @Description Logout user and invalidate refresh token
+// @Tags authentication
+// @Accept json
+// @Produce json
+// @Param logout body LogoutRequest true "Logout request"
+// @Success 204 "Successfully logged out"
+// @Failure 400 {object} ErrorResponse "Invalid request format"
+// @Failure 401 {object} ErrorResponse "Invalid refresh token"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /auth/logout [post]
+func (h *Handlers) Logout(c *gin.Context) {
+	var req LogoutRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error: ErrorDetail{
+				Code:    "VALIDATION_ERROR",
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
+	// Revoke refresh token
+	if err := h.service.RevokeRefreshToken(c.Request.Context(), req.RefreshToken); err != nil {
+		c.JSON(http.StatusUnauthorized, ErrorResponse{
+			Error: ErrorDetail{
+				Code:    "INVALID_REFRESH_TOKEN",
+				Message: "Session already logged out",
+			},
+		})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
 
 // CreateUser handles user creation (admin only)

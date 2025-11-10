@@ -99,7 +99,8 @@ func setupAcceptanceCriteriaTestRouter() (*gin.Engine, *MockAcceptanceCriteriaSe
 	router := gin.New()
 
 	// Create auth service for testing
-	authService := auth.NewService("test-secret", time.Hour)
+	mockRefreshTokenRepo := &mockRefreshTokenRepository{}
+	authService := auth.NewService("test-secret", time.Hour, mockRefreshTokenRepo)
 
 	v1 := router.Group("/api/v1")
 	v1.Use(authService.Middleware()) // Add auth middleware

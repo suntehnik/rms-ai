@@ -44,6 +44,26 @@ definitions:
     - role
     - username
     type: object
+  internal_auth.ErrorDetail:
+    description: Detailed error information with code and message
+    properties:
+      code:
+        description: Error code for programmatic handling
+        example: INVALID_REFRESH_TOKEN
+        type: string
+      message:
+        description: Human-readable error message
+        example: Invalid refresh token
+        type: string
+    type: object
+  internal_auth.ErrorResponse:
+    description: Standard error response format used across authentication endpoints
+    properties:
+      error:
+        allOf:
+        - $ref: '#/definitions/internal_auth.ErrorDetail'
+        description: Error details including code and message
+    type: object
   internal_auth.LoginRequest:
     description: Request payload for user authentication
     properties:
@@ -60,12 +80,16 @@ definitions:
     - username
     type: object
   internal_auth.LoginResponse:
-    description: Response payload for successful authentication containing JWT token
-      and user information
+    description: Response payload for successful authentication containing JWT token,
+      refresh token, and user information
     properties:
       expires_at:
         description: Token expiration timestamp
         example: "2023-01-02T12:30:00Z"
+        type: string
+      refresh_token:
+        description: Refresh token for obtaining new access tokens
+        example: dGhpc19pc19hX3JlZnJlc2hfdG9rZW4=
         type: string
       token:
         description: JWT authentication token
@@ -75,6 +99,44 @@ definitions:
         allOf:
         - $ref: '#/definitions/internal_auth.UserResponse'
         description: Authenticated user information
+    type: object
+  internal_auth.LogoutRequest:
+    description: Request payload for logging out and invalidating a refresh token
+    properties:
+      refresh_token:
+        description: Refresh token to invalidate
+        example: dGhpc19pc19hX3JlZnJlc2hfdG9rZW4=
+        type: string
+    required:
+    - refresh_token
+    type: object
+  internal_auth.RefreshRequest:
+    description: Request payload for refreshing an expired access token using a refresh
+      token
+    properties:
+      refresh_token:
+        description: Refresh token obtained from login
+        example: dGhpc19pc19hX3JlZnJlc2hfdG9rZW4=
+        type: string
+    required:
+    - refresh_token
+    type: object
+  internal_auth.RefreshResponse:
+    description: Response payload for successful token refresh containing new access
+      token and refresh token
+    properties:
+      expires_at:
+        description: New token expiration timestamp
+        example: "2023-01-02T12:30:00Z"
+        type: string
+      refresh_token:
+        description: New refresh token (token rotation)
+        example: bmV3X3JlZnJlc2hfdG9rZW4=
+        type: string
+      token:
+        description: New JWT authentication token
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
     type: object
   internal_auth.UpdateUserRequest:
     description: Request payload for updating user information (Administrator role
@@ -8388,6 +8450,7 @@ paths:
       consumes:
       - application/json
       description: Authenticate user with username and password to receive JWT token
+        and refresh token
       parameters:
       - description: Login credentials
         in: body
@@ -8399,7 +8462,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successful authentication with JWT token
+          description: Successful authentication with JWT token and refresh token
           schema:
             $ref: '#/definitions/internal_auth.LoginResponse'
         "400":
@@ -8421,6 +8484,38 @@ paths:
               type: string
             type: object
       summary: User login
+      tags:
+      - authentication
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Logout user and invalidate refresh token
+      parameters:
+      - description: Logout request
+        in: body
+        name: logout
+        required: true
+        schema:
+          $ref: '#/definitions/internal_auth.LogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Successfully logged out
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/internal_auth.ErrorResponse'
+        "401":
+          description: Invalid refresh token
+          schema:
+            $ref: '#/definitions/internal_auth.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/internal_auth.ErrorResponse'
+      summary: User logout
       tags:
       - authentication
   /auth/profile:
@@ -8454,6 +8549,44 @@ paths:
       security:
       - BearerAuth: []
       summary: Get current user profile
+      tags:
+      - authentication
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh an expired access token using a refresh token
+      parameters:
+      - description: Refresh token request
+        in: body
+        name: refresh
+        required: true
+        schema:
+          $ref: '#/definitions/internal_auth.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully refreshed tokens
+          schema:
+            $ref: '#/definitions/internal_auth.RefreshResponse'
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/internal_auth.ErrorResponse'
+        "401":
+          description: Invalid or expired refresh token
+          schema:
+            $ref: '#/definitions/internal_auth.ErrorResponse'
+        "429":
+          description: Too many refresh attempts
+          schema:
+            $ref: '#/definitions/internal_auth.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/internal_auth.ErrorResponse'
+      summary: Refresh access token
       tags:
       - authentication
   /auth/users:
