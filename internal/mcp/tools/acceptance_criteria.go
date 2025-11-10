@@ -29,14 +29,14 @@ func NewAcceptanceCriteriaHandler(
 // GetSupportedTools returns the list of tools this handler supports
 func (h *AcceptanceCriteriaHandler) GetSupportedTools() []string {
 	return []string{
-		"create_acceptance_criteria",
+		ToolCreateAcceptanceCriteria,
 	}
 }
 
 // HandleTool processes a specific tool call for Acceptance Criteria operations
 func (h *AcceptanceCriteriaHandler) HandleTool(ctx context.Context, toolName string, args map[string]interface{}) (interface{}, error) {
 	switch toolName {
-	case "create_acceptance_criteria":
+	case ToolCreateAcceptanceCriteria:
 		return h.Create(ctx, args)
 	default:
 		return nil, jsonrpc.NewMethodNotFoundError(fmt.Sprintf("Unknown tool: %s", toolName))

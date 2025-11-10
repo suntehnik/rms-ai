@@ -32,32 +32,32 @@ func NewSteeringDocumentHandler(
 // GetSupportedTools returns the list of tools this handler supports
 func (h *SteeringDocumentHandler) GetSupportedTools() []string {
 	return []string{
-		"list_steering_documents",
-		"create_steering_document",
-		"get_steering_document",
-		"update_steering_document",
-		"link_steering_to_epic",
-		"unlink_steering_from_epic",
-		"get_epic_steering_documents",
+		ToolListSteeringDocuments,
+		ToolCreateSteeringDocument,
+		ToolGetSteeringDocument,
+		ToolUpdateSteeringDocument,
+		ToolLinkSteeringToEpic,
+		ToolUnlinkSteeringFromEpic,
+		ToolGetEpicSteeringDocuments,
 	}
 }
 
 // HandleTool processes a specific tool call for steering document operations
 func (h *SteeringDocumentHandler) HandleTool(ctx context.Context, toolName string, args map[string]interface{}) (interface{}, error) {
 	switch toolName {
-	case "list_steering_documents":
+	case ToolListSteeringDocuments:
 		return h.ListSteeringDocuments(ctx, args)
-	case "create_steering_document":
+	case ToolCreateSteeringDocument:
 		return h.CreateSteeringDocument(ctx, args)
-	case "get_steering_document":
+	case ToolGetSteeringDocument:
 		return h.GetSteeringDocument(ctx, args)
-	case "update_steering_document":
+	case ToolUpdateSteeringDocument:
 		return h.UpdateSteeringDocument(ctx, args)
-	case "link_steering_to_epic":
+	case ToolLinkSteeringToEpic:
 		return h.LinkSteeringToEpic(ctx, args)
-	case "unlink_steering_from_epic":
+	case ToolUnlinkSteeringFromEpic:
 		return h.UnlinkSteeringFromEpic(ctx, args)
-	case "get_epic_steering_documents":
+	case ToolGetEpicSteeringDocuments:
 		return h.GetEpicSteeringDocuments(ctx, args)
 	default:
 		return nil, jsonrpc.NewMethodNotFoundError(fmt.Sprintf("Unknown steering document tool: %s", toolName))

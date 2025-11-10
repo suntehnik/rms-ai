@@ -33,20 +33,20 @@ func NewUserStoryHandler(userStoryService service.UserStoryService, epicService 
 // GetSupportedTools returns the list of tools this handler supports
 func (h *UserStoryHandler) GetSupportedTools() []string {
 	return []string{
-		"create_user_story",
-		"update_user_story",
-		"get_user_story_requirements",
+		ToolCreateUserStory,
+		ToolUpdateUserStory,
+		ToolGetUserStoryRequirements,
 	}
 }
 
 // HandleTool processes a specific tool call for User Story operations
 func (h *UserStoryHandler) HandleTool(ctx context.Context, toolName string, args map[string]interface{}) (interface{}, error) {
 	switch toolName {
-	case "create_user_story":
+	case ToolCreateUserStory:
 		return h.Create(ctx, args)
-	case "update_user_story":
+	case ToolUpdateUserStory:
 		return h.Update(ctx, args)
-	case "get_user_story_requirements":
+	case ToolGetUserStoryRequirements:
 		return h.GetRequirements(ctx, args)
 	default:
 		return nil, jsonrpc.NewMethodNotFoundError(fmt.Sprintf("Unknown tool: %s", toolName))

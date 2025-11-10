@@ -10488,6 +10488,18 @@ const docTemplate = `{
                 "EpicStatusCancelled"
             ]
         },
+        "product-requirements-management_internal_models.MCPRole": {
+            "description": "Valid roles for MCP prompt messages according to 2025-06-18 specification",
+            "type": "string",
+            "enum": [
+                "user",
+                "assistant"
+            ],
+            "x-enum-varnames": [
+                "MCPRoleUser",
+                "MCPRoleAssistant"
+            ]
+        },
         "product-requirements-management_internal_models.PersonalAccessToken": {
             "description": "Personal access token for secure API authentication without user credentials",
             "type": "object",
@@ -10586,6 +10598,7 @@ const docTemplate = `{
             "required": [
                 "content",
                 "name",
+                "role",
                 "title"
             ],
             "properties": {
@@ -10622,6 +10635,14 @@ const docTemplate = `{
                 "reference_id": {
                     "description": "ReferenceID is the human-readable identifier for the prompt\n@Description Human-readable reference identifier (auto-generated, format: PROMPT-XXX)\n@Example \"PROMPT-001\"",
                     "type": "string"
+                },
+                "role": {
+                    "description": "Role specifies the message role for MCP compliance\n@Description Role for MCP prompt messages (must be \"user\" or \"assistant\", defaults to \"assistant\")\n@Example \"assistant\"",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/product-requirements-management_internal_models.MCPRole"
+                        }
+                    ]
                 },
                 "title": {
                     "description": "Title is the display name of the prompt\n@Description Display title of the prompt (required, max 500 characters)\n@MaxLength 500\n@Example \"Requirements Analyst Assistant\"",
@@ -11522,6 +11543,9 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 255
                 },
+                "role": {
+                    "$ref": "#/definitions/product-requirements-management_internal_models.MCPRole"
+                },
                 "title": {
                     "type": "string",
                     "maxLength": 500
@@ -11979,6 +12003,9 @@ const docTemplate = `{
                 "description": {
                     "type": "string",
                     "maxLength": 50000
+                },
+                "role": {
+                    "$ref": "#/definitions/product-requirements-management_internal_models.MCPRole"
                 },
                 "title": {
                     "type": "string",

@@ -75,3 +75,6 @@ prompts/
 
 bruno/
 .roo/
+.spexus.config
+.spexus/
+mcp-claude/

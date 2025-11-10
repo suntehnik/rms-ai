@@ -30,17 +30,17 @@ func NewSearchHandler(
 // GetSupportedTools returns the list of tools this handler supports
 func (h *SearchHandler) GetSupportedTools() []string {
 	return []string{
-		"search_global",
-		"search_requirements",
+		ToolSearchGlobal,
+		ToolSearchRequirements,
 	}
 }
 
 // HandleTool processes a specific tool call for this domain
 func (h *SearchHandler) HandleTool(ctx context.Context, toolName string, args map[string]interface{}) (interface{}, error) {
 	switch toolName {
-	case "search_global":
+	case ToolSearchGlobal:
 		return h.Global(ctx, args)
-	case "search_requirements":
+	case ToolSearchRequirements:
 		return h.Requirements(ctx, args)
 	default:
 		return nil, jsonrpc.NewMethodNotFoundError(fmt.Sprintf("Unknown search tool: %s", toolName))
