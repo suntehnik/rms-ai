@@ -34,20 +34,20 @@ func NewEpicHandler(epicService service.EpicService, userService service.UserSer
 // GetSupportedTools returns the list of tools this handler supports
 func (h *EpicHandler) GetSupportedTools() []string {
 	return []string{
-		"create_epic",
-		"update_epic",
-		"list_epics",
+		ToolCreateEpic,
+		ToolUpdateEpic,
+		ToolListEpics,
 	}
 }
 
 // HandleTool processes a specific tool call for Epic domain operations
 func (h *EpicHandler) HandleTool(ctx context.Context, toolName string, args map[string]interface{}) (interface{}, error) {
 	switch toolName {
-	case "list_epics":
+	case ToolListEpics:
 		return h.List(ctx, args)
-	case "create_epic":
+	case ToolCreateEpic:
 		return h.Create(ctx, args)
-	case "update_epic":
+	case ToolUpdateEpic:
 		return h.Update(ctx, args)
 	default:
 		return nil, jsonrpc.NewMethodNotFoundError(fmt.Sprintf("Unknown Epic tool: %s", toolName))

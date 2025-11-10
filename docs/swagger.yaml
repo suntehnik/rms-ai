@@ -470,6 +470,15 @@ definitions:
     - EpicStatusInProgress
     - EpicStatusDone
     - EpicStatusCancelled
+  product-requirements-management_internal_models.MCPRole:
+    description: Valid roles for MCP prompt messages according to 2025-06-18 specification
+    enum:
+    - user
+    - assistant
+    type: string
+    x-enum-varnames:
+    - MCPRoleUser
+    - MCPRoleAssistant
   product-requirements-management_internal_models.PersonalAccessToken:
     description: Personal access token for secure API authentication without user
       credentials
@@ -598,6 +607,13 @@ definitions:
           @Description Human-readable reference identifier (auto-generated, format: PROMPT-XXX)
           @Example "PROMPT-001"
         type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/product-requirements-management_internal_models.MCPRole'
+        description: |-
+          Role specifies the message role for MCP compliance
+          @Description Role for MCP prompt messages (must be "user" or "assistant", defaults to "assistant")
+          @Example "assistant"
       title:
         description: |-
           Title is the display name of the prompt
@@ -615,6 +631,7 @@ definitions:
     required:
     - content
     - name
+    - role
     - title
     type: object
   product-requirements-management_internal_models.RelationshipType:
@@ -1330,6 +1347,8 @@ definitions:
       name:
         maxLength: 255
         type: string
+      role:
+        $ref: '#/definitions/product-requirements-management_internal_models.MCPRole'
       title:
         maxLength: 500
         type: string
@@ -1693,6 +1712,8 @@ definitions:
       description:
         maxLength: 50000
         type: string
+      role:
+        $ref: '#/definitions/product-requirements-management_internal_models.MCPRole'
       title:
         maxLength: 500
         type: string

@@ -38,29 +38,29 @@ func NewPromptHandler(promptService PromptServiceInterface) *PromptHandler {
 // GetSupportedTools returns the list of tools this handler supports
 func (h *PromptHandler) GetSupportedTools() []string {
 	return []string{
-		"create_prompt",
-		"update_prompt",
-		"delete_prompt",
-		"activate_prompt",
-		"list_prompts",
-		"get_active_prompt",
+		ToolCreatePrompt,
+		ToolUpdatePrompt,
+		ToolDeletePrompt,
+		ToolActivatePrompt,
+		ToolListPrompts,
+		ToolGetActivePrompt,
 	}
 }
 
 // HandleTool processes a specific tool call for Prompt domain operations
 func (h *PromptHandler) HandleTool(ctx context.Context, toolName string, args map[string]interface{}) (interface{}, error) {
 	switch toolName {
-	case "create_prompt":
+	case ToolCreatePrompt:
 		return h.Create(ctx, args)
-	case "update_prompt":
+	case ToolUpdatePrompt:
 		return h.Update(ctx, args)
-	case "delete_prompt":
+	case ToolDeletePrompt:
 		return h.Delete(ctx, args)
-	case "activate_prompt":
+	case ToolActivatePrompt:
 		return h.Activate(ctx, args)
-	case "list_prompts":
+	case ToolListPrompts:
 		return h.List(ctx, args)
-	case "get_active_prompt":
+	case ToolGetActivePrompt:
 		return h.GetActive(ctx, args)
 	default:
 		return nil, jsonrpc.NewMethodNotFoundError(fmt.Sprintf("Unknown Prompt tool: %s", toolName))

@@ -31,20 +31,20 @@ func NewRequirementHandler(requirementService service.RequirementService, userSt
 // GetSupportedTools returns the list of tools this handler supports
 func (h *RequirementHandler) GetSupportedTools() []string {
 	return []string{
-		"create_requirement",
-		"update_requirement",
-		"create_relationship",
+		ToolCreateRequirement,
+		ToolUpdateRequirement,
+		ToolCreateRelationship,
 	}
 }
 
 // HandleTool processes a specific tool call for Requirement domain operations
 func (h *RequirementHandler) HandleTool(ctx context.Context, toolName string, args map[string]interface{}) (interface{}, error) {
 	switch toolName {
-	case "create_requirement":
+	case ToolCreateRequirement:
 		return h.Create(ctx, args)
-	case "update_requirement":
+	case ToolUpdateRequirement:
 		return h.Update(ctx, args)
-	case "create_relationship":
+	case ToolCreateRelationship:
 		return h.CreateRelationship(ctx, args)
 	default:
 		return nil, jsonrpc.NewMethodNotFoundError(fmt.Sprintf("Unknown Requirement tool: %s", toolName))
