@@ -25,7 +25,7 @@ func TestInteractiveTestingValidation(t *testing.T) {
 	router := gin.New()
 
 	// Create auth service
-	authService := auth.NewService("test-secret-key", time.Hour)
+	authService := auth.NewService("test-secret-key", time.Hour, nil)
 
 	// Add middleware for authentication testing
 	router.Use(func(c *gin.Context) {
