@@ -21,6 +21,7 @@ type Repositories struct {
 	StatusTransition        StatusTransitionRepository
 	PersonalAccessToken     PersonalAccessTokenRepository
 	SteeringDocument        SteeringDocumentRepository
+	RefreshToken            RefreshTokenRepository
 }
 
 // NewRepositories creates a new instance of all repositories
@@ -40,6 +41,7 @@ func NewRepositories(db *gorm.DB, redis *redis.Client) *Repositories {
 		StatusTransition:        NewStatusTransitionRepository(db),
 		PersonalAccessToken:     NewPersonalAccessTokenRepository(db),
 		SteeringDocument:        NewSteeringDocumentRepository(db),
+		RefreshToken:            NewRefreshTokenRepository(db),
 	}
 }
 
@@ -63,6 +65,7 @@ func (r *Repositories) WithTransaction(fn func(*Repositories) error) error {
 			StatusTransition:        NewStatusTransitionRepository(tx),
 			PersonalAccessToken:     NewPersonalAccessTokenRepository(tx),
 			SteeringDocument:        NewSteeringDocumentRepository(tx),
+			RefreshToken:            NewRefreshTokenRepository(tx),
 		}
 		return fn(txRepos)
 	})

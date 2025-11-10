@@ -25,6 +25,7 @@ type (
 	StatusTransition        = models.StatusTransition
 	PersonalAccessToken     = models.PersonalAccessToken
 	SteeringDocument        = models.SteeringDocument
+	RefreshToken            = models.RefreshToken
 	EpicStatus              = models.EpicStatus
 	UserStoryStatus         = models.UserStoryStatus
 	RequirementStatus       = models.RequirementStatus
@@ -232,4 +233,17 @@ type SteeringDocumentRepository interface {
 	GetByEpicIDWithPagination(epicID uuid.UUID, limit, offset int) ([]SteeringDocument, int64, error)
 	LinkToEpic(steeringDocumentID, epicID uuid.UUID) error
 	UnlinkFromEpic(steeringDocumentID, epicID uuid.UUID) error
+}
+
+// RefreshTokenRepository defines refresh token-specific repository operations
+type RefreshTokenRepository interface {
+	Create(token *RefreshToken) error
+	FindByTokenHash(tokenHash string) (*RefreshToken, error)
+	FindByUserID(userID uuid.UUID) ([]*RefreshToken, error)
+	FindAll() ([]*RefreshToken, error)
+	Update(token *RefreshToken) error
+	Delete(id uuid.UUID) error
+	DeleteByUserID(userID uuid.UUID) error
+	DeleteExpired() (int64, error)
+	GetDB() *gorm.DB
 }

@@ -123,7 +123,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	resourceService := service.SetupResourceServiceForMCPHandler(repos, logger.Logger)
 
 	// Initialize auth service and handlers
-	authService := auth.NewService(cfg.JWT.Secret, 24*time.Hour) // 24 hours token duration
+	authService := auth.NewService(cfg.JWT.Secret, 24*time.Hour, repos.RefreshToken) // 24 hours token duration
 	authHandler := auth.NewHandlers(authService, db.Postgres)
 
 	// Initialize PAT service and handler
@@ -150,6 +150,8 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	authGroup := router.Group("/auth")
 	{
 		authGroup.POST("/login", authHandler.Login)
+		authGroup.POST("/refresh", authHandler.RefreshToken)
+		authGroup.POST("/logout", authHandler.Logout)
 		authGroup.GET("/profile", authService.Middleware(), authHandler.GetProfile)
 		authGroup.POST("/change-password", authService.Middleware(), authHandler.ChangePassword)
 

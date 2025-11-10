@@ -19,7 +19,7 @@ func setupTestRouter() *gin.Engine {
 }
 
 func TestAuthMiddleware(t *testing.T) {
-	service := NewService("test-secret", time.Hour)
+	service := NewService("test-secret", time.Hour, nil)
 	router := setupTestRouter()
 
 	// Test endpoint that requires authentication
@@ -74,7 +74,7 @@ func TestAuthMiddleware(t *testing.T) {
 	})
 
 	t.Run("expired token", func(t *testing.T) {
-		shortService := NewService("test-secret", time.Nanosecond)
+		shortService := NewService("test-secret", time.Nanosecond, nil)
 		expiredToken, err := shortService.GenerateToken(user)
 		require.NoError(t, err)
 
@@ -103,7 +103,7 @@ func TestAuthMiddleware(t *testing.T) {
 }
 
 func TestRequireRole(t *testing.T) {
-	service := NewService("test-secret", time.Hour)
+	service := NewService("test-secret", time.Hour, nil)
 	router := setupTestRouter()
 
 	// Test endpoints with different role requirements
@@ -183,7 +183,7 @@ func TestRequireRole(t *testing.T) {
 }
 
 func TestGetCurrentUser(t *testing.T) {
-	service := NewService("test-secret", time.Hour)
+	service := NewService("test-secret", time.Hour, nil)
 	router := setupTestRouter()
 
 	router.GET("/test", service.Middleware(), func(c *gin.Context) {
@@ -221,7 +221,7 @@ func TestGetCurrentUser(t *testing.T) {
 }
 
 func TestGetCurrentUserID(t *testing.T) {
-	service := NewService("test-secret", time.Hour)
+	service := NewService("test-secret", time.Hour, nil)
 	router := setupTestRouter()
 
 	router.GET("/test", service.Middleware(), func(c *gin.Context) {
@@ -253,7 +253,7 @@ func TestGetCurrentUserID(t *testing.T) {
 }
 
 func TestGetCurrentUserRole(t *testing.T) {
-	service := NewService("test-secret", time.Hour)
+	service := NewService("test-secret", time.Hour, nil)
 	router := setupTestRouter()
 
 	router.GET("/test", service.Middleware(), func(c *gin.Context) {
