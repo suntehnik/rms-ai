@@ -11,12 +11,14 @@ func TestGetSupportedTools(t *testing.T) {
 	tools := schemas.GetSupportedTools()
 
 	// Verify we have the expected number of tools
-	assert.Len(t, tools, 25)
+	assert.Len(t, tools, 26)
 
 	// Verify all expected tools are present
 	expectedTools := []string{
 		"create_epic",
 		"update_epic",
+		"list_epics",
+		"epic_hierarchy",
 		"create_user_story",
 		"update_user_story",
 		"create_requirement",

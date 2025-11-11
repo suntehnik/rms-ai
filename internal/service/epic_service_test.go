@@ -153,6 +153,14 @@ func (m *MockEpicRepository) ListWithIncludes(filters map[string]interface{}, in
 	return args.Get(0).([]models.Epic), args.Error(1)
 }
 
+func (m *MockEpicRepository) GetCompleteHierarchy(id uuid.UUID) (*models.Epic, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Epic), args.Error(1)
+}
+
 // MockUserRepository is a mock implementation of UserRepository
 type MockUserRepository struct {
 	mock.Mock
@@ -536,4 +544,95 @@ func TestEpicService_ChangeEpicStatus(t *testing.T) {
 // Helper function to create string pointers
 func stringPtr(s string) *string {
 	return &s
+}
+
+func TestEpicService_GetEpicWithCompleteHierarchy(t *testing.T) {
+	tests := []struct {
+		name          string
+		epicID        uuid.UUID
+		setupMocks    func(*MockEpicRepository, *MockUserRepository)
+		expectedError error
+	}{
+		{
+			name:   "successful get epic with complete hierarchy",
+			epicID: uuid.New(),
+			setupMocks: func(epicRepo *MockEpicRepository, userRepo *MockUserRepository) {
+				epicID := uuid.New()
+				userStoryID := uuid.New()
+				requirementID := uuid.New()
+				acID := uuid.New()
+
+				epic := &models.Epic{
+					ID:    epicID,
+					Title: "Test Epic",
+					UserStories: []models.UserStory{
+						{
+							ID:    userStoryID,
+							Title: "Test User Story",
+							Requirements: []models.Requirement{
+								{
+									ID:    requirementID,
+									Title: "Test Requirement",
+								},
+							},
+							AcceptanceCriteria: []models.AcceptanceCriteria{
+								{
+									ID:          acID,
+									Description: "Test Acceptance Criteria",
+								},
+							},
+						},
+					},
+				}
+				epicRepo.On("GetCompleteHierarchy", mock.AnythingOfType("uuid.UUID")).Return(epic, nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name:   "epic not found",
+			epicID: uuid.New(),
+			setupMocks: func(epicRepo *MockEpicRepository, userRepo *MockUserRepository) {
+				epicRepo.On("GetCompleteHierarchy", mock.AnythingOfType("uuid.UUID")).Return(nil, repository.ErrNotFound)
+			},
+			expectedError: ErrEpicNotFound,
+		},
+		{
+			name:   "repository error",
+			epicID: uuid.New(),
+			setupMocks: func(epicRepo *MockEpicRepository, userRepo *MockUserRepository) {
+				epicRepo.On("GetCompleteHierarchy", mock.AnythingOfType("uuid.UUID")).Return(nil, errors.New("database error"))
+			},
+			expectedError: errors.New("failed to get epic hierarchy"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			epicRepo := new(MockEpicRepository)
+			userRepo := new(MockUserRepository)
+
+			tt.setupMocks(epicRepo, userRepo)
+
+			service := NewEpicService(epicRepo, userRepo)
+
+			epic, err := service.GetEpicWithCompleteHierarchy(tt.epicID)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				if errors.Is(tt.expectedError, ErrEpicNotFound) {
+					assert.True(t, errors.Is(err, tt.expectedError))
+				}
+				assert.Nil(t, epic)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, epic)
+				assert.NotEmpty(t, epic.UserStories)
+				assert.NotEmpty(t, epic.UserStories[0].Requirements)
+				assert.NotEmpty(t, epic.UserStories[0].AcceptanceCriteria)
+			}
+
+			epicRepo.AssertExpectations(t)
+			userRepo.AssertExpectations(t)
+		})
+	}
 }

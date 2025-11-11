@@ -22,7 +22,7 @@ func TestMCPAPICompatibility_AllTools(t *testing.T) {
 
 	// Get all supported tools
 	tools := schemas.GetSupportedTools()
-	assert.Len(t, tools, 25, "Expected exactly 25 MCP tools")
+	assert.Len(t, tools, 26, "Expected exactly 26 MCP tools")
 
 	// Test each tool schema for API compatibility
 	for _, tool := range tools {
@@ -346,7 +346,7 @@ func TestMCPAPICompatibility_ToolsList(t *testing.T) {
 	assert.Contains(t, result, "tools")
 
 	tools := result["tools"].([]interface{})
-	assert.Len(t, tools, 25, "Should have exactly 25 tools")
+	assert.Len(t, tools, 26, "Should have exactly 26 tools")
 
 	// Verify each tool has required fields
 	for _, tool := range tools {

@@ -170,3 +170,40 @@ func (r *epicRepository) ListWithIncludes(filters map[string]interface{}, includ
 
 	return epics, nil
 }
+
+// GetCompleteHierarchy retrieves an epic with all nested entities preloaded
+// This method loads the complete hierarchy: Epic → [SteeringDocuments, UserStories] → [Requirements, AcceptanceCriteria]
+// SteeringDocuments and UserStories are loaded at the same level under Epic
+// Requirements and AcceptanceCriteria are loaded at the same level under each UserStory
+func (r *epicRepository) GetCompleteHierarchy(id uuid.UUID) (*models.Epic, error) {
+	var epic models.Epic
+	err := r.GetDB().
+		// Load steering documents with ordering
+		Preload("SteeringDocuments", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at ASC")
+		}).
+		// Load user stories with ordering
+		Preload("UserStories", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at ASC")
+		}).
+		// Load requirements for each user story
+		Preload("UserStories.Requirements", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at ASC")
+		}).
+		// Load requirement types
+		Preload("UserStories.Requirements.Type").
+		// Load acceptance criteria for each user story
+		Preload("UserStories.AcceptanceCriteria", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at ASC")
+		}).
+		Where("id = ?", id).
+		First(&epic).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, r.handleDBError(err)
+	}
+	return &epic, nil
+}

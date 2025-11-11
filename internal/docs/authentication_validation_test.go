@@ -582,7 +582,7 @@ func isPublicEndpoint(path string) bool {
 	return false
 }
 
-func hasAuthMiddleware(middleware []string, handler, line string) bool {
+func hasAuthMiddleware(middleware []string, _, line string) bool {
 	// Check if line contains auth middleware calls
 	authPatterns := []string{
 		"authService.Middleware()",

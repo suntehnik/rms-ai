@@ -75,6 +75,14 @@ func (m *MockEpicService) GetEpicWithUserStories(id uuid.UUID) (*models.Epic, er
 	return args.Get(0).(*models.Epic), args.Error(1)
 }
 
+func (m *MockEpicService) GetEpicWithCompleteHierarchy(id uuid.UUID) (*models.Epic, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Epic), args.Error(1)
+}
+
 func (m *MockEpicService) ChangeEpicStatus(id uuid.UUID, newStatus models.EpicStatus) (*models.Epic, error) {
 	args := m.Called(id, newStatus)
 	if args.Get(0) == nil {

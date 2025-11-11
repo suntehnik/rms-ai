@@ -71,6 +71,7 @@ type EpicRepository interface {
 	GetByReferenceIDWithUsers(referenceID string) (*Epic, error)
 	GetByReferenceIDWithUsersCaseInsensitive(referenceID string) (*Epic, error)
 	ListWithIncludes(filters map[string]interface{}, includes []string, orderBy string, limit, offset int) ([]Epic, error)
+	GetCompleteHierarchy(id uuid.UUID) (*Epic, error)
 }
 
 // UserStoryRepository defines user story-specific repository operations

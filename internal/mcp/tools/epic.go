@@ -37,6 +37,7 @@ func (h *EpicHandler) GetSupportedTools() []string {
 		ToolCreateEpic,
 		ToolUpdateEpic,
 		ToolListEpics,
+		ToolEpicHierarchy,
 	}
 }
 
@@ -49,6 +50,8 @@ func (h *EpicHandler) HandleTool(ctx context.Context, toolName string, args map[
 		return h.Create(ctx, args)
 	case ToolUpdateEpic:
 		return h.Update(ctx, args)
+	case ToolEpicHierarchy:
+		return h.GetHierarchy(ctx, args)
 	default:
 		return nil, jsonrpc.NewMethodNotFoundError(fmt.Sprintf("Unknown Epic tool: %s", toolName))
 	}
@@ -341,4 +344,164 @@ func parseIncludeList(include string) []string {
 		}
 	}
 	return includes
+}
+
+// GetHierarchy handles the epic_hierarchy tool
+// This method retrieves the complete hierarchy of an epic including user stories,
+// requirements, and acceptance criteria, and formats it as an ASCII tree
+func (h *EpicHandler) GetHierarchy(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+	// Validate and parse epic parameter
+	epicIDStr, ok := getStringArg(args, "epic")
+	if !ok || epicIDStr == "" {
+		return nil, jsonrpc.NewInvalidParamsError("Missing or invalid 'epic' argument")
+	}
+
+	// Parse UUID or reference ID
+	epicID, err := parseUUIDOrReferenceID(epicIDStr, func(refID string) (interface{}, error) {
+		return h.epicService.GetEpicByReferenceID(refID)
+	})
+	if err != nil {
+		return nil, jsonrpc.NewInvalidParamsError("Invalid 'epic': not a valid UUID or reference ID")
+	}
+
+	// Retrieve epic with complete hierarchy
+	epic, err := h.epicService.GetEpicWithCompleteHierarchy(epicID)
+	if err != nil {
+		if errors.Is(err, service.ErrEpicNotFound) {
+			return nil, jsonrpc.NewInvalidParamsError("Epic not found")
+		}
+		return nil, jsonrpc.NewInternalError(fmt.Sprintf("Failed to retrieve hierarchy: %v", err))
+	}
+
+	// Format as ASCII tree
+	treeOutput := h.formatTree(epic)
+
+	// Return MCP response
+	return types.CreateDataResponse(treeOutput, nil), nil
+}
+
+// formatTree formats an epic with its complete hierarchy as an ASCII tree
+func (h *EpicHandler) formatTree(epic *models.Epic) string {
+	var builder strings.Builder
+
+	// Epic root node
+	builder.WriteString(fmt.Sprintf("%s [%s] [P%d] %s\n",
+		epic.ReferenceID, epic.Status, epic.Priority, epic.Title))
+
+	if len(epic.SteeringDocuments) == 0 && len(epic.UserStories) == 0 {
+		builder.WriteString("│\n")
+		builder.WriteString("└── No steering documents or user stories attached\n")
+		return builder.String()
+	}
+
+	builder.WriteString("│\n")
+
+	// Display steering documents first (at same level as user stories)
+	for _, std := range epic.SteeringDocuments {
+		h.formatSteeringDocument(&builder, std)
+	}
+
+	// Add separator line if we have both steering documents and user stories
+	if len(epic.SteeringDocuments) > 0 && len(epic.UserStories) > 0 {
+		builder.WriteString("│\n")
+	}
+
+	// Display user stories second (at same level as steering documents)
+	for i, us := range epic.UserStories {
+		isLastUS := i == len(epic.UserStories)-1
+		h.formatUserStory(&builder, us, isLastUS, "")
+	}
+
+	return builder.String()
+}
+
+// formatSteeringDocument formats a steering document line (no status/priority)
+func (h *EpicHandler) formatSteeringDocument(builder *strings.Builder, std models.SteeringDocument) {
+	// Steering documents don't have status or priority
+	builder.WriteString(fmt.Sprintf("├── %s %s\n",
+		std.ReferenceID, std.Title))
+
+	// If there's a description, show truncated first sentence on next line
+	if std.Description != nil && *std.Description != "" {
+		truncatedDesc := h.truncateDescription(*std.Description, 80)
+		builder.WriteString(fmt.Sprintf("│   %s\n", truncatedDesc))
+	}
+}
+
+// formatUserStory formats a user story with its requirements and acceptance criteria
+func (h *EpicHandler) formatUserStory(builder *strings.Builder, us models.UserStory, isLast bool, indent string) {
+	// User story prefix
+	prefix := "├─┬"
+	if isLast {
+		prefix = "└─┬"
+	}
+
+	builder.WriteString(fmt.Sprintf("%s %s [%s] [P%d] %s\n",
+		prefix, us.ReferenceID, us.Status, us.Priority, us.Title))
+
+	childIndent := "│ "
+	if isLast {
+		childIndent = "  "
+	}
+	builder.WriteString(fmt.Sprintf("%s│\n", childIndent))
+
+	// Display requirements first
+	if len(us.Requirements) == 0 {
+		builder.WriteString(fmt.Sprintf("%s├── No requirements\n", childIndent))
+	} else {
+		for _, req := range us.Requirements {
+			h.formatRequirement(builder, req, childIndent)
+		}
+	}
+
+	// Display acceptance criteria second
+	if len(us.AcceptanceCriteria) == 0 {
+		builder.WriteString(fmt.Sprintf("%s│\n", childIndent))
+		builder.WriteString(fmt.Sprintf("%s└── No acceptance criteria\n", childIndent))
+	} else {
+		builder.WriteString(fmt.Sprintf("%s│\n", childIndent))
+		for i, ac := range us.AcceptanceCriteria {
+			isLastAC := i == len(us.AcceptanceCriteria)-1
+			h.formatAcceptanceCriteria(builder, ac, isLastAC, childIndent)
+		}
+	}
+}
+
+// formatRequirement formats a requirement line
+func (h *EpicHandler) formatRequirement(builder *strings.Builder, req models.Requirement, indent string) {
+	builder.WriteString(fmt.Sprintf("%s├── %s [%s] [P%d] %s\n",
+		indent, req.ReferenceID, req.Status, req.Priority, req.Title))
+}
+
+// formatAcceptanceCriteria formats an acceptance criteria line with truncated description
+func (h *EpicHandler) formatAcceptanceCriteria(builder *strings.Builder, ac models.AcceptanceCriteria, isLast bool, indent string) {
+	prefix := "├──"
+	if isLast {
+		prefix = "└──"
+	}
+
+	truncatedDesc := h.truncateDescription(ac.Description, 80)
+	builder.WriteString(fmt.Sprintf("%s%s %s — %s\n",
+		indent, prefix, ac.ReferenceID, truncatedDesc))
+}
+
+// truncateDescription truncates a description to maxLength characters
+// It extracts the first sentence and handles UTF-8 characters properly
+func (h *EpicHandler) truncateDescription(desc string, maxLength int) string {
+	// Extract first sentence
+	sentences := strings.SplitN(desc, ".", 2)
+	firstSentence := strings.TrimSpace(sentences[0])
+
+	// Handle case where there's no period (single sentence)
+	if firstSentence == "" && len(desc) > 0 {
+		firstSentence = desc
+	}
+
+	// Truncate to max length (accounting for UTF-8)
+	runes := []rune(firstSentence)
+	if len(runes) > maxLength {
+		return string(runes[:maxLength-3]) + "..."
+	}
+
+	return firstSentence
 }
