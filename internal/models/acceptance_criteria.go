@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -94,4 +95,41 @@ func (ac *AcceptanceCriteria) IsEARSFormat() bool {
 // GetFormattedDescription returns the description with proper formatting
 func (ac *AcceptanceCriteria) GetFormattedDescription() string {
 	return ac.Description
+}
+
+// MarshalJSON implements custom JSON marshaling for AcceptanceCriteria
+// This ensures that related objects are only included when they are actually populated
+func (ac *AcceptanceCriteria) MarshalJSON() ([]byte, error) {
+	// Create a map to build the JSON response
+	result := map[string]interface{}{
+		"id":            ac.ID,
+		"reference_id":  ac.ReferenceID,
+		"user_story_id": ac.UserStoryID,
+		"author_id":     ac.AuthorID,
+		"created_at":    ac.CreatedAt,
+		"updated_at":    ac.UpdatedAt,
+		"description":   ac.Description,
+	}
+
+	// Only include user_story if it has been populated (has a title, indicating it was preloaded)
+	if ac.UserStory.Title != "" {
+		result["user_story"] = ac.UserStory
+	}
+
+	// Only include author if it has been populated (has a username, indicating it was preloaded)
+	if ac.Author.Username != "" {
+		result["author"] = ac.Author
+	}
+
+	// Only include requirements if they have been populated
+	if len(ac.Requirements) > 0 {
+		result["requirements"] = ac.Requirements
+	}
+
+	// Only include comments if they have been populated
+	if len(ac.Comments) > 0 {
+		result["comments"] = ac.Comments
+	}
+
+	return json.Marshal(result)
 }

@@ -305,7 +305,8 @@ func (s *epicService) UpdateEpic(id uuid.UUID, req UpdateEpicRequest) (*models.E
 		return nil, fmt.Errorf("failed to update epic: %w", err)
 	}
 
-	return epic, nil
+	// Reload with preloads to return complete data
+	return s.epicRepo.GetByIDWithUsers(id)
 }
 
 // DeleteEpic deletes an epic with dependency validation
@@ -451,7 +452,8 @@ func (s *epicService) ChangeEpicStatus(id uuid.UUID, newStatus models.EpicStatus
 		return nil, fmt.Errorf("failed to update epic status: %w", err)
 	}
 
-	return epic, nil
+	// Reload with preloads to return complete data
+	return s.epicRepo.GetByIDWithUsers(id)
 }
 
 // AssignEpic assigns an epic to a user or unassigns it
@@ -485,5 +487,6 @@ func (s *epicService) AssignEpic(id uuid.UUID, assigneeID *uuid.UUID) (*models.E
 		return nil, fmt.Errorf("failed to assign epic: %w", err)
 	}
 
-	return epic, nil
+	// Reload with preloads to return complete data
+	return s.epicRepo.GetByIDWithUsers(id)
 }

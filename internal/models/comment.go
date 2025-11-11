@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -129,4 +130,53 @@ func (c *Comment) IsValidTextPosition() bool {
 		c.TextPositionEnd != nil &&
 		*c.TextPositionStart >= 0 &&
 		*c.TextPositionEnd >= *c.TextPositionStart
+}
+
+// MarshalJSON implements custom JSON marshaling for Comment
+// This ensures that related objects are only included when they are actually populated
+func (c *Comment) MarshalJSON() ([]byte, error) {
+	// Create a map to build the JSON response
+	result := map[string]interface{}{
+		"id":          c.ID,
+		"entity_type": c.EntityType,
+		"entity_id":   c.EntityID,
+		"author_id":   c.AuthorID,
+		"created_at":  c.CreatedAt,
+		"updated_at":  c.UpdatedAt,
+		"content":     c.Content,
+		"is_resolved": c.IsResolved,
+	}
+
+	// Only include parent_comment_id if it's not nil
+	if c.ParentCommentID != nil {
+		result["parent_comment_id"] = *c.ParentCommentID
+	}
+
+	// Only include inline comment fields if they are set
+	if c.LinkedText != nil {
+		result["linked_text"] = *c.LinkedText
+	}
+	if c.TextPositionStart != nil {
+		result["text_position_start"] = *c.TextPositionStart
+	}
+	if c.TextPositionEnd != nil {
+		result["text_position_end"] = *c.TextPositionEnd
+	}
+
+	// Only include parent_comment if it has been populated (has content, indicating it was preloaded)
+	if c.ParentComment != nil && c.ParentComment.Content != "" {
+		result["parent_comment"] = c.ParentComment
+	}
+
+	// Only include author if it has been populated (has a username, indicating it was preloaded)
+	if c.Author.Username != "" {
+		result["author"] = c.Author
+	}
+
+	// Only include replies if they have been populated
+	if len(c.Replies) > 0 {
+		result["replies"] = c.Replies
+	}
+
+	return json.Marshal(result)
 }

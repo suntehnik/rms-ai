@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -145,4 +146,75 @@ func (r *Requirement) GetAllRelationships() []RequirementRelationship {
 // IsLinkedToAcceptanceCriteria checks if the requirement is linked to acceptance criteria
 func (r *Requirement) IsLinkedToAcceptanceCriteria() bool {
 	return r.AcceptanceCriteriaID != nil
+}
+
+// MarshalJSON implements custom JSON marshaling for Requirement
+// This ensures that related objects are only included when they are actually populated
+func (r *Requirement) MarshalJSON() ([]byte, error) {
+	// Create a map to build the JSON response
+	result := map[string]interface{}{
+		"id":            r.ID,
+		"reference_id":  r.ReferenceID,
+		"user_story_id": r.UserStoryID,
+		"creator_id":    r.CreatorID,
+		"assignee_id":   r.AssigneeID,
+		"created_at":    r.CreatedAt,
+		"updated_at":    r.UpdatedAt,
+		"priority":      r.Priority,
+		"status":        r.Status,
+		"type_id":       r.TypeID,
+		"title":         r.Title,
+	}
+
+	// Only include acceptance_criteria_id if it's not nil
+	if r.AcceptanceCriteriaID != nil {
+		result["acceptance_criteria_id"] = *r.AcceptanceCriteriaID
+	}
+
+	// Only include description if it's not nil
+	if r.Description != nil {
+		result["description"] = *r.Description
+	}
+
+	// Only include user_story if it has been populated (has a title, indicating it was preloaded)
+	if r.UserStory.Title != "" {
+		result["user_story"] = r.UserStory
+	}
+
+	// Only include acceptance_criteria if it has been populated and is not nil
+	if r.AcceptanceCriteria != nil && r.AcceptanceCriteria.Description != "" {
+		result["acceptance_criteria"] = r.AcceptanceCriteria
+	}
+
+	// Only include creator if it has been populated (has a username, indicating it was preloaded)
+	if r.Creator.Username != "" {
+		result["creator"] = r.Creator
+	}
+
+	// Only include assignee if it has been populated (has a username, indicating it was preloaded)
+	if r.Assignee.Username != "" {
+		result["assignee"] = r.Assignee
+	}
+
+	// Only include type if it has been populated (has a name, indicating it was preloaded)
+	if r.Type.Name != "" {
+		result["type"] = r.Type
+	}
+
+	// Only include source_relationships if they have been populated
+	if len(r.SourceRelationships) > 0 {
+		result["source_relationships"] = r.SourceRelationships
+	}
+
+	// Only include target_relationships if they have been populated
+	if len(r.TargetRelationships) > 0 {
+		result["target_relationships"] = r.TargetRelationships
+	}
+
+	// Only include comments if they have been populated
+	if len(r.Comments) > 0 {
+		result["comments"] = r.Comments
+	}
+
+	return json.Marshal(result)
 }
