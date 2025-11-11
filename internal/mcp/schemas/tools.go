@@ -708,6 +708,22 @@ func GetSupportedTools() []ToolDefinition {
 				"required": []string{"user_story"},
 			},
 		},
+		{
+			Name:        "epic_hierarchy",
+			Title:       "View Epic Hierarchy",
+			Description: "Display the complete hierarchical structure of an epic including steering documents, user stories, requirements, and acceptance criteria in a compact ASCII tree format. The hierarchy shows: Epic → [Steering Documents, User Stories] → [Requirements, Acceptance Criteria] where steering documents and user stories are displayed at the same level under the epic, and requirements and acceptance criteria are displayed at the same level under each user story.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"epic": map[string]interface{}{
+						"type":        "string",
+						"description": "Epic reference ID (e.g., EP-001) or UUID to retrieve hierarchy for. Supports both reference ID format (EP-XXX) and UUID format.",
+						"pattern":     "^(EP-\\d+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
+					},
+				},
+				"required": []string{"epic"},
+			},
+		},
 	}
 }
 

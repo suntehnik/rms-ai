@@ -28,6 +28,7 @@ type EpicService interface {
 	DeleteEpic(id uuid.UUID, force bool) error
 	ListEpics(filters EpicFilters) ([]models.Epic, int64, error)
 	GetEpicWithUserStories(id uuid.UUID) (*models.Epic, error)
+	GetEpicWithCompleteHierarchy(id uuid.UUID) (*models.Epic, error)
 	ChangeEpicStatus(id uuid.UUID, newStatus models.EpicStatus) (*models.Epic, error)
 	AssignEpic(id uuid.UUID, assigneeID *uuid.UUID) (*models.Epic, error)
 }
@@ -408,6 +409,20 @@ func (s *epicService) GetEpicWithUserStories(id uuid.UUID) (*models.Epic, error)
 			return nil, ErrEpicNotFound
 		}
 		return nil, fmt.Errorf("failed to get epic with user stories: %w", err)
+	}
+	return epic, nil
+}
+
+// GetEpicWithCompleteHierarchy retrieves an epic with complete hierarchy
+// This includes: Epic → UserStories → [Requirements, AcceptanceCriteria]
+// Requirements and AcceptanceCriteria are loaded at the same level under each UserStory
+func (s *epicService) GetEpicWithCompleteHierarchy(id uuid.UUID) (*models.Epic, error) {
+	epic, err := s.epicRepo.GetCompleteHierarchy(id)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, ErrEpicNotFound
+		}
+		return nil, fmt.Errorf("failed to get epic hierarchy: %w", err)
 	}
 	return epic, nil
 }

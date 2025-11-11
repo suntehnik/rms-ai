@@ -234,6 +234,9 @@ func (m *MockSteeringEpicRepository) GetByReferenceIDWithUsersCaseInsensitive(re
 func (m *MockSteeringEpicRepository) ListWithIncludes(filters map[string]interface{}, includes []string, orderBy string, limit, offset int) ([]models.Epic, error) {
 	return nil, nil
 }
+func (m *MockSteeringEpicRepository) GetCompleteHierarchy(id uuid.UUID) (*models.Epic, error) {
+	return nil, nil
+}
 
 func TestNewSteeringDocumentService(t *testing.T) {
 	mockRepo := &MockSteeringDocumentRepository{}

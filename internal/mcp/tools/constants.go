@@ -3,9 +3,10 @@ package tools
 // Tool name constants for MCP server
 const (
 	// Epic tools
-	ToolCreateEpic = "create_epic"
-	ToolUpdateEpic = "update_epic"
-	ToolListEpics  = "list_epics"
+	ToolCreateEpic    = "create_epic"
+	ToolUpdateEpic    = "update_epic"
+	ToolListEpics     = "list_epics"
+	ToolEpicHierarchy = "epic_hierarchy"
 
 	// User Story tools
 	ToolCreateUserStory          = "create_user_story"
