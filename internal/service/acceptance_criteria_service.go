@@ -143,7 +143,8 @@ func (s *acceptanceCriteriaService) UpdateAcceptanceCriteria(id uuid.UUID, req U
 		return nil, fmt.Errorf("failed to update acceptance criteria: %w", err)
 	}
 
-	return acceptanceCriteria, nil
+	// Reload with preloads to return complete data
+	return s.acceptanceCriteriaRepo.GetByIDWithPreloads(id)
 }
 
 // DeleteAcceptanceCriteria deletes acceptance criteria with dependency validation
