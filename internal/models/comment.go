@@ -38,10 +38,13 @@ type Comment struct {
 	TextPositionStart *int    `json:"text_position_start" example:"45"`                    // Start position of linked text for inline comments
 	TextPositionEnd   *int    `json:"text_position_end" example:"73"`                      // End position of linked text for inline comments
 
-	// Relationships
-	ParentComment *Comment  `gorm:"foreignKey:ParentCommentID;constraint:OnDelete:CASCADE" json:"parent_comment,omitempty"` // Parent comment for threaded discussions
-	Author        User      `gorm:"foreignKey:AuthorID;constraint:OnDelete:RESTRICT" json:"author,omitempty"`               // User who authored this comment
-	Replies       []Comment `gorm:"foreignKey:ParentCommentID;constraint:OnDelete:CASCADE" json:"replies,omitempty"`        // Replies to this comment
+	// Relationships - These fields are populated when explicitly preloaded and included in JSON via custom MarshalJSON
+	// @Description Parent comment for threaded discussions (included only when preloaded via repository methods)
+	ParentComment *Comment `gorm:"foreignKey:ParentCommentID;constraint:OnDelete:CASCADE" json:"-"`
+	// @Description User who authored this comment (included only when preloaded via repository methods)
+	Author User `gorm:"foreignKey:AuthorID;constraint:OnDelete:RESTRICT" json:"-"`
+	// @Description Replies to this comment (included only when preloaded)
+	Replies []Comment `gorm:"foreignKey:ParentCommentID;constraint:OnDelete:CASCADE" json:"replies,omitempty"`
 }
 
 // BeforeCreate sets the ID if not already set

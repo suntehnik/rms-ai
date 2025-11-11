@@ -48,15 +48,23 @@ type Requirement struct {
 	Title                string            `gorm:"not null" json:"title" validate:"required,max=500" example:"User authentication must support OAuth 2.0"`                                                                                                                                                    // Brief title describing the requirement
 	Description          *string           `json:"description" validate:"omitempty,max=50000" example:"The system shall support OAuth 2.0 authentication flow with support for Google, GitHub, and Microsoft providers. The implementation must handle token refresh and provide secure session management."` // Detailed description of the requirement
 
-	// Relationships
-	UserStory           UserStory                 `gorm:"foreignKey:UserStoryID;constraint:OnDelete:CASCADE" json:"user_story,omitempty"`                    // Parent user story containing this requirement
-	AcceptanceCriteria  *AcceptanceCriteria       `gorm:"foreignKey:AcceptanceCriteriaID;constraint:OnDelete:SET NULL" json:"acceptance_criteria,omitempty"` // Optional linked acceptance criteria
-	Creator             User                      `gorm:"foreignKey:CreatorID;constraint:OnDelete:RESTRICT" json:"creator,omitempty"`                        // User who created this requirement
-	Assignee            User                      `gorm:"foreignKey:AssigneeID;constraint:OnDelete:RESTRICT" json:"assignee,omitempty"`                      // User assigned to implement this requirement
-	Type                RequirementType           `gorm:"foreignKey:TypeID;constraint:OnDelete:RESTRICT" json:"type,omitempty"`                              // Type classification of this requirement
-	SourceRelationships []RequirementRelationship `gorm:"foreignKey:SourceRequirementID;constraint:OnDelete:CASCADE" json:"source_relationships,omitempty"`  // Relationships where this requirement is the source
-	TargetRelationships []RequirementRelationship `gorm:"foreignKey:TargetRequirementID;constraint:OnDelete:CASCADE" json:"target_relationships,omitempty"`  // Relationships where this requirement is the target
-	Comments            []Comment                 `gorm:"polymorphic:Entity;polymorphicValue:requirement" json:"comments,omitempty"`                         // Comments associated with this requirement
+	// Relationships - These fields are populated when explicitly preloaded and included in JSON via custom MarshalJSON
+	// @Description Parent user story containing this requirement (included only when preloaded via repository methods)
+	UserStory UserStory `gorm:"foreignKey:UserStoryID;constraint:OnDelete:CASCADE" json:"-"`
+	// @Description Optional linked acceptance criteria (included only when preloaded via repository methods)
+	AcceptanceCriteria *AcceptanceCriteria `gorm:"foreignKey:AcceptanceCriteriaID;constraint:OnDelete:SET NULL" json:"-"`
+	// @Description User who created this requirement (included only when preloaded via repository methods)
+	Creator User `gorm:"foreignKey:CreatorID;constraint:OnDelete:RESTRICT" json:"-"`
+	// @Description User assigned to implement this requirement (included only when preloaded via repository methods)
+	Assignee User `gorm:"foreignKey:AssigneeID;constraint:OnDelete:RESTRICT" json:"-"`
+	// @Description Type classification of this requirement (included only when preloaded via repository methods)
+	Type RequirementType `gorm:"foreignKey:TypeID;constraint:OnDelete:RESTRICT" json:"-"`
+	// @Description Relationships where this requirement is the source (included only when preloaded)
+	SourceRelationships []RequirementRelationship `gorm:"foreignKey:SourceRequirementID;constraint:OnDelete:CASCADE" json:"source_relationships,omitempty"`
+	// @Description Relationships where this requirement is the target (included only when preloaded)
+	TargetRelationships []RequirementRelationship `gorm:"foreignKey:TargetRequirementID;constraint:OnDelete:CASCADE" json:"target_relationships,omitempty"`
+	// @Description Comments associated with this requirement (included only when preloaded)
+	Comments []Comment `gorm:"polymorphic:Entity;polymorphicValue:requirement" json:"comments,omitempty"`
 }
 
 // BeforeCreate sets the ID if not already set and ensures default status

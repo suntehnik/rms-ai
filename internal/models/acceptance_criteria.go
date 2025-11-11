@@ -31,11 +31,15 @@ type AcceptanceCriteria struct {
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at" example:"2023-01-02T12:30:00Z"`                                                                                                                // Timestamp when the acceptance criteria was last modified
 	Description string    `gorm:"not null" json:"description" validate:"required" example:"WHEN a user enters valid credentials THEN the system SHALL authenticate the user and redirect to the dashboard"` // EARS format description of the acceptance criteria
 
-	// Relationships
-	UserStory    UserStory     `gorm:"foreignKey:UserStoryID;constraint:OnDelete:CASCADE" json:"user_story,omitempty"`             // Parent user story that this acceptance criteria belongs to
-	Author       User          `gorm:"foreignKey:AuthorID;constraint:OnDelete:RESTRICT" json:"author,omitempty"`                   // User who authored this acceptance criteria
-	Requirements []Requirement `gorm:"foreignKey:AcceptanceCriteriaID;constraint:OnDelete:SET NULL" json:"requirements,omitempty"` // Requirements linked to this acceptance criteria
-	Comments     []Comment     `gorm:"polymorphic:Entity;polymorphicValue:acceptance_criteria" json:"comments,omitempty"`          // Comments associated with this acceptance criteria
+	// Relationships - These fields are populated when explicitly preloaded and included in JSON via custom MarshalJSON
+	// @Description Parent user story that this acceptance criteria belongs to (included only when preloaded via repository methods)
+	UserStory UserStory `gorm:"foreignKey:UserStoryID;constraint:OnDelete:CASCADE" json:"-"`
+	// @Description User who authored this acceptance criteria (included only when preloaded via repository methods)
+	Author User `gorm:"foreignKey:AuthorID;constraint:OnDelete:RESTRICT" json:"-"`
+	// @Description Requirements linked to this acceptance criteria (included only when preloaded)
+	Requirements []Requirement `gorm:"foreignKey:AcceptanceCriteriaID;constraint:OnDelete:SET NULL" json:"requirements,omitempty"`
+	// @Description Comments associated with this acceptance criteria (included only when preloaded)
+	Comments []Comment `gorm:"polymorphic:Entity;polymorphicValue:acceptance_criteria" json:"comments,omitempty"`
 }
 
 // BeforeCreate sets the ID and ReferenceID if not already set
