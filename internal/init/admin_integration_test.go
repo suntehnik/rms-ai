@@ -3,12 +3,14 @@ package init
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"product-requirements-management/internal/auth"
 	"product-requirements-management/internal/models"
+	"product-requirements-management/internal/repository"
 )
 
 func TestAdminCreator_CreateAdminUser_Integration(t *testing.T) {
@@ -20,8 +22,11 @@ func TestAdminCreator_CreateAdminUser_Integration(t *testing.T) {
 	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
+	// Create refresh token repository
+	refreshTokenRepo := repository.NewRefreshTokenRepository(testDB.DB)
+
 	// Create auth service
-	authService := auth.NewService("test-jwt-secret", 24*60*60) // 24 hours
+	authService := auth.NewService("test-jwt-secret", 24*time.Hour, refreshTokenRepo)
 
 	// Create admin creator
 	adminCreator := NewAdminCreator(testDB.DB, authService)
@@ -75,8 +80,11 @@ func TestAdminCreator_CreateAdminUserFromEnv_Integration(t *testing.T) {
 	testPassword := "env-admin-password-456"
 	os.Setenv("DEFAULT_ADMIN_PASSWORD", testPassword)
 
+	// Create refresh token repository
+	refreshTokenRepo := repository.NewRefreshTokenRepository(testDB.DB)
+
 	// Create auth service
-	authService := auth.NewService("test-jwt-secret", 24*60*60)
+	authService := auth.NewService("test-jwt-secret", 24*time.Hour, refreshTokenRepo)
 
 	// Create admin creator
 	adminCreator := NewAdminCreator(testDB.DB, authService)
@@ -109,8 +117,11 @@ func TestAdminCreator_CreateAdminUserFromEnv_MissingEnvironmentVariable(t *testi
 	}()
 	os.Unsetenv("DEFAULT_ADMIN_PASSWORD")
 
+	// Create refresh token repository
+	refreshTokenRepo := repository.NewRefreshTokenRepository(testDB.DB)
+
 	// Create auth service
-	authService := auth.NewService("test-jwt-secret", 24*60*60)
+	authService := auth.NewService("test-jwt-secret", 24*time.Hour, refreshTokenRepo)
 
 	// Create admin creator
 	adminCreator := NewAdminCreator(testDB.DB, authService)
@@ -131,8 +142,11 @@ func TestAdminCreator_CreateAdminUser_DuplicateUser(t *testing.T) {
 	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
+	// Create refresh token repository
+	refreshTokenRepo := repository.NewRefreshTokenRepository(testDB.DB)
+
 	// Create auth service
-	authService := auth.NewService("test-jwt-secret", 24*60*60)
+	authService := auth.NewService("test-jwt-secret", 24*time.Hour, refreshTokenRepo)
 
 	// Create admin creator
 	adminCreator := NewAdminCreator(testDB.DB, authService)
@@ -161,8 +175,11 @@ func TestAdminCreator_CreateAdminUser_WeakPassword(t *testing.T) {
 	testDB := setupTestDatabase(t)
 	defer testDB.cleanup(t)
 
+	// Create refresh token repository
+	refreshTokenRepo := repository.NewRefreshTokenRepository(testDB.DB)
+
 	// Create auth service
-	authService := auth.NewService("test-jwt-secret", 24*60*60)
+	authService := auth.NewService("test-jwt-secret", 24*time.Hour, refreshTokenRepo)
 
 	// Create admin creator
 	adminCreator := NewAdminCreator(testDB.DB, authService)
@@ -194,8 +211,11 @@ func TestAdminCreator_AdminUserExists_Integration(t *testing.T) {
 	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
+	// Create refresh token repository
+	refreshTokenRepo := repository.NewRefreshTokenRepository(testDB.DB)
+
 	// Create auth service
-	authService := auth.NewService("test-jwt-secret", 24*60*60)
+	authService := auth.NewService("test-jwt-secret", 24*time.Hour, refreshTokenRepo)
 
 	// Create admin creator
 	adminCreator := NewAdminCreator(testDB.DB, authService)
@@ -226,8 +246,11 @@ func TestAdminCreator_AdminUserExists_ByRole(t *testing.T) {
 	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
+	// Create refresh token repository
+	refreshTokenRepo := repository.NewRefreshTokenRepository(testDB.DB)
+
 	// Create auth service
-	authService := auth.NewService("test-jwt-secret", 24*60*60)
+	authService := auth.NewService("test-jwt-secret", 24*time.Hour, refreshTokenRepo)
 
 	// Create admin creator
 	adminCreator := NewAdminCreator(testDB.DB, authService)
@@ -257,8 +280,11 @@ func TestAdminCreator_CreateAdminUser_DatabaseTransaction(t *testing.T) {
 	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
+	// Create refresh token repository
+	refreshTokenRepo := repository.NewRefreshTokenRepository(testDB.DB)
+
 	// Create auth service
-	authService := auth.NewService("test-jwt-secret", 24*60*60)
+	authService := auth.NewService("test-jwt-secret", 24*time.Hour, refreshTokenRepo)
 
 	// Create admin creator
 	adminCreator := NewAdminCreator(testDB.DB, authService)
@@ -299,8 +325,11 @@ func TestAdminCreator_PasswordHashing_Integration(t *testing.T) {
 	err := testDB.runSQLMigrations()
 	require.NoError(t, err)
 
+	// Create refresh token repository
+	refreshTokenRepo := repository.NewRefreshTokenRepository(testDB.DB)
+
 	// Create auth service
-	authService := auth.NewService("test-jwt-secret", 24*60*60)
+	authService := auth.NewService("test-jwt-secret", 24*time.Hour, refreshTokenRepo)
 
 	// Create admin creator
 	adminCreator := NewAdminCreator(testDB.DB, authService)

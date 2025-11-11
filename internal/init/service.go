@@ -13,6 +13,7 @@ import (
 	"product-requirements-management/internal/database"
 	"product-requirements-management/internal/logger"
 	"product-requirements-management/internal/models"
+	"product-requirements-management/internal/repository"
 )
 
 // Note: Error types and InitError are now defined in errors.go
@@ -65,8 +66,12 @@ func NewInitService(cfg *config.Config) (*InitService, error) {
 		"action":    "create_service",
 	}).Info("Creating initialization service")
 
-	// Create auth service for password hashing
-	authService := auth.NewService(cfg.JWT.Secret, 24*time.Hour)
+	// Note: We create auth service without refresh token repository initially
+	// since we don't have a database connection yet. This is only used for
+	// password hashing during initialization, not for token generation.
+	// The auth service will be properly initialized with repository after
+	// database connection is established.
+	authService := auth.NewService(cfg.JWT.Secret, 24*time.Hour, nil)
 
 	service := &InitService{
 		cfg:           cfg,
@@ -302,6 +307,18 @@ func (s *InitService) connectDatabase(ctx context.Context) error {
 	}
 
 	s.db = db
+
+	// Initialize refresh token repository
+	refreshTokenRepo := repository.NewRefreshTokenRepository(s.db)
+	logger.WithContextAndFields(ctx, map[string]interface{}{
+		"action": "refresh_token_repository_initialized",
+	}).Debug("Refresh token repository initialized")
+
+	// Re-initialize auth service with refresh token repository
+	s.auth = auth.NewService(s.cfg.JWT.Secret, 24*time.Hour, refreshTokenRepo)
+	logger.WithContextAndFields(ctx, map[string]interface{}{
+		"action": "auth_service_reinitialized",
+	}).Debug("Auth service reinitialized with refresh token repository")
 
 	// Initialize safety checker
 	s.safetyChecker = NewSafetyChecker(s.db)
