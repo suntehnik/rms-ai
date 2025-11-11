@@ -11,6 +11,7 @@ import (
 	"product-requirements-management/internal/auth"
 	"product-requirements-management/internal/database"
 	"product-requirements-management/internal/models"
+	"product-requirements-management/internal/repository"
 )
 
 func TestEndToEnd_CompleteInitializationWorkflow(t *testing.T) {
@@ -131,8 +132,11 @@ func TestEndToEnd_CompleteInitializationWorkflow(t *testing.T) {
 
 	// === VERIFY PASSWORD AUTHENTICATION ===
 
+	// Create refresh token repository
+	refreshTokenRepo := repository.NewRefreshTokenRepository(testDB.DB)
+
 	// Create auth service to verify password
-	authService := auth.NewService(testDB.Config.JWT.Secret, 24*time.Hour)
+	authService := auth.NewService(testDB.Config.JWT.Secret, 24*time.Hour, refreshTokenRepo)
 
 	// Verify password can be authenticated
 	err = authService.VerifyPassword(testPassword, adminUser.PasswordHash)
@@ -436,8 +440,11 @@ func TestEndToEnd_InitializationWithCustomConfiguration(t *testing.T) {
 	err = testDB.DB.Where("username = ?", "admin").First(&adminUser).Error
 	assert.NoError(t, err)
 
+	// Create refresh token repository
+	refreshTokenRepo := repository.NewRefreshTokenRepository(testDB.DB)
+
 	// Verify password works with custom JWT secret
-	authService := auth.NewService(testDB.Config.JWT.Secret, 24*time.Hour)
+	authService := auth.NewService(testDB.Config.JWT.Secret, 24*time.Hour, refreshTokenRepo)
 	err = authService.VerifyPassword(customPassword, adminUser.PasswordHash)
 	assert.NoError(t, err, "Custom password should be verifiable")
 

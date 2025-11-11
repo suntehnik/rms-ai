@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
@@ -27,14 +28,70 @@ func setupAdminTestDB(t *testing.T) *gorm.DB {
 
 func setupAdminCreator(t *testing.T) (*AdminCreator, *gorm.DB) {
 	db := setupAdminTestDB(t)
-	authService := auth.NewService("test-secret", 24*time.Hour)
+
+	// Import repository package for refresh token repository
+	refreshTokenRepo := &mockRefreshTokenRepository{db: db}
+
+	authService := auth.NewService("test-secret", 24*time.Hour, refreshTokenRepo)
 	adminCreator := NewAdminCreator(db, authService)
 	return adminCreator, db
 }
 
+// mockRefreshTokenRepository is a minimal mock for testing
+type mockRefreshTokenRepository struct {
+	db *gorm.DB
+}
+
+func (m *mockRefreshTokenRepository) Create(token *models.RefreshToken) error {
+	return m.db.Create(token).Error
+}
+
+func (m *mockRefreshTokenRepository) FindByTokenHash(tokenHash string) (*models.RefreshToken, error) {
+	var token models.RefreshToken
+	err := m.db.Where("token_hash = ?", tokenHash).First(&token).Error
+	if err != nil {
+		return nil, err
+	}
+	return &token, nil
+}
+
+func (m *mockRefreshTokenRepository) FindByUserID(userID uuid.UUID) ([]*models.RefreshToken, error) {
+	var tokens []*models.RefreshToken
+	err := m.db.Where("user_id = ?", userID).Find(&tokens).Error
+	return tokens, err
+}
+
+func (m *mockRefreshTokenRepository) FindAll() ([]*models.RefreshToken, error) {
+	var tokens []*models.RefreshToken
+	err := m.db.Find(&tokens).Error
+	return tokens, err
+}
+
+func (m *mockRefreshTokenRepository) Delete(id uuid.UUID) error {
+	return m.db.Delete(&models.RefreshToken{}, "id = ?", id).Error
+}
+
+func (m *mockRefreshTokenRepository) DeleteByUserID(userID uuid.UUID) error {
+	return m.db.Delete(&models.RefreshToken{}, "user_id = ?", userID).Error
+}
+
+func (m *mockRefreshTokenRepository) DeleteExpired() (int64, error) {
+	result := m.db.Where("expires_at < ?", time.Now()).Delete(&models.RefreshToken{})
+	return result.RowsAffected, result.Error
+}
+
+func (m *mockRefreshTokenRepository) Update(token *models.RefreshToken) error {
+	return m.db.Save(token).Error
+}
+
+func (m *mockRefreshTokenRepository) GetDB() *gorm.DB {
+	return m.db
+}
+
 func TestNewAdminCreator(t *testing.T) {
 	db := setupAdminTestDB(t)
-	authService := auth.NewService("test-secret", 24*time.Hour)
+	refreshTokenRepo := &mockRefreshTokenRepository{db: db}
+	authService := auth.NewService("test-secret", 24*time.Hour, refreshTokenRepo)
 
 	adminCreator := NewAdminCreator(db, authService)
 
