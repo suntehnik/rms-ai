@@ -489,6 +489,7 @@ func TestEpicService_ChangeEpicStatus(t *testing.T) {
 					ID:     uuid.New(),
 					Status: models.EpicStatusBacklog,
 				}
+				epicRepo.On("GetByIDWithUsers", mock.AnythingOfType("uuid.UUID")).Return(epic, nil)
 				epicRepo.On("GetByID", mock.AnythingOfType("uuid.UUID")).Return(epic, nil)
 				epicRepo.On("Update", mock.AnythingOfType("*models.Epic")).Return(nil)
 			},
