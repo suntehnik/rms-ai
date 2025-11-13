@@ -135,7 +135,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 	// Initialize handlers
 	epicHandler := handlers.NewEpicHandler(epicService)
 	userStoryHandler := handlers.NewUserStoryHandler(userStoryService)
-	acceptanceCriteriaHandler := handlers.NewAcceptanceCriteriaHandler(acceptanceCriteriaService)
+	acceptanceCriteriaHandler := handlers.NewAcceptanceCriteriaHandler(acceptanceCriteriaService, userStoryService)
 	requirementHandler := handlers.NewRequirementHandler(requirementService)
 	configHandler := handlers.NewConfigHandler(configService)
 	deletionHandler := handlers.NewDeletionHandler(deletionService, logger.Logger)

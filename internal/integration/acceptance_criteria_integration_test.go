@@ -27,6 +27,7 @@ type AcceptanceCriteriaIntegrationTestSuite struct {
 	router                    *gin.Engine
 	acceptanceCriteriaHandler *handlers.AcceptanceCriteriaHandler
 	acceptanceCriteriaService service.AcceptanceCriteriaService
+	userStoryService          service.UserStoryService
 	acceptanceCriteriaRepo    repository.AcceptanceCriteriaRepository
 	userStoryRepo             repository.UserStoryRepository
 	epicRepo                  repository.EpicRepository
@@ -50,9 +51,9 @@ func (suite *AcceptanceCriteriaIntegrationTestSuite) SetupSuite() {
 
 	// Setup services
 	suite.acceptanceCriteriaService = service.NewAcceptanceCriteriaService(suite.acceptanceCriteriaRepo, suite.userStoryRepo, suite.userRepo)
-
+	suite.userStoryService = service.NewUserStoryService(suite.userStoryRepo, suite.epicRepo, suite.userRepo)
 	// Setup handlers
-	suite.acceptanceCriteriaHandler = handlers.NewAcceptanceCriteriaHandler(suite.acceptanceCriteriaService)
+	suite.acceptanceCriteriaHandler = handlers.NewAcceptanceCriteriaHandler(suite.acceptanceCriteriaService, suite.userStoryService)
 
 	// Setup authentication
 	suite.authContext = SetupTestAuth(suite.T(), suite.db)

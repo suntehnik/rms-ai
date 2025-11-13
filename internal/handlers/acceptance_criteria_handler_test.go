@@ -90,17 +90,17 @@ func (m *MockAcceptanceCriteriaService) ValidateUserStoryHasAcceptanceCriteria(u
 	return args.Error(0)
 }
 
-func setupAcceptanceCriteriaTestRouter() (*gin.Engine, *MockAcceptanceCriteriaService, *auth.Service) {
+func setupAcceptanceCriteriaTestRouter() (*gin.Engine, *MockAcceptanceCriteriaService, *MockUserStoryService, *auth.Service) {
 	gin.SetMode(gin.TestMode)
 
-	mockService := new(MockAcceptanceCriteriaService)
-	handler := NewAcceptanceCriteriaHandler(mockService)
+	mockACService := new(MockAcceptanceCriteriaService)
+	mockUSService := new(MockUserStoryService)
+	handler := NewAcceptanceCriteriaHandler(mockACService, mockUSService)
 
 	router := gin.New()
 
 	// Create auth service for testing
-	mockRefreshTokenRepo := &mockRefreshTokenRepository{}
-	authService := auth.NewService("test-secret", time.Hour, mockRefreshTokenRepo)
+	authService := auth.NewService("test-secret", time.Hour, nil)
 
 	v1 := router.Group("/api/v1")
 	v1.Use(authService.Middleware()) // Add auth middleware
@@ -113,7 +113,7 @@ func setupAcceptanceCriteriaTestRouter() (*gin.Engine, *MockAcceptanceCriteriaSe
 		v1.GET("/user-stories/:id/acceptance-criteria", handler.GetAcceptanceCriteriaByUserStory)
 	}
 
-	return router, mockService, authService
+	return router, mockACService, mockUSService, authService
 }
 
 // Helper function to create authenticated request
@@ -161,7 +161,7 @@ func createAuthenticatedAcceptanceCriteriaRequestWithUser(method, url string, bo
 }
 
 func TestAcceptanceCriteriaHandler_CreateAcceptanceCriteria(t *testing.T) {
-	router, mockService, authService := setupAcceptanceCriteriaTestRouter()
+	router, mockService, _, authService := setupAcceptanceCriteriaTestRouter()
 
 	userStoryID := uuid.New()
 	acceptanceCriteriaID := uuid.New()
@@ -275,7 +275,7 @@ func TestAcceptanceCriteriaHandler_CreateAcceptanceCriteria(t *testing.T) {
 }
 
 func TestAcceptanceCriteriaHandler_GetAcceptanceCriteria(t *testing.T) {
-	router, mockService, authService := setupAcceptanceCriteriaTestRouter()
+	router, mockService, _, authService := setupAcceptanceCriteriaTestRouter()
 
 	acceptanceCriteriaID := uuid.New()
 	expectedAcceptanceCriteria := &models.AcceptanceCriteria{
@@ -359,7 +359,7 @@ func TestAcceptanceCriteriaHandler_GetAcceptanceCriteria(t *testing.T) {
 }
 
 func TestAcceptanceCriteriaHandler_DeleteAcceptanceCriteria(t *testing.T) {
-	router, mockService, authService := setupAcceptanceCriteriaTestRouter()
+	router, mockService, _, authService := setupAcceptanceCriteriaTestRouter()
 
 	acceptanceCriteriaID := uuid.New()
 
@@ -471,7 +471,7 @@ func TestAcceptanceCriteriaHandler_DeleteAcceptanceCriteria(t *testing.T) {
 }
 
 func TestAcceptanceCriteriaHandler_ListAcceptanceCriteria(t *testing.T) {
-	router, mockService, authService := setupAcceptanceCriteriaTestRouter()
+	router, mockService, _, authService := setupAcceptanceCriteriaTestRouter()
 
 	userStoryID := uuid.New()
 	authorID := uuid.New()
@@ -567,7 +567,7 @@ func TestAcceptanceCriteriaHandler_ListAcceptanceCriteria(t *testing.T) {
 }
 
 func TestAcceptanceCriteriaHandler_GetAcceptanceCriteriaByUserStory(t *testing.T) {
-	router, mockService, authService := setupAcceptanceCriteriaTestRouter()
+	router, mockACService, mockUSService, authService := setupAcceptanceCriteriaTestRouter()
 
 	userStoryID := uuid.New()
 	expectedAcceptanceCriteria := []models.AcceptanceCriteria{
@@ -598,7 +598,7 @@ func TestAcceptanceCriteriaHandler_GetAcceptanceCriteriaByUserStory(t *testing.T
 			userStoryID: userStoryID.String(),
 			queryParams: "",
 			setupMocks: func() {
-				mockService.On("GetAcceptanceCriteriaByUserStory", userStoryID, 50, 0).Return(expectedAcceptanceCriteria, int64(2), nil)
+				mockACService.On("GetAcceptanceCriteriaByUserStory", userStoryID, 50, 0).Return(expectedAcceptanceCriteria, int64(2), nil)
 			},
 			expectedStatus: http.StatusOK,
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
@@ -616,7 +616,7 @@ func TestAcceptanceCriteriaHandler_GetAcceptanceCriteriaByUserStory(t *testing.T
 			userStoryID: userStoryID.String(),
 			queryParams: "?limit=10&offset=5",
 			setupMocks: func() {
-				mockService.On("GetAcceptanceCriteriaByUserStory", userStoryID, 10, 5).Return(expectedAcceptanceCriteria, int64(15), nil)
+				mockACService.On("GetAcceptanceCriteriaByUserStory", userStoryID, 10, 5).Return(expectedAcceptanceCriteria, int64(15), nil)
 			},
 			expectedStatus: http.StatusOK,
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
@@ -634,7 +634,7 @@ func TestAcceptanceCriteriaHandler_GetAcceptanceCriteriaByUserStory(t *testing.T
 			userStoryID: userStoryID.String(),
 			queryParams: "",
 			setupMocks: func() {
-				mockService.On("GetAcceptanceCriteriaByUserStory", userStoryID, 50, 0).Return(nil, int64(0), service.ErrUserStoryNotFound)
+				mockACService.On("GetAcceptanceCriteriaByUserStory", userStoryID, 50, 0).Return(nil, int64(0), service.ErrUserStoryNotFound)
 			},
 			expectedStatus: http.StatusNotFound,
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
@@ -645,16 +645,20 @@ func TestAcceptanceCriteriaHandler_GetAcceptanceCriteriaByUserStory(t *testing.T
 			},
 		},
 		{
-			name:           "invalid user story ID",
-			userStoryID:    "invalid-uuid",
-			queryParams:    "",
-			setupMocks:     func() {},
-			expectedStatus: http.StatusBadRequest,
+			name:        "invalid user story ID",
+			userStoryID: "invalid-uuid",
+			queryParams: "",
+			setupMocks: func() {
+				mockUSService.
+					On("GetUserStoryByReferenceID", "invalid-uuid").
+					Return(nil, service.ErrUserStoryNotFound)
+			},
+			expectedStatus: http.StatusNotFound,
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
 				var response map[string]any
 				err := json.Unmarshal(w.Body.Bytes(), &response)
 				assert.NoError(t, err)
-				assert.Contains(t, response["error"], "Please use UUID for user story ID")
+				assert.Contains(t, response["error"], "User story not found")
 			},
 		},
 	}
@@ -662,7 +666,8 @@ func TestAcceptanceCriteriaHandler_GetAcceptanceCriteriaByUserStory(t *testing.T
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Reset mock
-			mockService.ExpectedCalls = nil
+			mockACService.ExpectedCalls = nil
+			mockUSService.ExpectedCalls = nil
 			tt.setupMocks()
 
 			// Create authenticated request
@@ -677,13 +682,14 @@ func TestAcceptanceCriteriaHandler_GetAcceptanceCriteriaByUserStory(t *testing.T
 			assert.Equal(t, tt.expectedStatus, w.Code)
 			tt.checkResponse(t, w)
 
-			mockService.AssertExpectations(t)
+			mockACService.AssertExpectations(t)
+			mockUSService.AssertExpectations(t)
 		})
 	}
 }
 
 func TestAcceptanceCriteriaHandler_GetAcceptanceCriteriaByAuthor(t *testing.T) {
-	router, mockService, authService := setupAcceptanceCriteriaTestRouter()
+	router, mockService, _, authService := setupAcceptanceCriteriaTestRouter()
 
 	authorID := uuid.New()
 	expectedAcceptanceCriteria := []models.AcceptanceCriteria{
@@ -702,7 +708,7 @@ func TestAcceptanceCriteriaHandler_GetAcceptanceCriteriaByAuthor(t *testing.T) {
 	}
 
 	// Add route for this test since it's not in the setup
-	router.GET("/api/v1/users/:id/acceptance-criteria", NewAcceptanceCriteriaHandler(mockService).GetAcceptanceCriteriaByAuthor)
+	router.GET("/api/v1/users/:id/acceptance-criteria", NewAcceptanceCriteriaHandler(mockService, nil).GetAcceptanceCriteriaByAuthor)
 
 	tests := []struct {
 		name           string

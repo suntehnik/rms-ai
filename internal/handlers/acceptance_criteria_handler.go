@@ -18,12 +18,14 @@ type AcceptanceCriteriaListResponse = ListResponse[models.AcceptanceCriteria]
 // AcceptanceCriteriaHandler handles HTTP requests for acceptance criteria operations
 type AcceptanceCriteriaHandler struct {
 	acceptanceCriteriaService service.AcceptanceCriteriaService
+	userStoryService          service.UserStoryService
 }
 
 // NewAcceptanceCriteriaHandler creates a new acceptance criteria handler instance
-func NewAcceptanceCriteriaHandler(acceptanceCriteriaService service.AcceptanceCriteriaService) *AcceptanceCriteriaHandler {
+func NewAcceptanceCriteriaHandler(acceptanceCriteriaService service.AcceptanceCriteriaService, userStoryService service.UserStoryService) *AcceptanceCriteriaHandler {
 	return &AcceptanceCriteriaHandler{
 		acceptanceCriteriaService: acceptanceCriteriaService,
+		userStoryService:          userStoryService,
 	}
 }
 
@@ -357,21 +359,6 @@ func (h *AcceptanceCriteriaHandler) ListAcceptanceCriteria(c *gin.Context) {
 func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteriaByUserStory(c *gin.Context) {
 	userStoryIDParam := c.Param("id")
 
-	// Try to parse as UUID first, then as reference ID
-	var userStoryID uuid.UUID
-	var err error
-
-	if id, parseErr := uuid.Parse(userStoryIDParam); parseErr == nil {
-		userStoryID = id
-	} else {
-		// For reference ID, we need to resolve it first
-		// This would require the user story service, but for now we'll return an error
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Please use UUID for user story ID in this endpoint",
-		})
-		return
-	}
-
 	// Parse pagination parameters
 	var params PaginationParams
 	if limit := c.Query("limit"); limit != "" {
@@ -396,16 +383,28 @@ func (h *AcceptanceCriteriaHandler) GetAcceptanceCriteriaByUserStory(c *gin.Cont
 	}
 	params.SetDefaults()
 
-	acceptanceCriteria, totalCount, err := h.acceptanceCriteriaService.GetAcceptanceCriteriaByUserStory(userStoryID, params.Limit, params.Offset)
+	var acceptanceCriteria []models.AcceptanceCriteria
+	var err error
+	var totalCount int64
+
+	// Try to parse as UUID first, then as reference ID
+	if id, parseErr := uuid.Parse(userStoryIDParam); parseErr == nil {
+		acceptanceCriteria, totalCount, err = h.acceptanceCriteriaService.GetAcceptanceCriteriaByUserStory(id, params.Limit, params.Offset)
+	} else {
+		// For reference ID, we need to resolve it first
+		var tempUserStory *models.UserStory
+		if tempUserStory, err = h.userStoryService.GetUserStoryByReferenceID(userStoryIDParam); err == nil {
+			acceptanceCriteria, totalCount, err = h.acceptanceCriteriaService.GetAcceptanceCriteriaByUserStory(tempUserStory.ID, params.Limit, params.Offset)
+		}
+	}
 	if err != nil {
-		switch {
-		case errors.Is(err, service.ErrUserStoryNotFound):
+		if errors.Is(err, service.ErrUserStoryNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "User story not found",
 			})
-		default:
+		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to get acceptance criteria for user story",
+				"error": "Failed to get acceptance criterias",
 			})
 		}
 		return
