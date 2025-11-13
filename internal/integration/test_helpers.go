@@ -2,8 +2,6 @@ package integration
 
 import (
 	"log"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
@@ -144,19 +142,11 @@ func skipIfNoDocker(t *testing.T) {
 }
 
 // logTestStart logs the start of a test
-func logTestStart(t *testing.T, testName string) {
+func logTestStart(_ *testing.T, testName string) {
 	log.Printf("🧪 Starting integration test: %s", testName)
 }
 
 // logTestEnd logs the end of a test
-func logTestEnd(t *testing.T, testName string) {
+func logTestEnd(_ *testing.T, testName string) {
 	log.Printf("✅ Completed integration test: %s", testName)
-}
-
-// makeAuthenticatedRequest creates an HTTP request with authentication token
-func makeAuthenticatedRequest(method, url, token string) (*http.Request, *httptest.ResponseRecorder) {
-	req, _ := http.NewRequest(method, url, nil)
-	req.Header.Set("Authorization", "Bearer "+token)
-	w := httptest.ResponseRecorder{}
-	return req, &w
 }

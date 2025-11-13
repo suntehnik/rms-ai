@@ -90,16 +90,6 @@ func getIntArg(args map[string]interface{}, key string) (int, bool) {
 	return 0, false
 }
 
-// getBoolArg safely extracts a boolean argument from the args map
-func getBoolArg(args map[string]interface{}, key string) (bool, bool) {
-	if val, exists := args[key]; exists {
-		if b, ok := val.(bool); ok {
-			return b, true
-		}
-	}
-	return false, false
-}
-
 // getUUIDArg safely extracts and parses a UUID argument from the args map
 func getUUIDArg(args map[string]interface{}, key string) (uuid.UUID, bool) {
 	if str, exists := getStringArg(args, key); exists {
