@@ -153,7 +153,10 @@ services:
       - nginx-logs:/var/log/nginx
       - nginx-static:/usr/share/nginx
     depends_on:
-      - app
+      app:
+        condition: service_healthy
+      web:
+        condition: service_completed_successfully
     networks:
       - app-network
     healthcheck:
