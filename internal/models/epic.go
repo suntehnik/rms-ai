@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -135,13 +136,14 @@ func (e *Epic) BeforeCreate(tx *gorm.DB) error {
 		e.Status = EpicStatusBacklog
 	}
 
-	// Generate reference ID if not set
+	// Generate ReferenceID by calling PostgreSQL function directly
+	// This ensures we get a unique value from the sequence
 	if e.ReferenceID == "" {
-		referenceID, err := epicGenerator.Generate(tx, &Epic{})
-		if err != nil {
-			return err
+		var refID string
+		if err := tx.Raw("SELECT get_next_epic_ref_id()").Scan(&refID).Error; err != nil {
+			return fmt.Errorf("failed to generate reference ID: %w", err)
 		}
-		e.ReferenceID = referenceID
+		e.ReferenceID = refID
 	}
 
 	return nil

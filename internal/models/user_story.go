@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -132,13 +133,14 @@ func (us *UserStory) BeforeCreate(tx *gorm.DB) error {
 		us.Status = UserStoryStatusBacklog
 	}
 
-	// Generate reference ID if not set
+	// Generate ReferenceID by calling PostgreSQL function directly
+	// This ensures we get a unique value from the sequence
 	if us.ReferenceID == "" {
-		referenceID, err := userStoryGenerator.Generate(tx, &UserStory{})
-		if err != nil {
-			return err
+		var refID string
+		if err := tx.Raw("SELECT get_next_user_story_ref_id()").Scan(&refID).Error; err != nil {
+			return fmt.Errorf("failed to generate reference ID: %w", err)
 		}
-		us.ReferenceID = referenceID
+		us.ReferenceID = refID
 	}
 
 	return nil

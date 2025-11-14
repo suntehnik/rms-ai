@@ -73,6 +73,9 @@ browser-control-mcp/
 *_key*
 prompts/
 
+# Stress test scripts (not for production)
+scripts/*stress*.sh
+
 bruno/
 .roo/
 .spexus.config
