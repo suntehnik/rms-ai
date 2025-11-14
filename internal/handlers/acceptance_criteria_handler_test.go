@@ -110,35 +110,9 @@ func setupAcceptanceCriteriaTestRouter() (*gin.Engine, *MockAcceptanceCriteriaSe
 		v1.PUT("/acceptance-criteria/:id", handler.UpdateAcceptanceCriteria)
 		v1.DELETE("/acceptance-criteria/:id", handler.DeleteAcceptanceCriteria)
 		v1.GET("/acceptance-criteria", handler.ListAcceptanceCriteria)
-		v1.GET("/user-stories/:id/acceptance-criteria", handler.GetAcceptanceCriteriaByUserStory)
 	}
 
 	return router, mockACService, mockUSService, authService
-}
-
-// Helper function to create authenticated request
-func createAuthenticatedAcceptanceCriteriaRequest(method, url string, body io.Reader, authService *auth.Service) (*http.Request, error) {
-	req, err := http.NewRequest(method, url, body)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create test user and token
-	testUser := &models.User{
-		ID:       uuid.New(),
-		Username: "testuser",
-		Role:     models.RoleUser,
-	}
-	token, err := authService.GenerateToken(testUser)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Authorization", "Bearer "+token)
-	if body != nil {
-		req.Header.Set("Content-Type", "application/json")
-	}
-	return req, nil
 }
 
 // Helper function to create authenticated request with specific user
@@ -562,128 +536,6 @@ func TestAcceptanceCriteriaHandler_ListAcceptanceCriteria(t *testing.T) {
 			tt.checkResponse(t, w)
 
 			mockService.AssertExpectations(t)
-		})
-	}
-}
-
-func TestAcceptanceCriteriaHandler_GetAcceptanceCriteriaByUserStory(t *testing.T) {
-	router, mockACService, mockUSService, authService := setupAcceptanceCriteriaTestRouter()
-
-	userStoryID := uuid.New()
-	expectedAcceptanceCriteria := []models.AcceptanceCriteria{
-		{
-			ID:          uuid.New(),
-			ReferenceID: "AC-001",
-			UserStoryID: userStoryID,
-			Description: "WHEN user clicks submit THEN system SHALL validate the form",
-		},
-		{
-			ID:          uuid.New(),
-			ReferenceID: "AC-002",
-			UserStoryID: userStoryID,
-			Description: "WHEN validation fails THEN system SHALL display error message",
-		},
-	}
-
-	tests := []struct {
-		name           string
-		userStoryID    string
-		queryParams    string
-		setupMocks     func()
-		expectedStatus int
-		checkResponse  func(*testing.T, *httptest.ResponseRecorder)
-	}{
-		{
-			name:        "successful retrieval with default pagination",
-			userStoryID: userStoryID.String(),
-			queryParams: "",
-			setupMocks: func() {
-				mockACService.On("GetAcceptanceCriteriaByUserStory", userStoryID, 50, 0).Return(expectedAcceptanceCriteria, int64(2), nil)
-			},
-			expectedStatus: http.StatusOK,
-			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
-				var response ListResponse[models.AcceptanceCriteria]
-				err := json.Unmarshal(w.Body.Bytes(), &response)
-				assert.NoError(t, err)
-				assert.Equal(t, int64(2), response.TotalCount)
-				assert.Equal(t, 50, response.Limit)
-				assert.Equal(t, 0, response.Offset)
-				assert.Len(t, response.Data, 2)
-			},
-		},
-		{
-			name:        "successful retrieval with custom pagination",
-			userStoryID: userStoryID.String(),
-			queryParams: "?limit=10&offset=5",
-			setupMocks: func() {
-				mockACService.On("GetAcceptanceCriteriaByUserStory", userStoryID, 10, 5).Return(expectedAcceptanceCriteria, int64(15), nil)
-			},
-			expectedStatus: http.StatusOK,
-			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
-				var response ListResponse[models.AcceptanceCriteria]
-				err := json.Unmarshal(w.Body.Bytes(), &response)
-				assert.NoError(t, err)
-				assert.Equal(t, int64(15), response.TotalCount)
-				assert.Equal(t, 10, response.Limit)
-				assert.Equal(t, 5, response.Offset)
-				assert.Len(t, response.Data, 2)
-			},
-		},
-		{
-			name:        "user story not found",
-			userStoryID: userStoryID.String(),
-			queryParams: "",
-			setupMocks: func() {
-				mockACService.On("GetAcceptanceCriteriaByUserStory", userStoryID, 50, 0).Return(nil, int64(0), service.ErrUserStoryNotFound)
-			},
-			expectedStatus: http.StatusNotFound,
-			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
-				var response map[string]any
-				err := json.Unmarshal(w.Body.Bytes(), &response)
-				assert.NoError(t, err)
-				assert.Contains(t, response["error"], "User story not found")
-			},
-		},
-		{
-			name:        "invalid user story ID",
-			userStoryID: "invalid-uuid",
-			queryParams: "",
-			setupMocks: func() {
-				mockUSService.
-					On("GetUserStoryByReferenceID", "invalid-uuid").
-					Return(nil, service.ErrUserStoryNotFound)
-			},
-			expectedStatus: http.StatusNotFound,
-			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
-				var response map[string]any
-				err := json.Unmarshal(w.Body.Bytes(), &response)
-				assert.NoError(t, err)
-				assert.Contains(t, response["error"], "User story not found")
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Reset mock
-			mockACService.ExpectedCalls = nil
-			mockUSService.ExpectedCalls = nil
-			tt.setupMocks()
-
-			// Create authenticated request
-			req, err := createAuthenticatedAcceptanceCriteriaRequest(http.MethodGet, "/api/v1/user-stories/"+tt.userStoryID+"/acceptance-criteria"+tt.queryParams, nil, authService)
-			assert.NoError(t, err)
-			w := httptest.NewRecorder()
-
-			// Execute request
-			router.ServeHTTP(w, req)
-
-			// Check response
-			assert.Equal(t, tt.expectedStatus, w.Code)
-			tt.checkResponse(t, w)
-
-			mockACService.AssertExpectations(t)
-			mockUSService.AssertExpectations(t)
 		})
 	}
 }

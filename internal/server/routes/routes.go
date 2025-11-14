@@ -219,7 +219,7 @@ func Setup(router *gin.Engine, cfg *config.Config, db *database.DB) {
 			userStories.GET("/:id", userStoryHandler.GetUserStory)
 			userStories.PUT("/:id", userStoryHandler.UpdateUserStory)
 			userStories.DELETE("/:id", userStoryHandler.DeleteUserStory)
-			userStories.GET("/:id/acceptance-criteria", acceptanceCriteriaHandler.GetAcceptanceCriteriaByUserStory)
+			userStories.GET("/:id/acceptance-criteria", userStoryHandler.GetUserStoryWithAcceptanceCriteria)
 			userStories.POST("/:id/acceptance-criteria", acceptanceCriteriaHandler.CreateAcceptanceCriteria)
 			userStories.GET("/:id/requirements", userStoryHandler.GetUserStoryWithRequirements)
 			userStories.POST("/:id/requirements", requirementHandler.CreateRequirement)
