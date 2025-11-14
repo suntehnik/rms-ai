@@ -70,7 +70,6 @@ func (suite *AcceptanceCriteriaIntegrationTestSuite) SetupSuite() {
 		userStories := v1.Group("/user-stories")
 		{
 			userStories.POST("/:id/acceptance-criteria", suite.acceptanceCriteriaHandler.CreateAcceptanceCriteria)
-			userStories.GET("/:id/acceptance-criteria", suite.acceptanceCriteriaHandler.GetAcceptanceCriteriaByUserStory)
 		}
 
 		// Acceptance Criteria routes

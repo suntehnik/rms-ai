@@ -10371,21 +10371,13 @@ const docTemplate = `{
                 "description"
             ],
             "properties": {
-                "author": {
-                    "description": "User who authored this acceptance criteria",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
-                        }
-                    ]
-                },
                 "author_id": {
                     "description": "ID of the user who authored this acceptance criteria",
                     "type": "string",
                     "example": "123e4567-e89b-12d3-a456-426614174002"
                 },
                 "comments": {
-                    "description": "Comments associated with this acceptance criteria",
+                    "description": "@Description Comments associated with this acceptance criteria (included only when preloaded)",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/product-requirements-management_internal_models.Comment"
@@ -10412,7 +10404,7 @@ const docTemplate = `{
                     "example": "AC-001"
                 },
                 "requirements": {
-                    "description": "Requirements linked to this acceptance criteria",
+                    "description": "@Description Requirements linked to this acceptance criteria (included only when preloaded)",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/product-requirements-management_internal_models.Requirement"
@@ -10422,14 +10414,6 @@ const docTemplate = `{
                     "description": "Timestamp when the acceptance criteria was last modified",
                     "type": "string",
                     "example": "2023-01-02T12:30:00Z"
-                },
-                "user_story": {
-                    "description": "Relationships",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
-                        }
-                    ]
                 },
                 "user_story_id": {
                     "description": "ID of the parent user story",
@@ -10446,14 +10430,6 @@ const docTemplate = `{
                 "entity_type"
             ],
             "properties": {
-                "author": {
-                    "description": "User who authored this comment",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
-                        }
-                    ]
-                },
                 "author_id": {
                     "description": "ID of the user who authored this comment",
                     "type": "string",
@@ -10498,21 +10474,13 @@ const docTemplate = `{
                     "type": "string",
                     "example": "OAuth 2.0 authentication flow"
                 },
-                "parent_comment": {
-                    "description": "Relationships",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.Comment"
-                        }
-                    ]
-                },
                 "parent_comment_id": {
                     "description": "Optional ID of parent comment for threaded discussions",
                     "type": "string",
                     "example": "123e4567-e89b-12d3-a456-426614174002"
                 },
                 "replies": {
-                    "description": "Replies to this comment",
+                    "description": "@Description Replies to this comment (included only when preloaded)",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/product-requirements-management_internal_models.Comment"
@@ -10882,26 +10850,10 @@ const docTemplate = `{
                 "title"
             ],
             "properties": {
-                "acceptance_criteria": {
-                    "description": "Optional linked acceptance criteria",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.AcceptanceCriteria"
-                        }
-                    ]
-                },
                 "acceptance_criteria_id": {
                     "description": "Optional ID of linked acceptance criteria",
                     "type": "string",
                     "example": "123e4567-e89b-12d3-a456-426614174002"
-                },
-                "assignee": {
-                    "description": "User assigned to implement this requirement",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
-                        }
-                    ]
                 },
                 "assignee_id": {
                     "description": "ID of the user assigned to implement the requirement",
@@ -10909,7 +10861,7 @@ const docTemplate = `{
                     "example": "123e4567-e89b-12d3-a456-426614174004"
                 },
                 "comments": {
-                    "description": "Comments associated with this requirement",
+                    "description": "@Description Comments associated with this requirement (included only when preloaded)",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/product-requirements-management_internal_models.Comment"
@@ -10919,14 +10871,6 @@ const docTemplate = `{
                     "description": "Timestamp when the requirement was created",
                     "type": "string",
                     "example": "2023-01-01T00:00:00Z"
-                },
-                "creator": {
-                    "description": "User who created this requirement",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.User"
-                        }
-                    ]
                 },
                 "creator_id": {
                     "description": "ID of the user who created the requirement",
@@ -10961,7 +10905,7 @@ const docTemplate = `{
                     "example": "REQ-001"
                 },
                 "source_relationships": {
-                    "description": "Relationships where this requirement is the source",
+                    "description": "@Description Relationships where this requirement is the source (included only when preloaded)",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/product-requirements-management_internal_models.RequirementRelationship"
@@ -10977,7 +10921,7 @@ const docTemplate = `{
                     "example": "Draft"
                 },
                 "target_relationships": {
-                    "description": "Relationships where this requirement is the target",
+                    "description": "@Description Relationships where this requirement is the target (included only when preloaded)",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/product-requirements-management_internal_models.RequirementRelationship"
@@ -10989,14 +10933,6 @@ const docTemplate = `{
                     "maxLength": 500,
                     "example": "User authentication must support OAuth 2.0"
                 },
-                "type": {
-                    "description": "Type classification of this requirement",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.RequirementType"
-                        }
-                    ]
-                },
                 "type_id": {
                     "description": "ID of the requirement type (Functional, Non-Functional, etc.)",
                     "type": "string",
@@ -11006,14 +10942,6 @@ const docTemplate = `{
                     "description": "Timestamp when the requirement was last updated",
                     "type": "string",
                     "example": "2023-01-02T12:30:00Z"
-                },
-                "user_story": {
-                    "description": "Relationships",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/product-requirements-management_internal_models.UserStory"
-                        }
-                    ]
                 },
                 "user_story_id": {
                     "description": "ID of the parent user story",
