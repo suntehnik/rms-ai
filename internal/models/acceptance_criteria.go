@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -47,13 +48,17 @@ func (ac *AcceptanceCriteria) BeforeCreate(tx *gorm.DB) error {
 	if ac.ID == uuid.Nil {
 		ac.ID = uuid.New()
 	}
+
+	// Generate ReferenceID by calling PostgreSQL function directly
+	// This ensures we get a unique value from the sequence
 	if ac.ReferenceID == "" {
-		referenceID, err := acceptanceCriteriaGenerator.Generate(tx, &AcceptanceCriteria{})
-		if err != nil {
-			return err
+		var refID string
+		if err := tx.Raw("SELECT get_next_acceptance_criteria_ref_id()").Scan(&refID).Error; err != nil {
+			return fmt.Errorf("failed to generate reference ID: %w", err)
 		}
-		ac.ReferenceID = referenceID
+		ac.ReferenceID = refID
 	}
+
 	now := time.Now().UTC()
 	ac.CreatedAt = now
 	ac.UpdatedAt = now
