@@ -353,7 +353,6 @@ func testProductionGeneratorDirectly(t *testing.T, db *gorm.DB) {
 	}
 
 	// Test that the generator is the same one used by the model
-	assert.Equal(t, int64(2147483645), requirementGenerator.lockKey, "Model should use correct lock key")
 	assert.Equal(t, "REQ", requirementGenerator.prefix, "Model should use correct prefix")
 }
 

@@ -79,9 +79,33 @@ func (g *PostgreSQLReferenceIDGenerator) Generate(tx *gorm.DB, model interface{}
 	}
 
 	// For non-PostgreSQL databases (like SQLite in unit tests), use simple count method
+	// Determine table name based on prefix
+	var tableName string
+	switch g.prefix {
+	case "EP":
+		tableName = "epics"
+	case "US":
+		tableName = "user_stories"
+	case "AC":
+		tableName = "acceptance_criteria"
+	case "REQ":
+		tableName = "requirements"
+	case "STD":
+		tableName = "steering_documents"
+	case "PROMPT":
+		tableName = "prompts"
+	default:
+		return "", fmt.Errorf("unknown prefix: %s", g.prefix)
+	}
+
 	var count int64
-	if err := tx.Model(model).Count(&count).Error; err != nil {
+	if err := tx.Table(tableName).Count(&count).Error; err != nil {
 		return "", fmt.Errorf("failed to count records: %w", err)
 	}
-	return fmt.Sprintf("%s-%03d", g.prefix, count+1), nil
+
+	// Support unlimited growth like PostgreSQL version
+	if count < 999 {
+		return fmt.Sprintf("%s-%03d", g.prefix, count+1), nil
+	}
+	return fmt.Sprintf("%s-%d", g.prefix, count+1), nil
 }

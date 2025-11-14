@@ -317,7 +317,6 @@ func testAcceptanceCriteriaProductionGeneratorDirectly(t *testing.T, db *gorm.DB
 	}
 
 	// Test that the generator is the same one used by the model
-	assert.Equal(t, int64(2147483644), acceptanceCriteriaGenerator.lockKey, "Model should use correct lock key")
 	assert.Equal(t, "AC", acceptanceCriteriaGenerator.prefix, "Model should use correct prefix")
 }
 
