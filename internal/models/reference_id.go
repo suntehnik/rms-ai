@@ -42,7 +42,8 @@ func NewPostgreSQLReferenceIDGenerator(lockKey int64, prefix string) *PostgreSQL
 // The function uses PostgreSQL sequences which are atomic and guarantee uniqueness.
 // This method is called from BeforeCreate hooks in GORM models.
 //
-// This generator is designed for PostgreSQL only. For testing, use TestReferenceIDGenerator.
+// Note: This generator requires PostgreSQL-specific functions and will not work with SQLite.
+// For unit tests with SQLite, use TestReferenceIDGenerator from reference_id_test.go.
 func (g *PostgreSQLReferenceIDGenerator) Generate(tx *gorm.DB, model interface{}) (string, error) {
 	// Determine which function to call based on prefix
 	var functionName string
@@ -63,7 +64,7 @@ func (g *PostgreSQLReferenceIDGenerator) Generate(tx *gorm.DB, model interface{}
 		return "", fmt.Errorf("unknown prefix: %s", g.prefix)
 	}
 
-	// Call the PostgreSQL function to get the next reference ID
+	// Execute PostgreSQL function to atomically generate next reference ID from sequence
 	var referenceID string
 	if err := tx.Raw(fmt.Sprintf("SELECT %s()", functionName)).Scan(&referenceID).Error; err != nil {
 		return "", fmt.Errorf("failed to generate reference ID: %w", err)
