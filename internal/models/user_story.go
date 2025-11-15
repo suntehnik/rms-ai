@@ -20,7 +20,17 @@ import (
 //
 // For unit tests, use TestReferenceIDGenerator from reference_id_test.go instead.
 // The static selection approach ensures the right generator is used in the right context.
-var userStoryGenerator = NewPostgreSQLReferenceIDGenerator(2147483646, "US")
+var userStoryGenerator ReferenceIDGenerator = NewPostgreSQLReferenceIDGenerator(2147483646, "US")
+
+// GetUserStoryGenerator returns the current generator (for testing)
+func GetUserStoryGenerator() ReferenceIDGenerator {
+	return userStoryGenerator
+}
+
+// SetUserStoryGenerator sets a custom generator (for testing)
+func SetUserStoryGenerator(gen ReferenceIDGenerator) {
+	userStoryGenerator = gen
+}
 
 // UserStoryStatus represents the status of a user story in the workflow
 // @Description Status of a user story in the workflow lifecycle

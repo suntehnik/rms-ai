@@ -19,7 +19,17 @@ import (
 //
 // For unit tests, use TestReferenceIDGenerator from reference_id_test.go instead.
 // The static selection approach ensures the right generator is used in the right context.
-var epicGenerator = NewPostgreSQLReferenceIDGenerator(2147483647, "EP")
+var epicGenerator ReferenceIDGenerator = NewPostgreSQLReferenceIDGenerator(2147483647, "EP")
+
+// GetEpicGenerator returns the current generator (for testing)
+func GetEpicGenerator() ReferenceIDGenerator {
+	return epicGenerator
+}
+
+// SetEpicGenerator sets a custom generator (for testing)
+func SetEpicGenerator(gen ReferenceIDGenerator) {
+	epicGenerator = gen
+}
 
 // Priority represents the priority level of an entity
 // @Description Priority level for entities (1=Critical, 2=High, 3=Medium, 4=Low)

@@ -490,6 +490,7 @@ func createTestEpic(t *testing.T, db *gorm.DB, user *models.User) *models.Epic {
 		Status:      models.EpicStatusBacklog,
 		Title:       "User Authentication Epic",
 		Description: stringPtr("This epic covers all user authentication features including login, logout, and password reset functionality."),
+		ReferenceID: "EP-001", // Set manually to avoid generator call
 	}
 	err := db.Create(epic).Error
 	require.NoError(t, err)
@@ -506,6 +507,7 @@ func createTestUserStory(t *testing.T, db *gorm.DB, user *models.User, epic *mod
 		Status:      models.UserStoryStatusDraft,
 		Title:       "User Login Feature",
 		Description: stringPtr("As a user, I want to login to the system, so that I can access my account and personal data."),
+		ReferenceID: "US-001", // Set manually to avoid generator call
 	}
 	err := db.Create(userStory).Error
 	require.NoError(t, err)
@@ -528,6 +530,7 @@ func createTestRequirement(t *testing.T, db *gorm.DB, user *models.User, userSto
 		TypeID:      reqType.ID,
 		Title:       "Password Validation Requirement",
 		Description: stringPtr("The system must validate user passwords against security policies including minimum length and complexity requirements."),
+		ReferenceID: "REQ-001", // Set manually to avoid generator call
 	}
 	err = db.Create(requirement).Error
 	require.NoError(t, err)

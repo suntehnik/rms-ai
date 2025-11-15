@@ -7,8 +7,6 @@ import (
 )
 
 // ReferenceIDGenerator defines the interface for generating reference IDs.
-// This interface is implemented by both production and test generators to ensure
-// consistent behavior across different environments.
 type ReferenceIDGenerator interface {
 	Generate(tx *gorm.DB, model interface{}) (string, error)
 }

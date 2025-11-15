@@ -19,7 +19,17 @@ import (
 //
 // For unit tests, use TestReferenceIDGenerator from reference_id_test.go instead.
 // The static selection approach ensures the right generator is used in the right context.
-var requirementGenerator = NewPostgreSQLReferenceIDGenerator(2147483645, "REQ")
+var requirementGenerator ReferenceIDGenerator = NewPostgreSQLReferenceIDGenerator(2147483645, "REQ")
+
+// GetRequirementGenerator returns the current generator (for testing)
+func GetRequirementGenerator() ReferenceIDGenerator {
+	return requirementGenerator
+}
+
+// SetRequirementGenerator sets a custom generator (for testing)
+func SetRequirementGenerator(gen ReferenceIDGenerator) {
+	requirementGenerator = gen
+}
 
 // RequirementStatus represents the status of a requirement
 // @Description Status of a requirement in the workflow lifecycle
