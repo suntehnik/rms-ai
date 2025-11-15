@@ -19,7 +19,17 @@ import (
 //
 // For unit tests, use TestReferenceIDGenerator from reference_id_test.go instead.
 // The static selection approach ensures the right generator is used in the right context.
-var promptGenerator = NewPostgreSQLReferenceIDGenerator(2147483642, "PROMPT")
+var promptGenerator ReferenceIDGenerator = NewPostgreSQLReferenceIDGenerator(2147483642, "PROMPT")
+
+// GetPromptGenerator returns the current generator (for testing)
+func GetPromptGenerator() ReferenceIDGenerator {
+	return promptGenerator
+}
+
+// SetPromptGenerator sets a custom generator (for testing)
+func SetPromptGenerator(gen ReferenceIDGenerator) {
+	promptGenerator = gen
+}
 
 // Prompt represents a system prompt in the system
 // @Description System prompt contains instructions for AI assistant behavior and can be activated for use

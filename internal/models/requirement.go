@@ -18,7 +18,17 @@ import (
 //
 // For unit tests, use TestReferenceIDGenerator from reference_id_test.go instead.
 // The static selection approach ensures the right generator is used in the right context.
-var requirementGenerator = NewPostgreSQLReferenceIDGenerator(2147483645, "REQ")
+var requirementGenerator ReferenceIDGenerator = NewPostgreSQLReferenceIDGenerator(2147483645, "REQ")
+
+// GetRequirementGenerator returns the current generator (for testing)
+func GetRequirementGenerator() ReferenceIDGenerator {
+	return requirementGenerator
+}
+
+// SetRequirementGenerator sets a custom generator (for testing)
+func SetRequirementGenerator(gen ReferenceIDGenerator) {
+	requirementGenerator = gen
+}
 
 // RequirementStatus represents the status of a requirement
 // @Description Status of a requirement in the workflow lifecycle
@@ -75,9 +85,8 @@ func (r *Requirement) BeforeCreate(tx *gorm.DB) error {
 	if r.Status == "" {
 		r.Status = RequirementStatusDraft
 	}
-	// Generate ReferenceID if not set using production generator.
-	// This uses the package-level requirementGenerator which provides thread-safe,
-	// production-grade reference ID generation with PostgreSQL advisory locks.
+
+	// Generate reference ID if not set
 	if r.ReferenceID == "" {
 		referenceID, err := requirementGenerator.Generate(tx, &Requirement{})
 		if err != nil {

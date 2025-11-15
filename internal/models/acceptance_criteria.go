@@ -18,7 +18,17 @@ import (
 //
 // For unit tests, use TestReferenceIDGenerator from reference_id_test.go instead.
 // The static selection approach ensures the right generator is used in the right context.
-var acceptanceCriteriaGenerator = NewPostgreSQLReferenceIDGenerator(2147483644, "AC")
+var acceptanceCriteriaGenerator ReferenceIDGenerator = NewPostgreSQLReferenceIDGenerator(2147483644, "AC")
+
+// GetAcceptanceCriteriaGenerator returns the current generator (for testing)
+func GetAcceptanceCriteriaGenerator() ReferenceIDGenerator {
+	return acceptanceCriteriaGenerator
+}
+
+// SetAcceptanceCriteriaGenerator sets a custom generator (for testing)
+func SetAcceptanceCriteriaGenerator(gen ReferenceIDGenerator) {
+	acceptanceCriteriaGenerator = gen
+}
 
 // AcceptanceCriteria represents acceptance criteria for a user story
 // @Description Testable conditions that define when a user story is considered complete and acceptable
@@ -47,6 +57,8 @@ func (ac *AcceptanceCriteria) BeforeCreate(tx *gorm.DB) error {
 	if ac.ID == uuid.Nil {
 		ac.ID = uuid.New()
 	}
+
+	// Generate reference ID if not set
 	if ac.ReferenceID == "" {
 		referenceID, err := acceptanceCriteriaGenerator.Generate(tx, &AcceptanceCriteria{})
 		if err != nil {
@@ -54,6 +66,7 @@ func (ac *AcceptanceCriteria) BeforeCreate(tx *gorm.DB) error {
 		}
 		ac.ReferenceID = referenceID
 	}
+
 	now := time.Now().UTC()
 	ac.CreatedAt = now
 	ac.UpdatedAt = now

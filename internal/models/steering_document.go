@@ -18,7 +18,17 @@ import (
 //
 // For unit tests, use TestReferenceIDGenerator from reference_id_test.go instead.
 // The static selection approach ensures the right generator is used in the right context.
-var steeringDocumentGenerator = NewPostgreSQLReferenceIDGenerator(2147483643, "STD")
+var steeringDocumentGenerator ReferenceIDGenerator = NewPostgreSQLReferenceIDGenerator(2147483643, "STD")
+
+// GetSteeringDocumentGenerator returns the current generator (for testing)
+func GetSteeringDocumentGenerator() ReferenceIDGenerator {
+	return steeringDocumentGenerator
+}
+
+// SetSteeringDocumentGenerator sets a custom generator (for testing)
+func SetSteeringDocumentGenerator(gen ReferenceIDGenerator) {
+	steeringDocumentGenerator = gen
+}
 
 // SteeringDocument represents a steering document in the system
 // @Description Steering document contains instructions, standards and team norms that can be linked to epics for additional context
