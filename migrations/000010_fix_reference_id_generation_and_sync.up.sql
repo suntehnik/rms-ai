@@ -71,15 +71,22 @@ DECLARE
     max_ref_id TEXT;
     max_number BIGINT;
 BEGIN
+    -- Get the maximum valid numeric reference ID (EP-001, EP-002, etc.)
+    -- Filter out any invalid reference IDs that don't match the expected pattern
     SELECT reference_id INTO max_ref_id
     FROM epics
-    ORDER BY reference_id DESC
+    WHERE reference_id ~ '^EP-[0-9]+$'
+    ORDER BY CAST(SUBSTRING(reference_id FROM 4) AS BIGINT) DESC
     LIMIT 1;
     
     IF max_ref_id IS NOT NULL THEN
         max_number := CAST(SUBSTRING(max_ref_id FROM 4) AS BIGINT);
-        PERFORM setval('epic_ref_seq', max_number, true);
+        PERFORM setval('epic_ref_seq', GREATEST(max_number, 1), true);
         RAISE NOTICE 'Epic sequence synced to %', max_number;
+    ELSE
+        -- No valid reference IDs found, reset to 1
+        PERFORM setval('epic_ref_seq', 1, false);
+        RAISE NOTICE 'Epic sequence reset to 1 (no valid reference IDs found)';
     END IF;
 END $$;
 
@@ -89,15 +96,22 @@ DECLARE
     max_ref_id TEXT;
     max_number BIGINT;
 BEGIN
+    -- Get the maximum valid numeric reference ID (US-001, US-002, etc.)
+    -- Filter out any invalid reference IDs that don't match the expected pattern
     SELECT reference_id INTO max_ref_id
     FROM user_stories
-    ORDER BY reference_id DESC
+    WHERE reference_id ~ '^US-[0-9]+$'
+    ORDER BY CAST(SUBSTRING(reference_id FROM 4) AS BIGINT) DESC
     LIMIT 1;
     
     IF max_ref_id IS NOT NULL THEN
-        max_number := CAST(SUBSTRING(max_ref_id FROM 4) AS BIGINT);
-        PERFORM setval('user_story_ref_seq', max_number, true);
+        max_number := CAST(SUBSTRING(reference_id FROM 4) AS BIGINT);
+        PERFORM setval('user_story_ref_seq', GREATEST(max_number, 1), true);
         RAISE NOTICE 'User Story sequence synced to %', max_number;
+    ELSE
+        -- No valid reference IDs found, reset to 1
+        PERFORM setval('user_story_ref_seq', 1, false);
+        RAISE NOTICE 'User Story sequence reset to 1 (no valid reference IDs found)';
     END IF;
 END $$;
 
@@ -107,15 +121,22 @@ DECLARE
     max_ref_id TEXT;
     max_number BIGINT;
 BEGIN
+    -- Get the maximum valid numeric reference ID (AC-001, AC-002, etc.)
+    -- Filter out any invalid reference IDs that don't match the expected pattern
     SELECT reference_id INTO max_ref_id
     FROM acceptance_criteria
-    ORDER BY reference_id DESC
+    WHERE reference_id ~ '^AC-[0-9]+$'
+    ORDER BY CAST(SUBSTRING(reference_id FROM 4) AS BIGINT) DESC
     LIMIT 1;
     
     IF max_ref_id IS NOT NULL THEN
-        max_number := CAST(SUBSTRING(max_ref_id FROM 4) AS BIGINT);
-        PERFORM setval('acceptance_criteria_ref_seq', max_number, true);
+        max_number := CAST(SUBSTRING(reference_id FROM 4) AS BIGINT);
+        PERFORM setval('acceptance_criteria_ref_seq', GREATEST(max_number, 1), true);
         RAISE NOTICE 'Acceptance Criteria sequence synced to %', max_number;
+    ELSE
+        -- No valid reference IDs found, reset to 1
+        PERFORM setval('acceptance_criteria_ref_seq', 1, false);
+        RAISE NOTICE 'Acceptance Criteria sequence reset to 1 (no valid reference IDs found)';
     END IF;
 END $$;
 
@@ -125,35 +146,42 @@ DECLARE
     max_ref_id TEXT;
     max_number BIGINT;
 BEGIN
+    -- Get the maximum valid numeric reference ID (REQ-001, REQ-002, etc.)
+    -- Filter out any invalid reference IDs that don't match the expected pattern
     SELECT reference_id INTO max_ref_id
     FROM requirements
-    ORDER BY reference_id DESC
+    WHERE reference_id ~ '^REQ-[0-9]+$'
+    ORDER BY CAST(SUBSTRING(reference_id FROM 5) AS BIGINT) DESC
     LIMIT 1;
     
     IF max_ref_id IS NOT NULL THEN
-        max_number := CAST(SUBSTRING(max_ref_id FROM 4) AS BIGINT);
-        PERFORM setval('requirement_ref_seq', max_number, true);
+        max_number := CAST(SUBSTRING(max_ref_id FROM 5) AS BIGINT);
+        PERFORM setval('requirement_ref_seq', GREATEST(max_number, 1), true);
         RAISE NOTICE 'Requirement sequence synced to %', max_number;
+    ELSE
+        -- No valid reference IDs found, reset to 1
+        PERFORM setval('requirement_ref_seq', 1, false);
+        RAISE NOTICE 'Requirement sequence reset to 1 (no valid reference IDs found)';
     END IF;
 END $$;
 
--- Verify synchronization
+-- Verify synchronization (only valid reference IDs)
 SELECT 
     'epic' as entity,
-    (SELECT MAX(CAST(SUBSTRING(reference_id FROM 4) AS BIGINT)) FROM epics) as max_in_table,
+    (SELECT MAX(CAST(SUBSTRING(reference_id FROM 4) AS BIGINT)) FROM epics WHERE reference_id ~ '^EP-[0-9]+$') as max_in_table,
     (SELECT last_value FROM epic_ref_seq) as sequence_value
 UNION ALL
 SELECT 
     'user_story',
-    (SELECT MAX(CAST(SUBSTRING(reference_id FROM 4) AS BIGINT)) FROM user_stories),
+    (SELECT MAX(CAST(SUBSTRING(reference_id FROM 4) AS BIGINT)) FROM user_stories WHERE reference_id ~ '^US-[0-9]+$'),
     (SELECT last_value FROM user_story_ref_seq)
 UNION ALL
 SELECT 
     'acceptance_criteria',
-    (SELECT MAX(CAST(SUBSTRING(reference_id FROM 4) AS BIGINT)) FROM acceptance_criteria),
+    (SELECT MAX(CAST(SUBSTRING(reference_id FROM 4) AS BIGINT)) FROM acceptance_criteria WHERE reference_id ~ '^AC-[0-9]+$'),
     (SELECT last_value FROM acceptance_criteria_ref_seq)
 UNION ALL
 SELECT 
     'requirement',
-    (SELECT MAX(CAST(SUBSTRING(reference_id FROM 4) AS BIGINT)) FROM requirements),
+    (SELECT MAX(CAST(SUBSTRING(reference_id FROM 5) AS BIGINT)) FROM requirements WHERE reference_id ~ '^REQ-[0-9]+$'),
     (SELECT last_value FROM requirement_ref_seq);
