@@ -7,8 +7,6 @@ import (
 )
 
 // ReferenceIDGenerator defines the interface for generating reference IDs.
-// This interface is implemented by both production and test generators to ensure
-// consistent behavior across different environments.
 type ReferenceIDGenerator interface {
 	Generate(tx *gorm.DB, model interface{}) (string, error)
 }
@@ -22,8 +20,8 @@ type ReferenceIDGenerator interface {
 // - EP-001 to EP-999 (with zero-padding)
 // - EP-1000, EP-1001, ... (without padding for numbers >= 1000)
 //
-// This generator is used in production, integration, and e2e test environments.
-// For unit tests, use TestReferenceIDGenerator from reference_id_test.go instead.
+// This generator is designed for PostgreSQL only.
+// For testing with SQLite, use TestReferenceIDGenerator from reference_id_test.go.
 type PostgreSQLReferenceIDGenerator struct {
 	prefix string // Entity prefix (EP, US, REQ, AC, STD, PROMPT)
 }
@@ -44,68 +42,32 @@ func NewPostgreSQLReferenceIDGenerator(lockKey int64, prefix string) *PostgreSQL
 // The function uses PostgreSQL sequences which are atomic and guarantee uniqueness.
 // This method is called from BeforeCreate hooks in GORM models.
 //
-// Behavior by database type:
-// - PostgreSQL: Calls database function (e.g., get_next_epic_ref_id())
-// - SQLite: Uses simple counting (for unit tests only)
+// This generator is designed for PostgreSQL only. For testing, use TestReferenceIDGenerator.
 func (g *PostgreSQLReferenceIDGenerator) Generate(tx *gorm.DB, model interface{}) (string, error) {
-	// Check if we're using PostgreSQL
-	if tx.Dialector.Name() == "postgres" {
-		// Determine which function to call based on prefix
-		var functionName string
-		switch g.prefix {
-		case "EP":
-			functionName = "get_next_epic_ref_id"
-		case "US":
-			functionName = "get_next_user_story_ref_id"
-		case "AC":
-			functionName = "get_next_acceptance_criteria_ref_id"
-		case "REQ":
-			functionName = "get_next_requirement_ref_id"
-		case "STD":
-			functionName = "get_next_steering_document_ref_id"
-		case "PROMPT":
-			functionName = "get_next_prompt_ref_id"
-		default:
-			return "", fmt.Errorf("unknown prefix: %s", g.prefix)
-		}
-
-		// Call the PostgreSQL function to get the next reference ID
-		var referenceID string
-		if err := tx.Raw(fmt.Sprintf("SELECT %s()", functionName)).Scan(&referenceID).Error; err != nil {
-			return "", fmt.Errorf("failed to generate reference ID: %w", err)
-		}
-
-		return referenceID, nil
-	}
-
-	// For non-PostgreSQL databases (like SQLite in unit tests), use simple count method
-	// Determine table name based on prefix
-	var tableName string
+	// Determine which function to call based on prefix
+	var functionName string
 	switch g.prefix {
 	case "EP":
-		tableName = "epics"
+		functionName = "get_next_epic_ref_id"
 	case "US":
-		tableName = "user_stories"
+		functionName = "get_next_user_story_ref_id"
 	case "AC":
-		tableName = "acceptance_criteria"
+		functionName = "get_next_acceptance_criteria_ref_id"
 	case "REQ":
-		tableName = "requirements"
+		functionName = "get_next_requirement_ref_id"
 	case "STD":
-		tableName = "steering_documents"
+		functionName = "get_next_steering_document_ref_id"
 	case "PROMPT":
-		tableName = "prompts"
+		functionName = "get_next_prompt_ref_id"
 	default:
 		return "", fmt.Errorf("unknown prefix: %s", g.prefix)
 	}
 
-	var count int64
-	if err := tx.Table(tableName).Count(&count).Error; err != nil {
-		return "", fmt.Errorf("failed to count records: %w", err)
+	// Call the PostgreSQL function to get the next reference ID
+	var referenceID string
+	if err := tx.Raw(fmt.Sprintf("SELECT %s()", functionName)).Scan(&referenceID).Error; err != nil {
+		return "", fmt.Errorf("failed to generate reference ID: %w", err)
 	}
 
-	// Support unlimited growth like PostgreSQL version
-	if count < 999 {
-		return fmt.Sprintf("%s-%03d", g.prefix, count+1), nil
-	}
-	return fmt.Sprintf("%s-%d", g.prefix, count+1), nil
+	return referenceID, nil
 }
