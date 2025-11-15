@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 	"time"
 
@@ -20,7 +19,17 @@ import (
 //
 // For unit tests, use TestReferenceIDGenerator from reference_id_test.go instead.
 // The static selection approach ensures the right generator is used in the right context.
-var userStoryGenerator = NewPostgreSQLReferenceIDGenerator(2147483646, "US")
+var userStoryGenerator ReferenceIDGenerator = NewPostgreSQLReferenceIDGenerator(2147483646, "US")
+
+// GetUserStoryGenerator returns the current generator (for testing)
+func GetUserStoryGenerator() ReferenceIDGenerator {
+	return userStoryGenerator
+}
+
+// SetUserStoryGenerator sets a custom generator (for testing)
+func SetUserStoryGenerator(gen ReferenceIDGenerator) {
+	userStoryGenerator = gen
+}
 
 // UserStoryStatus represents the status of a user story in the workflow
 // @Description Status of a user story in the workflow lifecycle
@@ -133,14 +142,13 @@ func (us *UserStory) BeforeCreate(tx *gorm.DB) error {
 		us.Status = UserStoryStatusBacklog
 	}
 
-	// Generate ReferenceID by calling PostgreSQL function directly
-	// This ensures we get a unique value from the sequence
+	// Generate reference ID if not set
 	if us.ReferenceID == "" {
-		var refID string
-		if err := tx.Raw("SELECT get_next_user_story_ref_id()").Scan(&refID).Error; err != nil {
-			return fmt.Errorf("failed to generate reference ID: %w", err)
+		referenceID, err := userStoryGenerator.Generate(tx, &UserStory{})
+		if err != nil {
+			return err
 		}
-		us.ReferenceID = refID
+		us.ReferenceID = referenceID
 	}
 
 	return nil

@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,7 +18,17 @@ import (
 //
 // For unit tests, use TestReferenceIDGenerator from reference_id_test.go instead.
 // The static selection approach ensures the right generator is used in the right context.
-var requirementGenerator = NewPostgreSQLReferenceIDGenerator(2147483645, "REQ")
+var requirementGenerator ReferenceIDGenerator = NewPostgreSQLReferenceIDGenerator(2147483645, "REQ")
+
+// GetRequirementGenerator returns the current generator (for testing)
+func GetRequirementGenerator() ReferenceIDGenerator {
+	return requirementGenerator
+}
+
+// SetRequirementGenerator sets a custom generator (for testing)
+func SetRequirementGenerator(gen ReferenceIDGenerator) {
+	requirementGenerator = gen
+}
 
 // RequirementStatus represents the status of a requirement
 // @Description Status of a requirement in the workflow lifecycle
@@ -77,14 +86,13 @@ func (r *Requirement) BeforeCreate(tx *gorm.DB) error {
 		r.Status = RequirementStatusDraft
 	}
 
-	// Generate ReferenceID by calling PostgreSQL function directly
-	// This ensures we get a unique value from the sequence
+	// Generate reference ID if not set
 	if r.ReferenceID == "" {
-		var refID string
-		if err := tx.Raw("SELECT get_next_requirement_ref_id()").Scan(&refID).Error; err != nil {
-			return fmt.Errorf("failed to generate reference ID: %w", err)
+		referenceID, err := requirementGenerator.Generate(tx, &Requirement{})
+		if err != nil {
+			return err
 		}
-		r.ReferenceID = refID
+		r.ReferenceID = referenceID
 	}
 
 	return nil

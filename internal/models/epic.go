@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,7 +18,17 @@ import (
 //
 // For unit tests, use TestReferenceIDGenerator from reference_id_test.go instead.
 // The static selection approach ensures the right generator is used in the right context.
-var epicGenerator = NewPostgreSQLReferenceIDGenerator(2147483647, "EP")
+var epicGenerator ReferenceIDGenerator = NewPostgreSQLReferenceIDGenerator(2147483647, "EP")
+
+// GetEpicGenerator returns the current generator (for testing)
+func GetEpicGenerator() ReferenceIDGenerator {
+	return epicGenerator
+}
+
+// SetEpicGenerator sets a custom generator (for testing)
+func SetEpicGenerator(gen ReferenceIDGenerator) {
+	epicGenerator = gen
+}
 
 // Priority represents the priority level of an entity
 // @Description Priority level for entities (1=Critical, 2=High, 3=Medium, 4=Low)
@@ -136,14 +145,13 @@ func (e *Epic) BeforeCreate(tx *gorm.DB) error {
 		e.Status = EpicStatusBacklog
 	}
 
-	// Generate ReferenceID by calling PostgreSQL function directly
-	// This ensures we get a unique value from the sequence
+	// Generate reference ID if not set
 	if e.ReferenceID == "" {
-		var refID string
-		if err := tx.Raw("SELECT get_next_epic_ref_id()").Scan(&refID).Error; err != nil {
-			return fmt.Errorf("failed to generate reference ID: %w", err)
+		referenceID, err := epicGenerator.Generate(tx, &Epic{})
+		if err != nil {
+			return err
 		}
-		e.ReferenceID = refID
+		e.ReferenceID = referenceID
 	}
 
 	return nil
