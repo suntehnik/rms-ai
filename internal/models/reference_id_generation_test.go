@@ -38,6 +38,7 @@ func setupMockTestDB(t *testing.T) *gorm.DB {
 		&AcceptanceCriteria{},
 		&SteeringDocument{},
 		&RequirementType{},
+		&Prompt{},
 	)
 	require.NoError(t, err)
 
@@ -384,4 +385,83 @@ func TestSteeringDocumentBeforeCreate_CallsGenerator(t *testing.T) {
 	// Verify the generator was called
 	assert.Equal(t, 1, mockGen.callCount, "Generator should be called once")
 	assert.Equal(t, "STD-MOCK", steeringDoc.ReferenceID, "ReferenceID should be set by generator")
+}
+
+// TestPromptBeforeCreate_CallsGenerator verifies that Prompt.BeforeCreate calls the generator
+func TestPromptBeforeCreate_CallsGenerator(t *testing.T) {
+	db := setupMockTestDB(t)
+
+	// Create a mock generator
+	mockGen := &mockReferenceIDGenerator{
+		generateFunc: func(tx *gorm.DB, model interface{}) (string, error) {
+			return "PROMPT-MOCK", nil
+		},
+	}
+
+	// Replace the prompt generator with our mock
+	originalGenerator := GetPromptGenerator()
+	SetPromptGenerator(mockGen)
+	defer func() { SetPromptGenerator(originalGenerator) }()
+
+	// Create test data
+	user := &User{
+		Username: "testuser",
+		Email:    "test@example.com",
+		Role:     RoleUser,
+	}
+	err := db.Create(user).Error
+	require.NoError(t, err)
+
+	// Create prompt
+	prompt := &Prompt{
+		Name:      "test-prompt",
+		Title:     "Test Prompt",
+		Content:   "Test prompt content",
+		CreatorID: user.ID,
+	}
+
+	err = db.Create(prompt).Error
+	require.NoError(t, err)
+
+	// Verify the generator was called
+	assert.Equal(t, 1, mockGen.callCount, "Generator should be called once")
+	assert.Equal(t, "PROMPT-MOCK", prompt.ReferenceID, "ReferenceID should be set by generator")
+}
+
+// TestPromptBeforeCreate_GeneratorError verifies error handling when generator fails
+func TestPromptBeforeCreate_GeneratorError(t *testing.T) {
+	db := setupMockTestDB(t)
+
+	// Create a mock generator that returns an error
+	mockGen := &mockReferenceIDGenerator{
+		generateFunc: func(tx *gorm.DB, model interface{}) (string, error) {
+			return "", errors.New("generator error")
+		},
+	}
+
+	// Replace the prompt generator with our mock
+	originalGenerator := GetPromptGenerator()
+	SetPromptGenerator(mockGen)
+	defer func() { SetPromptGenerator(originalGenerator) }()
+
+	// Create test data
+	user := &User{
+		Username: "testuser",
+		Email:    "test@example.com",
+		Role:     RoleUser,
+	}
+	err := db.Create(user).Error
+	require.NoError(t, err)
+
+	// Try to create a prompt
+	prompt := &Prompt{
+		Name:      "test-prompt",
+		Title:     "Test Prompt",
+		Content:   "Test prompt content",
+		CreatorID: user.ID,
+	}
+
+	err = db.Create(prompt).Error
+	assert.Error(t, err, "Should return error when generator fails")
+	assert.Contains(t, err.Error(), "generator error")
 }
