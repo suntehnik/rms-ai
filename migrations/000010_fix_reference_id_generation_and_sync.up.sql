@@ -6,7 +6,7 @@
 -- 4. Synchronizes sequences with existing data
 
 -- Function to get next epic reference ID
-CREATE OR REPLACE FUNCTION get_next_epic_ref_id() RETURNS VARCHAR(20) AS $
+CREATE OR REPLACE FUNCTION get_next_epic_ref_id() RETURNS VARCHAR(20) AS $$
 DECLARE
     next_id BIGINT;
 BEGIN
@@ -17,10 +17,10 @@ BEGIN
         RETURN 'EP-' || next_id::TEXT;
     END IF;
 END;
-$ LANGUAGE plpgsql VOLATILE;
+$$ LANGUAGE plpgsql VOLATILE;
 
 -- Function to get next user story reference ID
-CREATE OR REPLACE FUNCTION get_next_user_story_ref_id() RETURNS VARCHAR(20) AS $
+CREATE OR REPLACE FUNCTION get_next_user_story_ref_id() RETURNS VARCHAR(20) AS $$
 DECLARE
     next_id BIGINT;
 BEGIN
@@ -31,10 +31,10 @@ BEGIN
         RETURN 'US-' || next_id::TEXT;
     END IF;
 END;
-$ LANGUAGE plpgsql VOLATILE;
+$$ LANGUAGE plpgsql VOLATILE;
 
 -- Function to get next acceptance criteria reference ID
-CREATE OR REPLACE FUNCTION get_next_acceptance_criteria_ref_id() RETURNS VARCHAR(20) AS $
+CREATE OR REPLACE FUNCTION get_next_acceptance_criteria_ref_id() RETURNS VARCHAR(20) AS $$
 DECLARE
     next_id BIGINT;
 BEGIN
@@ -45,10 +45,10 @@ BEGIN
         RETURN 'AC-' || next_id::TEXT;
     END IF;
 END;
-$ LANGUAGE plpgsql VOLATILE;
+$$ LANGUAGE plpgsql VOLATILE;
 
 -- Function to get next requirement reference ID
-CREATE OR REPLACE FUNCTION get_next_requirement_ref_id() RETURNS VARCHAR(20) AS $
+CREATE OR REPLACE FUNCTION get_next_requirement_ref_id() RETURNS VARCHAR(20) AS $$
 DECLARE
     next_id BIGINT;
 BEGIN
@@ -59,14 +59,14 @@ BEGIN
         RETURN 'REQ-' || next_id::TEXT;
     END IF;
 END;
-$ LANGUAGE plpgsql VOLATILE;
+$$ LANGUAGE plpgsql VOLATILE;
 
 -- Synchronize sequences with existing data
 -- This is necessary if reference IDs were created manually or by scripts
 -- that bypassed the sequence mechanism
 
 -- Sync epic sequence
-DO $
+DO $$
 DECLARE
     max_ref_id TEXT;
     max_number BIGINT;
@@ -81,10 +81,10 @@ BEGIN
         PERFORM setval('epic_ref_seq', max_number, true);
         RAISE NOTICE 'Epic sequence synced to %', max_number;
     END IF;
-END $;
+END $$;
 
 -- Sync user story sequence
-DO $
+DO $$
 DECLARE
     max_ref_id TEXT;
     max_number BIGINT;
@@ -99,10 +99,10 @@ BEGIN
         PERFORM setval('user_story_ref_seq', max_number, true);
         RAISE NOTICE 'User Story sequence synced to %', max_number;
     END IF;
-END $;
+END $$;
 
 -- Sync acceptance criteria sequence
-DO $
+DO $$
 DECLARE
     max_ref_id TEXT;
     max_number BIGINT;
@@ -117,10 +117,10 @@ BEGIN
         PERFORM setval('acceptance_criteria_ref_seq', max_number, true);
         RAISE NOTICE 'Acceptance Criteria sequence synced to %', max_number;
     END IF;
-END $;
+END $$;
 
 -- Sync requirement sequence
-DO $
+DO $$
 DECLARE
     max_ref_id TEXT;
     max_number BIGINT;
@@ -135,7 +135,7 @@ BEGIN
         PERFORM setval('requirement_ref_seq', max_number, true);
         RAISE NOTICE 'Requirement sequence synced to %', max_number;
     END IF;
-END $;
+END $$;
 
 -- Verify synchronization
 SELECT 

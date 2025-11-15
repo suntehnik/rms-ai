@@ -2,7 +2,7 @@
 -- Note: This will restore the old functions but will NOT revert sequence values
 
 -- Restore old epic reference ID function (with advisory locks)
-CREATE OR REPLACE FUNCTION get_next_epic_ref_id() RETURNS VARCHAR(20) AS $
+CREATE OR REPLACE FUNCTION get_next_epic_ref_id() RETURNS VARCHAR(20) AS $$
 DECLARE
     next_id BIGINT;
     lock_acquired BOOLEAN;
@@ -21,10 +21,10 @@ BEGIN
     -- Format with zero-padding (EP-001, EP-002, etc.)
     RETURN 'EP-' || LPAD(next_id::TEXT, 3, '0');
 END;
-$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 -- Restore old user story reference ID function (with advisory locks)
-CREATE OR REPLACE FUNCTION get_next_user_story_ref_id() RETURNS VARCHAR(20) AS $
+CREATE OR REPLACE FUNCTION get_next_user_story_ref_id() RETURNS VARCHAR(20) AS $$
 DECLARE
     next_id BIGINT;
     lock_acquired BOOLEAN;
@@ -38,10 +38,10 @@ BEGIN
     next_id := nextval('user_story_ref_seq');
     RETURN 'US-' || LPAD(next_id::TEXT, 3, '0');
 END;
-$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 -- Restore old acceptance criteria reference ID function (with advisory locks)
-CREATE OR REPLACE FUNCTION get_next_acceptance_criteria_ref_id() RETURNS VARCHAR(20) AS $
+CREATE OR REPLACE FUNCTION get_next_acceptance_criteria_ref_id() RETURNS VARCHAR(20) AS $$
 DECLARE
     next_id BIGINT;
     lock_acquired BOOLEAN;
@@ -55,10 +55,10 @@ BEGIN
     next_id := nextval('acceptance_criteria_ref_seq');
     RETURN 'AC-' || LPAD(next_id::TEXT, 3, '0');
 END;
-$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 -- Restore old requirement reference ID function (with advisory locks)
-CREATE OR REPLACE FUNCTION get_next_requirement_ref_id() RETURNS VARCHAR(20) AS $
+CREATE OR REPLACE FUNCTION get_next_requirement_ref_id() RETURNS VARCHAR(20) AS $$
 DECLARE
     next_id BIGINT;
     lock_acquired BOOLEAN;
@@ -72,4 +72,4 @@ BEGIN
     next_id := nextval('requirement_ref_seq');
     RETURN 'REQ-' || LPAD(next_id::TEXT, 3, '0');
 END;
-$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;

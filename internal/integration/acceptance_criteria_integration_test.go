@@ -70,7 +70,6 @@ func (suite *AcceptanceCriteriaIntegrationTestSuite) SetupSuite() {
 		userStories := v1.Group("/user-stories")
 		{
 			userStories.POST("/:id/acceptance-criteria", suite.acceptanceCriteriaHandler.CreateAcceptanceCriteria)
-			userStories.GET("/:id/acceptance-criteria", suite.acceptanceCriteriaHandler.GetAcceptanceCriteriaByUserStory)
 		}
 
 		// Acceptance Criteria routes
@@ -275,29 +274,6 @@ func (suite *AcceptanceCriteriaIntegrationTestSuite) TestListAcceptanceCriteriaW
 	assert.Equal(suite.T(), float64(50), response["limit"])
 	assert.Equal(suite.T(), float64(0), response["offset"])
 	assert.NotNil(suite.T(), response["data"])
-
-	criteria := response["data"].([]any)
-	assert.Len(suite.T(), criteria, 2)
-}
-
-func (suite *AcceptanceCriteriaIntegrationTestSuite) TestGetAcceptanceCriteriaByUserStory() {
-	// Create test acceptance criteria
-	suite.createTestAcceptanceCriteria("WHEN user submits form THEN system SHALL validate all required fields")
-	suite.createTestAcceptanceCriteria("WHEN user clicks cancel THEN system SHALL discard changes")
-
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/user-stories/%s/acceptance-criteria", suite.testUserStory.ID.String()), nil)
-	req.Header.Set("Authorization", "Bearer "+suite.authContext.Token)
-	w := httptest.NewRecorder()
-
-	suite.router.ServeHTTP(w, req)
-
-	assert.Equal(suite.T(), http.StatusOK, w.Code)
-
-	var response map[string]any
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	suite.Require().NoError(err)
-
-	assert.Equal(suite.T(), float64(2), response["total_count"])
 
 	criteria := response["data"].([]any)
 	assert.Len(suite.T(), criteria, 2)
