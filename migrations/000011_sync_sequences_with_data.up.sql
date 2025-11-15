@@ -83,19 +83,19 @@ END $$;
 SELECT 
     'epic' as entity,
     (SELECT MAX(CAST(SUBSTRING(reference_id FROM 4) AS BIGINT)) FROM epics) as max_in_table,
-    currval('epic_ref_seq') as sequence_value
+    (SELECT last_value FROM epic_ref_seq) as sequence_value
 UNION ALL
 SELECT 
     'user_story',
     (SELECT MAX(CAST(SUBSTRING(reference_id FROM 4) AS BIGINT)) FROM user_stories),
-    currval('user_story_ref_seq')
+    (SELECT last_value FROM user_story_ref_seq)
 UNION ALL
 SELECT 
     'acceptance_criteria',
     (SELECT MAX(CAST(SUBSTRING(reference_id FROM 4) AS BIGINT)) FROM acceptance_criteria),
-    currval('acceptance_criteria_ref_seq')
+    (SELECT last_value FROM acceptance_criteria_ref_seq)
 UNION ALL
 SELECT 
     'requirement',
     (SELECT MAX(CAST(SUBSTRING(reference_id FROM 4) AS BIGINT)) FROM requirements),
-    currval('requirement_ref_seq');
+    (SELECT last_value FROM requirement_ref_seq);
