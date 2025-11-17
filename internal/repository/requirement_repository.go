@@ -2,8 +2,6 @@ package repository
 
 import (
 	"errors"
-	"fmt"
-	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -21,80 +19,6 @@ func NewRequirementRepository(db *gorm.DB) RequirementRepository {
 	return &requirementRepository{
 		BaseRepository: NewBaseRepository[models.Requirement](db),
 	}
-}
-
-// Create creates a new requirement with proper concurrent reference ID generation
-func (r *requirementRepository) Create(requirement *models.Requirement) error {
-	maxRetries := 10
-
-	for attempt := 0; attempt < maxRetries; attempt++ {
-		// Generate reference ID if not set
-		if requirement.ReferenceID == "" {
-			if err := r.generateReferenceID(requirement, attempt); err != nil {
-				return err
-			}
-		}
-
-		// Try to create the requirement
-		err := r.BaseRepository.Create(requirement)
-		if err == nil {
-			// Success
-			return nil
-		}
-
-		// Check if it's a duplicate key error on reference_id
-		if errors.Is(err, ErrDuplicateKey) ||
-			(strings.Contains(strings.ToLower(err.Error()), "unique constraint") ||
-				strings.Contains(strings.ToLower(err.Error()), "duplicate key") ||
-				strings.Contains(strings.ToLower(err.Error()), "reference_id")) {
-			// Clear the reference ID and retry
-			requirement.ReferenceID = ""
-			continue
-		}
-
-		// Non-retryable error
-		return err
-	}
-
-	// If we exhausted retries, use UUID-based reference ID as fallback
-	requirement.ReferenceID = fmt.Sprintf("REQ-%s", uuid.New().String()[:8])
-	return r.BaseRepository.Create(requirement)
-}
-
-// generateReferenceID generates a reference ID for the requirement
-func (r *requirementRepository) generateReferenceID(requirement *models.Requirement, attempt int) error {
-	// Get the current maximum reference number
-	var maxRefNum int
-	var maxRef string
-
-	err := r.GetDB().Model(&models.Requirement{}).
-		Select("reference_id").
-		Where("reference_id LIKE 'REQ-%'").
-		Order("reference_id DESC").
-		Limit(1).
-		Pluck("reference_id", &maxRef).Error
-
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return r.handleDBError(err)
-	}
-
-	// Parse the maximum reference number
-	if maxRef != "" {
-		if _, scanErr := fmt.Sscanf(maxRef, "REQ-%d", &maxRefNum); scanErr != nil {
-			// If parsing fails, fall back to counting all records
-			var count int64
-			if countErr := r.GetDB().Model(&models.Requirement{}).Count(&count).Error; countErr != nil {
-				return r.handleDBError(countErr)
-			}
-			maxRefNum = int(count)
-		}
-	}
-
-	// Generate next reference ID with attempt offset to reduce collisions
-	nextNum := maxRefNum + 1 + attempt
-	requirement.ReferenceID = fmt.Sprintf("REQ-%03d", nextNum)
-
-	return nil
 }
 
 // GetWithRelationships retrieves a requirement with its relationships
