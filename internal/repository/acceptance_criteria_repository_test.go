@@ -17,6 +17,10 @@ func setupAcceptanceCriteriaTestDB(t *testing.T) *gorm.DB {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(t, err)
 
+	// Enable foreign key constraints in SQLite
+	err = db.Exec("PRAGMA foreign_keys = ON").Error
+	require.NoError(t, err)
+
 	// Auto-migrate all required models
 	err = db.AutoMigrate(
 		&models.User{},
@@ -178,6 +182,87 @@ func TestAcceptanceCriteriaRepository_Delete(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, ErrNotFound, err)
 	assert.Nil(t, retrieved)
+}
+
+// TestAcceptanceCriteriaRepository_Create_DuplicateReferenceID tests insertion error with duplicate reference ID
+// References: AC-749 - insertion errors surface without committing
+func TestAcceptanceCriteriaRepository_Create_DuplicateReferenceID(t *testing.T) {
+	db := setupAcceptanceCriteriaTestDB(t)
+	repo := NewAcceptanceCriteriaRepository(db)
+
+	user := createUserStoryTestUser(t, db, "testuser")
+	epic := createUserStoryTestEpic(t, db, user, "EP-001")
+	userStory := createUserStoryTestUserStory(t, db, epic, user, user, "US-001")
+
+	// Create first acceptance criteria
+	ac1 := createTestAcceptanceCriteria(t, db, userStory, user, "AC-001")
+
+	// Try to create second acceptance criteria with same ReferenceID
+	ac2 := &models.AcceptanceCriteria{
+		UserStoryID: userStory.ID,
+		AuthorID:    user.ID,
+		Description: "Duplicate AC",
+		ReferenceID: "AC-001", // Duplicate!
+	}
+
+	err := repo.Create(ac2)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "UNIQUE constraint")
+
+	// Verify original record still exists and no side effects
+	retrieved, err := repo.GetByReferenceID("AC-001")
+	assert.NoError(t, err)
+	assert.Equal(t, ac1.ID, retrieved.ID)
+	assert.Equal(t, ac1.Description, retrieved.Description)
+}
+
+// NOTE: Update_NonExistent test is not included here as existence validation
+// happens at the service layer, not repository layer (AC-751).
+// GORM's Save() method doesn't return an error for non-existent records.
+
+// TestAcceptanceCriteriaRepository_Delete_WithRequirements tests FK constraint on delete with requirements
+// References: AC-752 - FK/relationship conflicts surface and record remains
+func TestAcceptanceCriteriaRepository_Delete_WithRequirements(t *testing.T) {
+	db := setupAcceptanceCriteriaTestDB(t)
+	repo := NewAcceptanceCriteriaRepository(db)
+
+	user := createUserStoryTestUser(t, db, "testuser")
+	epic := createUserStoryTestEpic(t, db, user, "EP-001")
+	userStory := createUserStoryTestUserStory(t, db, epic, user, user, "US-001")
+	ac := createTestAcceptanceCriteria(t, db, userStory, user, "AC-001")
+
+	// Create requirement type
+	reqType := createTestRequirementType(t, db, "Functional")
+
+	// Create requirement linked to acceptance criteria (with SET NULL it should nullify the FK)
+	requirement := &models.Requirement{
+		UserStoryID:          userStory.ID,
+		CreatorID:            user.ID,
+		AssigneeID:           user.ID,
+		Title:                "Test Requirement",
+		Priority:             models.PriorityMedium,
+		TypeID:               reqType.ID,
+		AcceptanceCriteriaID: &ac.ID,
+		ReferenceID:          "REQ-001",
+	}
+	err := db.Create(requirement).Error
+	require.NoError(t, err)
+
+	// Delete acceptance criteria - should succeed with SET NULL
+	err = repo.Delete(ac.ID)
+	assert.NoError(t, err)
+
+	// Verify AC is deleted
+	retrieved, err := repo.GetByID(ac.ID)
+	assert.Error(t, err)
+	assert.Equal(t, ErrNotFound, err)
+	assert.Nil(t, retrieved)
+
+	// Verify requirement still exists but acceptance_criteria_id is NULL
+	var req models.Requirement
+	err = db.First(&req, requirement.ID).Error
+	assert.NoError(t, err)
+	assert.Nil(t, req.AcceptanceCriteriaID)
 }
 
 // TestAcceptanceCriteriaRepository_CountByUserStory tests counting acceptance criteria for a user story

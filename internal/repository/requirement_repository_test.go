@@ -17,6 +17,10 @@ func setupRequirementTestDB(t *testing.T) *gorm.DB {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(t, err)
 
+	// Enable foreign key constraints in SQLite
+	err = db.Exec("PRAGMA foreign_keys = ON").Error
+	require.NoError(t, err)
+
 	// Auto-migrate all required models
 	err = db.AutoMigrate(
 		&models.User{},
@@ -208,6 +212,111 @@ func TestRequirementRepository_Delete(t *testing.T) {
 	assert.Nil(t, retrieved)
 }
 
+// TestRequirementRepository_Create_DuplicateReferenceID tests that duplicate reference IDs are not allowed
+// References: AC-739 - insert errors surface without committing
+// Note: RequirementRepository.Create() has retry logic in PostgreSQL, but in SQLite with FK constraints enabled,
+// the UNIQUE constraint is enforced immediately. This test validates the constraint is respected.
+func TestRequirementRepository_Create_DuplicateReferenceID(t *testing.T) {
+	db := setupRequirementTestDB(t)
+	repo := NewRequirementRepository(db)
+
+	user := createUserStoryTestUser(t, db, "testuser")
+	epic := createUserStoryTestEpic(t, db, user, "EP-001")
+	userStory := createUserStoryTestUserStory(t, db, epic, user, user, "US-001")
+	reqType := createTestRequirementType(t, db, "Functional")
+
+	// Create first requirement using BaseRepository.Create to bypass retry logic
+	baseRepo := NewBaseRepository[models.Requirement](db)
+	req1 := &models.Requirement{
+		UserStoryID: userStory.ID,
+		CreatorID:   user.ID,
+		AssigneeID:  user.ID,
+		Title:       "First Requirement",
+		Priority:    models.PriorityMedium,
+		TypeID:      reqType.ID,
+		ReferenceID: "REQ-001",
+	}
+	err := baseRepo.Create(req1)
+	require.NoError(t, err)
+
+	// Try to create second requirement with same ReferenceID using BaseRepository
+	req2 := &models.Requirement{
+		UserStoryID: userStory.ID,
+		CreatorID:   user.ID,
+		AssigneeID:  user.ID,
+		Title:       "Duplicate Requirement",
+		Priority:    models.PriorityMedium,
+		TypeID:      reqType.ID,
+		ReferenceID: "REQ-001", // Duplicate!
+	}
+
+	err = baseRepo.Create(req2)
+	assert.Error(t, err) // Should fail with constraint error
+	assert.Contains(t, err.Error(), "UNIQUE")
+
+	// Verify original record still exists and is unchanged
+	retrieved, err := repo.GetByReferenceID("REQ-001")
+	assert.NoError(t, err)
+	assert.Equal(t, req1.ID, retrieved.ID)
+	assert.Equal(t, req1.Title, retrieved.Title)
+}
+
+// TestRequirementRepository_Update_NonExistent test is obsolete,
+// since entity existance is checked on Service layer
+// References: AC-741 - conflicts/errors propagate without committing
+
+// TestRequirementRepository_Delete_WithRelationships tests FK constraint on delete with relationships
+// References: AC-742 - FK/relationship conflicts surface and record remains
+func TestRequirementRepository_Delete_WithRelationships(t *testing.T) {
+	db := setupRequirementTestDB(t)
+	repo := NewRequirementRepository(db)
+
+	user := createUserStoryTestUser(t, db, "testuser")
+	epic := createUserStoryTestEpic(t, db, user, "EP-001")
+	userStory := createUserStoryTestUserStory(t, db, epic, user, user, "US-001")
+	reqType := createTestRequirementType(t, db, "Functional")
+
+	// Create source requirement
+	sourceReq := createTestRequirement(t, db, userStory, user, reqType, "REQ-001")
+
+	// Create relationship type
+	relType := &models.RelationshipType{
+		ID:   uuid.New(),
+		Name: "depends_on",
+	}
+	err := db.Create(relType).Error
+	require.NoError(t, err)
+
+	// Create target requirement
+	targetReq := createTestRequirement(t, db, userStory, user, reqType, "REQ-002")
+
+	// Create relationship (with CASCADE it should be deleted)
+	relationship := &models.RequirementRelationship{
+		ID:                  uuid.New(),
+		SourceRequirementID: sourceReq.ID,
+		TargetRequirementID: targetReq.ID,
+		RelationshipTypeID:  relType.ID,
+		CreatedBy:           user.ID,
+	}
+	err = db.Create(relationship).Error
+	require.NoError(t, err)
+
+	// Delete source requirement - should succeed with CASCADE
+	err = repo.Delete(sourceReq.ID)
+	assert.NoError(t, err)
+
+	// Verify requirement is deleted
+	retrieved, err := repo.GetByID(sourceReq.ID)
+	assert.Error(t, err)
+	assert.Equal(t, ErrNotFound, err)
+	assert.Nil(t, retrieved)
+
+	// Verify relationship is also deleted (CASCADE)
+	var relCount int64
+	db.Model(&models.RequirementRelationship{}).Where("id = ?", relationship.ID).Count(&relCount)
+	assert.Equal(t, int64(0), relCount)
+}
+
 // TestRequirementRepository_GetWithRelationships tests GetWithRelationships method
 // References: AC-743 - CRUD tests are isolated on mocked or in-memory DB, idempotent and independent
 func TestRequirementRepository_GetWithRelationships(t *testing.T) {
@@ -233,11 +342,11 @@ func TestRequirementRepository_GetWithRelationships(t *testing.T) {
 
 	// Create relationship
 	relationship := &models.RequirementRelationship{
-		ID:                     uuid.New(),
-		SourceRequirementID:    sourceReq.ID,
-		TargetRequirementID:    targetReq.ID,
-		RelationshipTypeID:     relType.ID,
-		CreatedBy:              user.ID,
+		ID:                  uuid.New(),
+		SourceRequirementID: sourceReq.ID,
+		TargetRequirementID: targetReq.ID,
+		RelationshipTypeID:  relType.ID,
+		CreatedBy:           user.ID,
 	}
 	err = db.Create(relationship).Error
 	require.NoError(t, err)

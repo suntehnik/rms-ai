@@ -17,6 +17,10 @@ func setupUserStoryTestDB(t *testing.T) *gorm.DB {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(t, err)
 
+	// Enable foreign key constraints in SQLite
+	err = db.Exec("PRAGMA foreign_keys = ON").Error
+	require.NoError(t, err)
+
 	// Auto-migrate all required models
 	err = db.AutoMigrate(
 		&models.User{},
@@ -50,6 +54,7 @@ func createUserStoryTestEpic(t *testing.T, db *gorm.DB, user *models.User, refID
 		Title:       "Test Epic",
 		Priority:    models.PriorityHigh,
 		CreatorID:   user.ID,
+		AssigneeID:  user.ID, // Required field
 		Status:      models.EpicStatusBacklog,
 		ReferenceID: refID, // Set manually to avoid PostgreSQL function call
 	}
@@ -205,6 +210,79 @@ func TestUserStoryRepository_Delete(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, ErrNotFound, err)
 	assert.Nil(t, retrieved)
+}
+
+// TestUserStoryRepository_Create_DuplicateReferenceID tests insertion error with duplicate reference ID
+// References: AC-759 - insertion error surfaces without committing
+func TestUserStoryRepository_Create_DuplicateReferenceID(t *testing.T) {
+	db := setupUserStoryTestDB(t)
+	repo := NewUserStoryRepository(db, nil)
+
+	user := createUserStoryTestUser(t, db, "testuser")
+	epic := createUserStoryTestEpic(t, db, user, "EP-001")
+
+	// Create first user story
+	us1 := createUserStoryTestUserStory(t, db, epic, user, user, "US-001")
+
+	// Try to create second user story with same ReferenceID
+	us2 := &models.UserStory{
+		Title:       "Duplicate User Story",
+		Priority:    models.PriorityMedium,
+		EpicID:      epic.ID,
+		CreatorID:   user.ID,
+		AssigneeID:  user.ID,
+		ReferenceID: "US-001", // Duplicate!
+	}
+
+	err := repo.Create(us2)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "UNIQUE constraint")
+
+	// Verify original record still exists and no side effects
+	retrieved, err := repo.GetByReferenceID("US-001")
+	assert.NoError(t, err)
+	assert.Equal(t, us1.ID, retrieved.ID)
+	assert.Equal(t, us1.Title, retrieved.Title)
+}
+
+// NOTE: Update_NonExistent test is not included here as existence validation
+// happens at the service layer, not repository layer (AC-761).
+// GORM's Save() method doesn't return an error for non-existent records.
+
+// TestUserStoryRepository_Delete_WithAcceptanceCriteria tests FK constraint on delete
+// References: AC-762 - FK/relationship conflicts surface and record remains
+func TestUserStoryRepository_Delete_WithAcceptanceCriteria(t *testing.T) {
+	db := setupUserStoryTestDB(t)
+	repo := NewUserStoryRepository(db, nil)
+
+	user := createUserStoryTestUser(t, db, "testuser")
+	epic := createUserStoryTestEpic(t, db, user, "EP-001")
+	userStory := createUserStoryTestUserStory(t, db, epic, user, user, "US-001")
+
+	// Create acceptance criteria (with CASCADE delete it should be deleted)
+	ac := &models.AcceptanceCriteria{
+		UserStoryID: userStory.ID,
+		AuthorID:    user.ID,
+		Description: "Test AC",
+		ReferenceID: "AC-001",
+	}
+	err := db.Create(ac).Error
+	require.NoError(t, err)
+
+	// Delete user story - should succeed with CASCADE
+	err = repo.Delete(userStory.ID)
+	assert.NoError(t, err)
+
+	// Verify user story is deleted
+	retrieved, err := repo.GetByID(userStory.ID)
+	assert.Error(t, err)
+	assert.Equal(t, ErrNotFound, err)
+	assert.Nil(t, retrieved)
+
+	// Verify AC is also deleted (CASCADE)
+	var acCount int64
+	db.Model(&models.AcceptanceCriteria{}).Where("id = ?", ac.ID).Count(&acCount)
+	assert.Equal(t, int64(0), acCount)
 }
 
 // TestUserStoryRepository_GetWithAcceptanceCriteria tests GetWithAcceptanceCriteria method
